@@ -168,7 +168,7 @@
       <p class="hint" style="margin:8px 0 0">اضغط على البطاقة لعرض تبويبات النواقص لكل فرع (فرع 1، فرع 2، فرع 3).</p>
     </div>
 
-    <!-- Group Cards -->
+    <!-- Group Cards + تصوير -->
     <div class="cards" id="groupsGrid"></div>
 
     <div class="card">
@@ -224,6 +224,25 @@
         </table>
       </div>
 
+      <!-- جدول طلبات التصوير -->
+      <div id="tableShootWrap" class="table-wrap" style="display:none">
+        <table id="modalTableShoot">
+          <thead>
+            <tr>
+              <th>رقم</th>
+              <th>التاريخ</th>
+              <th>مقدّم</th>
+              <th>عدد الهياكل</th>
+              <th>الحالة</th>
+              <th>استلام إداري</th>
+              <th>تجهيز</th>
+              <th>ملاحظات الإدارة</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
       <p class="hint" id="modalCount" style="margin-top:8px"></p>
     </div>
   </div>
@@ -262,7 +281,8 @@
 
   /* ===== State ===== */
   let stock=[], moves=[], models=[], variantsMap={};
-  let currentFilterKey = null; // لمعرفة إن كنا في "تحت التسليم"
+  let shootRequests=[]; // <<< طلبات التصوير
+  let currentFilterKey = null;
 
   // الجهات
   const groupsDef = [
@@ -365,8 +385,9 @@
         moves = Array.isArray(d.moves)? d.moves: [];
         models = Array.isArray(d.models)? d.models: [];
         variantsMap = d.variantsMap || {};
+        shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: []; // تحميل طلبات التصوير
       }else{
-        stock=[]; moves=[]; models=[]; variantsMap={};
+        stock=[]; moves=[]; models=[]; variantsMap={}; shootRequests=[];
       }
       renderAll();
     }catch(e){
@@ -382,6 +403,7 @@
         moves = Array.isArray(d.moves)? d.moves: moves;
         models= Array.isArray(d.models)? d.models: models;
         variantsMap = d.variantsMap || variantsMap;
+        shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: shootRequests;
         renderAll();
         setStatus('ok','مزامنة حيّة');
       },()=> setStatus('warn','انقطاع المزامنة مؤقتًا'));
@@ -451,10 +473,59 @@
     const pending   = rows.filter(r => (r.location||'').includes('مباع تحت التسليم')).length;
     const delivered = rows.filter(r => (r.location||'').includes('مباع تم التسليم')).length;
 
-    const actualTotal = available + notes;           // الإجمالي الفعلي
-    const keysTotal   = available + notes + pending; // إجمالي المفاتيح
+    const actualTotal = available + notes;
+    const keysTotal   = available + notes + pending;
 
     return { available, notes, pending, delivered, actualTotal, keysTotal };
+  }
+
+  /* ===== تصوير: إحصائيات + بطاقة ===== */
+  function shootStats(){
+    const total = shootRequests.length;
+    const drafts = shootRequests.filter(r=> (r.status||'')==='مسودة').length;
+    const inprog = shootRequests.filter(r=> (r.status||'')==='تحت الإجراء').length;
+    const done   = shootRequests.filter(r=> (r.status||'')==='تم').length;
+    const received = shootRequests.filter(r=> r?.admin?.received).length;
+    const prepared = shootRequests.filter(r=> r?.admin?.prepared).length;
+    return { total, drafts, inprog, done, received, prepared };
+  }
+
+  function renderShootCard(gridEl){
+    const st = shootStats();
+    const card = document.createElement('div');
+    card.className='card group-card';
+    card.id = 'shootCard';
+    card.innerHTML = `
+      <div class="group-head">
+        <div class="group-left">
+          <h3 class="group-title"><i class="fa-solid fa-camera-retro"></i> طلبات التصوير</h3>
+          <div class="sub-metrics">
+            <span class="metric"><i class="fa-solid fa-list-ol"></i> الإجمالي: <b>${st.total.toLocaleString('ar-SA')}</b></span>
+            <span class="metric"><i class="fa-solid fa-inbox"></i> استلام إداري: <b>${st.received.toLocaleString('ar-SA')}</b></span>
+            <span class="metric"><i class="fa-solid fa-screwdriver-wrench"></i> تجهيز: <b>${st.prepared.toLocaleString('ar-SA')}</b></span>
+            <span class="metric"><i class="fa-solid fa-check"></i> تم: <b>${st.done.toLocaleString('ar-SA')}</b></span>
+          </div>
+        </div>
+        <div class="group-total" title="إجمالي الطلبات">${st.total.toLocaleString('ar-SA')}</div>
+      </div>
+
+      <div class="chips">
+        <span class="chip" data-shoot="ALL"><i class="fa-solid fa-layer-group"></i> الكل</span>
+        <span class="chip" data-shoot="مسودة"><i class="fa-regular fa-file-lines"></i> مسودة: <b>${st.drafts}</b></span>
+        <span class="chip" data-shoot="تحت الإجراء"><i class="fa-solid fa-hourglass-half"></i> تحت الإجراء: <b>${st.inprog}</b></span>
+        <span class="chip" data-shoot="تم"><i class="fa-solid fa-circle-check"></i> تم: <b>${st.done}</b></span>
+      </div>
+      <p class="hint" style="margin:10px 0 0">اضغط على البطاقة لعرض كل الطلبات، أو استخدم الشرائح للتصفية حسب الحالة.</p>
+    `;
+    // فتح الكل
+    card.addEventListener('click', (ev)=>{ if(ev.target.closest('.chip')) return; openShootModal('ALL'); });
+    // الشرائح
+    card.addEventListener('click', (e)=>{
+      const chip = e.target.closest('.chip'); if(!chip) return;
+      e.stopPropagation();
+      openShootModal(chip.getAttribute('data-shoot')||'ALL');
+    });
+    gridEl.appendChild(card);
   }
 
   /* ===== Render ===== */
@@ -501,18 +572,17 @@
         </div>
         <p class="hint" style="margin:10px 0 0">اضغط على البطاقة لعرض كل سيارات الجهة، أو اضغط على الشرائح لعرض الفئة فقط.</p>
       `;
-      // فتح كل الجهة
-      card.addEventListener('click', (ev)=>{
-        if(ev.target.closest('.chip')) return;
-        openModalForGroupRows(g, null);
-      });
+      card.addEventListener('click', (ev)=>{ if(ev.target.closest('.chip')) return; openModalForGroupRows(g, null); });
       grid.appendChild(card);
     });
 
-    // حدث الشرائح
+    /* بطاقة طلبات التصوير — تُضاف بعد آخر فرع (القادسية) */
+    renderShootCard(grid);
+
+    // حدث الشرائح للجهات
     grid.addEventListener('click',(e)=>{
       const chip = e.target.closest('.chip');
-      if(!chip) return;
+      if(!chip || chip.hasAttribute('data-shoot')) return; // تجاهل شرائح بطاقة التصوير هنا
       e.stopPropagation();
       const key   = chip.getAttribute('data-group');
       const filt  = chip.getAttribute('data-filter');
@@ -527,7 +597,7 @@
     renderGroups();
   }
 
-  /* ===== Modal: rows + shortages (branches) ===== */
+  /* ===== Modal: rows + shortages (branches) + shoot ===== */
   const backdrop = $('#backdrop');
   const modalTitle = $('#modalTitle');
   const modalSearch = $('#modalSearch');
@@ -536,33 +606,39 @@
 
   const tableRowsWrap = $('#tableRowsWrap');
   const tableShortWrap= $('#tableShortWrap');
+  const tableShootWrap= $('#tableShootWrap');
+
   const modalTableRowsHead = $('#rowsHeadTr');
   const modalTableRowsBody  = document.querySelector('#modalTableRows tbody');
   const modalTableShortBody = document.querySelector('#modalTableShort tbody');
+  const modalTableShootBody = document.querySelector('#modalTableShoot tbody');
   const modalCount = $('#modalCount');
 
   const shortTabs = $('#shortTabs');
 
-  let currentMode = 'rows'; // 'rows' | 'shortagesBranches'
-  let currentRows = [];
-  let filteredRows = [];
-
-  // shortagesBranches mode
-  let shortDataByKey = new Map();
-  let shortActiveKey = 'ALL';
-  let shortFiltered = [];
+  let currentMode = 'rows'; // 'rows' | 'shortagesBranches' | 'shoot'
+  let currentRows = []; let filteredRows = [];
+  let shortDataByKey = new Map(); let shortActiveKey = 'ALL'; let shortFiltered = [];
+  let currentShoot = []; let filteredShoot = []; let currentShootFilter = 'ALL';
 
   function openModal(mode, title){
     currentMode = mode;
-    modalTitle.textContent = title || (mode==='rows'?'السيارات':'النواقص — الفروع');
+    modalTitle.textContent = title || (mode==='rows'?'السيارات': mode==='shoot'?'طلبات التصوير':'النواقص — الفروع');
     if(mode==='rows'){
-      $('#shortTabs').style.display='none';
+      shortTabs.style.display='none';
       tableRowsWrap.style.display='block';
       tableShortWrap.style.display='none';
-    }else{
-      $('#shortTabs').style.display='flex';
+      tableShootWrap.style.display='none';
+    }else if(mode==='shortagesBranches'){
+      shortTabs.style.display='flex';
       tableRowsWrap.style.display='none';
       tableShortWrap.style.display='block';
+      tableShootWrap.style.display='none';
+    }else{
+      shortTabs.style.display='none';
+      tableRowsWrap.style.display='none';
+      tableShortWrap.style.display='none';
+      tableShootWrap.style.display='block';
     }
     modalSearch.value='';
     renderModal();
@@ -572,13 +648,14 @@
     backdrop.style.display='none';
     currentRows=[]; filteredRows=[];
     shortDataByKey.clear(); shortFiltered=[];
+    currentShoot=[]; filteredShoot=[];
     currentFilterKey=null;
   }
   btnCloseModal.addEventListener('click', closeModal);
   backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) closeModal(); });
 
+  /* ===== Rows table (cars) ===== */
   function buildRowsHeader(){
-    // رأس الجدول يتغير لو كنا في تحت التسليم
     const common = `
       <th>م</th>
       <th>السيارة</th>
@@ -601,7 +678,6 @@
     `;
     modalTableRowsHead.innerHTML = currentFilterKey==='pending' ? common + approvals : common;
   }
-
   function renderRowsTable(){
     buildRowsHeader();
     modalTableRowsBody.innerHTML='';
@@ -634,6 +710,7 @@
     modalCount.textContent = `عدد السيارات الظاهرة: ${filteredRows.length.toLocaleString('ar-SA')} من ${currentRows.length.toLocaleString('ar-SA')}`;
   }
 
+  /* ===== Shortages table ===== */
   function renderShortTable(){
     modalTableShortBody.innerHTML='';
     shortFiltered.forEach(s=>{
@@ -655,7 +732,8 @@
 
   function renderModal(){
     if(currentMode==='rows'){ renderRowsTable(); }
-    else { renderShortTable(); }
+    else if(currentMode==='shortagesBranches'){ renderShortTable(); }
+    else { renderShootTable(); }
   }
 
   // فتح سيارات الجهة
@@ -672,7 +750,7 @@
     const list = rowsForFilter(rows, filterKey);
     currentRows = list.slice().sort((a,b)=> (a.id||0)-(b.id||0));
     filteredRows= currentRows.slice();
-    currentFilterKey = filterKey; // لمعرفة أعمدة الموافقات
+    currentFilterKey = filterKey;
     openModal('rows', filterKey ? `${group.title} — ${labelForFilter(filterKey)}` : `${group.title} — كل السيارات`);
   }
 
@@ -727,7 +805,34 @@
     activateShortTab(key);
   });
 
-  // بحث في الوضعين
+  /* ===== SHOOT modal ===== */
+  function openShootModal(filter='ALL'){
+    currentShootFilter = filter;
+    currentShoot = shootRequests.slice().sort((a,b)=> b.id - a.id);
+    filteredShoot = currentShoot.filter(r=> filter==='ALL' ? true : (r.status||'')===filter);
+    openModal('shoot', filter==='ALL' ? 'طلبات التصوير — الكل' : `طلبات التصوير — ${filter}`);
+  }
+
+  function renderShootTable(){
+    modalTableShootBody.innerHTML='';
+    filteredShoot.forEach(r=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `
+        <td>#${r.id}</td>
+        <td>${r.createdAt||''}</td>
+        <td>${r.createdBy||'-'}</td>
+        <td>${(r.rows||[]).length}</td>
+        <td>${r.status||'-'}</td>
+        <td>${r?.admin?.received? '✅ '+r.admin.received : '—'}</td>
+        <td>${r?.admin?.prepared? '✅ '+r.admin.prepared : '—'}</td>
+        <td>${r?.admin?.notes||''}</td>
+      `;
+      modalTableShootBody.appendChild(tr);
+    });
+    modalCount.textContent = `عدد الطلبات الظاهرة: ${filteredShoot.length.toLocaleString('ar-SA')} من ${currentShoot.length.toLocaleString('ar-SA')}`;
+  }
+
+  // بحث موحّد في المودال
   modalSearch.addEventListener('input', ()=>{
     const q = (modalSearch.value||'').trim().toLowerCase();
     if(currentMode==='rows'){
@@ -737,31 +842,34 @@
                    r.adminNotes,r.financeNotes, String(r.adminApproved), String(r.financeApproved)].join(' ').toLowerCase();
         return hay.includes(q);
       });
-    }else{
+    }else if(currentMode==='shortagesBranches'){
       if(!q){ shortFiltered = (shortDataByKey.get(shortActiveKey)||[]).slice(); return renderModal(); }
       shortFiltered = (shortDataByKey.get(shortActiveKey)||[]).filter(s=>{
         const hay=[s.car,s.variant,s.extColor,s.intColor,s.modelYear, String(s.countBranch), String(s.countGlobal)].join(' ').toLowerCase();
         return hay.includes(q);
       });
+    }else{
+      if(!q){ filteredShoot = currentShoot.filter(r=> currentShootFilter==='ALL'?true:(r.status||'')===currentShootFilter); return renderModal(); }
+      filteredShoot = currentShoot.filter(r=>{
+        const hay=[
+          r.id,r.createdAt,r.createdBy,r.status,(r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),
+          ...(r.rows||[]).flatMap(x=>[x.vin,x.car,x.variant,x.extColor,x.modelYear,x.currentLocation,x.shootPlace,x.note])
+        ].join(' ').toLowerCase();
+        return hay.includes(q);
+      }).filter(r=> currentShootFilter==='ALL'?true:(r.status||'')===currentShootFilter);
     }
     renderModal();
   });
 
-  // تصدير
-  const exportRowsCommonHeader = ["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
-  const exportRowsPendingExtra  = ["الموافقة الإدارية","ملاحظات الإدارة","الموافقة المالية","ملاحظات المالية"];
-
+  // تصدير Excel حسب الوضع
   document.getElementById('btnExportGroup').addEventListener('click', ()=>{
     if(currentMode==='rows'){
-      const header = currentFilterKey==='pending'
-        ? [...exportRowsCommonHeader, ...exportRowsPendingExtra]
-        : [...exportRowsCommonHeader];
-
+      const headerCommon = ["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
+      const headerPending= ["الموافقة الإدارية","ملاحظات الإدارة","الموافقة المالية","ملاحظات المالية"];
+      const header = currentFilterKey==='pending' ? [...headerCommon, ...headerPending] : headerCommon;
       const data=[header];
       filteredRows.forEach(r=>{
-        const row = [
-          r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName||'',r.vin,r.notes
-        ];
+        const row = [r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName||'',r.vin,r.notes];
         if(currentFilterKey==='pending'){
           const adminA = (r.adminApproved===true || r.adminApproved==='true') ? 'موافق' : (r.adminApproved===false || r.adminApproved==='false') ? 'مرفوض' : '-';
           const finA   = (r.financeApproved===true || r.financeApproved==='true') ? 'موافق' : (r.financeApproved===false || r.financeApproved==='false') ? 'مرفوض' : '-';
@@ -770,20 +878,28 @@
         data.push(row);
       });
       const ws=XLSX.utils.aoa_to_sheet(data);
-      ws['!cols'] = [{wch:5},{wch:24},{wch:30},{wch:18},{wch:16},{wch:16},{wch:10},{wch:10},{wch:20},{wch:16},{wch:22},{wch:26},
-                     ...(currentFilterKey==='pending'?[{wch:14},{wch:24},{wch:14},{wch:24}]:[])];
-      const wb=XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb,ws,"Rows");
+      ws['!cols']=[{wch:5},{wch:24},{wch:30},{wch:18},{wch:16},{wch:16},{wch:10},{wch:10},{wch:20},{wch:16},{wch:22},{wch:26}];
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Rows");
       XLSX.writeFile(wb, `mzj-dashboard-${modalTitle.textContent.replace(/\s+/g,'-')}.xlsx`);
-    }else{
+    }else if(currentMode==='shortagesBranches'){
       const header=["السيارة","البيان","اللون الخارجي","اللون الداخلي","الموديل","عدد الفرع","الإجمالي العام"];
       const data=[header];
       shortFiltered.forEach(s=> data.push([s.car,s.variant,s.extColor,s.intColor,s.modelYear,s.countBranch,s.countGlobal]));
       const ws=XLSX.utils.aoa_to_sheet(data);
-      ws['!cols'] = [{wch:24},{wch:20},{wch:16},{wch:16},{wch:10},{wch:12},{wch:14}];
-      const wb=XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb,ws, tabTitle(shortActiveKey));
+      ws['!cols']=[{wch:24},{wch:20},{wch:16},{wch:16},{wch:10},{wch:12},{wch:14}];
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws, tabTitle(shortActiveKey));
       XLSX.writeFile(wb, `mzj-shortages-branches-${tabTitle(shortActiveKey).replace(/\s+/g,'-')}.xlsx`);
+    }else{ // shoot
+      const header=["رقم الطلب","التاريخ","مقدّم","عدد الهياكل","الحالة","استلام إداري","تجهيز","ملاحظات الإدارة"];
+      const data=[header];
+      filteredShoot.forEach(r=>{
+        data.push([r.id,r.createdAt||'',r.createdBy||'',(r.rows||[]).length,r.status||'',
+          r?.admin?.received||'', r?.admin?.prepared||'', r?.admin?.notes||'']);
+      });
+      const ws=XLSX.utils.aoa_to_sheet(data);
+      ws['!cols']=[{wch:8},{wch:18},{wch:14},{wch:10},{wch:12},{wch:18},{wch:14},{wch:22}];
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Shoot Requests");
+      XLSX.writeFile(wb, `mzj-photoshoot-requests-${(currentShootFilter||'ALL')}.xlsx`);
     }
   });
 
@@ -795,4 +911,3 @@
 </script>
 </body>
 </html>
-
