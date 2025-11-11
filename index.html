@@ -123,7 +123,7 @@
     <div class="tabs">
       <a class="tab active" href="admin.html">الإدارة</a>
       <a class="tab" href="inventory.html">المخزون</a>
-      <a class="tab active" href="dashboard.html">الداش بورد</a>
+      <a class="tab" href="dashboard.html">الداش بورد</a>
     </div>
     <div class="row">
       <div class="status-badge"><span id="connDot" class="dot warn"></span><span id="connText">جارِ الاتصال…</span></div>
@@ -232,11 +232,35 @@
           </div>
         </div>
 
-        <div><label for="location">المكان</label>
-          <div class="input-wrap">
-            <span class="i"><i class="fa-solid fa-location-dot"></i></span>
-            <input id="location" placeholder="المعرض / الفرع"/>
-          </div>
+        <!-- المكان: قائمة منسدلة ثابتة -->
+        <div>
+          <label for="location">المكان</label>
+          <select id="location" title="اختر المكان">
+            <option value="المستودع : المخزون المتاح">المستودع : المخزون المتاح</option>
+            <option value="المستودع : سيارات بها ملاحظات">المستودع : سيارات بها ملاحظات</option>
+            <option value="المستودع : مباع تحت التسليم">المستودع : مباع تحت التسليم</option>
+            <option value="المستودع : مباع تم التسليم">المستودع : مباع تم التسليم</option>
+
+            <option value="الوكالة : المخزون المتاح">الوكالة : المخزون المتاح</option>
+            <option value="الوكالة : سيارات بها ملاحظات">الوكالة : سيارات بها ملاحظات</option>
+            <option value="الوكالة : مباع تحت التسليم">الوكالة : مباع تحت التسليم</option>
+            <option value="الوكالة : مباع تم التسليم">الوكالة : مباع تم التسليم</option>
+
+            <option value="فرع 1 الصالة : المخزون المتاح">فرع 1 الصالة : المخزون المتاح</option>
+            <option value="فرع 1 الصالة : سيارات بها ملاحظات">فرع 1 الصالة : سيارات بها ملاحظات</option>
+            <option value="فرع 1 الصالة : مباع تحت التسليم">فرع 1 الصالة : مباع تحت التسليم</option>
+            <option value="فرع 1 الصالة : مباع تم التسليم">فرع 1 الصالة : مباع تم التسليم</option>
+
+            <option value="فرع 2 الملتقى : المخزون المتاح">فرع 2 الملتقى : المخزون المتاح</option>
+            <option value="فرع 2 الملتقى : سيارات بها ملاحظات">فرع 2 الملتقى : سيارات بها ملاحظات</option>
+            <option value="فرع 2 الملتقى : مباع تحت التسليم">فرع 2 الملتقى : مباع تحت التسليم</option>
+            <option value="فرع 2 الملتقى : مباع تم التسليم">فرع 2 الملتقى : مباع تم التسليم</option>
+
+            <option value="فرع 3 القادسية : المخزون المتاح">فرع 3 القادسية : المخزون المتاح</option>
+            <option value="فرع 3 القادسية : سيارات بها ملاحظات">فرع 3 القادسية : سيارات بها ملاحظات</option>
+            <option value="فرع 3 القادسية : مباع تحت التسليم">فرع 3 القادسية : مباع تحت التسليم</option>
+            <option value="فرع 3 القادسية : مباع تم التسليم">فرع 3 القادسية : مباع تم التسليم</option>
+          </select>
         </div>
 
         <div><label for="batchName">اسم الدفعة</label>
@@ -277,7 +301,7 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 10l5-5 5 5"/><path d="M7 14l5 5 5-5"/></svg>
           <h2 style="margin:0">حركة نقل السيارات (برقم الهيكل)</h2>
         </div>
-        <span class="hint">القوائم (من/إلى) ثابتة بالقيم المعتمدة</span>
+        <span class="hint">يتم تحديد <b>من</b> تلقائيًا حسب مكان السيارة الحالي من الجدول.</span>
       </div>
 
       <div class="grid grid-3">
@@ -286,12 +310,12 @@
           <input id="moveVin" placeholder="اكتب رقم الهيكل الكامل" title="VIN كامل"/>
         </div>
         <div>
-          <label for="moveFrom">من</label>
-          <select id="moveFrom" title="المكان الحالي (اختيار ثابت)"></select>
+          <label for="moveFrom">من (محدّد تلقائيًا)</label>
+          <select id="moveFrom" title="المكان الحالي" disabled></select>
         </div>
         <div>
           <label for="moveTo">إلى</label>
-          <select id="moveTo" title="المكان الجديد (اختيار ثابت)"></select>
+          <select id="moveTo" title="المكان الجديد"></select>
         </div>
       </div>
       <div class="row" style="margin-top:12px">
@@ -326,7 +350,7 @@
           <thead>
             <tr>
               <th class="w-120">#</th>
-              <th class="w-160">التاريخ والوقت (ميلادي)</th>
+              <th class="w-120">التاريخ والوقت</th>
               <th>رقم الهيكل</th>
               <th>سيارة</th>
               <th>من</th>
@@ -461,7 +485,7 @@
 
   const carSelect=$('#carSelect'), variantSelect=$('#variantSelect');
   const dealerInput=$('#dealer'), extColorInput=$('#extColor'), intColorInput=$('#intColor');
-  const modelYearInput=$('#modelYear'), plateInput=$('#plate'), locationInput=$('#location'), batchNameInput=$('#batchName');
+  const modelYearInput=$('#modelYear'), plateInput=$('#plate'), locationSelect=$('#location'), batchNameInput=$('#batchName');
   const vinInput=$('#vin'), notesInput=$('#notes');
   const btnSave=$('#btnSave'), btnReset=$('#btnReset');
 
@@ -483,18 +507,6 @@
 
   const moveVin=$('#moveVin'), moveFrom=$('#moveFrom'), moveTo=$('#moveTo'), btnFindByVin=$('#btnFindByVin'), btnMove=$('#btnMove');
   const moveStatus=$('#moveStatus'), carDetailsBox=$('#carDetailsBox'), carDetails=$('#carDetails'), carDetailsHint=$('#carDetailsHint');
-
-  /* ===== Modals helpers ===== */
-  function openModal(el){ el.style.display='flex'; setTimeout(()=>{ const first = el.querySelector('input,select,textarea,button'); first?.focus(); }, 50); }
-  function closeModalById(id){ const el = document.getElementById(id); if(el) el.style.display='none'; }
-  document.addEventListener('click',(e)=>{
-    const closeBtn = e.target.closest('[data-close]');
-    if(closeBtn){ closeModalById(closeBtn.getAttribute('data-close')); }
-    if(e.target.classList.contains('modal-backdrop')){ e.target.style.display='none'; }
-  });
-  document.addEventListener('keydown',(e)=>{
-    if(e.key==='Escape'){ modelModal.style.display='none'; variantModal.style.display='none'; }
-  });
 
   /* ===== Connection status ===== */
   function setStatus(mode, txt){
@@ -546,7 +558,7 @@
       loadModelsIntoSelects();
       if(carSelect.value) populateVariants(carSelect.value);
       renderTable(); renderMoves();
-      fillMoveLists(); // ثابت
+      fillMoveLists();
       setStatus('ok','تم تحميل البيانات');
     }catch(e){ setStatus('warn','تعذّر تحميل البيانات'); }
   }
@@ -592,16 +604,8 @@
   carSelect.addEventListener('change',e=>{ populateVariants(e.target.value); });
 
   // فتح المودالات
-  btnAddModel.addEventListener('click',()=>{
-    modelNameEl.value=''; openModal(modelModal);
-  });
-  btnAddVariant.addEventListener('click',()=>{
-    // اختار الموديل الحالي تلقائياً
-    if(models.length && carSelect.value){
-      variantModelForEl.value = carSelect.value;
-    }
-    variantNameEl.value=''; openModal(variantModal);
-  });
+  btnAddModel.addEventListener('click',()=>{ modelNameEl.value=''; openModal(modelModal); });
+  btnAddVariant.addEventListener('click',()=>{ if(models.length && carSelect.value){ variantModelForEl.value = carSelect.value; } variantNameEl.value=''; openModal(variantModal); });
 
   // تأكيد إضافة موديل
   confirmAddModel.addEventListener('click', async ()=>{
@@ -675,7 +679,8 @@
         const id=Number(edit); const rec=stock.find(r=>r.id===id); if(!rec) return;
         editId=id; carSelect.value=rec.car||''; populateVariants(rec.car||''); variantSelect.value=rec.variant||'';
         dealerInput.value=rec.dealer||''; extColorInput.value=rec.extColor||''; intColorInput.value=rec.intColor||'';
-        modelYearInput.value=rec.modelYear||''; plateInput.value=rec.plate||''; locationInput.value=rec.location||'';
+        modelYearInput.value=rec.modelYear||''; plateInput.value=rec.plate||'';
+        locationSelect.value=rec.location||locationSelect.options[0]?.value||'';
         batchNameInput.value=rec.batchName||''; vinInput.value=rec.vin||''; notesInput.value=rec.notes||''; window.scrollTo({top:0,behavior:'smooth'});
       }
       if(del){
@@ -699,7 +704,7 @@
       vin:normalizeVin(vinInput.value),
       modelYear:modelYearInput.value.trim(),
       plate:plateInput.value.trim(),
-      location:locationInput.value.trim(),
+      location:locationSelect.value,            // ← أخذ المكان من القائمة
       batchName:batchNameInput.value.trim(),
       notes:notesInput.value.trim()
     };
@@ -712,7 +717,8 @@
   function clearForm(){
     if(models.length){carSelect.value=models[0]; populateVariants(carSelect.value); variantSelect.value=variantSelect.options[0]?.value||'';}
     dealerInput.value=''; extColorInput.value=''; intColorInput.value='';
-    modelYearInput.value=''; plateInput.value=''; locationInput.value='';
+    modelYearInput.value=''; plateInput.value='';
+    locationSelect.selectedIndex=0;   // ← رجّع المكان لأول عنصر في القائمة
     batchNameInput.value=''; vinInput.value=''; notesInput.value=''; editId=null;
   }
   btnReset.addEventListener('click',clearForm);
@@ -727,7 +733,7 @@
     XLSX.writeFile(wb,"mzj-cars-inventory.xlsx"); showToast('تم تصدير الملف','ok');
   });
 
-  /* استيراد Excel (يدعم اسم الدفعة) */
+  /* استيراد Excel */
   let importMode=null; const VIN_HEADERS=["رقم الهيكل","VIN","الشاص","رقم الشاص","Chassis","Chassis No","Chassis Number","الهيكل","نوع الهيكل"];
   btnImportMenu.addEventListener('click',()=>{importDropdown.style.display=importDropdown.style.display==='block'?'none':'block';});
   importDropdown.addEventListener('click',(e)=>{const btn=e.target.closest('button'); if(!btn) return; importMode=btn.getAttribute('data-mode'); importDropdown.style.display='none'; fileImport.click();});
@@ -750,7 +756,6 @@
         };
         let idxVin=-1; for(const h of VIN_HEADERS){const i=header.indexOf(h); if(i!==-1){idxVin=i; break;}}
 
-        // تحقق من الأعمدة الأساسية
         const mustHave=["سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","الملاحظات"];
         const missing = mustHave.filter(n=> colIndex(n)===-1);
         if(missing.length){ throw new Error('فشل الاستيراد — أعمدة ناقصة: '+missing.join(', ')); }
@@ -786,18 +791,22 @@
     reader.readAsArrayBuffer(file);
   });
 
-  /* ===== حركة النقل — قوائم ثابتة ===== */
+  /* ===== حركة النقل — قوائم ثابتة (بنفس ترتيبك) ===== */
   const FIXED_LOCATIONS = [
-"الوكالة : المخزون المتاح","الوكالة : سيارات بها ملاحظات","الوكالة : مباع تحت التسليم","الوكالة : مباع تم التسليم",
 "المستودع : المخزون المتاح","المستودع : سيارات بها ملاحظات","المستودع : مباع تحت التسليم","المستودع : مباع تم التسليم",
+"الوكالة : المخزون المتاح","الوكالة : سيارات بها ملاحظات","الوكالة : مباع تحت التسليم","الوكالة : مباع تم التسليم",
 "فرع 1 الصالة : المخزون المتاح","فرع 1 الصالة : سيارات بها ملاحظات","فرع 1 الصالة : مباع تحت التسليم","فرع 1 الصالة : مباع تم التسليم",
 "فرع 2 الملتقى : المخزون المتاح","فرع 2 الملتقى : سيارات بها ملاحظات","فرع 2 الملتقى : مباع تحت التسليم","فرع 2 الملتقى : مباع تم التسليم",
 "فرع 3 القادسية : المخزون المتاح","فرع 3 القادسية : سيارات بها ملاحظات","فرع 3 القادسية : مباع تحت التسليم","فرع 3 القادسية : مباع تم التسليم"
   ];
   function fillMoveLists(){
     const opts = FIXED_LOCATIONS.map(l=> `<option value="${l}">${l}</option>`).join('');
-    moveFrom.innerHTML = opts; moveTo.innerHTML = opts;
+    // "من" يُملأ لاحقًا حسب السيارة ويكون Disabled
+    moveFrom.innerHTML = opts;
+    moveTo.innerHTML   = opts;
   }
+  fillMoveLists();
+
   function renderCarDetails(rec){
     carDetails.innerHTML=`
       <div style="grid-column:1/-1"><b>سيارة:</b> ${rec.car??""}</div>
@@ -814,22 +823,43 @@
     carDetailsHint.textContent=rec.vin?`رقم الهيكل: ${rec.vin}`:'لا يوجد رقم هيكل محفوظ لهذه السيارة.';
     carDetailsBox.style.display='block';
   }
+
+  // عرض البيانات: يحدد "من" تلقائيًا حسب مكان السيارة ويغلقه
   $('#btnFindByVin').addEventListener('click',()=>{
     const vinRaw=(moveVin.value||'').trim(); if(!vinRaw){moveStatus.textContent='اكتب رقم الهيكل الكامل أولًا.'; return;}
     const norm=normalizeVin(vinRaw); const match=stock.find(r=>normalizeVin(r.vin)===norm);
     if(!match){moveStatus.textContent='لم يتم العثور على سيارة بهذا الرقم.'; carDetailsBox.style.display='none'; showToast('لا توجد سيارة بهذا VIN','err'); return;}
-    renderCarDetails(match); moveStatus.textContent=`تم العثور: ${match.car} — المكان الحالي: ${match.location||'غير محدد'}`;
+    renderCarDetails(match);
+    const currentLoc = match.location || '';
+    if(currentLoc){
+      moveFrom.value = currentLoc;
+      moveFrom.disabled = true; // ← قفل "من" حسب طلبك
+      moveStatus.textContent=`تم العثور: ${match.car} — المكان الحالي: ${currentLoc}`;
+    }else{
+      moveFrom.disabled = false;
+      moveStatus.textContent=`تم العثور: ${match.car} — لا يوجد مكان مسجل. اختر المكان يدويًا.`;
+    }
   });
+
+  // تنفيذ النقل
   $('#btnMove').addEventListener('click', async ()=>{
     const norm=normalizeVin((moveVin.value||'').trim()); if(!norm) return showToast('اكتب رقم الهيكل الكامل','err');
     const idx=stock.findIndex(r=>normalizeVin(r.vin)===norm); if(idx<0) return showToast('لم يتم العثور على سيارة بهذا VIN','err');
-    const from=moveFrom.value, to=moveTo.value; if(from===to) return showToast('اختر مكانين مختلفين','info');
-    const oldLoc=stock[idx].location||''; stock[idx].location=to;
     const rec=stock[idx];
-    moves.push({when:now(),vin:rec.vin||'',car:rec.car||'',from:from||oldLoc,to,id:rec.id});
+    const from = moveFrom.value || rec.location || '';
+    const to   = moveTo.value;
+    if(!to) return showToast('اختر وجهة النقل (إلى)','info');
+    if(from===to) return showToast('اختر مكانين مختلفين','info');
+
+    const oldLoc = rec.location || '';
+    rec.location = to;
+    moves.push({ when: now(), vin: rec.vin||'', car: rec.car||'', from: from||oldLoc, to, id: rec.id });
     await persistAll(); renderTable(); renderMoves();
+
     moveStatus.textContent=`تم النقل: ${rec.car} — من "${from||oldLoc||'غير محدد'}" إلى "${to}".`;
-    carDetailsBox.style.display='none'; moveVin.value='';
+    carDetailsBox.style.display='none';
+    moveVin.value='';
+    moveFrom.disabled = false;   // فك القفل بعد الانتهاء
   });
 
   function renderMoves(){
@@ -847,9 +877,16 @@
       movesTableBody.appendChild(tr);
     });
   }
-  btnClearMoves.addEventListener('click',async ()=>{if(confirm('تفريغ سجل الحركات بالكامل؟')){moves=[]; await persistAll(); renderMoves(); showToast('تم التفريغ','ok');}});
+  $('#btnClearMoves').addEventListener('click',async ()=>{if(confirm('تفريغ سجل الحركات بالكامل؟')){moves=[]; await persistAll(); renderMoves(); showToast('تم التفريغ','ok');}});
 
-  /* Shortcuts */
+  /* Modals helpers */
+  function openModal(el){ el.style.display='flex'; setTimeout(()=>{ const first = el.querySelector('input,select,textarea,button'); first?.focus(); }, 50); }
+  function closeModalById(id){ const el = document.getElementById(id); if(el) el.style.display='none'; }
+  document.addEventListener('click',(e)=>{
+    const closeBtn = e.target.closest('[data-close]');
+    if(closeBtn){ closeModalById(closeBtn.getAttribute('data-close')); }
+    if(e.target.classList.contains('modal-backdrop')){ e.target.style.display='none'; }
+  });
   document.addEventListener('keydown',(e)=>{
     if(e.key==='/'){e.preventDefault(); searchInput.focus();}
     if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){e.preventDefault(); btnSave.click();}
@@ -859,7 +896,11 @@
 
   /* أول تحميل */
   setStatus('warn','جارِ الاتصال…');
+
+  /* صغيرة: فتح/إغلاق قائمة الاستيراد */
+  document.addEventListener('click',(e)=>{
+    if(!e.target.closest('.import-menu')) importDropdown.style.display='none';
+  });
 </script>
 </body>
 </html>
-
