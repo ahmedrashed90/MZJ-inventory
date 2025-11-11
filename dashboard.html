@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>لوحة المؤشرات — MZJ Cars</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+
+<style>
+  :root{
+    --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef;
+    --text:#1f2937; --muted:#6b7280; --line:#e8e5e2;
+    --card:#ffffff; --bg:#faf7f3; --radius:14px;
+    --shadow:0 12px 28px rgba(0,0,0,.06);
+    --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9; --warn:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:"Tajawal",system-ui,Arial}
+
+  /* Topbar + Tabs */
+  .topbar{position:sticky;top:0;z-index:60;background:#fff;border-bottom:1px solid var(--line)}
+  .topbar-inner{max-width:1280px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:12px 18px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brown),#2a1613);display:grid;place-items:center;color:#fff;font-weight:900}
+  .brand h1{margin:0;font-size:18px;color:var(--brown);font-weight:800}
+  .brand small{color:var(--muted)}
+  .tabs{display:flex;gap:8px}
+  .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;text-decoration:none;color:inherit;font-weight:800}
+  .tab.active{background:var(--brown);border-color:var(--brown);color:#fff}
+  .status-badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;font-size:12px}
+  .dot{width:10px;height:10px;border-radius:999px;background:var(--warn)}
+  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)} .dot.warn{background:var(--warn)}
+
+  .container{max-width:1280px;margin:18px auto;padding:0 16px;display:grid;gap:16px}
+
+  /* Cards grid */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media (max-width:1100px){.cards{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:680px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+  .group-card{cursor:pointer;transition:.15s;border:1px solid var(--line)}
+  .group-card:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(0,0,0,.08)}
+  .group-head{display:flex;align-items:center;justify-content:space-between}
+  .group-title{display:flex;align-items:center;gap:8px;color:var(--brown);margin:0}
+  .group-title i{color:var(--beige)}
+  .group-total{font-weight:900;font-size:28px;color:var(--brown)}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px}
+  .chip i{color:var(--muted)}
+  .hint{color:var(--muted);font-size:12px}
+
+  /* Modal */
+  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.38);display:none;align-items:center;justify-content:center;z-index:80}
+  .modal{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 28px 70px rgba(0,0,0,.35);width:min(1100px,96vw);max-height:90vh;display:flex;flex-direction:column}
+  .modal header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .modal h3{margin:0;color:var(--brown)}
+  .modal .body{padding:12px 14px;overflow:auto}
+  .modal .tools{display:flex;gap:8px;align-items:center}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700;display:inline-flex;gap:8px;align-items:center;transition:.15s}
+  .btn-primary{background:var(--beige);border-color:var(--beige);color:#fff}
+  .btn-ghost{background:#fff}
+  .btn-outline{background:#fff;border-color:var(--brown);color:var(--brown)}
+  .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
+  .input{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  /* Table */
+  .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
+  table{width:100%;border-collapse:separate;border-spacing:0}
+  thead th{position:sticky;top:0;background:#fafafa;z-index:2;border-bottom:2px solid var(--line);text-align:right;color:#111827;font-size:13.5px;padding:10px}
+  tbody td{border-top:1px solid var(--line);padding:10px;vertical-align:top}
+  tbody tr:nth-child(odd){background:#fff}
+  tbody tr:nth-child(even){background:#fffdfb}
+  td,th{border-left:1px solid var(--line)}
+  td:last-child,th:last-child{border-left:0}
+  .tag{display:inline-block;background:#f6f6f6;border:1px solid var(--line);padding:2px 8px;border-radius:999px;font-size:12px;color:#444}
+
+  /* Toast */
+  .toast{position:fixed;bottom:18px;right:18px;background:#111827;color:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.25);display:none;z-index:100}
+  .toast.show{display:block;animation:fade .2s ease-out}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="logo">MZJ</div>
+      <div>
+        <h1>لوحة المؤشرات</h1>
+        <small class="hint">مجموعة محمد بن ذعار العجمي للسيارات</small>
+      </div>
+    </div>
+    <div class="tabs">
+      <a class="tab" href="admin.html">الإدارة</a>
+      <a class="tab" href="inventory.html">المخزون</a>
+      <a class="tab active" href="dashboard.html">الداش بورد</a>
+    </div>
+    <div class="row">
+      <div class="status-badge"><span id="connDot" class="dot warn"></span><span id="connText">جارِ الاتصال…</span></div>
+      <button id="btnSignOut" class="btn btn-ghost" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+    </div>
+  </div>
+</div>
+
+<!-- Auth Gate -->
+<div id="authGate" style="min-height:60vh;display:grid;place-items:center;padding:24px">
+  <div class="card" style="max-width:440px;width:96%">
+    <h2 style="margin:0 0 10px;color:var(--brown)">تسجيل الدخول</h2>
+    <label>البريد الإلكتروني</label>
+    <input id="email" class="input" type="email" placeholder="you@example.com"/>
+    <label style="margin-top:8px">كلمة المرور</label>
+    <input id="password" class="input" type="password" placeholder="••••••••"/>
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
+      <button class="btn btn-outline" id="btnSignup">إنشاء حساب</button>
+    </div>
+    <p class="hint" id="authHint" style="margin-top:10px"></p>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app" style="display:none">
+  <div class="container">
+
+    <!-- Cards -->
+    <div class="cards" id="groupsGrid">
+      <!-- تعبئة ديناميكية -->
+    </div>
+
+    <div class="card">
+      <p class="hint" style="margin:0">
+        اضغط على أي مجموعة لعرض كل السيارات بداخلها (مع بحث وتصدير Excel). التوزيع مبني على المكان: <b>المخزون المتاح، سيارات بها ملاحظات، مباع تحت التسليم، مباع تم التسليم</b> لكل جهة.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="backdrop" class="backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <header>
+      <h3 id="modalTitle">عرض السيارات</h3>
+      <div class="tools">
+        <input id="modalSearch" class="input" placeholder="بحث داخل المجموعة (سيارة / بيان / ألوان / لوحة / VIN / وكيل / سنة / اسم الدفعة)" style="min-width:280px">
+        <button id="btnExportGroup" class="btn"><i class="fa-regular fa-file-excel"></i> تصدير Excel</button>
+        <button id="btnCloseModal" class="btn btn-danger"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+      </div>
+    </header>
+    <div class="body">
+      <div class="table-wrap">
+        <table id="modalTable">
+          <thead>
+            <tr>
+              <th>م</th>
+              <th>السيارة</th>
+              <th>البيان</th>
+              <th>الوكيل</th>
+              <th>اللون الخارجي</th>
+              <th>اللون الداخلي</th>
+              <th>الموديل</th>
+              <th>اللوحة</th>
+              <th>المكان</th>
+              <th>اسم الدفعة</th>
+              <th>رقم الهيكل</th>
+              <th>الملاحظات</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="hint" id="modalCount" style="margin-top:8px"></p>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast">تم النسخ</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  /* ===== Firebase ===== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
+    authDomain: "mzj-agenda.firebaseapp.com",
+    projectId: "mzj-agenda",
+    storageBucket: "mzj-agenda.firebasestorage.app",
+    messagingSenderId: "834700407721",
+    appId: "1:834700407721:web:75c17665d4f032fd65cab8"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+  const STATE_REF = doc(db, "mzj_admin_state", "v1");
+
+  /* ===== Helpers ===== */
+  const $ = s => document.querySelector(s);
+  const toast = $('#toast');
+  const pad = n => n<10?'0'+n:n;
+  const now = ()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`};
+  function setStatus(mode,txt){ $('#connDot').className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'warn'); $('#connText').textContent=txt; }
+  function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1200); }
+
+  /* ===== State ===== */
+  let stock=[], moves=[], models=[], variantsMap={};
+  let groupsDef = [
+    {
+      key:'AGENCY',
+      title:'الوكالة',
+      icon:'fa-building-columns',
+      members:[
+        'الوكالة : المخزون المتاح',
+        'الوكالة : سيارات بها ملاحظات',
+        'الوكالة : مباع تحت التسليم',
+        'الوكالة : مباع تم التسليم'
+      ]
+    },
+    {
+      key:'WAREHOUSE',
+      title:'المستودع',
+      icon:'fa-warehouse',
+      members:[
+        'المستودع : المخزون المتاح',
+        'المستودع : سيارات بها ملاحظات',
+        'المستودع : مباع تحت التسليم',
+        'المستودع : مباع تم التسليم'
+      ]
+    },
+    {
+      key:'BR1',
+      title:'فرع 1 : الصالة',
+      icon:'fa-store',
+      members:[
+        'فرع 1 الصالة : المخزون المتاح',
+        'فرع 1 الصالة : سيارات بها ملاحظات',
+        'فرع 1 الصالة : مباع تحت التسليم',
+        'فرع 1 الصالة : مباع تم التسليم'
+      ]
+    },
+    {
+      key:'BR2',
+      title:'فرع 2 : الملتقى',
+      icon:'fa-store',
+      members:[
+        'فرع 2 الملتقى : المخزون المتاح',
+        'فرع 2 الملتقى : سيارات بها ملاحظات',
+        'فرع 2 الملتقى : مباع تحت التسليم',
+        'فرع 2 الملتقى : مباع تم التسليم'
+      ]
+    },
+    {
+      key:'BR3',
+      title:'فرع 3 : القادسية',
+      icon:'fa-store',
+      members:[
+        'فرع 3 القادسية : المخزون المتاح',
+        'فرع 3 القادسية : سيارات بها ملاحظات',
+        'فرع 3 القادسية : مباع تحت التسليم',
+        'فرع 3 القادسية : مباع تم التسليم'
+      ]
+    }
+  ];
+
+  /* ===== Auth Gate ===== */
+  onAuthStateChanged(auth, async (user)=>{
+    if(user){
+      $('#authGate').style.display='none';
+      $('#app').style.display='block';
+      $('#btnSignOut').style.display='inline-flex';
+      setStatus('ok', `متصل: ${user.email}`);
+      await initData();
+      subscribeLive();
+    }else{
+      $('#app').style.display='none';
+      $('#authGate').style.display='grid';
+      $('#btnSignOut').style.display='none';
+      setStatus('warn','لم يتم تسجيل الدخول');
+    }
+  });
+  $('#btnLogin').addEventListener('click', async ()=>{
+    $('#authHint').textContent='';
+    try{ await signInWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
+    catch(e){ $('#authHint').textContent='فشل تسجيل الدخول: '+(e?.message||e); }
+  });
+  $('#btnSignup').addEventListener('click', async ()=>{
+    $('#authHint').textContent='';
+    try{ await createUserWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
+    catch(e){ $('#authHint').textContent='تعذّر إنشاء الحساب: '+(e?.message||e); }
+  });
+  $('#btnSignOut').addEventListener('click', ()=> signOut(auth));
+
+  /* ===== Data ===== */
+  async function initData(){
+    try{
+      const s=await getDoc(STATE_REF);
+      if(s.exists()){
+        const d=s.data()||{};
+        stock = Array.isArray(d.stock)? d.stock: [];
+        moves = Array.isArray(d.moves)? d.moves: [];
+        models = Array.isArray(d.models)? d.models: [];
+        variantsMap = d.variantsMap || {};
+      }else{
+        stock=[]; moves=[]; models=[]; variantsMap={};
+      }
+      renderGroups();
+    }catch(e){
+      setStatus('warn','تعذّر تحميل البيانات');
+    }
+  }
+  function subscribeLive(){
+    try{
+      onSnapshot(STATE_REF,(snap)=>{
+        if(!snap.exists()) return;
+        const d=snap.data()||{};
+        stock = Array.isArray(d.stock)? d.stock: stock;
+        moves = Array.isArray(d.moves)? d.moves: moves;
+        models= Array.isArray(d.models)? d.models: models;
+        variantsMap = d.variantsMap || variantsMap;
+        renderGroups();
+        setStatus('ok','مزامنة حيّة');
+      },()=> setStatus('warn','انقطاع المزامنة مؤقتًا'));
+    }catch(e){}
+  }
+  async function persistAll(){
+    try{
+      await setDoc(STATE_REF, { stock, moves, models, variantsMap, updatedAt: now() }, { merge:true });
+      setStatus('ok','تم الحفظ');
+    }catch(e){
+      setStatus('err','تعذّر الحفظ'); 
+    }
+  }
+
+  /* ===== Group calculations ===== */
+  function groupStats(members){
+    const rows = stock.filter(r => members.includes(r.location||''));
+    const breakdown = {
+      available: rows.filter(r => r.location==='الوكالة : المخزون المتاح' || r.location==='المستودع : المخزون المتاح' || r.location?.includes('الصالة : المخزون المتاح') || r.location?.includes('الملتقى : المخزون المتاح') || r.location?.includes('القادسية : المخزون المتاح')).length,
+      notes:     rows.filter(r => (r.location||'').includes('سيارات بها ملاحظات')).length,
+      pending:   rows.filter(r => (r.location||'').includes('مباع تحت التسليم')).length,
+      delivered: rows.filter(r => (r.location||'').includes('مباع تم التسليم')).length
+    };
+    return { total: rows.length, rows, breakdown };
+  }
+
+  function renderGroups(){
+    const grid = $('#groupsGrid');
+    grid.innerHTML='';
+    groupsDef.forEach(g=>{
+      const { total, breakdown } = groupStats(g.members);
+      const card = document.createElement('div');
+      card.className='card group-card';
+      card.innerHTML = `
+        <div class="group-head">
+          <h3 class="group-title"><i class="fa-solid ${g.icon}"></i> ${g.title}</h3>
+          <div class="group-total">${total.toLocaleString('ar-SA')}</div>
+        </div>
+        <div class="chips">
+          <span class="chip" title="المخزون المتاح"><i class="fa-solid fa-boxes-stacked"></i> متاح: <b>${breakdown.available.toLocaleString('ar-SA')}</b></span>
+          <span class="chip" title="سيارات بها ملاحظات"><i class="fa-solid fa-triangle-exclamation"></i> ملاحظات: <b>${breakdown.notes.toLocaleString('ar-SA')}</b></span>
+          <span class="chip" title="مباع تحت التسليم"><i class="fa-solid fa-truck"></i> تحت التسليم: <b>${breakdown.pending.toLocaleString('ar-SA')}</b></span>
+          <span class="chip" title="مباع تم التسليم"><i class="fa-solid fa-circle-check"></i> تم التسليم: <b>${breakdown.delivered.toLocaleString('ar-SA')}</b></span>
+        </div>
+        <p class="hint" style="margin:10px 0 0">اضغط للعرض — يشمل: ${g.members.map(m=>`<code>${m}</code>`).join(' ، ')}</p>
+      `;
+      card.addEventListener('click', ()=> openModalForGroup(g));
+      grid.appendChild(card);
+    });
+  }
+
+  /* ===== Modal (list for a group) ===== */
+  const backdrop = $('#backdrop');
+  const modalTitle = $('#modalTitle');
+  const modalSearch = $('#modalSearch');
+  const modalTableBody = document.querySelector('#modalTable tbody');
+  const modalCount = $('#modalCount');
+  const btnCloseModal = $('#btnCloseModal');
+  const btnExportGroup = $('#btnExportGroup');
+
+  let currentGroup = null;
+  let currentGroupRows = [];
+  let currentFilteredRows = [];
+
+  function openModalForGroup(g){
+    currentGroup = g;
+    modalTitle.textContent = `السيارات — ${g.title}`;
+    const { rows } = groupStats(g.members);
+    currentGroupRows = rows.slice().sort((a,b)=> (a.id||0)-(b.id||0));
+    currentFilteredRows = currentGroupRows.slice();
+    renderModalTable();
+    modalSearch.value = '';
+    backdrop.style.display='flex';
+  }
+  function closeModal(){
+    backdrop.style.display='none';
+    currentGroup = null;
+    currentGroupRows = [];
+    currentFilteredRows = [];
+  }
+  btnCloseModal.addEventListener('click', closeModal);
+  backdrop.addEventListener('click', (e)=>{ if(e.target===backdrop) closeModal(); });
+
+  function renderModalTable(){
+    modalTableBody.innerHTML='';
+    currentFilteredRows.forEach(r=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td>${r.id||''}</td>
+        <td>${r.car||''}</td>
+        <td>${r.variant||''}</td>
+        <td><span class="tag">${r.dealer||'-'}</span></td>
+        <td>${r.extColor||''}</td>
+        <td>${r.intColor||''}</td>
+        <td>${r.modelYear||''}</td>
+        <td>${r.plate||''}</td>
+        <td>${r.location||''}</td>
+        <td>${r.batchName||''}</td>
+        <td>${r.vin||''}</td>
+        <td>${r.notes||''}</td>
+      `;
+      modalTableBody.appendChild(tr);
+    });
+    modalCount.textContent = `عدد السيارات الظاهرة: ${currentFilteredRows.length.toLocaleString('ar-SA')} من ${currentGroupRows.length.toLocaleString('ar-SA')}`;
+  }
+
+  modalSearch.addEventListener('input', ()=>{
+    const q = (modalSearch.value||'').trim().toLowerCase();
+    if(!q){ currentFilteredRows = currentGroupRows.slice(); renderModalTable(); return; }
+    currentFilteredRows = currentGroupRows.filter(r=>{
+      const hay=[r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName,r.vin,r.notes].join(' ').toLowerCase();
+      return hay.includes(q);
+    });
+    renderModalTable();
+  });
+
+  btnExportGroup.addEventListener('click', ()=>{
+    const header=["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
+    const data=[header];
+    currentFilteredRows.forEach(r=>{
+      data.push([r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName||'',r.vin,r.notes]);
+    });
+    const ws=XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [{wch:5},{wch:24},{wch:30},{wch:18},{wch:16},{wch:16},{wch:10},{wch:10},{wch:20},{wch:16},{wch:22},{wch:26}];
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws, (currentGroup?.title||'Group'));
+    XLSX.writeFile(wb, `mzj-${(currentGroup?.key||'group').toLowerCase()}-inventory.xlsx`);
+  });
+
+  /* ===== Keyboard helpers ===== */
+  document.addEventListener('keydown',(e)=>{
+    if(e.key==='Escape' && backdrop.style.display==='flex'){ closeModal(); }
+  });
+
+  /* ===== Start ===== */
+  setStatus('warn','جارِ الاتصال…');
+</script>
+</body>
+</html>
