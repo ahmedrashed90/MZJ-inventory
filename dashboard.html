@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -47,6 +46,8 @@
   .group-title{display:flex;align-items:center;gap:8px;color:var(--brown);margin:0}
   .group-title i{color:var(--beige)}
   .group-total{font-weight:900;font-size:28px;color:var(--brown)}
+  .sub-metrics{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .metric{display:inline-flex;gap:6px;align-items:center;background:#fff;border:1px dashed var(--line);border-radius:10px;padding:4px 10px;font-weight:800;font-size:12px}
   .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
   .chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px;cursor:pointer}
   .chip i{color:var(--muted)}
@@ -257,7 +258,7 @@
   /* ===== State ===== */
   let stock=[], moves=[], models=[], variantsMap={};
 
-  // الجهات (تظل كما هي لبطاقات المجموعات)
+  // الجهات
   const groupsDef = [
     {
       key:'AGENCY',
@@ -316,7 +317,7 @@
     }
   ];
 
-  // قائمة الفروع فقط لاستخدامها في بطاقة/مودال النواقص
+  // فروع لبطاقة النواقص
   const branchKeys = ['BR1','BR2','BR3'];
   const branchGroups = () => groupsDef.filter(g=> branchKeys.includes(g.key));
 
@@ -393,7 +394,7 @@
     return '';
   }
 
-  /* ===== Shortages logic (FINAL): combo = car+variant+ext+int+year ; shortage if count in branch == 1 ===== */
+  /* ===== Shortages logic (branches): combo = car+variant+ext+int+year ; shortage if count in branch == 1 ===== */
   const comboKey = r => [
     trim(r.car), trim(r.variant), trim(r.extColor), trim(r.intColor), trim(r.modelYear)
   ].join('⇢');
@@ -407,13 +408,9 @@
     });
     return m;
   }
-
-  // إجمالي عام لنفس التركيبة عبر كل المخزون (للإظهار فقط)
   function globalTotalsByCombo(){
     return countByCombo(stock);
   }
-
-  // احسب نواقص فرع واحد (count == 1)
   function computeBranchShortages(group){
     const rows = rowsForMembers(group.members);
     const byCombo = countByCombo(rows);
@@ -422,14 +419,9 @@
     byCombo.forEach((cnt,k)=>{
       if(cnt===1){
         const [car,variant,extColor,intColor,modelYear] = k.split('⇢');
-        res.push({
-          car, variant, extColor, intColor, modelYear,
-          countBranch: cnt,
-          countGlobal: glob.get(k)||cnt
-        });
+        res.push({ car, variant, extColor, intColor, modelYear, countBranch: cnt, countGlobal: glob.get(k)||cnt });
       }
     });
-    // ترتيب
     res.sort((a,b)=>
       (a.car||'').localeCompare(b.car||'','ar') ||
       (a.variant||'').localeCompare(b.variant||'','ar') ||
@@ -439,8 +431,6 @@
     );
     return res;
   }
-
-  // بطاقة النواقص (فروع فقط)
   function computeShortagesSummaryBranches(){
     const summary=[]; let total=0;
     branchGroups().forEach(g=>{
@@ -451,14 +441,18 @@
     return { total, summary };
   }
 
-  /* ===== Group counts for chips ===== */
+  /* ===== Group counts (with new totals) ===== */
   function groupBreakdownCounts(group){
     const rows = rowsForMembers(group.members);
     const available = rows.filter(r => (r.location||'').endsWith('المخزون المتاح')).length;
     const notes     = rows.filter(r => (r.location||'').includes('سيارات بها ملاحظات')).length;
     const pending   = rows.filter(r => (r.location||'').includes('مباع تحت التسليم')).length;
     const delivered = rows.filter(r => (r.location||'').includes('مباع تم التسليم')).length;
-    return { total: rows.length, available, notes, pending, delivered };
+
+    const actualTotal = available + notes;              // الإجمالي الفعلي
+    const keysTotal   = available + notes + pending;    // إجمالي المفاتيح
+
+    return { available, notes, pending, delivered, actualTotal, keysTotal };
   }
 
   /* ===== Render ===== */
@@ -474,14 +468,24 @@
     grid.innerHTML='';
 
     groupsDef.forEach(g=>{
-      const { total, available, notes, pending, delivered } = groupBreakdownCounts(g);
+      const { available, notes, pending, delivered, actualTotal, keysTotal } = groupBreakdownCounts(g);
       const card = document.createElement('div');
       card.className='card group-card';
       card.innerHTML = `
         <div class="group-head">
           <h3 class="group-title"><i class="fa-solid ${g.icon}"></i> ${g.title}</h3>
-          <div class="group-total">${total.toLocaleString('ar-SA')}</div>
+          <div class="group-total" title="الإجمالي الفعلي">${actualTotal.toLocaleString('ar-SA')}</div>
         </div>
+
+        <div class="sub-metrics">
+          <span class="metric" title="الإجمالي الفعلي">
+            <i class="fa-solid fa-equals"></i> الإجمالي الفعلي: <b>${actualTotal.toLocaleString('ar-SA')}</b>
+          </span>
+          <span class="metric" title="إجمالي المفاتيح">
+            <i class="fa-solid fa-key"></i> إجمالي المفاتيح: <b>${keysTotal.toLocaleString('ar-SA')}</b>
+          </span>
+        </div>
+
         <div class="chips">
           <span class="chip" data-group="${g.key}" data-mode="rows" data-filter="available" title="المخزون المتاح">
             <i class="fa-solid fa-boxes-stacked"></i> متاح: <b>${available.toLocaleString('ar-SA')}</b>
@@ -645,12 +649,10 @@
 
   function openShortagesModalBranches(){
     shortDataByKey = new Map();
-    // لكل فرع
     branchGroups().forEach(g=>{
       shortDataByKey.set(g.key, computeBranchShortages(g));
     });
-    // تبويب الكل: دمج فريد حسب التركيبة مع أقل countBranch (دائمًا 1 لأننا شرطنا 1)، نعرض countGlobal للعلم
-    const uniq = new Map(); // combo -> item (car,variant,ext,int,year,countBranch=1,countGlobal)
+    const uniq = new Map();
     branchGroups().forEach(g=>{
       (shortDataByKey.get(g.key)||[]).forEach(item=>{
         const k = [item.car,item.variant,item.extColor,item.intColor,item.modelYear].join('⇢');
@@ -666,15 +668,11 @@
     );
     shortDataByKey.set('ALL', allList);
 
-    // بناء التبويبات
     shortTabs.innerHTML='';
     const mk = (id, txt)=>`<button class="t" data-tab="${id}">${txt}</button>`;
     shortTabs.insertAdjacentHTML('beforeend', mk('ALL','الكل (الفروع)'));
     branchGroups().forEach(g=> shortTabs.insertAdjacentHTML('beforeend', mk(g.key,g.title)));
-    // تفعيل
     activateShortTab('ALL');
-
-    // عرض المودال
     openModal('shortagesBranches', 'النواقص — الفروع فقط');
   }
 
@@ -740,7 +738,6 @@
   });
 
   /* ===== Events ===== */
-  // بطاقة النواقص (فروع فقط)
   $('#shortagesCard').addEventListener('click', ()=> openShortagesModalBranches());
 
   /* ===== Start ===== */
@@ -748,4 +745,3 @@
 </script>
 </body>
 </html>
-```
