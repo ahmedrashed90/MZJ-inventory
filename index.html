@@ -238,6 +238,13 @@
           </div>
         </div>
 
+        <div><label for="batchName">اسم الدفعة</label>
+          <div class="input-wrap">
+            <span class="i"><i class="fa-solid fa-layer-group"></i></span>
+            <input id="batchName" placeholder="دفعة رمضان / نوفمبر 2025…"/>
+          </div>
+        </div>
+
         <div><label for="vin">رقم الهيكل</label>
           <div class="input-wrap">
             <span class="i"><i class="fa-solid fa-barcode"></i></span>
@@ -346,7 +353,7 @@
         <span class="hint">اضغط على “اللوحة” أو “رقم الهيكل” للنسخ السريع</span>
       </div>
       <div class="row" style="gap:8px;margin-bottom:8px">
-        <input id="search" placeholder="بحث سريع (سيارة / البيان / الوكيل / الألوان / الموديل / اللوحة / المكان / رقم الهيكل)" title="اضغط / للبحث" style="flex:1; padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff">
+        <input id="search" placeholder="بحث سريع (سيارة / البيان / الوكيل / الألوان / الموديل / اللوحة / المكان / اسم الدفعة / رقم الهيكل)" title="اضغط / للبحث" style="flex:1; padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff">
         <button class="btn btn-ghost" id="btnClearSearch" title="مسح البحث">
           <i class="fa-solid fa-minus"></i> مسح
         </button>
@@ -363,6 +370,7 @@
               <th>موديل</th>
               <th>اللوحة</th>
               <th>المكان</th>
+              <th>اسم الدفعة</th>
               <th>رقم الهيكل</th>
               <th>الملاحظات</th>
               <th class="w-160">تحكم</th>
@@ -372,6 +380,41 @@
         </table>
       </div>
       <p class="hint">الحفظ يتم مباشرة على Firestore.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modals -->
+<!-- إضافة موديل -->
+<div id="modelModal" class="modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <header>
+      <h3>إضافة موديل جديد</h3>
+      <button class="btn btn-ghost" data-close="modelModal"><i class="fa-solid fa-xmark"></i></button>
+    </header>
+    <label for="modelName">اسم الموديل</label>
+    <input id="modelName" placeholder="هيونداي توسان 2026 / سنتافي…"/>
+    <div class="actions">
+      <button class="btn btn-primary" id="confirmAddModel"><i class="fa-solid fa-check"></i> إضافة</button>
+      <button class="btn" data-close="modelModal">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- إضافة بيان -->
+<div id="variantModal" class="modal-backdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <header>
+      <h3>إضافة بيان وربطه بموديل</h3>
+      <button class="btn btn-ghost" data-close="variantModal"><i class="fa-solid fa-xmark"></i></button>
+    </header>
+    <label for="variantModelFor">الموديل</label>
+    <select id="variantModelFor"></select>
+    <label for="variantName" style="margin-top:8px">اسم البيان</label>
+    <input id="variantName" placeholder="كومفورت / سمارت / رويال…"/>
+    <div class="actions">
+      <button class="btn btn-primary" id="confirmAddVariant"><i class="fa-solid fa-check"></i> إضافة</button>
+      <button class="btn" data-close="variantModal">إلغاء</button>
     </div>
   </div>
 </div>
@@ -417,7 +460,7 @@
 
   const carSelect=$('#carSelect'), variantSelect=$('#variantSelect');
   const dealerInput=$('#dealer'), extColorInput=$('#extColor'), intColorInput=$('#intColor');
-  const modelYearInput=$('#modelYear'), plateInput=$('#plate'), locationInput=$('#location');
+  const modelYearInput=$('#modelYear'), plateInput=$('#plate'), locationInput=$('#location'), batchNameInput=$('#batchName');
   const vinInput=$('#vin'), notesInput=$('#notes');
   const btnSave=$('#btnSave'), btnReset=$('#btnReset');
 
@@ -426,11 +469,31 @@
   const searchInput=$('#search'), btnClearSearch=$('#btnClearSearch'), tableBody=document.querySelector('#carsTable tbody');
   const movesTableBody=document.querySelector('#movesTable tbody'), btnClearMoves=$('#btnClearMoves');
 
-  const variantModalBackdrop=document.createElement('div'); // (إلغاء نافذة منفصلة لتقليل الحجم)
+  // Modals
+  const modelModal = $('#modelModal');
+  const variantModal = $('#variantModal');
   const btnAddModel=$('#btnAddModel'), btnAddVariant=$('#btnAddVariant');
+  const modelNameEl = $('#modelName');
+  const confirmAddModel = $('#confirmAddModel');
+
+  const variantModelForEl = $('#variantModelFor');
+  const variantNameEl = $('#variantName');
+  const confirmAddVariant = $('#confirmAddVariant');
 
   const moveVin=$('#moveVin'), moveFrom=$('#moveFrom'), moveTo=$('#moveTo'), btnFindByVin=$('#btnFindByVin'), btnMove=$('#btnMove');
   const moveStatus=$('#moveStatus'), carDetailsBox=$('#carDetailsBox'), carDetails=$('#carDetails'), carDetailsHint=$('#carDetailsHint');
+
+  /* ===== Modals helpers ===== */
+  function openModal(el){ el.style.display='flex'; setTimeout(()=>{ const first = el.querySelector('input,select,textarea,button'); first?.focus(); }, 50); }
+  function closeModalById(id){ const el = document.getElementById(id); if(el) el.style.display='none'; }
+  document.addEventListener('click',(e)=>{
+    const closeBtn = e.target.closest('[data-close]');
+    if(closeBtn){ closeModalById(closeBtn.getAttribute('data-close')); }
+    if(e.target.classList.contains('modal-backdrop')){ e.target.style.display='none'; }
+  });
+  document.addEventListener('keydown',(e)=>{
+    if(e.key==='Escape'){ modelModal.style.display='none'; variantModal.style.display='none'; }
+  });
 
   /* ===== Connection status ===== */
   function setStatus(mode, txt){
@@ -515,6 +578,9 @@
   function loadModelsIntoSelects(){
     carSelect.innerHTML='';
     models.forEach(m=>{ const o=document.createElement('option'); o.value=m; o.textContent=m; carSelect.appendChild(o); });
+    // تحديث مودال البيان
+    variantModelForEl.innerHTML='';
+    models.forEach(m=>{ const o=document.createElement('option'); o.value=m; o.textContent=m; variantModelForEl.appendChild(o); });
   }
   function populateVariants(modelName){
     const arr=(variantsMap[modelName]||[]);
@@ -524,17 +590,37 @@
   }
   carSelect.addEventListener('change',e=>{ populateVariants(e.target.value); });
 
-  btnAddModel.addEventListener('click',async ()=>{
-    const name=prompt('اكتب اسم الموديل الجديد:'); if(!name) return;
+  // فتح المودالات
+  btnAddModel.addEventListener('click',()=>{
+    modelNameEl.value=''; openModal(modelModal);
+  });
+  btnAddVariant.addEventListener('click',()=>{
+    // اختار الموديل الحالي تلقائياً
+    if(models.length && carSelect.value){
+      variantModelForEl.value = carSelect.value;
+    }
+    variantNameEl.value=''; openModal(variantModal);
+  });
+
+  // تأكيد إضافة موديل
+  confirmAddModel.addEventListener('click', async ()=>{
+    const name=(modelNameEl.value||'').trim();
+    if(!name) return showToast('اكتب اسم الموديل','info');
     if(!models.includes(name)){ models.push(name); if(!variantsMap[name]) variantsMap[name]=[]; loadModelsIntoSelects(); carSelect.value=name; populateVariants(name); await persistAll(); showToast('تمت إضافة الموديل','ok');}
     else showToast('الموديل موجود بالفعل','info');
+    modelModal.style.display='none';
   });
-  btnAddVariant.addEventListener('click',async ()=>{
-    const modelFor=carSelect.value||models[0]||''; if(!modelFor) return showToast('اختر السيارة أولًا','err');
-    const vName=prompt('اسم البيان:'); if(!vName) return;
+
+  // تأكيد إضافة بيان
+  confirmAddVariant.addEventListener('click', async ()=>{
+    const modelFor=(variantModelForEl.value||'').trim();
+    const vName=(variantNameEl.value||'').trim();
+    if(!modelFor) return showToast('اختر الموديل','info');
+    if(!vName) return showToast('اكتب اسم البيان','info');
     variantsMap[modelFor]=variantsMap[modelFor]||[];
-    if(!variantsMap[modelFor].includes(vName)){ variantsMap[modelFor].push(vName); populateVariants(modelFor); variantSelect.value=vName; await persistAll(); showToast('تم حفظ البيان','ok');}
+    if(!variantsMap[modelFor].includes(vName)){ variantsMap[modelFor].push(vName); if(carSelect.value===modelFor){ populateVariants(modelFor); variantSelect.value=vName; } await persistAll(); showToast('تم حفظ البيان','ok');}
     else showToast('البيان مسجّل مسبقًا','info');
+    variantModal.style.display='none';
   });
 
   /* ===== Table render / search ===== */
@@ -544,7 +630,7 @@
     let rows=stock.slice().sort((a,b)=>a.id-b.id);
     if(q){
       rows=rows.filter(r=>{
-        const hay=[r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.notes,r.vin].join(' ').toLowerCase();
+        const hay=[r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName,r.notes,r.vin].join(' ').toLowerCase();
         return hay.includes(q);
       });
     }
@@ -559,6 +645,7 @@
         <td class="nowrap">${r.modelYear||''}</td>
         <td class="nowrap"><span class="copyable" data-copy="${r.plate||''}" title="انسخ اللوحة">${r.plate||''}</span></td>
         <td>${r.location||''}</td>
+        <td>${r.batchName||''}</td>
         <td class="nowrap"><span class="copyable" data-copy="${r.vin||''}" title="انسخ رقم الهيكل">${r.vin||''}</span></td>
         <td>${r.notes||''}</td>
         <td>
@@ -573,7 +660,7 @@
   searchInput.addEventListener('input',renderTable);
   btnClearSearch.addEventListener('click',()=>{searchInput.value=''; renderTable();});
 
-  /* نسخ سريع */
+  /* نسخ سريع + أزرار تعديل/حذف */
   document.addEventListener('click',(e)=>{
     const pill=e.target.closest('.copyable');
     const btn=e.target.closest('button');
@@ -588,7 +675,7 @@
         editId=id; carSelect.value=rec.car||''; populateVariants(rec.car||''); variantSelect.value=rec.variant||'';
         dealerInput.value=rec.dealer||''; extColorInput.value=rec.extColor||''; intColorInput.value=rec.intColor||'';
         modelYearInput.value=rec.modelYear||''; plateInput.value=rec.plate||''; locationInput.value=rec.location||'';
-        vinInput.value=rec.vin||''; notesInput.value=rec.notes||''; window.scrollTo({top:0,behavior:'smooth'});
+        batchNameInput.value=rec.batchName||''; vinInput.value=rec.vin||''; notesInput.value=rec.notes||''; window.scrollTo({top:0,behavior:'smooth'});
       }
       if(del){
         const id=Number(del); if(confirm('تأكيد الحذف؟')){
@@ -612,6 +699,7 @@
       modelYear:modelYearInput.value.trim(),
       plate:plateInput.value.trim(),
       location:locationInput.value.trim(),
+      batchName:batchNameInput.value.trim(),
       notes:notesInput.value.trim()
     };
     if(!record.car) return showToast('اختر السيارة أولًا','err');
@@ -624,23 +712,24 @@
     if(models.length){carSelect.value=models[0]; populateVariants(carSelect.value); variantSelect.value=variantSelect.options[0]?.value||'';}
     dealerInput.value=''; extColorInput.value=''; intColorInput.value='';
     modelYearInput.value=''; plateInput.value=''; locationInput.value='';
-    vinInput.value=''; notesInput.value=''; editId=null;
+    batchNameInput.value=''; vinInput.value=''; notesInput.value=''; editId=null;
   }
   btnReset.addEventListener('click',clearForm);
 
-  /* تصدير Excel */
+  /* تصدير Excel (يشمل اسم الدفعة) */
   btnExport.addEventListener('click',()=>{
     const rows=stock.slice().sort((a,b)=>a.id-b.id);
-    const header=["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","رقم الهيكل","الملاحظات"];
-    const data=[header]; rows.forEach(r=>data.push([r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.vin,r.notes]));
+    const header=["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
+    const data=[header];
+    rows.forEach(r=>data.push([r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName||'',r.vin,r.notes]));
     const ws=XLSX.utils.aoa_to_sheet(data); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Cars");
     XLSX.writeFile(wb,"mzj-cars-inventory.xlsx"); showToast('تم تصدير الملف','ok');
   });
 
-  /* استيراد Excel */
+  /* استيراد Excel (يدعم اسم الدفعة) */
   let importMode=null; const VIN_HEADERS=["رقم الهيكل","VIN","الشاص","رقم الشاص","Chassis","Chassis No","Chassis Number","الهيكل","نوع الهيكل"];
   btnImportMenu.addEventListener('click',()=>{importDropdown.style.display=importDropdown.style.display==='block'?'none':'block';});
-  importDropdown.addEventListener('click',(e)=>{const mode=e.target.closest('button')?.getAttribute('data-mode'); if(!mode) return; importMode=mode; importDropdown.style.display='none'; fileImport.click();});
+  importDropdown.addEventListener('click',(e)=>{const btn=e.target.closest('button'); if(!btn) return; importMode=btn.getAttribute('data-mode'); importDropdown.style.display='none'; fileImport.click();});
   document.addEventListener('click',(e)=>{if(!e.target.closest('.import-menu')) importDropdown.style.display='none';});
   fileImport.addEventListener('change',(e)=>{
     const file=e.target.files[0]; if(!file) return; if(!importMode){showToast('اختر وضع الاستيراد أولًا','info'); fileImport.value=''; return;}
@@ -651,29 +740,46 @@
         const workbook=XLSX.read(data,{type:'array'}); const first=workbook.SheetNames[0]; const sheet=workbook.Sheets[first];
         const json=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});
         const header=json[0]||[]; const colIndex=name=>header.indexOf(name);
-        const idxMap={id:colIndex("م"),car:colIndex("سيارة"),variant:colIndex("البيان"),dealer:colIndex("الوكيل"),
-          extColor:colIndex("اللون الخارجي"),intColor:colIndex("اللون الداخلي"),modelYear:colIndex("موديل"),
-          plate:colIndex("اللوحة"),location:colIndex("المكان"),notes:colIndex("الملاحظات")};
+
+        const idxMap={
+          id:colIndex("م"),car:colIndex("سيارة"),variant:colIndex("البيان"),dealer:colIndex("الوكيل"),
+          extColor:colIndex("اللون الخارجي"),intColor:colIndex("اللون الداخلي"),
+          modelYear:colIndex("موديل"), plate:colIndex("اللوحة"), location:colIndex("المكان"),
+          batchName:colIndex("اسم الدفعة"), notes:colIndex("الملاحظات")
+        };
         let idxVin=-1; for(const h of VIN_HEADERS){const i=header.indexOf(h); if(i!==-1){idxVin=i; break;}}
+
+        // تحقق من الأعمدة الأساسية
+        const mustHave=["سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","الملاحظات"];
+        const missing = mustHave.filter(n=> colIndex(n)===-1);
+        if(missing.length){ throw new Error('فشل الاستيراد — أعمدة ناقصة: '+missing.join(', ')); }
+
         const imported=[];
         for(let i=1;i<json.length;i++){
           const row=json[i]; if(!row || row.length===0) continue;
           const rawVin=(idxVin!==-1?row[idxVin]:'');
           imported.push({
             id:Number(row[idxMap.id])||null,
-            car:row[idxMap.car]||'', variant:row[idxMap.variant]||'', dealer:row[idxMap.dealer]||'',
-            extColor:row[idxMap.extColor]||'', intColor:row[idxMap.intColor]||'',
-            modelYear:row[idxMap.modelYear]||'', plate:row[idxMap.plate]||'',
-            location:row[idxMap.location]||'', notes:row[idxMap.notes]||'',
+            car:row[idxMap.car]||'',
+            variant:row[idxMap.variant]||'',
+            dealer:row[idxMap.dealer]||'',
+            extColor:row[idxMap.extColor]||'',
+            intColor:row[idxMap.intColor]||'',
+            modelYear:row[idxMap.modelYear]||'',
+            plate:row[idxMap.plate]||'',
+            location:row[idxMap.location]||'',
+            batchName:row[idxMap.batchName]||'',
+            notes:row[idxMap.notes]||'',
             vin:normalizeVin(rawVin)
           });
-          const name=row[idxMap.car]; if(name && !models.includes(name)){models.push(name); if(!variantsMap[name]) variantsMap[name]=[];}
+          const name=row[idxMap.car];
+          if(name && !models.includes(name)){models.push(name); if(!variantsMap[name]) variantsMap[name]=[];}
         }
         if(importMode==='replace'){stock=[]; imported.forEach(r=>{r.id=nextId(); stock.push(r);});}
         else {imported.forEach(r=>{r.id=nextId(); stock.push(r);});}
         await persistAll(); loadModelsIntoSelects(); if(carSelect.value) populateVariants(carSelect.value);
         renderTable(); showToast(importMode==='replace'?'تم الاستبدال الكامل بالبيانات الجديدة':'تمت الإضافة إلى البيانات الحالية','ok');
-      }catch(err){ showToast('فشل الاستيراد — راجع تنسيق الملف','err'); }
+      }catch(err){ showToast((err?.message)||'فشل الاستيراد — راجع تنسيق الملف','err'); }
       finally{ fileImport.value=''; importMode=null; }
     };
     reader.readAsArrayBuffer(file);
@@ -701,6 +807,7 @@
       <div><b>موديل:</b> ${rec.modelYear??""}</div>
       <div><b>اللوحة:</b> ${rec.plate??""}</div>
       <div><b>المكان:</b> ${rec.location??""}</div>
+      <div><b>اسم الدفعة:</b> ${rec.batchName??""}</div>
       <div style="grid-column:1/-1"><b>رقم الهيكل:</b> ${rec.vin??""}</div>
       <div style="grid-column:1/-1"><b>الملاحظات:</b> ${rec.notes??""}</div>`;
     carDetailsHint.textContent=rec.vin?`رقم الهيكل: ${rec.vin}`:'لا يوجد رقم هيكل محفوظ لهذه السيارة.';
@@ -746,7 +853,7 @@
     if(e.key==='/'){e.preventDefault(); searchInput.focus();}
     if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){e.preventDefault(); btnSave.click();}
     if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='k'){e.preventDefault(); btnAddVariant.click();}
-    if(e.key==='Escape'){clearForm();}
+    if(e.key==='Escape'){modelModal.style.display='none'; variantModal.style.display='none'; btnReset.click();}
   });
 
   /* أول تحميل */
