@@ -44,7 +44,7 @@
   .group-card{cursor:pointer;transition:.15s;border:1px solid var(--line)}
   .group-card:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(0,0,0,.08)}
 
-  /* Group header: title + metrics stacked left, total on right */
+  /* Group header */
   .group-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
   .group-left{display:flex;flex-direction:column;gap:6px}
   .group-title{display:flex;align-items:center;gap:8px;color:var(--brown);margin:0}
@@ -52,7 +52,7 @@
   .group-total{font-weight:900;font-size:28px;color:var(--brown)}
   .sub-metrics{display:flex;gap:8px;flex-wrap:wrap;margin-top:0}
 
-  /* Dark badges: أسود على أصفر */
+  /* أسود على أصفر للبادجات الرئيسية */
   .metric{
     display:inline-flex;gap:6px;align-items:center;
     background:var(--warn);border:1px solid #000;border-radius:10px;
@@ -237,6 +237,7 @@
               <th>استلام إداري</th>
               <th>تجهيز</th>
               <th>ملاحظات الإدارة</th>
+              <th>تفاصيل الطلب</th> <!-- جديد -->
             </tr>
           </thead>
           <tbody></tbody>
@@ -281,66 +282,26 @@
 
   /* ===== State ===== */
   let stock=[], moves=[], models=[], variantsMap={};
-  let shootRequests=[]; // <<< طلبات التصوير
+  let shootRequests=[];
   let currentFilterKey = null;
 
   // الجهات
   const groupsDef = [
-    {
-      key:'AGENCY',
-      title:'الوكالة',
-      icon:'fa-building-columns',
-      members:[
-        'الوكالة : المخزون المتاح',
-        'الوكالة : سيارات بها ملاحظات',
-        'الوكالة : مباع تحت التسليم',
-        'الوكالة : مباع تم التسليم'
-      ]
-    },
-    {
-      key:'WAREHOUSE',
-      title:'المستودع',
-      icon:'fa-warehouse',
-      members:[
-        'المستودع : المخزون المتاح',
-        'المستودع : سيارات بها ملاحظات',
-        'المستودع : مباع تحت التسليم',
-        'المستودع : مباع تم التسليم'
-      ]
-    },
-    {
-      key:'BR1',
-      title:'فرع 1 : الصالة',
-      icon:'fa-store',
-      members:[
-        'فرع 1 الصالة : المخزون المتاح',
-        'فرع 1 الصالة : سيارات بها ملاحظات',
-        'فرع 1 الصالة : مباع تحت التسليم',
-        'فرع 1 الصالة : مباع تم التسليم'
-      ]
-    },
-    {
-      key:'BR2',
-      title:'فرع 2 : الملتقى',
-      icon:'fa-store',
-      members:[
-        'فرع 2 الملتقى : المخزون المتاح',
-        'فرع 2 الملتقى : سيارات بها ملاحظات',
-        'فرع 2 الملتقى : مباع تحت التسليم',
-        'فرع 2 الملتقى : مباع تم التسليم'
-      ]
-    },
-    {
-      key:'BR3',
-      title:'فرع 3 : القادسية',
-      icon:'fa-store',
-      members:[
-        'فرع 3 القادسية : المخزون المتاح',
-        'فرع 3 القادسية : سيارات بها ملاحظات',
-        'فرع 3 القادسية : مباع تحت التسليم',
-        'فرع 3 القادسية : مباع تم التسليم'
-      ]
-    }
+    { key:'AGENCY', title:'الوكالة', icon:'fa-building-columns', members:[
+      'الوكالة : المخزون المتاح','الوكالة : سيارات بها ملاحظات','الوكالة : مباع تحت التسليم','الوكالة : مباع تم التسليم'
+    ]},
+    { key:'WAREHOUSE', title:'المستودع', icon:'fa-warehouse', members:[
+      'المستودع : المخزون المتاح','المستودع : سيارات بها ملاحظات','المستودع : مباع تحت التسليم','المستودع : مباع تم التسليم'
+    ]},
+    { key:'BR1', title:'فرع 1 : الصالة', icon:'fa-store', members:[
+      'فرع 1 الصالة : المخزون المتاح','فرع 1 الصالة : سيارات بها ملاحظات','فرع 1 الصالة : مباع تحت التسليم','فرع 1 الصالة : مباع تم التسليم'
+    ]},
+    { key:'BR2', title:'فرع 2 : الملتقى', icon:'fa-store', members:[
+      'فرع 2 الملتقى : المخزون المتاح','فرع 2 الملتقى : سيارات بها ملاحظات','فرع 2 الملتقى : مباع تحت التسليم','فرع 2 الملتقى : مباع تم التسليم'
+    ]},
+    { key:'BR3', title:'فرع 3 : القادسية', icon:'fa-store', members:[
+      'فرع 3 القادسية : المخزون المتاح','فرع 3 القادسية : سيارات بها ملاحظات','فرع 3 القادسية : مباع تحت التسليم','فرع 3 القادسية : مباع تم التسليم'
+    ]}
   ];
 
   // فروع لبطاقة النواقص
@@ -385,7 +346,7 @@
         moves = Array.isArray(d.moves)? d.moves: [];
         models = Array.isArray(d.models)? d.models: [];
         variantsMap = d.variantsMap || {};
-        shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: []; // تحميل طلبات التصوير
+        shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: [];
       }else{
         stock=[]; moves=[]; models=[]; variantsMap={}; shootRequests=[];
       }
@@ -411,9 +372,7 @@
   }
 
   /* ===== Utilities ===== */
-  function rowsForMembers(members){
-    return stock.filter(r => members.includes(r.location||''));
-  }
+  function rowsForMembers(members){ return stock.filter(r => members.includes(r.location||'')); }
   function labelForFilter(key){
     if(key==='available') return 'المخزون المتاح';
     if(key==='notes')     return 'سيارات بها ملاحظات';
@@ -424,14 +383,9 @@
 
   /* ===== Shortages logic (branches) ===== */
   const comboKey = r => [trim(r.car), trim(r.variant), trim(r.extColor), trim(r.intColor), trim(r.modelYear)].join('⇢');
-
   function countByCombo(rows){
     const m=new Map();
-    rows.forEach(r=>{
-      const k=comboKey(r);
-      if(!k) return;
-      m.set(k,(m.get(k)||0)+1);
-    });
+    rows.forEach(r=>{ const k=comboKey(r); if(!k) return; m.set(k,(m.get(k)||0)+1); });
     return m;
   }
   function globalTotalsByCombo(){ return countByCombo(stock); }
@@ -465,17 +419,15 @@
     return { total, summary };
   }
 
-  /* ===== Group counts (with new totals) ===== */
+  /* ===== Group counts ===== */
   function groupBreakdownCounts(group){
     const rows = rowsForMembers(group.members);
     const available = rows.filter(r => (r.location||'').endsWith('المخزون المتاح')).length;
     const notes     = rows.filter(r => (r.location||'').includes('سيارات بها ملاحظات')).length;
     const pending   = rows.filter(r => (r.location||'').includes('مباع تحت التسليم')).length;
     const delivered = rows.filter(r => (r.location||'').includes('مباع تم التسليم')).length;
-
     const actualTotal = available + notes;
     const keysTotal   = available + notes + pending;
-
     return { available, notes, pending, delivered, actualTotal, keysTotal };
   }
 
@@ -517,9 +469,7 @@
       </div>
       <p class="hint" style="margin:10px 0 0">اضغط على البطاقة لعرض كل الطلبات، أو استخدم الشرائح للتصفية حسب الحالة.</p>
     `;
-    // فتح الكل
     card.addEventListener('click', (ev)=>{ if(ev.target.closest('.chip')) return; openShootModal('ALL'); });
-    // الشرائح
     card.addEventListener('click', (e)=>{
       const chip = e.target.closest('.chip'); if(!chip) return;
       e.stopPropagation();
@@ -570,19 +520,19 @@
             <i class="fa-solid fa-circle-check"></i> تم التسليم: <b>${delivered.toLocaleString('ar-SA')}</b>
           </span>
         </div>
-        <p class="hint" style="margin:10px 0 0">اضغط على البطاقة لعرض كل سيارات الجهة، أو اضغط على الشرائح لعرض الفئة فقط.</p>
+        <p class="hint" style="margin:10px 0 0">اضغط على بطاقة الجهة لعرض كل السيارات، أو اضغط على الشرائح لعرض الفئة فقط.</p>
       `;
       card.addEventListener('click', (ev)=>{ if(ev.target.closest('.chip')) return; openModalForGroupRows(g, null); });
       grid.appendChild(card);
     });
 
-    /* بطاقة طلبات التصوير — تُضاف بعد آخر فرع (القادسية) */
+    /* بطاقة طلبات التصوير */
     renderShootCard(grid);
 
     // حدث الشرائح للجهات
     grid.addEventListener('click',(e)=>{
       const chip = e.target.closest('.chip');
-      if(!chip || chip.hasAttribute('data-shoot')) return; // تجاهل شرائح بطاقة التصوير هنا
+      if(!chip || chip.hasAttribute('data-shoot')) return;
       e.stopPropagation();
       const key   = chip.getAttribute('data-group');
       const filt  = chip.getAttribute('data-filter');
@@ -744,7 +694,6 @@
     if(filterKey==='delivered'){ return rows.filter(r => (r.location||'').includes('مباع تم التسليم')); }
     return rows;
   }
-
   function openModalForGroupRows(group, filterKey=null){
     const rows = rowsForMembers(group.members);
     const list = rowsForFilter(rows, filterKey);
@@ -760,12 +709,9 @@
     const g=groupsDef.find(x=>x.key===key);
     return g?g.title:key;
   }
-
   function openShortagesModalBranches(){
     shortDataByKey = new Map();
-    branchGroups().forEach(g=>{
-      shortDataByKey.set(g.key, computeBranchShortages(g));
-    });
+    branchGroups().forEach(g=>{ shortDataByKey.set(g.key, computeBranchShortages(g)); });
     const uniq = new Map();
     branchGroups().forEach(g=>{
       (shortDataByKey.get(g.key)||[]).forEach(item=>{
@@ -789,26 +735,22 @@
     activateShortTab('ALL');
     openModal('shortagesBranches', 'النواقص — الفروع فقط');
   }
-
   function activateShortTab(key){
     shortActiveKey = key;
     shortTabs.querySelectorAll('.t').forEach(b=> b.classList.toggle('active', b.getAttribute('data-tab')===key));
     shortFiltered = (shortDataByKey.get(key)||[]).slice();
     renderModal();
   }
-
   shortTabs.addEventListener('click', (e)=>{
-    const btn = e.target.closest('.t');
-    if(!btn) return;
-    const key = btn.getAttribute('data-tab');
-    if(!key) return;
+    const btn = e.target.closest('.t'); if(!btn) return;
+    const key = btn.getAttribute('data-tab'); if(!key) return;
     activateShortTab(key);
   });
 
   /* ===== SHOOT modal ===== */
   function openShootModal(filter='ALL'){
     currentShootFilter = filter;
-    currentShoot = shootRequests.slice().sort((a,b)=> b.id - a.id);
+    currentShoot = shootRequests.slice().sort((a,b)=> Number(b.id) - Number(a.id));
     filteredShoot = currentShoot.filter(r=> filter==='ALL' ? true : (r.status||'')===filter);
     openModal('shoot', filter==='ALL' ? 'طلبات التصوير — الكل' : `طلبات التصوير — ${filter}`);
   }
@@ -826,11 +768,26 @@
         <td>${r?.admin?.received? '✅ '+r.admin.received : '—'}</td>
         <td>${r?.admin?.prepared? '✅ '+r.admin.prepared : '—'}</td>
         <td>${r?.admin?.notes||''}</td>
+        <td>
+          <button class="btn btn-outline" data-view-id="${String(r.id)}" title="عرض تفاصيل الطلب">
+            <i class="fa-solid fa-up-right-from-square"></i> تفاصيل
+          </button>
+        </td>
       `;
       modalTableShootBody.appendChild(tr);
     });
     modalCount.textContent = `عدد الطلبات الظاهرة: ${filteredShoot.length.toLocaleString('ar-SA')} من ${currentShoot.length.toLocaleString('ar-SA')}`;
   }
+
+  // انتقال لصفحة تفاصيل الطلب
+  document.getElementById('tableShootWrap').addEventListener('click', (e)=>{
+    const btn = e.target.closest('button[data-view-id]');
+    if(!btn) return;
+    const id = btn.getAttribute('data-view-id');
+    if(!id) return;
+    // نفس التبويب:
+    window.location.href = `photoshoot.html?id=${encodeURIComponent(id)}`;
+  });
 
   // بحث موحّد في المودال
   modalSearch.addEventListener('input', ()=>{
