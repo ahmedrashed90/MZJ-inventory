@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -51,7 +52,7 @@
   .chip i{color:var(--muted)}
   .chip:hover{border-color:var(--beige);box-shadow:0 2px 0 rgba(0,0,0,.04)}
 
-  /* shortages pills inside its card */
+  .short-card{cursor:pointer}
   .short-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
   .pill{background:#fff;border:1px dashed var(--line);border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px}
 
@@ -138,8 +139,18 @@
 <div id="app" style="display:none">
   <div class="container">
 
-    <!-- نفس شبكة البطاقات: سنضيف بطاقة النواقص + بطاقات الجهات داخل نفس الـ grid -->
-    <div class="cards" id="cardsGrid"></div>
+    <!-- Shortages Summary Card (Branches only) -->
+    <div class="card short-card" id="shortagesCard" title="عرض النواقص لأفرع المعارض (حسب السيارة + البيان + الألوان + الموديل | العدد داخل الفرع = 1)">
+      <div class="group-head">
+        <h3 class="group-title"><i class="fa-solid fa-list-check"></i> النواقص — الفروع فقط</h3>
+        <div class="group-total" id="shortagesTotal">0</div>
+      </div>
+      <div class="short-pills" id="shortagesPills"></div>
+      <p class="hint" style="margin:8px 0 0">اضغط على البطاقة لعرض تبويبات النواقص لكل فرع (فرع 1، فرع 2، فرع 3).</p>
+    </div>
+
+    <!-- Group Cards -->
+    <div class="cards" id="groupsGrid"></div>
 
     <div class="card">
       <p class="hint" style="margin:0">
@@ -383,8 +394,9 @@
   }
 
   /* ===== Shortages logic (FINAL): combo = car+variant+ext+int+year ; shortage if count in branch == 1 ===== */
-  const trimVal = v => (v??'').toString().trim();
-  const comboKey = r => [trimVal(r.car), trimVal(r.variant), trimVal(r.extColor), trimVal(r.intColor), trimVal(r.modelYear)].join('⇢');
+  const comboKey = r => [
+    trim(r.car), trim(r.variant), trim(r.extColor), trim(r.intColor), trim(r.modelYear)
+  ].join('⇢');
 
   function countByCombo(rows){
     const m=new Map();
@@ -395,19 +407,29 @@
     });
     return m;
   }
-  function globalTotalsByCombo(){ return countByCombo(stock); }
 
+  // إجمالي عام لنفس التركيبة عبر كل المخزون (للإظهار فقط)
+  function globalTotalsByCombo(){
+    return countByCombo(stock);
+  }
+
+  // احسب نواقص فرع واحد (count == 1)
   function computeBranchShortages(group){
     const rows = rowsForMembers(group.members);
     const byCombo = countByCombo(rows);
-    const glob = globalTotalsByCombo();
+    const glob    = globalTotalsByCombo();
     const res=[];
     byCombo.forEach((cnt,k)=>{
       if(cnt===1){
         const [car,variant,extColor,intColor,modelYear] = k.split('⇢');
-        res.push({car,variant,extColor,intColor,modelYear,countBranch:cnt,countGlobal:glob.get(k)||cnt});
+        res.push({
+          car, variant, extColor, intColor, modelYear,
+          countBranch: cnt,
+          countGlobal: glob.get(k)||cnt
+        });
       }
     });
+    // ترتيب
     res.sort((a,b)=>
       (a.car||'').localeCompare(b.car||'','ar') ||
       (a.variant||'').localeCompare(b.variant||'','ar') ||
@@ -418,6 +440,7 @@
     return res;
   }
 
+  // بطاقة النواقص (فروع فقط)
   function computeShortagesSummaryBranches(){
     const summary=[]; let total=0;
     branchGroups().forEach(g=>{
@@ -428,7 +451,7 @@
     return { total, summary };
   }
 
-  /* ===== Group breakdown ===== */
+  /* ===== Group counts for chips ===== */
   function groupBreakdownCounts(group){
     const rows = rowsForMembers(group.members);
     const available = rows.filter(r => (r.location||'').endsWith('المخزون المتاح')).length;
@@ -439,33 +462,17 @@
   }
 
   /* ===== Render ===== */
-  function renderShortagesCardElement(){
+  function renderShortagesCard(){
     const { total, summary } = computeShortagesSummaryBranches();
-    const card = document.createElement('div');
-    card.className = 'card group-card';
-    card.setAttribute('id','shortagesCard');
-    card.innerHTML = `
-      <div class="group-head">
-        <h3 class="group-title"><i class="fa-solid fa-list-check"></i> النواقص — الفروع فقط</h3>
-        <div class="group-total">${total.toLocaleString('ar-SA')}</div>
-      </div>
-      <div class="short-pills">
-        ${summary.map(s=> `<span class="pill"><i class="fa-solid fa-store"></i> ${s.title}: <b>${s.count.toLocaleString('ar-SA')}</b></span>`).join('')}
-      </div>
-      <p class="hint" style="margin:8px 0 0">اضغط على البطاقة لعرض تبويبات النواقص لكل فرع (فرع 1، فرع 2، فرع 3).</p>
-    `;
-    card.addEventListener('click', ()=> openShortagesModalBranches());
-    return card;
+    $('#shortagesTotal').textContent = total.toLocaleString('ar-SA');
+    const pills = summary.map(s=> `<span class="pill"><i class="fa-solid fa-store"></i> ${s.title}: <b>${s.count.toLocaleString('ar-SA')}</b></span>`).join('');
+    $('#shortagesPills').innerHTML = pills;
   }
 
-  function renderAllCards(){
-    const grid = $('#cardsGrid');
-    grid.innerHTML = '';
+  function renderGroups(){
+    const grid = $('#groupsGrid');
+    grid.innerHTML='';
 
-    // 1) بطاقة النواقص كأول عنصر في نفس الشبكة
-    grid.appendChild(renderShortagesCardElement());
-
-    // 2) بطاقات الجهات
     groupsDef.forEach(g=>{
       const { total, available, notes, pending, delivered } = groupBreakdownCounts(g);
       const card = document.createElement('div');
@@ -491,15 +498,15 @@
         </div>
         <p class="hint" style="margin:10px 0 0">اضغط على البطاقة لعرض كل سيارات الجهة، أو اضغط على الشرائح لعرض الفئة فقط.</p>
       `;
-      // فتح كل الجهة عند الضغط على البطاقة نفسها (مع تجاهل الضغط على الشيب)
+      // فتح كل الجهة
       card.addEventListener('click', (ev)=>{
-        if(ev.target.closest('.chip')) return;
+        if(ev.target.closest('.chip')) return; // لو الضغط على الشريحة لا تفتح الكل
         openModalForGroupRows(g, null);
       });
       grid.appendChild(card);
     });
 
-    // تفويض حدث الشيبس لكل الشبكة
+    // حدث الشرائح (chips) — فلترة دقيقة
     grid.addEventListener('click',(e)=>{
       const chip = e.target.closest('.chip');
       if(!chip) return;
@@ -509,11 +516,12 @@
       const g = groupsDef.find(x=>x.key===key);
       if(!g) return;
       openModalForGroupRows(g, filt);
-    }, { once:true }); // نضيفه مرة واحدة في كل إعادة رسم
+    });
   }
 
   function renderAll(){
-    renderAllCards();
+    renderShortagesCard();
+    renderGroups();
   }
 
   /* ===== Modal: rows + shortages (branches) ===== */
@@ -612,7 +620,6 @@
   }
 
   // فتح سيارات الجهة
-  function rowsForMembers(members){ return stock.filter(r => members.includes(r.location||'')); }
   function rowsForFilter(rows, filterKey){
     if(filterKey==='available'){ return rows.filter(r => (r.location||'').endsWith('المخزون المتاح')); }
     if(filterKey==='notes'){ return rows.filter(r => (r.location||'').includes('سيارات بها ملاحظات')); }
@@ -620,6 +627,7 @@
     if(filterKey==='delivered'){ return rows.filter(r => (r.location||'').includes('مباع تم التسليم')); }
     return rows;
   }
+
   function openModalForGroupRows(group, filterKey=null){
     const rows = rowsForMembers(group.members);
     const list = rowsForFilter(rows, filterKey);
@@ -634,14 +642,15 @@
     const g=groupsDef.find(x=>x.key===key);
     return g?g.title:key;
   }
+
   function openShortagesModalBranches(){
     shortDataByKey = new Map();
     // لكل فرع
     branchGroups().forEach(g=>{
       shortDataByKey.set(g.key, computeBranchShortages(g));
     });
-    // تبويب الكل
-    const uniq = new Map();
+    // تبويب الكل: دمج فريد حسب التركيبة مع أقل countBranch (دائمًا 1 لأننا شرطنا 1)، نعرض countGlobal للعلم
+    const uniq = new Map(); // combo -> item (car,variant,ext,int,year,countBranch=1,countGlobal)
     branchGroups().forEach(g=>{
       (shortDataByKey.get(g.key)||[]).forEach(item=>{
         const k = [item.car,item.variant,item.extColor,item.intColor,item.modelYear].join('⇢');
@@ -658,23 +667,25 @@
     shortDataByKey.set('ALL', allList);
 
     // بناء التبويبات
-    const shortTabs = $('#shortTabs');
     shortTabs.innerHTML='';
     const mk = (id, txt)=>`<button class="t" data-tab="${id}">${txt}</button>`;
     shortTabs.insertAdjacentHTML('beforeend', mk('ALL','الكل (الفروع)'));
     branchGroups().forEach(g=> shortTabs.insertAdjacentHTML('beforeend', mk(g.key,g.title)));
+    // تفعيل
     activateShortTab('ALL');
 
+    // عرض المودال
     openModal('shortagesBranches', 'النواقص — الفروع فقط');
   }
+
   function activateShortTab(key){
-    const shortTabs = $('#shortTabs');
-    shortTabs.querySelectorAll('.t').forEach(b=> b.classList.toggle('active', b.getAttribute('data-tab')===key));
     shortActiveKey = key;
+    shortTabs.querySelectorAll('.t').forEach(b=> b.classList.toggle('active', b.getAttribute('data-tab')===key));
     shortFiltered = (shortDataByKey.get(key)||[]).slice();
     renderModal();
   }
-  $('#shortTabs').addEventListener('click', (e)=>{
+
+  shortTabs.addEventListener('click', (e)=>{
     const btn = e.target.closest('.t');
     if(!btn) return;
     const key = btn.getAttribute('data-tab');
@@ -683,8 +694,8 @@
   });
 
   // بحث في الوضعين
-  $('#modalSearch').addEventListener('input', ()=>{
-    const q = ($('#modalSearch').value||'').trim().toLowerCase();
+  modalSearch.addEventListener('input', ()=>{
+    const q = (modalSearch.value||'').trim().toLowerCase();
     if(currentMode==='rows'){
       if(!q){ filteredRows = currentRows.slice(); return renderModal(); }
       filteredRows = currentRows.filter(r=>{
@@ -702,7 +713,7 @@
   });
 
   // تصدير
-  $('#btnExportGroup').addEventListener('click', ()=>{
+  btnExportGroup.addEventListener('click', ()=>{
     if(currentMode==='rows'){
       const header=["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
       const data=[header];
@@ -713,7 +724,7 @@
       ws['!cols'] = [{wch:5},{wch:24},{wch:30},{wch:18},{wch:16},{wch:16},{wch:10},{wch:10},{wch:20},{wch:16},{wch:22},{wch:26}];
       const wb=XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb,ws,"Rows");
-      XLSX.writeFile(wb, `mzj-dashboard-${$('#modalTitle').textContent.replace(/\s+/g,'-')}.xlsx`);
+      XLSX.writeFile(wb, `mzj-dashboard-${modalTitle.textContent.replace(/\s+/g,'-')}.xlsx`);
     }else{
       const header=["السيارة","البيان","اللون الخارجي","اللون الداخلي","الموديل","عدد الفرع","الإجمالي العام"];
       const data=[header];
@@ -723,13 +734,16 @@
       const ws=XLSX.utils.aoa_to_sheet(data);
       ws['!cols'] = [{wch:24},{wch:20},{wch:16},{wch:16},{wch:10},{wch:12},{wch:14}];
       const wb=XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb,ws, 'Shortages');
-      XLSX.writeFile(wb, `mzj-shortages-branches-${$('#modalTitle').textContent.replace(/\s+/g,'-')}.xlsx`);
+      XLSX.utils.book_append_sheet(wb,ws, tabTitle(shortActiveKey));
+      XLSX.writeFile(wb, `mzj-shortages-branches-${tabTitle(shortActiveKey).replace(/\s+/g,'-')}.xlsx`);
     }
   });
 
+  /* ===== Events ===== */
+  // بطاقة النواقص (فروع فقط)
+  $('#shortagesCard').addEventListener('click', ()=> openShortagesModalBranches());
+
   /* ===== Start ===== */
-  function renderAll(){ renderAllCards(); }
   setStatus('warn','جارِ الاتصال…');
 </script>
 </body>
