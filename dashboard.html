@@ -14,6 +14,7 @@
     --card:#ffffff; --bg:#faf7f3; --radius:14px;
     --shadow:0 12px 28px rgba(0,0,0,.06);
     --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9; --warn:#f59e0b;
+    --black:#0b0b0b;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -42,12 +43,23 @@
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
   .group-card{cursor:pointer;transition:.15s;border:1px solid var(--line)}
   .group-card:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(0,0,0,.08)}
-  .group-head{display:flex;align-items:center;justify-content:space-between}
+
+  /* Group header: title + metrics stacked left, total on right */
+  .group-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .group-left{display:flex;flex-direction:column;gap:6px}
   .group-title{display:flex;align-items:center;gap:8px;color:var(--brown);margin:0}
   .group-title i{color:var(--beige)}
   .group-total{font-weight:900;font-size:28px;color:var(--brown)}
-  .sub-metrics{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-  .metric{display:inline-flex;gap:6px;align-items:center;background:#fff;border:1px dashed var(--line);border-radius:10px;padding:4px 10px;font-weight:800;font-size:12px}
+  .sub-metrics{display:flex;gap:8px;flex-wrap:wrap;margin-top:0}
+
+  /* Dark badges: أسود على أصفر */
+  .metric{
+    display:inline-flex;gap:6px;align-items:center;
+    background:var(--warn);border:1px solid #000;border-radius:10px;
+    padding:4px 10px;font-weight:900;font-size:12px;color:#000
+  }
+  .metric i{color:#000}
+
   .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
   .chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px;cursor:pointer}
   .chip i{color:var(--muted)}
@@ -143,7 +155,12 @@
     <!-- Shortages Summary Card (Branches only) -->
     <div class="card short-card" id="shortagesCard" title="عرض النواقص لأفرع المعارض (حسب السيارة + البيان + الألوان + الموديل | العدد داخل الفرع = 1)">
       <div class="group-head">
-        <h3 class="group-title"><i class="fa-solid fa-list-check"></i> النواقص — الفروع فقط</h3>
+        <div class="group-left">
+          <h3 class="group-title"><i class="fa-solid fa-list-check"></i> النواقص — الفروع فقط</h3>
+          <div class="sub-metrics">
+            <span class="metric"><i class="fa-solid fa-equals"></i> ملخص</span>
+          </div>
+        </div>
         <div class="group-total" id="shortagesTotal">0</div>
       </div>
       <div class="short-pills" id="shortagesPills"></div>
@@ -182,20 +199,7 @@
       <div id="tableRowsWrap" class="table-wrap" style="display:none">
         <table id="modalTableRows">
           <thead>
-            <tr>
-              <th>م</th>
-              <th>السيارة</th>
-              <th>البيان</th>
-              <th>الوكيل</th>
-              <th>اللون الخارجي</th>
-              <th>اللون الداخلي</th>
-              <th>الموديل</th>
-              <th>اللوحة</th>
-              <th>المكان</th>
-              <th>اسم الدفعة</th>
-              <th>رقم الهيكل</th>
-              <th>الملاحظات</th>
-            </tr>
+            <tr id="rowsHeadTr"></tr>
           </thead>
           <tbody></tbody>
         </table>
@@ -257,6 +261,7 @@
 
   /* ===== State ===== */
   let stock=[], moves=[], models=[], variantsMap={};
+  let currentFilterKey = null; // لمعرفة إن كنا في "تحت التسليم"
 
   // الجهات
   const groupsDef = [
@@ -394,10 +399,8 @@
     return '';
   }
 
-  /* ===== Shortages logic (branches): combo = car+variant+ext+int+year ; shortage if count in branch == 1 ===== */
-  const comboKey = r => [
-    trim(r.car), trim(r.variant), trim(r.extColor), trim(r.intColor), trim(r.modelYear)
-  ].join('⇢');
+  /* ===== Shortages logic (branches) ===== */
+  const comboKey = r => [trim(r.car), trim(r.variant), trim(r.extColor), trim(r.intColor), trim(r.modelYear)].join('⇢');
 
   function countByCombo(rows){
     const m=new Map();
@@ -408,9 +411,7 @@
     });
     return m;
   }
-  function globalTotalsByCombo(){
-    return countByCombo(stock);
-  }
+  function globalTotalsByCombo(){ return countByCombo(stock); }
   function computeBranchShortages(group){
     const rows = rowsForMembers(group.members);
     const byCombo = countByCombo(rows);
@@ -449,8 +450,8 @@
     const pending   = rows.filter(r => (r.location||'').includes('مباع تحت التسليم')).length;
     const delivered = rows.filter(r => (r.location||'').includes('مباع تم التسليم')).length;
 
-    const actualTotal = available + notes;              // الإجمالي الفعلي
-    const keysTotal   = available + notes + pending;    // إجمالي المفاتيح
+    const actualTotal = available + notes;           // الإجمالي الفعلي
+    const keysTotal   = available + notes + pending; // إجمالي المفاتيح
 
     return { available, notes, pending, delivered, actualTotal, keysTotal };
   }
@@ -473,17 +474,14 @@
       card.className='card group-card';
       card.innerHTML = `
         <div class="group-head">
-          <h3 class="group-title"><i class="fa-solid ${g.icon}"></i> ${g.title}</h3>
+          <div class="group-left">
+            <h3 class="group-title"><i class="fa-solid ${g.icon}"></i> ${g.title}</h3>
+            <div class="sub-metrics">
+              <span class="metric" title="الإجمالي الفعلي"><i class="fa-solid fa-equals"></i> الإجمالي الفعلي: <b>${actualTotal.toLocaleString('ar-SA')}</b></span>
+              <span class="metric" title="إجمالي المفاتيح"><i class="fa-solid fa-key"></i> إجمالي المفاتيح: <b>${keysTotal.toLocaleString('ar-SA')}</b></span>
+            </div>
+          </div>
           <div class="group-total" title="الإجمالي الفعلي">${actualTotal.toLocaleString('ar-SA')}</div>
-        </div>
-
-        <div class="sub-metrics">
-          <span class="metric" title="الإجمالي الفعلي">
-            <i class="fa-solid fa-equals"></i> الإجمالي الفعلي: <b>${actualTotal.toLocaleString('ar-SA')}</b>
-          </span>
-          <span class="metric" title="إجمالي المفاتيح">
-            <i class="fa-solid fa-key"></i> إجمالي المفاتيح: <b>${keysTotal.toLocaleString('ar-SA')}</b>
-          </span>
         </div>
 
         <div class="chips">
@@ -504,13 +502,13 @@
       `;
       // فتح كل الجهة
       card.addEventListener('click', (ev)=>{
-        if(ev.target.closest('.chip')) return; // لو الضغط على الشريحة لا تفتح الكل
+        if(ev.target.closest('.chip')) return;
         openModalForGroupRows(g, null);
       });
       grid.appendChild(card);
     });
 
-    // حدث الشرائح (chips) — فلترة دقيقة
+    // حدث الشرائح
     grid.addEventListener('click',(e)=>{
       const chip = e.target.closest('.chip');
       if(!chip) return;
@@ -537,6 +535,7 @@
 
   const tableRowsWrap = $('#tableRowsWrap');
   const tableShortWrap= $('#tableShortWrap');
+  const modalTableRowsHead = $('#rowsHeadTr');
   const modalTableRowsBody  = document.querySelector('#modalTableRows tbody');
   const modalTableShortBody = document.querySelector('#modalTableShort tbody');
   const modalCount = $('#modalCount');
@@ -544,11 +543,11 @@
   const shortTabs = $('#shortTabs');
 
   let currentMode = 'rows'; // 'rows' | 'shortagesBranches'
-  let currentRows = [];     // rows mode
+  let currentRows = [];
   let filteredRows = [];
 
   // shortagesBranches mode
-  let shortDataByKey = new Map(); // 'ALL' + each BRx -> items[]
+  let shortDataByKey = new Map();
   let shortActiveKey = 'ALL';
   let shortFiltered = [];
 
@@ -572,13 +571,42 @@
     backdrop.style.display='none';
     currentRows=[]; filteredRows=[];
     shortDataByKey.clear(); shortFiltered=[];
+    currentFilterKey=null;
   }
   btnCloseModal.addEventListener('click', closeModal);
   backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) closeModal(); });
 
+  function buildRowsHeader(){
+    // رأس الجدول يتغير لو كنا في تحت التسليم
+    const common = `
+      <th>م</th>
+      <th>السيارة</th>
+      <th>البيان</th>
+      <th>الوكيل</th>
+      <th>اللون الخارجي</th>
+      <th>اللون الداخلي</th>
+      <th>الموديل</th>
+      <th>اللوحة</th>
+      <th>المكان</th>
+      <th>اسم الدفعة</th>
+      <th>رقم الهيكل</th>
+      <th>الملاحظات</th>
+    `;
+    const approvals = `
+      <th>الموافقة الإدارية</th>
+      <th>ملاحظات الإدارة</th>
+      <th>الموافقة المالية</th>
+      <th>ملاحظات المالية</th>
+    `;
+    modalTableRowsHead.innerHTML = currentFilterKey==='pending' ? common + approvals : common;
+  }
+
   function renderRowsTable(){
+    buildRowsHeader();
     modalTableRowsBody.innerHTML='';
     filteredRows.forEach(r=>{
+      const isApprovedAdmin   = (r.adminApproved===true || r.adminApproved==='true') ? '✅' : (r.adminApproved===false || r.adminApproved==='false') ? '❌' : '-';
+      const isApprovedFinance = (r.financeApproved===true || r.financeApproved==='true') ? '✅' : (r.financeApproved===false || r.financeApproved==='false') ? '❌' : '-';
       const tr=document.createElement('tr');
       tr.innerHTML=`
         <td>${r.id||''}</td>
@@ -593,6 +621,12 @@
         <td>${r.batchName||''}</td>
         <td>${r.vin||''}</td>
         <td>${r.notes||''}</td>
+        ${currentFilterKey==='pending' ? `
+          <td style="text-align:center">${isApprovedAdmin}</td>
+          <td>${r.adminNotes||'-'}</td>
+          <td style="text-align:center">${isApprovedFinance}</td>
+          <td>${r.financeNotes||'-'}</td>
+        `:''}
       `;
       modalTableRowsBody.appendChild(tr);
     });
@@ -637,6 +671,7 @@
     const list = rowsForFilter(rows, filterKey);
     currentRows = list.slice().sort((a,b)=> (a.id||0)-(b.id||0));
     filteredRows= currentRows.slice();
+    currentFilterKey = filterKey; // لمعرفة أعمدة الموافقات
     openModal('rows', filterKey ? `${group.title} — ${labelForFilter(filterKey)}` : `${group.title} — كل السيارات`);
   }
 
@@ -697,7 +732,8 @@
     if(currentMode==='rows'){
       if(!q){ filteredRows = currentRows.slice(); return renderModal(); }
       filteredRows = currentRows.filter(r=>{
-        const hay=[r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName,r.vin,r.notes].join(' ').toLowerCase();
+        const hay=[r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName,r.vin,r.notes,
+                   r.adminNotes,r.financeNotes, String(r.adminApproved), String(r.financeApproved)].join(' ').toLowerCase();
         return hay.includes(q);
       });
     }else{
@@ -711,24 +747,37 @@
   });
 
   // تصدير
-  btnExportGroup.addEventListener('click', ()=>{
+  const exportRowsCommonHeader = ["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
+  const exportRowsPendingExtra  = ["الموافقة الإدارية","ملاحظات الإدارة","الموافقة المالية","ملاحظات المالية"];
+
+  document.getElementById('btnExportGroup').addEventListener('click', ()=>{
     if(currentMode==='rows'){
-      const header=["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
+      const header = currentFilterKey==='pending'
+        ? [...exportRowsCommonHeader, ...exportRowsPendingExtra]
+        : [...exportRowsCommonHeader];
+
       const data=[header];
       filteredRows.forEach(r=>{
-        data.push([r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName||'',r.vin,r.notes]);
+        const row = [
+          r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName||'',r.vin,r.notes
+        ];
+        if(currentFilterKey==='pending'){
+          const adminA = (r.adminApproved===true || r.adminApproved==='true') ? 'موافق' : (r.adminApproved===false || r.adminApproved==='false') ? 'مرفوض' : '-';
+          const finA   = (r.financeApproved===true || r.financeApproved==='true') ? 'موافق' : (r.financeApproved===false || r.financeApproved==='false') ? 'مرفوض' : '-';
+          row.push(adminA, r.adminNotes||'', finA, r.financeNotes||'');
+        }
+        data.push(row);
       });
       const ws=XLSX.utils.aoa_to_sheet(data);
-      ws['!cols'] = [{wch:5},{wch:24},{wch:30},{wch:18},{wch:16},{wch:16},{wch:10},{wch:10},{wch:20},{wch:16},{wch:22},{wch:26}];
+      ws['!cols'] = [{wch:5},{wch:24},{wch:30},{wch:18},{wch:16},{wch:16},{wch:10},{wch:10},{wch:20},{wch:16},{wch:22},{wch:26},
+                     ...(currentFilterKey==='pending'?[{wch:14},{wch:24},{wch:14},{wch:24}]:[])];
       const wb=XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb,ws,"Rows");
       XLSX.writeFile(wb, `mzj-dashboard-${modalTitle.textContent.replace(/\s+/g,'-')}.xlsx`);
     }else{
       const header=["السيارة","البيان","اللون الخارجي","اللون الداخلي","الموديل","عدد الفرع","الإجمالي العام"];
       const data=[header];
-      shortFiltered.forEach(s=>{
-        data.push([s.car,s.variant,s.extColor,s.intColor,s.modelYear,s.countBranch,s.countGlobal]);
-      });
+      shortFiltered.forEach(s=> data.push([s.car,s.variant,s.extColor,s.intColor,s.modelYear,s.countBranch,s.countGlobal]));
       const ws=XLSX.utils.aoa_to_sheet(data);
       ws['!cols'] = [{wch:24},{wch:20},{wch:16},{wch:16},{wch:10},{wch:12},{wch:14}];
       const wb=XLSX.utils.book_new();
@@ -738,7 +787,7 @@
   });
 
   /* ===== Events ===== */
-  $('#shortagesCard').addEventListener('click', ()=> openShortagesModalBranches());
+  document.getElementById('shortagesCard').addEventListener('click', ()=> openShortagesModalBranches());
 
   /* ===== Start ===== */
   setStatus('warn','جارِ الاتصال…');
