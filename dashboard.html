@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -47,8 +48,14 @@
   .group-title i{color:var(--beige)}
   .group-total{font-weight:900;font-size:28px;color:var(--brown)}
   .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
-  .chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px;cursor:pointer}
   .chip i{color:var(--muted)}
+  .chip:hover{border-color:var(--beige);box-shadow:0 2px 0 rgba(0,0,0,.04)}
+
+  .short-card{cursor:pointer}
+  .short-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .pill{background:#fff;border:1px dashed var(--line);border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px}
+
   .hint{color:var(--muted);font-size:12px}
 
   /* Modal */
@@ -57,7 +64,7 @@
   .modal header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
   .modal h3{margin:0;color:var(--brown)}
   .modal .body{padding:12px 14px;overflow:auto}
-  .modal .tools{display:flex;gap:8px;align-items:center}
+  .modal .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700;display:inline-flex;gap:8px;align-items:center;transition:.15s}
   .btn-primary{background:var(--beige);border-color:var(--beige);color:#fff}
   .btn-ghost{background:#fff}
@@ -66,7 +73,12 @@
   .input{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
-  /* Table */
+  /* Tabs inside shortages modal */
+  .tabs2{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .tabs2 .t{padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;font-weight:800}
+  .tabs2 .t.active{background:var(--brown);border-color:var(--brown);color:#fff}
+
+  /* Tables */
   .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
   table{width:100%;border-collapse:separate;border-spacing:0}
   thead th{position:sticky;top:0;background:#fafafa;z-index:2;border-bottom:2px solid var(--line);text-align:right;color:#111827;font-size:13.5px;padding:10px}
@@ -127,14 +139,25 @@
 <div id="app" style="display:none">
   <div class="container">
 
-    <!-- Cards -->
+    <!-- Shortages Summary Card -->
+    <div class="card short-card" id="shortagesCard" title="عرض النواقص لكل جهة">
+      <div class="group-head">
+        <h3 class="group-title"><i class="fa-solid fa-list-check"></i> النواقص (حسب السيارة + اللون الخارجي | أقل من 2)</h3>
+        <div class="group-total" id="shortagesTotal">0</div>
+      </div>
+      <div class="short-pills" id="shortagesPills"><!-- تعبئة ديناميكية: عدد النواقص لكل جهة --></div>
+      <p class="hint" style="margin:8px 0 0">اضغط على البطاقة لعرض تبويبات نواقص كل جهة (الوكالة، المستودع، الفروع).</p>
+    </div>
+
+    <!-- Group Cards -->
     <div class="cards" id="groupsGrid">
       <!-- تعبئة ديناميكية -->
     </div>
 
     <div class="card">
       <p class="hint" style="margin:0">
-        اضغط على أي مجموعة لعرض كل السيارات بداخلها (مع بحث وتصدير Excel). التوزيع مبني على المكان: <b>المخزون المتاح، سيارات بها ملاحظات، مباع تحت التسليم، مباع تم التسليم</b> لكل جهة.
+        اضغط على بطاقة الجهة لعرض كل السيارات، أو اضغط على الشرائح “متاح / ملاحظات / تحت التسليم / تم التسليم” لعرضها مباشرة.  
+        بطاقة “النواقص” منفصلة وتجمع نواقص كل الجهات بناءً على (السيارة + اللون الخارجي) عندما يكون العدد داخل الجهة أقل من 2.
       </p>
     </div>
 
@@ -145,16 +168,20 @@
 <div id="backdrop" class="backdrop" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <header>
-      <h3 id="modalTitle">عرض السيارات</h3>
+      <h3 id="modalTitle">عرض</h3>
       <div class="tools">
-        <input id="modalSearch" class="input" placeholder="بحث داخل المجموعة (سيارة / بيان / ألوان / لوحة / VIN / وكيل / سنة / اسم الدفعة)" style="min-width:280px">
+        <input id="modalSearch" class="input" placeholder="بحث..." style="min-width:280px">
         <button id="btnExportGroup" class="btn"><i class="fa-regular fa-file-excel"></i> تصدير Excel</button>
         <button id="btnCloseModal" class="btn btn-danger"><i class="fa-solid fa-xmark"></i> إغلاق</button>
       </div>
     </header>
     <div class="body">
-      <div class="table-wrap">
-        <table id="modalTable">
+      <!-- تبويبات لنواقص الفروع -->
+      <div id="shortTabs" class="tabs2" style="display:none"></div>
+
+      <!-- جدول السيارات (rows) -->
+      <div id="tableRowsWrap" class="table-wrap" style="display:none">
+        <table id="modalTableRows">
           <thead>
             <tr>
               <th>م</th>
@@ -174,12 +201,28 @@
           <tbody></tbody>
         </table>
       </div>
+
+      <!-- جدول النواقص (Shortages) -->
+      <div id="tableShortWrap" class="table-wrap" style="display:none">
+        <table id="modalTableShort">
+          <thead>
+            <tr>
+              <th>السيارة</th>
+              <th>اللون الخارجي</th>
+              <th>إجمالي الجهة</th>
+              <th>الإجمالي العام</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
       <p class="hint" id="modalCount" style="margin-top:8px"></p>
     </div>
   </div>
 </div>
 
-<div id="toast" class="toast">تم النسخ</div>
+<div id="toast" class="toast">تم</div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
@@ -208,10 +251,13 @@
   const now = ()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`};
   function setStatus(mode,txt){ $('#connDot').className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'warn'); $('#connText').textContent=txt; }
   function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1200); }
+  const trim = v => (v||'').toString().trim();
 
   /* ===== State ===== */
   let stock=[], moves=[], models=[], variantsMap={};
-  let groupsDef = [
+
+  // تعريف الجهات
+  const groupsDef = [
     {
       key:'AGENCY',
       title:'الوكالة',
@@ -310,7 +356,7 @@
       }else{
         stock=[]; moves=[]; models=[]; variantsMap={};
       }
-      renderGroups();
+      renderAll();
     }catch(e){
       setStatus('warn','تعذّر تحميل البيانات');
     }
@@ -324,37 +370,102 @@
         moves = Array.isArray(d.moves)? d.moves: moves;
         models= Array.isArray(d.models)? d.models: models;
         variantsMap = d.variantsMap || variantsMap;
-        renderGroups();
+        renderAll();
         setStatus('ok','مزامنة حيّة');
       },()=> setStatus('warn','انقطاع المزامنة مؤقتًا'));
     }catch(e){}
   }
-  async function persistAll(){
-    try{
-      await setDoc(STATE_REF, { stock, moves, models, variantsMap, updatedAt: now() }, { merge:true });
-      setStatus('ok','تم الحفظ');
-    }catch(e){
-      setStatus('err','تعذّر الحفظ'); 
-    }
+
+  /* ===== Utilities ===== */
+  function rowsForMembers(members){
+    return stock.filter(r => members.includes(r.location||''));
+  }
+  function labelForFilter(key){
+    if(key==='available') return 'المخزون المتاح';
+    if(key==='notes')     return 'سيارات بها ملاحظات';
+    if(key==='pending')   return 'مباع تحت التسليم';
+    if(key==='delivered') return 'مباع تم التسليم';
+    return '';
   }
 
-  /* ===== Group calculations ===== */
-  function groupStats(members){
-    const rows = stock.filter(r => members.includes(r.location||''));
-    const breakdown = {
-      available: rows.filter(r => r.location==='الوكالة : المخزون المتاح' || r.location==='المستودع : المخزون المتاح' || r.location?.includes('الصالة : المخزون المتاح') || r.location?.includes('الملتقى : المخزون المتاح') || r.location?.includes('القادسية : المخزون المتاح')).length,
-      notes:     rows.filter(r => (r.location||'').includes('سيارات بها ملاحظات')).length,
-      pending:   rows.filter(r => (r.location||'').includes('مباع تحت التسليم')).length,
-      delivered: rows.filter(r => (r.location||'').includes('مباع تم التسليم')).length
-    };
-    return { total: rows.length, rows, breakdown };
+  /* ===== Shortages logic (car + extColor, threshold < 2 per group) ===== */
+  const comboKeyShort = r => `${r.car||''}⇢${r.extColor||''}`.trim();
+
+  function countByComboShort(rows){
+    const map = new Map();
+    rows.forEach(r=>{
+      const k = comboKeyShort(r);
+      if(!k) return;
+      map.set(k, (map.get(k)||0)+1);
+    });
+    return map;
+  }
+  function allGlobalShortCombos(){ // global totals by (car+extColor)
+    const map = new Map();
+    stock.forEach(r=>{
+      const k = comboKeyShort(r);
+      if(!k) return;
+      map.set(k, (map.get(k)||0)+1);
+    });
+    return map;
+  }
+  // نواقص لجهة واحدة
+  function computeShortagesForGroup(group){
+    const grpRows = rowsForMembers(group.members);
+    const grpMap  = countByComboShort(grpRows);
+    const globMap = allGlobalShortCombos();
+
+    const res = [];
+    globMap.forEach((globTotal, k)=>{
+      const inGroup = grpMap.get(k)||0;
+      if(inGroup < 2){ // أقل من 2 => ناقص
+        const [car,extColor] = k.split('⇢');
+        res.push({
+          car:car||'',
+          extColor:extColor||'',
+          countInGroup: inGroup,
+          countGlobal: globTotal
+        });
+      }
+    });
+    return res.sort((a,b)=> (a.car||'').localeCompare(b.car||'','ar') || (a.extColor||'').localeCompare(b.extColor||'','ar'));
+  }
+  // إجمالي النواقص لكل الجهات + تعبئة بطاقة النواقص
+  function computeShortagesSummary(){
+    const summary = [];
+    let total = 0;
+    groupsDef.forEach(g=>{
+      const items = computeShortagesForGroup(g);
+      summary.push({ key:g.key, title:g.title, count:items.length });
+      total += items.length;
+    });
+    return { total, summary };
+  }
+
+  /* ===== Group counts for chips ===== */
+  function groupBreakdownCounts(group){
+    const rows = rowsForMembers(group.members);
+    const available = rows.filter(r => (r.location||'').endsWith('المخزون المتاح')).length;
+    const notes     = rows.filter(r => (r.location||'').includes('سيارات بها ملاحظات')).length;
+    const pending   = rows.filter(r => (r.location||'').includes('مباع تحت التسليم')).length;
+    const delivered = rows.filter(r => (r.location||'').includes('مباع تم التسليم')).length;
+    return { total: rows.length, available, notes, pending, delivered };
+  }
+
+  /* ===== Render ===== */
+  function renderShortagesCard(){
+    const { total, summary } = computeShortagesSummary();
+    $('#shortagesTotal').textContent = total.toLocaleString('ar-SA');
+    const pills = summary.map(s=> `<span class="pill"><i class="fa-solid fa-store"></i> ${s.title}: <b>${s.count.toLocaleString('ar-SA')}</b></span>`).join('');
+    $('#shortagesPills').innerHTML = pills;
   }
 
   function renderGroups(){
     const grid = $('#groupsGrid');
     grid.innerHTML='';
+
     groupsDef.forEach(g=>{
-      const { total, breakdown } = groupStats(g.members);
+      const { total, available, notes, pending, delivered } = groupBreakdownCounts(g);
       const card = document.createElement('div');
       card.className='card group-card';
       card.innerHTML = `
@@ -363,53 +474,99 @@
           <div class="group-total">${total.toLocaleString('ar-SA')}</div>
         </div>
         <div class="chips">
-          <span class="chip" title="المخزون المتاح"><i class="fa-solid fa-boxes-stacked"></i> متاح: <b>${breakdown.available.toLocaleString('ar-SA')}</b></span>
-          <span class="chip" title="سيارات بها ملاحظات"><i class="fa-solid fa-triangle-exclamation"></i> ملاحظات: <b>${breakdown.notes.toLocaleString('ar-SA')}</b></span>
-          <span class="chip" title="مباع تحت التسليم"><i class="fa-solid fa-truck"></i> تحت التسليم: <b>${breakdown.pending.toLocaleString('ar-SA')}</b></span>
-          <span class="chip" title="مباع تم التسليم"><i class="fa-solid fa-circle-check"></i> تم التسليم: <b>${breakdown.delivered.toLocaleString('ar-SA')}</b></span>
+          <span class="chip" data-group="${g.key}" data-mode="rows" data-filter="available" title="المخزون المتاح">
+            <i class="fa-solid fa-boxes-stacked"></i> متاح: <b>${available.toLocaleString('ar-SA')}</b>
+          </span>
+          <span class="chip" data-group="${g.key}" data-mode="rows" data-filter="notes" title="سيارات بها ملاحظات">
+            <i class="fa-solid fa-triangle-exclamation"></i> ملاحظات: <b>${notes.toLocaleString('ar-SA')}</b>
+          </span>
+          <span class="chip" data-group="${g.key}" data-mode="rows" data-filter="pending" title="مباع تحت التسليم">
+            <i class="fa-solid fa-truck"></i> تحت التسليم: <b>${pending.toLocaleString('ar-SA')}</b>
+          </span>
+          <span class="chip" data-group="${g.key}" data-mode="rows" data-filter="delivered" title="مباع تم التسليم">
+            <i class="fa-solid fa-circle-check"></i> تم التسليم: <b>${delivered.toLocaleString('ar-SA')}</b>
+          </span>
         </div>
-        <p class="hint" style="margin:10px 0 0">اضغط للعرض — يشمل: ${g.members.map(m=>`<code>${m}</code>`).join(' ، ')}</p>
+        <p class="hint" style="margin:10px 0 0">اضغط على البطاقة لعرض كل سيارات الجهة، أو اضغط على الشرائح لعرض الفئة فقط.</p>
       `;
-      card.addEventListener('click', ()=> openModalForGroup(g));
+      // فتح كل الجهة
+      card.addEventListener('click', (ev)=>{
+        // لو الضغط جاء من chip لا تفتح كل الجهة
+        if(ev.target.closest('.chip')) return;
+        openModalForGroupRows(g, null);
+      });
       grid.appendChild(card);
+    });
+
+    // حدث الشرائح (chips) — بدون once + مع إيقاف الانتشار
+    grid.addEventListener('click',(e)=>{
+      const chip = e.target.closest('.chip');
+      if(!chip) return;
+      e.stopPropagation();
+      const key   = chip.getAttribute('data-group');
+      const filt  = chip.getAttribute('data-filter');
+      const g = groupsDef.find(x=>x.key===key);
+      if(!g) return;
+      openModalForGroupRows(g, filt);
     });
   }
 
-  /* ===== Modal (list for a group) ===== */
+  function renderAll(){
+    renderShortagesCard();
+    renderGroups();
+  }
+
+  /* ===== Modal: rows + shortagesGlobal ===== */
   const backdrop = $('#backdrop');
   const modalTitle = $('#modalTitle');
   const modalSearch = $('#modalSearch');
-  const modalTableBody = document.querySelector('#modalTable tbody');
-  const modalCount = $('#modalCount');
   const btnCloseModal = $('#btnCloseModal');
   const btnExportGroup = $('#btnExportGroup');
 
-  let currentGroup = null;
-  let currentGroupRows = [];
-  let currentFilteredRows = [];
+  const tableRowsWrap = $('#tableRowsWrap');
+  const tableShortWrap= $('#tableShortWrap');
+  const modalTableRowsBody  = document.querySelector('#modalTableRows tbody');
+  const modalTableShortBody = document.querySelector('#modalTableShort tbody');
+  const modalCount = $('#modalCount');
 
-  function openModalForGroup(g){
-    currentGroup = g;
-    modalTitle.textContent = `السيارات — ${g.title}`;
-    const { rows } = groupStats(g.members);
-    currentGroupRows = rows.slice().sort((a,b)=> (a.id||0)-(b.id||0));
-    currentFilteredRows = currentGroupRows.slice();
-    renderModalTable();
-    modalSearch.value = '';
+  const shortTabs = $('#shortTabs');
+
+  let currentMode = 'rows'; // 'rows' | 'shortagesGlobal'
+  let currentRows = [];     // rows mode
+  let filteredRows = [];
+
+  // shortagesGlobal mode
+  let shortDataByGroup = new Map(); // key -> items[]
+  let shortActiveKey = 'ALL';
+  let shortFiltered = [];
+
+  function openModal(mode, title){
+    currentMode = mode;
+    modalTitle.textContent = title || (mode==='rows'?'السيارات':'النواقص');
+    if(mode==='rows'){
+      $('#shortTabs').style.display='none';
+      tableRowsWrap.style.display='block';
+      tableShortWrap.style.display='none';
+    }else{
+      $('#shortTabs').style.display='flex';
+      tableRowsWrap.style.display='none';
+      tableShortWrap.style.display='block';
+    }
+    modalSearch.value='';
+    renderModal();
     backdrop.style.display='flex';
   }
   function closeModal(){
     backdrop.style.display='none';
-    currentGroup = null;
-    currentGroupRows = [];
-    currentFilteredRows = [];
+    currentRows=[]; filteredRows=[];
+    shortDataByGroup.clear(); shortFiltered=[];
   }
   btnCloseModal.addEventListener('click', closeModal);
-  backdrop.addEventListener('click', (e)=>{ if(e.target===backdrop) closeModal(); });
+  backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) closeModal(); });
 
-  function renderModalTable(){
-    modalTableBody.innerHTML='';
-    currentFilteredRows.forEach(r=>{
+  function renderRowsTable(){
+    modalTableRowsBody.innerHTML='';
+    filteredRows.forEach(r=>{
       const tr=document.createElement('tr');
       tr.innerHTML=`
         <td>${r.id||''}</td>
@@ -425,41 +582,164 @@
         <td>${r.vin||''}</td>
         <td>${r.notes||''}</td>
       `;
-      modalTableBody.appendChild(tr);
+      modalTableRowsBody.appendChild(tr);
     });
-    modalCount.textContent = `عدد السيارات الظاهرة: ${currentFilteredRows.length.toLocaleString('ar-SA')} من ${currentGroupRows.length.toLocaleString('ar-SA')}`;
+    modalCount.textContent = `عدد السيارات الظاهرة: ${filteredRows.length.toLocaleString('ar-SA')} من ${currentRows.length.toLocaleString('ar-SA')}`;
   }
 
+  function renderShortTable(){
+    const list = shortFiltered;
+    modalTableShortBody.innerHTML='';
+    list.forEach(s=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td>${s.car||''}</td>
+        <td>${s.extColor||''}</td>
+        <td style="text-align:center"><span class="tag">${s.countInGroup}</span></td>
+        <td style="text-align:center"><span class="tag">${s.countGlobal}</span></td>
+      `;
+      modalTableShortBody.appendChild(tr);
+    });
+    const totalAll = (shortDataByGroup.get(shortActiveKey)||[]).length;
+    modalCount.textContent = `عدد التركيبات الناقصة الظاهرة: ${list.length.toLocaleString('ar-SA')} من ${totalAll.toLocaleString('ar-SA')} — ${tabTitle(shortActiveKey)}`;
+  }
+
+  function renderModal(){
+    if(currentMode==='rows'){ renderRowsTable(); }
+    else { renderShortTable(); }
+  }
+
+  // فتح سيارات الجهة
+  function openModalForGroupRows(group, filterKey=null){
+    const rows = rowsForMembers(group.members);
+    let list = rows.slice();
+
+    if(filterKey==='available'){ list = list.filter(r => (r.location||'').endsWith('المخزون المتاح')); }
+    else if(filterKey==='notes'){ list = list.filter(r => (r.location||'').includes('سيارات بها ملاحظات')); }
+    else if(filterKey==='pending'){ list = list.filter(r => (r.location||'').includes('مباع تحت التسليم')); }
+    else if(filterKey==='delivered'){ list = list.filter(r => (r.location||'').includes('مباع تم التسليم')); }
+
+    currentRows = list.sort((a,b)=> (a.id||0)-(b.id||0));
+    filteredRows= currentRows.slice();
+    openModal('rows', filterKey ? `${group.title} — ${labelForFilter(filterKey)}` : `${group.title} — كل السيارات`);
+  }
+
+  /* ===== Shortages Global Modal (tabs for each group + ALL) ===== */
+  function tabTitle(key){
+    if(key==='ALL') return 'الكل';
+    const g=groupsDef.find(x=>x.key===key);
+    return g?g.title:key;
+  }
+
+  function openShortagesModal(){
+    shortDataByGroup = new Map();
+    // حساب لكل جهة
+    groupsDef.forEach(g=>{
+      shortDataByGroup.set(g.key, computeShortagesForGroup(g));
+    });
+    // تبويب الكل: دمج فريد بالسيارة+اللون مع عرض أقل countInGroup (أو نعرض per group؟)
+    // سنعرض “الكل” كاتحاد فريد (car+extColor) مع مجموع نقص الجهات التي أقل من 2؟
+    // لسهولة القراءة: نعرض العناصر الفريدة (car+extColor)، مع إظهار الإجمالي العام (ثابت) وأقل قيمة داخل الجهات (للتذكير أنها ناقصة في بعض الجهات).
+    const uniq = new Map(); // k -> {car, extColor, countGlobal, minInGroups}
+    const globMap = allGlobalShortCombos();
+    groupsDef.forEach(g=>{
+      (shortDataByGroup.get(g.key)||[]).forEach(item=>{
+        const k = `${item.car}⇢${item.extColor}`;
+        if(!uniq.has(k)){
+          uniq.set(k, { car:item.car, extColor:item.extColor, countGlobal:item.countGlobal, minInGroups:item.countInGroup });
+        }else{
+          const cur=uniq.get(k);
+          cur.minInGroups = Math.min(cur.minInGroups, item.countInGroup);
+          // countGlobal ثابت من globMap
+        }
+      });
+    });
+    const allList = Array.from(uniq.values()).sort((a,b)=> (a.car||'').localeCompare(b.car||'','ar') || (a.extColor||'').localeCompare(b.extColor||'','ar'))
+      .map(x=>({ car:x.car, extColor:x.extColor, countInGroup:x.minInGroups, countGlobal: (globMap.get(`${x.car}⇢${x.extColor}`)||0) }));
+    shortDataByGroup.set('ALL', allList);
+
+    // بناء التبويبات
+    shortTabs.innerHTML='';
+    const mk = (id, txt)=>`<button class="t" data-tab="${id}">${txt}</button>`;
+    shortTabs.insertAdjacentHTML('beforeend', mk('ALL','الكل'));
+    groupsDef.forEach(g=> shortTabs.insertAdjacentHTML('beforeend', mk(g.key,g.title)));
+    // فعل أول تبويب
+    activateShortTab('ALL');
+
+    // أظهر المودال
+    openModal('shortagesGlobal', 'النواقص — تبويبات الجهات');
+  }
+
+  function activateShortTab(key){
+    shortActiveKey = key;
+    // تفعيل شكلي
+    shortTabs.querySelectorAll('.t').forEach(b=> b.classList.toggle('active', b.getAttribute('data-tab')===key));
+    // بيانات
+    shortFiltered = (shortDataByGroup.get(key)||[]).slice();
+    renderModal();
+  }
+
+  shortTabs.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.t');
+    if(!btn) return;
+    const key = btn.getAttribute('data-tab');
+    if(!key) return;
+    activateShortTab(key);
+  });
+
+  // بحث في الوضعين
   modalSearch.addEventListener('input', ()=>{
     const q = (modalSearch.value||'').trim().toLowerCase();
-    if(!q){ currentFilteredRows = currentGroupRows.slice(); renderModalTable(); return; }
-    currentFilteredRows = currentGroupRows.filter(r=>{
-      const hay=[r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName,r.vin,r.notes].join(' ').toLowerCase();
-      return hay.includes(q);
-    });
-    renderModalTable();
+    if(currentMode==='rows'){
+      if(!q){ filteredRows = currentRows.slice(); return renderModal(); }
+      filteredRows = currentRows.filter(r=>{
+        const hay=[r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName,r.vin,r.notes].join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+    }else{
+      if(!q){ shortFiltered = (shortDataByGroup.get(shortActiveKey)||[]).slice(); return renderModal(); }
+      shortFiltered = (shortDataByGroup.get(shortActiveKey)||[]).filter(s=>{
+        const hay=[s.car,s.extColor, String(s.countInGroup), String(s.countGlobal)].join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+    }
+    renderModal();
   });
 
+  // تصدير
   btnExportGroup.addEventListener('click', ()=>{
-    const header=["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
-    const data=[header];
-    currentFilteredRows.forEach(r=>{
-      data.push([r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName||'',r.vin,r.notes]);
-    });
-    const ws=XLSX.utils.aoa_to_sheet(data);
-    ws['!cols'] = [{wch:5},{wch:24},{wch:30},{wch:18},{wch:16},{wch:16},{wch:10},{wch:10},{wch:20},{wch:16},{wch:22},{wch:26}];
-    const wb=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb,ws, (currentGroup?.title||'Group'));
-    XLSX.writeFile(wb, `mzj-${(currentGroup?.key||'group').toLowerCase()}-inventory.xlsx`);
+    if(currentMode==='rows'){
+      const header=["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
+      const data=[header];
+      filteredRows.forEach(r=>{
+        data.push([r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName||'',r.vin,r.notes]);
+      });
+      const ws=XLSX.utils.aoa_to_sheet(data);
+      ws['!cols'] = [{wch:5},{wch:24},{wch:30},{wch:18},{wch:16},{wch:16},{wch:10},{wch:10},{wch:20},{wch:16},{wch:22},{wch:26}];
+      const wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws,"Rows");
+      XLSX.writeFile(wb, `mzj-dashboard-${modalTitle.textContent.replace(/\s+/g,'-')}.xlsx`);
+    }else{
+      const header=["السيارة","اللون الخارجي","إجمالي الجهة","الإجمالي العام"];
+      const data=[header];
+      shortFiltered.forEach(s=>{
+        data.push([s.car,s.extColor,s.countInGroup,s.countGlobal]);
+      });
+      const ws=XLSX.utils.aoa_to_sheet(data);
+      ws['!cols'] = [{wch:24},{wch:16},{wch:14},{wch:14}];
+      const wb=XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb,ws, tabTitle(shortActiveKey));
+      XLSX.writeFile(wb, `mzj-shortages-${tabTitle(shortActiveKey).replace(/\s+/g,'-')}.xlsx`);
+    }
   });
 
-  /* ===== Keyboard helpers ===== */
-  document.addEventListener('keydown',(e)=>{
-    if(e.key==='Escape' && backdrop.style.display==='flex'){ closeModal(); }
-  });
+  /* ===== Events ===== */
+  // بطاقة النواقص
+  $('#shortagesCard').addEventListener('click', ()=> openShortagesModal());
 
   /* ===== Start ===== */
   setStatus('warn','جارِ الاتصال…');
 </script>
 </body>
 </html>
+```
