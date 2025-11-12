@@ -1,0 +1,381 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MZJ — إدارة طلبات التصوير (Lite • Date Range)</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<style id="noflash">html{background:#fff8ef}body{opacity:0;transition:opacity .12s ease}</style>
+<meta name="color-scheme" content="light"/>
+<style>
+  :root{
+    --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef; --card:#ffffff; --line:#e7e5e4;
+    --text:#1f2937; --muted:#6b7280; --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9;
+    --radius:12px; --shadow:0 10px 26px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--cream);color:var(--text);font-family:"Tajawal",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;line-height:1.75}
+  a{text-decoration:none;color:var(--brown)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+
+  /* Header */
+  .top{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);z-index:10}
+  .top .inner{max-width:1240px;margin:auto;padding:12px;display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#3e2420,#bc8f74);display:grid;place-items:center;color:#fff;font-weight:900;box-shadow:var(--shadow)}
+  h1{margin:0;font-size:19px;color:var(--brown)}
+  .chip{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
+  .dot{width:8px;height:8px;border-radius:999px;background:#f59e0b}
+  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)}
+  .btn{background:var(--brown);color:#fff;border:none;border-radius:10px;padding:8px 11px;font-weight:800;cursor:pointer}
+  .btn.secondary{background:#fff;color:var(--brown);border:1px solid var(--line)}
+  .btn.ghost{background:transparent;color:var(--brown);border:1px dashed var(--line)}
+
+  /* Layout */
+  .wrap{max-width:1240px;margin:14px auto;padding:0 12px}
+  .grid{display:grid;gap:12px}
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .card .inner{padding:14px}
+  .metric{display:flex;align-items:center;justify-content:space-between}
+  .metric .k{font-size:24px;font-weight:800;color:var(--brown)}
+  .metric .l{font-size:12px;color:var(--muted)}
+  .metric i{opacity:.7}
+
+  .panel{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+  .panel .head{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--line)}
+  .panel .body{padding:0}
+
+  .filters{display:flex;gap:8px;flex-wrap:wrap;padding:10px;background:#fff8ef;border-bottom:1px dashed var(--line)}
+  input,select,button,textarea{font-family:inherit}
+  input[type="search"], select, input[type="date"]{height:36px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+
+  .table-wrap{overflow:auto}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid var(--line);padding:10px 8px;font-size:13px;vertical-align:top}
+  th{position:sticky;top:0;background:#fafafa;text-align:right;z-index:1}
+  tr:hover td{background:#fffdf8}
+
+  .muted{color:var(--muted)}
+  .pill{display:inline-flex;gap:8px;align-items:center;padding:3px 9px;border-radius:999px;border:1px solid var(--line);font-size:12px}
+  .pill-draft{background:#FEF3C7}
+  .pill-prog{background:#DBEAFE}
+  .pill-done{background:#DCFCE7}
+
+  /* Auth */
+  #authGate{display:none;min-height:80vh;place-items:center}
+  #authCard{width:min(420px,92vw);padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow)}
+
+  /* Responsive */
+  @media(max-width:1000px){ .cards{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+  <header class="top">
+    <div class="inner">
+      <div class="brand">
+        <div class="logo">MZJ</div>
+        <h1>إدارة طلبات التصوير — مبسّطة</h1>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="chip"><span id="connDot" class="dot"></span><span id="connText">جارِ الاتصال…</span></span>
+        <button id="btnSignOut" class="btn secondary" style="display:none">خروج</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap grid">
+    <!-- Top metrics -->
+    <section class="cards">
+      <div class="card"><div class="inner metric"><div><div class="l">إجمالي الطلبات</div><div id="m_all" class="k">0</div></div><i class="fa-solid fa-list-check"></i></div></div>
+      <div class="card"><div class="inner metric"><div><div class="l">تحت الإجراء</div><div id="m_prog" class="k">0</div></div><i class="fa-solid fa-gears"></i></div></div>
+      <div class="card"><div class="inner metric"><div><div class="l">تم</div><div id="m_done" class="k">0</div></div><i class="fa-regular fa-circle-check"></i></div></div>
+    </section>
+
+    <!-- Auth Gate -->
+    <section id="authGate" class="panel">
+      <div class="head"><strong>تسجيل الدخول</strong></div>
+      <div class="body" style="padding:12px">
+        <div style="display:grid;gap:10px;max-width:420px">
+          <input id="email" type="text" placeholder="Email">
+          <input id="password" type="password" placeholder="Password">
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="btnLogin" class="btn">دخول</button>
+            <span id="authHint" class="muted"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main table -->
+    <section id="app" class="panel" style="display:none">
+      <div class="head">
+        <strong>الطلبات (عرض فقط + تأكيدات)</strong>
+        <div class="muted"><span id="countShown">0</span> من <span id="countTotal">0</span></div>
+      </div>
+      <div class="body">
+        <div class="filters">
+          <input id="date_from" type="date" title="من تاريخ">
+          <input id="date_to" type="date" title="إلى تاريخ">
+          <select id="f_status" title="الحالة">
+            <option value="">كل الحالات</option>
+            <option>مسودة</option>
+            <option>تحت الإجراء</option>
+            <option>تم</option>
+          </select>
+          <input id="q" type="search" placeholder="بحث: VIN / السيارة / ملاحظة / منشئ الطلب">
+          <button id="f_reset" class="btn ghost"><i class="fa-solid fa-rotate-right"></i> إعادة التصفية</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="center">#</th>
+                <th>الطلب</th>
+                <th>المنشئ</th>
+                <th>الحالة</th>
+                <th>تاريخ الإنشاء</th>
+                <th>استلام الإدارة</th>
+                <th>جاهزية السيارات</th>
+                <th>ملاحظات الإدارة</th>
+                <th>إجراءات</th>
+              </tr>
+            </thead>
+            <tbody id="reqTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="chip" style="position:fixed;bottom:18px;right:18px;display:none;background:#111827;color:#fff;border-color:#111827"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  /* ===== Firebase ===== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
+    authDomain: "mzj-agenda.firebaseapp.com",
+    projectId: "mzj-agenda",
+    storageBucket: "mzj-agenda.firebasestorage.app",
+    messagingSenderId: "834700407721",
+    appId: "1:834700407721:web:75c17665d4f032fd65cab8"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+  const STATE_REF = doc(db, "mzj_admin_state", "v1");
+
+  /* ===== Admin Name Logic ===== */
+  const ADMIN_MAP = {
+    // "hossam@mzjcars.com": "حسام",
+    // "nagy@mzjcars.com": "أحمد ناجي",
+    // "gabaly@mzjcars.com": "محمد الجبالي",
+  };
+  function displayNameFor(user){
+    if(!user) return "مسؤول";
+    if(user.displayName && user.displayName.trim()) return user.displayName.trim();
+    const e = (user.email||"").toLowerCase();
+    if(ADMIN_MAP[e]) return ADMIN_MAP[e];
+    const local = e.split("@")[0]||"";
+    return local.replace(/[._-]+/g," ").replace(/\b\w/g, c=>c.toUpperCase());
+  }
+
+  /* ===== State & Helpers ===== */
+  let shootRequests = [];
+  const $ = s=>document.querySelector(s);
+  const $$ = s=>Array.from(document.querySelectorAll(s));
+  const pad = n=>n<10?'0'+n:n;
+  function now(){
+    const d=new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+  function setStatus(mode,txt){ $('#connDot').className='dot '+(mode==='ok'?'ok':mode==='err'?'err':''); $('#connText').textContent=txt; }
+  const toast=$('#toast'); const showToast=(m)=>{ toast.textContent=m; toast.style.display='block'; setTimeout(()=>toast.style.display='none',1200); };
+
+  function toDateOnly(s){
+    // expects "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD"
+    if(!s) return null;
+    const d = s.slice(0,10);
+    const [y,m,dd] = d.split('-').map(n=>parseInt(n,10));
+    if(!y||!m||!dd) return null;
+    return new Date(y, m-1, dd);
+  }
+  function inRange(createdAt, from, to){
+    if(!from && !to) return true;
+    const d = toDateOnly(createdAt);
+    if(!d) return false;
+    if(from && d < from) return false;
+    if(to   && d > to)   return false;
+    return true;
+  }
+
+  function metrics(){
+    $('#m_all').textContent = shootRequests.length;
+    $('#m_prog').textContent = shootRequests.filter(x=>x.status==='تحت الإجراء').length;
+    $('#m_done').textContent = shootRequests.filter(x=>x.status==='تم').length;
+  }
+
+  function render(){
+    const q = ($('#q').value||'').trim().toLowerCase();
+    const s = $('#f_status').value||'';
+    const fromVal = $('#date_from').value||'';
+    const toVal   = $('#date_to').value||'';
+    const fromD = fromVal ? new Date(fromVal+"T00:00:00") : null;
+    const toD   = toVal   ? new Date(toVal+"T23:59:59") : null;
+
+    let list = [...shootRequests];
+    if(s) list = list.filter(r=> (r.status||'')===s );
+    list = list.filter(r=> inRange(r.createdAt, fromD, toD) );
+
+    if(q){
+      list = list.filter(r=>{
+        const hay = [
+          r.id, r.createdBy, r.createdAt, r.status,
+          (r.admin?.received)||'', (r.admin?.prepared)||'', (r.admin?.notes)||'',
+          ...(r.rows||[]).flatMap(x=>[x.vin||'',x.car||'',x.variant||'',x.note||''])
+        ].join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+    }
+    list.sort((a,b)=> (b.id||0)-(a.id||0) );
+    $('#countTotal').textContent = shootRequests.length;
+    $('#countShown').textContent = list.length;
+
+    const tb = $('#reqTable'); tb.innerHTML='';
+    list.forEach((r,i)=>{
+      const tr = document.createElement('tr');
+      const pillClass = r.status==='تم' ? 'pill-done' : (r.status==='تحت الإجراء'?'pill-prog':'pill-draft');
+      tr.innerHTML = `
+        <td class="center">${i+1}</td>
+        <td><span class="mono" style="font-weight:700">#${r.id||'?'}</span></td>
+        <td>${r.createdBy||''}</td>
+        <td><span class="pill ${pillClass}">${r.status||''}</span></td>
+        <td>${r.createdAt||''}</td>
+        <td>
+          <div class="muted">${r.admin?.received||'-'}</div>
+          <button class="btn secondary js-recv" data-id="${r.id}"><i class="fa-regular fa-handshake"></i> تأكيد الاستلام</button>
+        </td>
+        <td>
+          <div class="muted">${r.admin?.prepared||'-'}</div>
+          <button class="btn secondary js-prep" data-id="${r.id}"><i class="fa-solid fa-clipboard-check"></i> تأكيد التجهيز</button>
+        </td>
+        <td>
+          <input class="js-note" data-id="${r.id}" type="text" placeholder="ملاحظات…" value="${(r.admin?.notes||'').replace(/"/g,'&quot;')}">
+        </td>
+        <td>
+          <button class="btn js-save" data-id="${r.id}"><i class="fa-solid fa-floppy-disk"></i> حفظ الطلب</button>
+        </td>`;
+      tb.appendChild(tr);
+    });
+
+    // bind
+    $$('.js-recv').forEach(el=> el.addEventListener('click', async e=>{
+      const id = Number(e.currentTarget.getAttribute('data-id'));
+      await markReceived(id);
+    }));
+    $$('.js-prep').forEach(el=> el.addEventListener('click', async e=>{
+      const id = Number(e.currentTarget.getAttribute('data-id'));
+      await markPrepared(id);
+    }));
+    $$('.js-save').forEach(el=> el.addEventListener('click', async e=>{
+      const id = Number(e.currentTarget.getAttribute('data-id'));
+      const noteEl = document.querySelector(`.js-note[data-id="${id}"]`);
+      await saveNotes(id, noteEl?.value||'');
+    }));
+  }
+
+  async function persistAll(newArray){
+    await setDoc(STATE_REF, { shootRequests: newArray, updatedAt: now() }, { merge:true });
+  }
+
+  async function markReceived(id){
+    const user = auth.currentUser;
+    const who = displayNameFor(user);
+    const stamp = `${now()} — ${who}`;
+    const list = shootRequests.map(x=> Number(x.id)===Number(id) ? ({...x, status:'تحت الإجراء', admin:{...(x.admin||{}), received: stamp}}) : x);
+    await persistAll(list);
+    showToast('تم تأكيد الاستلام');
+  }
+  async function markPrepared(id){
+    const user = auth.currentUser;
+    const who = displayNameFor(user);
+    const stamp = `${now()} — ${who}`;
+    const list = shootRequests.map(x=> Number(x.id)===Number(id) ? ({...x, status:'تم', admin:{...(x.admin||{}), prepared: stamp}}) : x);
+    await persistAll(list);
+    showToast('تم تأكيد التجهيز');
+  }
+  async function saveNotes(id, notes){
+    const list = shootRequests.map(x=> Number(x.id)===Number(id) ? ({...x, admin:{...(x.admin||{}), notes: notes||''}}) : x);
+    await persistAll(list);
+    showToast('تم حفظ الطلب');
+  }
+
+  // Filters & bindings
+  $('#q').addEventListener('input', render);
+  $('#f_status').addEventListener('change', render);
+  $('#date_from').addEventListener('change', render);
+  $('#date_to').addEventListener('change', render);
+  $('#f_reset').addEventListener('click', ()=>{
+    $('#q').value='';
+    $('#f_status').value='';
+    $('#date_from').value='';
+    $('#date_to').value='';
+    render();
+  });
+
+  /* ===== Auth ===== */
+  onAuthStateChanged(auth, async (user)=>{
+    if(user){
+      $('#authGate').style.display='none';
+      $('#app').style.display='block';
+      $('#btnSignOut').style.display='inline-block';
+      setStatus('ok', `متصل: ${displayNameFor(user)}`);
+      await initData(); subscribeLive(); metrics(); render();
+      document.body.style.opacity='1';
+    }else{
+      $('#app').style.display='none';
+      $('#authGate').style.display='block';
+      $('#btnSignOut').style.display='none';
+      setStatus('', 'لم يتم تسجيل الدخول');
+      document.body.style.opacity='1';
+    }
+  });
+  $('#btnLogin').addEventListener('click', async ()=>{
+    $('#authHint').textContent='';
+    try{
+      await signInWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value);
+    }catch(e){
+      $('#authHint').textContent='بيانات غير صحيحة';
+    }
+  });
+  $('#btnSignOut').addEventListener('click', ()=> signOut(auth));
+
+  /* ===== Firestore ===== */
+  async function initData(){
+    const snap = await getDoc(STATE_REF);
+    if(snap.exists()){
+      const d = snap.data()||{};
+      shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: [];
+    }else{
+      shootRequests = [];
+    }
+  }
+  function subscribeLive(){
+    onSnapshot(STATE_REF,(snap)=>{
+      if(!snap.exists()) return;
+      const d = snap.data()||{};
+      shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: shootRequests;
+      metrics(); render();
+    });
+  }
+</script>
+</body>
+</html>
