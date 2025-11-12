@@ -78,27 +78,23 @@
 </main>
 
 <script type="module">
-  // ====== Firebase SDKs
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import {
-    getFirestore, collection, query, where, orderBy, getDocs
+    getFirestore, collection, query, where, orderBy, getDocs, limit
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // ====== إعدادات مشروع MZJ
+  // إعدادات Firebase الخاصة بمشروعك
   const firebaseConfig = {
     apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
     authDomain: "mzj-agenda.firebaseapp.com",
     projectId: "mzj-agenda",
-    storageBucket: "mzj-agenda.appspot.com",   // ← المصحّح
+    storageBucket: "mzj-agenda.appspot.com",
     messagingSenderId: "834700407721",
     appId: "1:834700407721:web:75c17665d4f032fd65cab8",
     measurementId: "G-770YFMGWQ4"
   };
 
-  const REQUIRE_AUTH = true;
-
-  // ====== Bootstrap
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getFirestore(app);
@@ -112,40 +108,31 @@
   const countText = $("#countText");
   const conn      = $("#conn");
 
-  // افتراضي: اليوم
   const todayISO = (d = new Date()) => d.toISOString().slice(0,10);
   dateFrom.value = todayISO();
   dateTo.value   = todayISO();
 
-  const fmtTime = (date) => new Date(date).toLocaleString("ar-SA", { hour12:false });
+  const fmtTime  = (date) => new Date(date).toLocaleString("ar-SA", { hour12:false });
   const sanitize = (v) => (v===undefined||v===null) ? "" : (typeof v==='string'? v : JSON.stringify(v));
+  const setRangeText = () => rangeText.textContent = من ${dateFrom.value || "—"} إلى ${dateTo.value || "—"};
 
-  function setRangeText(){ rangeText.textContent = من ${dateFrom.value || "—"} إلى ${dateTo.value || "—"}; }
-
-  // ====== فحص الاتصال (قراءة فقط)
   async function connectivityCheck(){
     try{
-      const qy = query(collection(db, "audit_logs"), orderBy("ts","desc"), /* limit */ {limit:1}.limit || undefined);
-      // workaround صغير لأن limit كـ object ما يشتغل—نعمل استيراد ثاني:
-    }catch(e){}
-    try{
-      const snap = await getDocs(query(collection(db,"audit_logs"), orderBy("ts","desc")));
+      await getDocs(query(collection(db, "audit_logs"), orderBy("ts","desc"), limit(1)));
       conn.textContent = "متصل بـ Firebase ✓";
       conn.className = "status ok";
     }catch(e){
-      console.error("Firebase connection error:", e);
-      conn.textContent = "غير متصل — تأكد من firebaseConfig / القواعد / الدومين";
+      console.error(e);
+      conn.textContent = "غير متصل — تأكد من القواعد/الدومين/الفهارس";
       conn.className = "status err";
     }
   }
 
-  // ====== تحميل السجل (من–إلى)
   async function loadAudit(){
     setRangeText();
     tbody.innerHTML = <tr><td colspan="5" class="muted">جاري التحميل...</td></tr>;
-
-    const from = dateFrom.value ? new Date(dateFrom.value + "T00:00:00") : new Date("2000-01-01T00:00:00");
-    const to   = dateTo.value   ? new Date(dateTo.value   + "T23:59:59") : new Date();
+    const from = dateFrom.value ? new Date(dateFrom.value+"T00:00:00") : new Date("2000-01-01T00:00:00");
+    const to   = dateTo.value   ? new Date(dateTo.value+"T23:59:59")   : new Date();
 
     try{
       const qy = query(
@@ -154,7 +141,6 @@
         where("ts", "<=", to),
         orderBy("ts", "desc")
       );
-
       const snap = await getDocs(qy);
 
       if(!snap.size){
@@ -164,9 +150,9 @@
       }
 
       const rows = [];
-      snap.forEach(doc => {
-        const x = doc.data();
-        const ts = (x.ts && x.ts.toDate) ? x.ts.toDate() : (x.ts ? new Date(x.ts) : null);
+      snap.forEach(d=>{
+        const x = d.data();
+        const ts = x.ts?.toDate ? x.ts.toDate() : (x.ts ? new Date(x.ts) : null);
         rows.push(`
           <tr>
             <td>${ts ? fmtTime(ts) : "-"}</td>
@@ -183,30 +169,23 @@
           </tr>
         `);
       });
-
       tbody.innerHTML = rows.join("");
       countText.textContent = ${snap.size} نتيجة;
-
-    }catch(err){
-      console.error(err);
-      tbody.innerHTML = <tr><td colspan="5" class="muted">تعذر التحميل. تأكد من الفهارس (Index) وقواعد Firestore.</td></tr>;
+    }catch(e){
+      console.error(e);
+      tbody.innerHTML = <tr><td colspan="5" class="muted">تعذر التحميل — راجع الفهارس (Index) وقواعد Firestore.</td></tr>;
       countText.textContent = "—";
     }
   }
 
   btnApply.addEventListener("click", loadAudit);
 
-  // تشغيل
-  connectivityCheck();
-
-  if(REQUIRE_AUTH){
-    onAuthStateChanged(auth, async (u)=>{
-      if(!u){ location.href="login.html"; return; }
-      loadAudit();
-    });
-  }else{
-    loadAudit();
-  }
+  // فحص الاتصال وتشغيل بعد تسجيل الدخول
+  onAuthStateChanged(auth, async (u)=>{
+    if(!u){ location.href="login.html"; return; }
+    await connectivityCheck();
+    await loadAudit();
+  });
 </script>
 </body>
 </html>
