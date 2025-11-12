@@ -47,7 +47,7 @@
   input,select,textarea{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px}
   input[readonly]{background:#fafafa;color:#6b7280}
 
-  /* جداول بدون سكرول أفقي — تصغير ومسافات مضغوطة + التفاف نصوص */
+  /* جدول مضغوط بدون سكرول أفقي */
   .table-wrap{border:1px solid var(--line);border-radius:10px;overflow:hidden}
   table{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed}
   thead th{position:sticky;top:0;background:#fcfbf9;border-bottom:2px solid var(--line);text-align:right;
@@ -141,9 +141,10 @@
         <table id="entryTable">
           <colgroup>
             <col style="width:4ch">
-            <col style="width:22ch">
             <col style="width:20ch">
             <col style="width:18ch">
+            <col style="width:16ch">
+            <col style="width:14ch">
             <col style="width:14ch">
             <col style="width:8ch">
             <col style="width:18ch">
@@ -158,6 +159,7 @@
               <th>السيارة</th>
               <th>البيان</th>
               <th>الخارجي</th>
+              <th>الداخلي</th>
               <th class="center">الموديل</th>
               <th>مكان السيارة</th>
               <th>مكان التصوير</th>
@@ -268,7 +270,8 @@
             <col style="width:20ch">
             <col style="width:18ch">
             <col style="width:16ch">
-            <col style="width:16ch">
+            <col style="width:14ch">
+            <col style="width:14ch">
             <col style="width:8ch">
             <col style="width:18ch">
             <col style="width:16ch">
@@ -281,6 +284,7 @@
               <th>السيارة</th>
               <th>البيان</th>
               <th>الخارجي</th>
+              <th>الداخلي</th>
               <th class="center">الموديل</th>
               <th>مكان السيارة</th>
               <th>مكان التصوير</th>
@@ -338,7 +342,6 @@
       $('#btnSignOut').style.display='inline-block';
       setStatus('ok', `متصل: ${user.email}`);
       await initData(); subscribeLive(); buildFormRows(); renderRequestsTable();
-      // تأكيد ضبط مقدّم الطلب تلقائيًا
       const rb = $('#reqBy'); rb.value='أحمد ناجي'; rb.setAttribute('readonly','readonly');
     }else{
       $('#app').style.display='none';
@@ -397,6 +400,7 @@
         <td><input class="car small-input" readonly placeholder="—"></td>
         <td><input class="variant small-input" readonly placeholder="—"></td>
         <td><input class="ext small-input" readonly placeholder="—"></td>
+        <td><input class="int small-input" readonly placeholder="—"></td>
         <td class="center"><input class="year center small-input" readonly placeholder="—"></td>
         <td><input class="loc small-input" readonly placeholder="—"></td>
         <td>
@@ -412,7 +416,6 @@
       `;
       reqRowsBody.appendChild(tr);
     }
-    // تأكيد اسم مقدّم الطلب بعد إعادة البناء
     const rb = $('#reqBy'); if(rb){ rb.value='أحمد ناجي'; rb.setAttribute('readonly','readonly'); }
   }
   $('#btnClear').addEventListener('click', buildFormRows);
@@ -423,7 +426,7 @@
     const tr=b.closest('tr'); tr.querySelectorAll('input,select').forEach(x=> x.value='');
   });
 
-  // تعبئة تلقائية من المخزون عند الخروج من خانة VIN
+  // تعبئة تلقائية من المخزون عند إدخال VIN
   reqRowsBody.addEventListener('blur',(e)=>{
     const vinEl = e.target.closest('input.vin'); if(!vinEl) return;
     const norm = normalizeVin(vinEl.value); vinEl.value = norm;
@@ -434,11 +437,12 @@
       row.querySelector('.car').value    = rec.car||'';
       row.querySelector('.variant').value= rec.variant||'';
       row.querySelector('.ext').value    = rec.extColor||'';
+      row.querySelector('.int').value    = rec.intColor||'';
       row.querySelector('.year').value   = rec.modelYear||'';
       row.querySelector('.loc').value    = rec.location||'';
       showToast('تم جلب بيانات السيارة');
     }else{
-      row.querySelectorAll('.car,.variant,.ext,.year,.loc').forEach(i=> i.value='');
+      row.querySelectorAll('.car,.variant,.ext,.int,.year,.loc').forEach(i=> i.value='');
       showToast('لا يوجد هيكل مطابق');
     }
   }, true);
@@ -452,7 +456,7 @@
         car:tr.querySelector('.car').value||'',
         variant:tr.querySelector('.variant').value||'',
         extColor:tr.querySelector('.ext').value||'',
-        intColor:'',
+        intColor:tr.querySelector('.int').value||'',
         modelYear:tr.querySelector('.year').value||'',
         currentLocation:tr.querySelector('.loc').value||'',
         shootPlace: (tr.querySelector('.place').value||''),
@@ -498,7 +502,7 @@
       list = list.filter(r=>{
         const hay=[
           r.id,r.createdAt,r.createdBy,r.status,(r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),
-          ...r.rows.flatMap(x=>[x.vin,x.car,x.variant,x.extColor,x.modelYear,x.currentLocation,x.shootPlace,x.note])
+          ...r.rows.flatMap(x=>[x.vin,x.car,x.variant,x.extColor,x.intColor,x.modelYear,x.currentLocation,x.shootPlace,x.note])
         ].join(' ').toLowerCase();
         return hay.includes(q);
       });
@@ -588,6 +592,7 @@
         <td><input class="small-input m_car" value="${x.car||''}" readonly></td>
         <td><input class="small-input m_variant" value="${x.variant||''}" readonly></td>
         <td><input class="small-input m_ext" value="${x.extColor||''}" readonly></td>
+        <td><input class="small-input m_int" value="${x.intColor||''}" readonly></td>
         <td class="center"><input class="small-input m_year center" value="${x.modelYear||''}" readonly></td>
         <td><input class="small-input m_loc" value="${x.currentLocation||''}" readonly></td>
         <td>
@@ -626,7 +631,7 @@
       req.admin = req.admin||{};
       req.admin.notes = $('#m_adminNotes').value||'';
 
-      // تحديث مكان التصوير + ملاحظة لكل صف
+      // تحديث مكان التصوير + ملاحظة لكل صف (مع الحفاظ على الألوان الداخلية/الخارجية)
       const newRows=[];
       modalRowsBody.querySelectorAll('tr').forEach(tr=>{
         const vin = tr.querySelector('.m_vin').value||'';
@@ -655,23 +660,23 @@
   $('#btnExport').addEventListener('click', ()=>{
     const header=["رقم الطلب","التاريخ","مقدّم","عدد الهياكل","الحالة",
       "استلام إداري","تجهيز","ملاحظات الإدارة",
-      "VIN","السيارة","البيان","الخارجي","الموديل","مكان السيارة","مكان التصوير (صف)","ملاحظة الصف"];
+      "VIN","السيارة","البيان","الخارجي","الداخلي","الموديل","مكان السيارة","مكان التصوير (صف)","ملاحظة الصف"];
     const data=[header];
     (shootRequests||[]).forEach(r=>{
       if(!r.rows?.length){
-        data.push([r.id,r.createdAt,r.createdBy,0,r.status,(r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),"","","","","","","",""]);
+        data.push([r.id,r.createdAt,r.createdBy,0,r.status,(r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),"","","","","","","","",""]);
       }else{
         r.rows.forEach((x,i)=>{
           data.push([
             i===0?r.id:"", i===0?r.createdAt:"", i===0?r.createdBy:"", i===0?r.rows.length:"", i===0?(r.status||""):"",
             i===0?(r.admin?.received||""):"", i===0?(r.admin?.prepared||""):"", i===0?(r.admin?.notes||""):"",
-            x.vin,x.car,x.variant,x.extColor,x.modelYear,x.currentLocation,x.shootPlace||"",x.note||""
+            x.vin,x.car,x.variant,x.extColor,x.intColor,x.modelYear,x.currentLocation,x.shootPlace||"",x.note||""
           ]);
         });
       }
     });
     const ws=XLSX.utils.aoa_to_sheet(data);
-    ws['!cols']=[{wch:8},{wch:18},{wch:14},{wch:8},{wch:10},{wch:16},{wch:18},{wch:16},{wch:20},{wch:14},{wch:10},{wch:16},{wch:16},{wch:18}];
+    ws['!cols']=[{wch:8},{wch:18},{wch:14},{wch:8},{wch:10},{wch:16},{wch:18},{wch:16},{wch:20},{wch:14},{wch:10},{wch:10},{wch:16},{wch:16},{wch:18}];
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,"Shoot Requests");
     XLSX.writeFile(wb,"mzj-photoshoot-requests.xlsx");
@@ -682,4 +687,3 @@
 </script>
 </body>
 </html>
-
