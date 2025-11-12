@@ -1,8 +1,18 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<link rel="prefetch" href="admin.html">
+<link rel="prefetch" href="inventory.html">
+<link rel="prefetch" href="dashboard.html">
+<link rel="prefetch" href="photoshoot.html">
+<link rel="prefetch" href="index.html">
+
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style id="noFlash">
+#authGate{display:none!important}
+html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
+<meta name="color-scheme" content="light">
 <title>MZJ — طلبات التصوير</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
@@ -46,9 +56,8 @@
   .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
   input,select,textarea{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px}
   input[readonly]{background:#fafafa;color:#6b7280}
-  textarea{min-height:36px;resize:vertical;line-height:1.5}
 
-  /* جدول مضغوط بدون سكرول أفقي + الملاحظات عريضة */
+  /* جدول مضغوط بدون سكرول أفقي */
   .table-wrap{border:1px solid var(--line);border-radius:10px;overflow:hidden}
   table{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed}
   thead th{position:sticky;top:0;background:#fcfbf9;border-bottom:2px solid var(--line);text-align:right;
@@ -96,7 +105,6 @@
       <a class="tab" href="admin.html">الإدارة</a>
       <a class="tab" href="inventory.html">المخزون</a>
       <a class="tab" href="dashboard.html">الداش بورد</a>
-      <a class="tab active" href="photoshoot.html">التصوير</a>
     </div>
     <div class="row">
       <div class="status-badge"><span id="connDot" class="dot"></span><span id="connText">جارِ الاتصال…</span></div>
@@ -106,7 +114,7 @@
 </div>
 
 <!-- Auth Gate -->
-<div id="authGate" style="min-height:60vh;display:grid;place-items:center;padding:20px">
+<div id="authGate" style="min-height:60vh;display:grid;place-items:center;padding:20px;display:none">
   <div class="card" style="max-width:420px;width:96%">
     <h2 class="title" style="margin-bottom:8px"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</h2>
     <label>البريد الإلكتروني</label>
@@ -141,19 +149,18 @@
 
       <div class="table-wrap" style="margin-top:8px">
         <table id="entryTable">
-          <!-- توزيع الأعمدة: الملاحظة كبيرة، أعمدة الهوية/الموديل/الحذف أصغر -->
           <colgroup>
-            <col style="width:4ch">   <!-- # -->
-            <col style="width:18ch">  <!-- VIN -->
-            <col style="width:16ch">  <!-- السيارة -->
-            <col style="width:14ch">  <!-- البيان -->
-            <col style="width:10ch">  <!-- الخارجي -->
-            <col style="width:10ch">  <!-- الداخلي -->
-            <col style="width:6ch">   <!-- الموديل -->
-            <col style="width:14ch">  <!-- مكان السيارة -->
-            <col style="width:14ch">  <!-- مكان التصوير -->
-            <col style="width:26ch">  <!-- ملاحظة (واسع) -->
-            <col style="width:7ch">   <!-- حذف -->
+            <col style="width:4ch">
+            <col style="width:20ch">
+            <col style="width:18ch">
+            <col style="width:16ch">
+            <col style="width:14ch">
+            <col style="width:14ch">
+            <col style="width:8ch">
+            <col style="width:18ch">
+            <col style="width:16ch">
+            <col style="width:auto">
+            <col style="width:8ch">
           </colgroup>
           <thead>
             <tr>
@@ -269,16 +276,16 @@
       <div class="table-wrap">
         <table id="modalRows">
           <colgroup>
-            <col style="width:4ch">   <!-- # -->
-            <col style="width:18ch">  <!-- VIN -->
-            <col style="width:16ch">  <!-- السيارة -->
-            <col style="width:14ch">  <!-- البيان -->
-            <col style="width:10ch">  <!-- الخارجي -->
-            <col style="width:10ch">  <!-- الداخلي -->
-            <col style="width:6ch">   <!-- الموديل -->
-            <col style="width:14ch">  <!-- مكان السيارة -->
-            <col style="width:14ch">  <!-- مكان التصوير -->
-            <col style="width:26ch">  <!-- ملاحظة -->
+            <col style="width:4ch">
+            <col style="width:20ch">
+            <col style="width:18ch">
+            <col style="width:16ch">
+            <col style="width:14ch">
+            <col style="width:14ch">
+            <col style="width:8ch">
+            <col style="width:18ch">
+            <col style="width:16ch">
+            <col style="width:auto">
           </colgroup>
           <thead>
             <tr>
@@ -346,12 +353,14 @@
       setStatus('ok', `متصل: ${user.email}`);
       await initData(); subscribeLive(); buildFormRows(); renderRequestsTable();
       const rb = $('#reqBy'); rb.value='أحمد ناجي'; rb.setAttribute('readonly','readonly');
-    }else{
+    
+      document.body.style.opacity='1';}else{
       $('#app').style.display='none';
       $('#authGate').style.display='grid';
       $('#btnSignOut').style.display='none';
       setStatus('', 'لم يتم تسجيل الدخول');
-    }
+    
+      document.body.style.opacity='1';}
   });
   $('#btnLogin').addEventListener('click', async ()=>{
     $('#authHint').textContent=''; try{ await signInWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
@@ -412,9 +421,9 @@
             ${SHOOT_PLACES.map(p=>`<option>${p}</option>`).join('')}
           </select>
         </td>
-        <td><textarea class="note small-input" placeholder="اختياري"></textarea></td>
+        <td><input class="note small-input" placeholder="اختياري"></td>
         <td class="center">
-          <button class="btn btn-danger btn-row-del" title="تفريغ الصف"><i class="fa-solid fa-xmark"></i></button>
+          <button class="btn btn-danger btn-row-del"><i class="fa-solid fa-xmark"></i> حذف</button>
         </td>
       `;
       reqRowsBody.appendChild(tr);
@@ -426,7 +435,7 @@
   // حذف صف (تفريغ حقول)
   reqRowsBody.addEventListener('click',(e)=>{
     const b=e.target.closest('.btn-row-del'); if(!b) return;
-    const tr=b.closest('tr'); tr.querySelectorAll('input,select,textarea').forEach(x=> x.value='');
+    const tr=b.closest('tr'); tr.querySelectorAll('input,select').forEach(x=> x.value='');
   });
 
   // تعبئة تلقائية من المخزون عند إدخال VIN
@@ -604,7 +613,7 @@
             ${["المعرض","الاستديو","الصالة الاساسية","صالة القادسية","معرض الملتقى"].map(p=>`<option ${p===(x.shootPlace||'')?'selected':''}>${p}</option>`).join('')}
           </select>
         </td>
-        <td><textarea class="small-input m_note">${x.note||''}</textarea></td>
+        <td><input class="small-input m_note" value="${x.note||''}"></td>
       `;
       modalRowsBody.appendChild(tr);
     });
@@ -634,7 +643,7 @@
       req.admin = req.admin||{};
       req.admin.notes = $('#m_adminNotes').value||'';
 
-      // تحديث مكان التصوير + ملاحظة لكل صف
+      // تحديث مكان التصوير + ملاحظة لكل صف (مع الحفاظ على الألوان الداخلية/الخارجية)
       const newRows=[];
       modalRowsBody.querySelectorAll('tr').forEach(tr=>{
         const vin = tr.querySelector('.m_vin').value||'';
@@ -679,7 +688,7 @@
       }
     });
     const ws=XLSX.utils.aoa_to_sheet(data);
-    ws['!cols']=[{wch:8},{wch:18},{wch:14},{wch:8},{wch:10},{wch:10},{wch:10},{wch:16},{wch:16},{wch:18}];
+    ws['!cols']=[{wch:8},{wch:18},{wch:14},{wch:8},{wch:10},{wch:16},{wch:18},{wch:16},{wch:20},{wch:14},{wch:10},{wch:10},{wch:16},{wch:16},{wch:18}];
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,"Shoot Requests");
     XLSX.writeFile(wb,"mzj-photoshoot-requests.xlsx");
