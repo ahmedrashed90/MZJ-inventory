@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>MZJ — إدارة طلبات التصوير (Lite • Date Range)</title>
+<title>MZJ — إدارة طلبات التصوير (عرض تفصيلي + اختيار مكان التصوير + تأكيد الاستلام/التجهيز)</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 <style id="noflash">html{background:#fff8ef}body{opacity:0;transition:opacity .12s ease}</style>
@@ -13,7 +12,7 @@
   :root{
     --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef; --card:#ffffff; --line:#e7e5e4;
     --text:#1f2937; --muted:#6b7280; --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9;
-    --radius:12px; --shadow:0 10px 26px rgba(0,0,0,.06);
+    --radius:12px; --shadow:0 10px 26px rgba(0,0,0,.06); --table-head:#fafafa;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -30,9 +29,11 @@
   .chip{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
   .dot{width:8px;height:8px;border-radius:999px;background:#f59e0b}
   .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)}
-  .btn{background:var(--brown);color:#fff;border:none;border-radius:10px;padding:8px 11px;font-weight:800;cursor:pointer}
+  .btn{background:var(--brown);color:#fff;border:none;border-radius:10px;padding:8px 11px;font-weight:800;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
   .btn.secondary{background:#fff;color:var(--brown);border:1px solid var(--line)}
   .btn.ghost{background:transparent;color:var(--brown);border:1px dashed var(--line)}
+  .btn.beige{background:var(--beige)}
+  .btn.danger{background:var(--danger)}
 
   /* Layout */
   .wrap{max-width:1240px;margin:14px auto;padding:0 12px}
@@ -51,12 +52,12 @@
 
   .filters{display:flex;gap:8px;flex-wrap:wrap;padding:10px;background:#fff8ef;border-bottom:1px dashed var(--line)}
   input,select,button,textarea{font-family:inherit}
-  input[type="search"], select, input[type="date"]{height:36px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  input[type="search"], select, input[type="date"], input[type="text"]{height:36px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
 
   .table-wrap{overflow:auto}
-  table{width:100%;border-collapse:collapse}
+  table{width:100%;border-collapse:separate;border-spacing:0}
   th,td{border-bottom:1px solid var(--line);padding:10px 8px;font-size:13px;vertical-align:top}
-  th{position:sticky;top:0;background:#fafafa;text-align:right;z-index:1}
+  th{position:sticky;top:0;background:var(--table-head);text-align:right;z-index:1}
   tr:hover td{background:#fffdf8}
 
   .muted{color:var(--muted)}
@@ -64,6 +65,13 @@
   .pill-draft{background:#FEF3C7}
   .pill-prog{background:#DBEAFE}
   .pill-done{background:#DCFCE7}
+
+  /* Modal */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.38);display:none;align-items:center;justify-content:center;z-index:50}
+  .modal{background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.35);width:min(1000px,96vw);border:1px solid var(--line)}
+  .modal header{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--line)}
+  .modal .content{padding:12px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
   /* Auth */
   #authGate{display:none;min-height:80vh;place-items:center}
@@ -78,7 +86,7 @@
     <div class="inner">
       <div class="brand">
         <div class="logo">MZJ</div>
-        <h1>إدارة طلبات التصوير — </h1>
+        <h1>إدارة طلبات التصوير —</h1>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <span class="chip"><span id="connDot" class="dot"></span><span id="connText">جارِ الاتصال…</span></span>
@@ -110,10 +118,10 @@
       </div>
     </section>
 
-    <!-- Main table -->
+    <!-- الجدول الرئيسي -->
     <section id="app" class="panel" style="display:none">
       <div class="head">
-        <strong>الطلبات (عرض  + تأكيد)</strong>
+        <strong>الطلبات (عرض تفصيلي + حفظ مكان التصوير)</strong>
         <div class="muted"><span id="countShown">0</span> من <span id="countTotal">0</span></div>
       </div>
       <div class="body">
@@ -126,7 +134,7 @@
             <option>تحت الإجراء</option>
             <option>تم</option>
           </select>
-          <input id="q" type="search" placeholder="بحث: VIN / السيارة / ملاحظة / منشئ الطلب">
+          <input id="q" type="search" placeholder="بحث: VIN / السيارة / المكان / ملاحظة / منشئ الطلب">
           <button id="f_reset" class="btn ghost"><i class="fa-solid fa-rotate-right"></i> إعادة التصفية</button>
         </div>
 
@@ -152,6 +160,64 @@
     </section>
   </main>
 
+  <!-- Modal: عرض الطلب -->
+  <div id="reqModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <header>
+        <strong id="reqModalTitle">عرض الطلب</strong>
+        <div class="row">
+          <button class="btn secondary" id="btnModalReceived"><i class="fa-regular fa-handshake"></i> تأكيد الاستلام</button>
+          <button class="btn beige" id="btnModalPrepared"><i class="fa-solid fa-clipboard-check"></i> تأكيد التجهيز</button>
+          <button class="btn secondary" id="reqModalClose"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+        </div>
+      </header>
+      <div class="content">
+        <div class="row" style="justify-content:space-between;margin-bottom:6px">
+          <div class="subhint" id="reqMeta"></div>
+          <div class="subhint" id="reqStatus"></div>
+        </div>
+
+        <!-- أماكن التصوير -->
+        <div class="card" style="margin-top:8px">
+          <div class="inner">
+            <div class="row" style="align-items:flex-end;gap:10px">
+              <div style="flex:1">
+                <label style="display:block;margin-bottom:6px">مكان التصوير (المطلوب)</label>
+                <input id="reqPlaceRequested" type="text" readonly placeholder="— غير محدد —" />
+              </div>
+              <div style="flex:1">
+                <label style="display:block;margin-bottom:6px">اختيار مكان التصوير (فعلي)</label>
+                <select id="reqPlaceChosen"></select>
+              </div>
+              <button class="btn" id="btnSaveChosen"><i class="fa-solid fa-floppy-disk"></i> حفظ المكان</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- جدول تفاصيل السيارات داخل الطلب -->
+        <div class="table-wrap" style="margin-top:10px">
+          <table>
+            <thead>
+              <tr>
+                <th style="min-width:50px">#</th>
+                <th style="min-width:160px">رقم الهيكل (VIN)</th>
+                <th style="min-width:160px">السيارة</th>
+                <th>البيان</th>
+                <th>الخارجي</th>
+                <th>الداخلي</th>
+                <th style="min-width:90px">الموديل</th>
+                <th style="min-width:220px">مكان السيارة (حالي)</th>
+                <th style="min-width:220px">مكان التصوير</th>
+                <th>ملاحظات</th>
+              </tr>
+            </thead>
+            <tbody id="reqCarsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast" class="chip" style="position:fixed;bottom:18px;right:18px;display:none;background:#111827;color:#fff;border-color:#111827"></div>
 
 <script type="module">
@@ -174,11 +240,7 @@
   const STATE_REF = doc(db, "mzj_admin_state", "v1");
 
   /* ===== Admin Name Logic ===== */
-  const ADMIN_MAP = {
-    // "hossam@mzjcars.com": "حسام",
-    // "nagy@mzjcars.com": "أحمد ناجي",
-    // "gabaly@mzjcars.com": "محمد الجبالي",
-  };
+  const ADMIN_MAP = { };
   function displayNameFor(user){
     if(!user) return "مسؤول";
     if(user.displayName && user.displayName.trim()) return user.displayName.trim();
@@ -188,39 +250,80 @@
     return local.replace(/[._-]+/g," ").replace(/\b\w/g, c=>c.toUpperCase());
   }
 
+  /* ===== ثابت المواقع لاختيار مكان التصوير ===== */
+  const FIXED_LOCATIONS = [
+    "المستودع : المخزون المتاح","المستودع : سيارات بها ملاحظات","المستودع : مباع تحت التسليم","المستودع : مباع تم التسليم",
+    "الوكالة : المخزون المتاح","الوكالة : سيارات بها ملاحظات","الوكالة : مباع تحت التسليم","الوكالة : مباع تم التسليم",
+    "فرع 1 الصالة : المخزون المتاح","فرع 1 الصالة : سيارات بها ملاحظات","فرع 1 الصالة : مباع تحت التسليم","فرع 1 الصالة : مباع تم التسليم",
+    "فرع 2 الملتقى : المخزون المتاح","فرع 2 الملتقى : سيارات بها ملاحظات","فرع 2 الملتقى : مباع تحت التسليم","فرع 2 الملتقى : مباع تم التسليم",
+    "فرع 3 القادسية : المخزون المتاح","فرع 3 القادسية : سيارات بها ملاحظات","فرع 3 القادسية : مباع تحت التسليم","فرع 3 القادسية : مباع تم التسليم"
+  ];
+
   /* ===== State & Helpers ===== */
   let shootRequests = [];
+  let stock = []; // اختياري لعرض موقع السيارة الحالي
+
   const $ = s=>document.querySelector(s);
   const $$ = s=>Array.from(document.querySelectorAll(s));
   const pad = n=>n<10?'0'+n:n;
-  function now(){
-    const d=new Date();
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-  }
+  const toast=$('#toast');
+  const showToast=(m)=>{ toast.textContent=m; toast.style.display='block'; setTimeout(()=>toast.style.display='none',1400); };
+  function now(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
   function setStatus(mode,txt){ $('#connDot').className='dot '+(mode==='ok'?'ok':mode==='err'?'err':''); $('#connText').textContent=txt; }
-  const toast=$('#toast'); const showToast=(m)=>{ toast.textContent=m; toast.style.display='block'; setTimeout(()=>toast.style.display='none',1200); };
-
-  function toDateOnly(s){
-    // expects "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD"
-    if(!s) return null;
-    const d = s.slice(0,10);
-    const [y,m,dd] = d.split('-').map(n=>parseInt(n,10));
-    if(!y||!m||!dd) return null;
-    return new Date(y, m-1, dd);
-  }
+  function toDateOnly(s){ if(!s) return null; const d=s.slice(0,10); const [y,m,dd]=d.split('-').map(n=>parseInt(n,10)); if(!y||!m||!dd) return null; return new Date(y,m-1,dd); }
   function inRange(createdAt, from, to){
     if(!from && !to) return true;
-    const d = toDateOnly(createdAt);
-    if(!d) return false;
+    const d = toDateOnly(createdAt); if(!d) return false;
     if(from && d < from) return false;
     if(to   && d > to)   return false;
     return true;
   }
+  function normalizeVin(v){ if(!v) return ''; const ar={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'}; return v.toString().replace(/[٠-٩]/g,d=>ar[d]).toUpperCase().replace(/[\s\-\._]/g,'').trim(); }
 
   function metrics(){
     $('#m_all').textContent = shootRequests.length;
     $('#m_prog').textContent = shootRequests.filter(x=>x.status==='تحت الإجراء').length;
     $('#m_done').textContent = shootRequests.filter(x=>x.status==='تم').length;
+  }
+
+  /* ===== أدوات حفظ عامة ===== */
+  async function persistRequests(newArray){
+    await setDoc(STATE_REF, { shootRequests: newArray, updatedAt: now() }, { merge:true });
+  }
+
+  async function markReceived(id){
+    const user = auth.currentUser;
+    const who = displayNameFor(user);
+    const stamp = `${now()} — ${who}`;
+    const list = shootRequests.map(x=> Number(x.id)===Number(id)
+      ? ({...x, status:'تحت الإجراء', admin:{...(x.admin||{}), received: stamp}})
+      : x);
+    await persistRequests(list);
+    showToast('تم تأكيد الاستلام ✅');
+  }
+
+  async function markPrepared(id){
+    const user = auth.currentUser;
+    const who = displayNameFor(user);
+    const stamp = `${now()} — ${who}`;
+    const list = shootRequests.map(x=> Number(x.id)===Number(id)
+      ? ({...x, status:'تم', admin:{...(x.admin||{}), prepared: stamp}})
+      : x);
+    await persistRequests(list);
+    showToast('تم تأكيد التجهيز ✅');
+  }
+
+  async function saveNotes(id, notes){
+    const list = shootRequests.map(x=> Number(x.id)===Number(id)
+      ? ({...x, admin:{...(x.admin||{}), notes: notes||''}})
+      : x);
+    await persistRequests(list);
+    showToast('تم حفظ الملاحظات 💾');
+  }
+
+  /* ===== جدول الطلبات ===== */
+  function requestedPlaceOf(r){
+    return (r?.shoot && (r.shoot.requested || r.shoot.placeRequested)) || r.requestedPlace || r.placeRequested || '';
   }
 
   function render(){
@@ -239,8 +342,8 @@
       list = list.filter(r=>{
         const hay = [
           r.id, r.createdBy, r.createdAt, r.status,
-          (r.admin?.received)||'', (r.admin?.prepared)||'', (r.admin?.notes)||'',
-          ...(r.rows||[]).flatMap(x=>[x.vin||'',x.car||'',x.variant||'',x.note||''])
+          requestedPlaceOf(r), (r.admin?.received)||'', (r.admin?.prepared)||'', (r.admin?.notes)||'',
+          ...(r.rows||[]).flatMap(x=>[x.vin||'',x.car||'',x.variant||'',x.extColor||'',x.intColor||'',x.modelYear||'',x.note||''])
         ].join(' ').toLowerCase();
         return hay.includes(q);
       });
@@ -251,8 +354,8 @@
 
     const tb = $('#reqTable'); tb.innerHTML='';
     list.forEach((r,i)=>{
-      const tr = document.createElement('tr');
       const pillClass = r.status==='تم' ? 'pill-done' : (r.status==='تحت الإجراء'?'pill-prog':'pill-draft');
+      const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="center">${i+1}</td>
         <td><span class="mono" style="font-weight:700">#${r.id||'?'}</span></td>
@@ -260,18 +363,19 @@
         <td><span class="pill ${pillClass}">${r.status||''}</span></td>
         <td>${r.createdAt||''}</td>
         <td>
-          <div class="muted">${r.admin?.received||'-'}</div>
+          <div class="muted" id="recv_${r.id}">${r.admin?.received||'-'}</div>
           <button class="btn secondary js-recv" data-id="${r.id}"><i class="fa-regular fa-handshake"></i> تأكيد الاستلام</button>
         </td>
         <td>
-          <div class="muted">${r.admin?.prepared||'-'}</div>
-          <button class="btn secondary js-prep" data-id="${r.id}"><i class="fa-solid fa-clipboard-check"></i> تأكيد التجهيز</button>
+          <div class="muted" id="prep_${r.id}">${r.admin?.prepared||'-'}</div>
+          <button class="btn beige js-prep" data-id="${r.id}"><i class="fa-solid fa-clipboard-check"></i> تأكيد التجهيز</button>
         </td>
         <td>
           <input class="js-note" data-id="${r.id}" type="text" placeholder="ملاحظات…" value="${(r.admin?.notes||'').replace(/"/g,'&quot;')}">
         </td>
-        <td>
-          <button class="btn js-save" data-id="${r.id}"><i class="fa-solid fa-floppy-disk"></i> حفظ الطلب</button>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn js-save" data-id="${r.id}"><i class="fa-solid fa-floppy-disk"></i> حفظ</button>
+          <button class="btn secondary js-view" data-id="${r.id}"><i class="fa-regular fa-eye"></i> عرض</button>
         </td>`;
       tb.appendChild(tr);
     });
@@ -290,46 +394,124 @@
       const noteEl = document.querySelector(`.js-note[data-id="${id}"]`);
       await saveNotes(id, noteEl?.value||'');
     }));
+    $$('.js-view').forEach(el=> el.addEventListener('click', e=>{
+      const id = Number(e.currentTarget.getAttribute('data-id'));
+      openReqModal(id);
+    }));
   }
 
-  async function persistAll(newArray){
-    await setDoc(STATE_REF, { shootRequests: newArray, updatedAt: now() }, { merge:true });
+  /* ===== المودال: عرض الطلب ===== */
+  const reqModal = $('#reqModal');
+  const reqModalClose = $('#reqModalClose');
+  const reqModalTitle = $('#reqModalTitle');
+  const reqMeta = $('#reqMeta');
+  const reqStatus = $('#reqStatus');
+  const reqPlaceRequested = $('#reqPlaceRequested');
+  const reqPlaceChosen = $('#reqPlaceChosen');
+  const btnSaveChosen = $('#btnSaveChosen');
+  const reqCarsTable = $('#reqCarsTable');
+  const btnModalReceived = $('#btnModalReceived');
+  const btnModalPrepared = $('#btnModalPrepared');
+
+  function fillShootPlacesSelect(sel){
+    sel.innerHTML = `<option value="">— اختر مكان التصوير —</option>` + FIXED_LOCATIONS.map(l=> `<option value="${l}">${l}</option>`).join('');
+  }
+  fillShootPlacesSelect(reqPlaceChosen);
+
+  function currentLocationByVIN(vin){
+    if(!vin) return '';
+    const norm = normalizeVin(vin);
+    const rec = stock.find(s=> normalizeVin(s.vin)===norm);
+    return rec ? (rec.location || '') : '';
   }
 
-  async function markReceived(id){
-    const user = auth.currentUser;
-    const who = displayNameFor(user);
-    const stamp = `${now()} — ${who}`;
-    const list = shootRequests.map(x=> Number(x.id)===Number(id) ? ({...x, status:'تحت الإجراء', admin:{...(x.admin||{}), received: stamp}}) : x);
-    await persistAll(list);
-    showToast('تم تأكيد الاستلام');
-  }
-  async function markPrepared(id){
-    const user = auth.currentUser;
-    const who = displayNameFor(user);
-    const stamp = `${now()} — ${who}`;
-    const list = shootRequests.map(x=> Number(x.id)===Number(id) ? ({...x, status:'تم', admin:{...(x.admin||{}), prepared: stamp}}) : x);
-    await persistAll(list);
-    showToast('تم تأكيد التجهيز');
-  }
-  async function saveNotes(id, notes){
-    const list = shootRequests.map(x=> Number(x.id)===Number(id) ? ({...x, admin:{...(x.admin||{}), notes: notes||''}}) : x);
-    await persistAll(list);
-    showToast('تم حفظ الطلب');
+  let modalCurrentId = null;
+
+  function openReqModal(id){
+    const r = shootRequests.find(x=> Number(x.id)===Number(id));
+    if(!r){ showToast('الطلب غير موجود'); return; }
+    modalCurrentId = id;
+
+    reqModalTitle.textContent = `عرض الطلب #${r.id||'?'}`;
+    reqMeta.textContent = `المنشئ: ${r.createdBy||'-'} — بتاريخ: ${r.createdAt||'-'}`;
+    reqStatus.textContent = `الحالة: ${r.status||'-'}`;
+
+    const requested = requestedPlaceOf(r) || '';
+    reqPlaceRequested.value = requested || '— غير محدد —';
+
+    fillShootPlacesSelect(reqPlaceChosen);
+    const chosen = (r?.shoot && (r.shoot.chosen || r.shoot.placeChosen)) ? (r.shoot.chosen || r.shoot.placeChosen) : '';
+    reqPlaceChosen.value = chosen || requested || '';
+
+    // تفاصيل السيارات
+    reqCarsTable.innerHTML = '';
+    const rows = Array.isArray(r.rows) ? r.rows : [];
+    rows.forEach((row,i)=>{
+      const vin = row.vin || '';
+      const car = row.car || '';
+      const variant = row.variant || '';
+      const ext = row.extColor || row.ext || '';
+      const intl = row.intColor || row.int || '';
+      const model = row.modelYear || row.model || '';
+      const loc = currentLocationByVIN(vin) || row.location || '— غير مسجل —';
+      const shootPlace = (row.shootPlace || reqPlaceChosen.value || requested || '');
+      const note = row.note || '';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td class="mono">${vin}</td>
+        <td>${car}</td>
+        <td>${variant}</td>
+        <td>${ext}</td>
+        <td>${intl}</td>
+        <td>${model}</td>
+        <td>${loc}</td>
+        <td>${shootPlace || '—'}</td>
+        <td>${note}</td>`;
+      reqCarsTable.appendChild(tr);
+    });
+
+    // ربط الأزرار داخل المودال
+    btnSaveChosen.onclick = async ()=>{
+      const val = reqPlaceChosen.value || '';
+      const newList = shootRequests.map(x=>{
+        if(Number(x.id)===Number(id)){
+          const prevShoot = x.shoot || {};
+          return {...x, shoot: {...prevShoot, chosen: val}};
+        }
+        return x;
+      });
+      await persistRequests(newList);
+      showToast('تم حفظ مكان التصوير');
+      // حدّث العمود "مكان التصوير" داخل الجدول في نفس اللحظة
+      $$('#reqCarsTable tr').forEach((tr, idx)=>{
+        const cellShoot = tr.querySelectorAll('td')[8];
+        if(cellShoot) cellShoot.textContent = val || '—';
+      });
+    };
+
+    btnModalReceived.onclick = async ()=>{
+      if(modalCurrentId==null) return;
+      await markReceived(modalCurrentId);
+    };
+
+    btnModalPrepared.onclick = async ()=>{
+      if(modalCurrentId==null) return;
+      await markPrepared(modalCurrentId);
+    };
+
+    reqModal.style.display='flex';
+    reqModal.setAttribute('aria-hidden','false');
   }
 
-  // Filters & bindings
-  $('#q').addEventListener('input', render);
-  $('#f_status').addEventListener('change', render);
-  $('#date_from').addEventListener('change', render);
-  $('#date_to').addEventListener('change', render);
-  $('#f_reset').addEventListener('click', ()=>{
-    $('#q').value='';
-    $('#f_status').value='';
-    $('#date_from').value='';
-    $('#date_to').value='';
-    render();
+  reqModalClose.addEventListener('click', ()=>{
+    reqModal.style.display='none';
+    reqModal.setAttribute('aria-hidden','true');
+    modalCurrentId = null;
   });
+  reqModal.addEventListener('click',(e)=>{ if(e.target===reqModal){ reqModalClose.click(); } });
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && reqModal.style.display==='flex'){ reqModalClose.click(); } });
 
   /* ===== Auth ===== */
   onAuthStateChanged(auth, async (user)=>{
@@ -364,8 +546,9 @@
     if(snap.exists()){
       const d = snap.data()||{};
       shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: [];
+      stock = Array.isArray(d.stock)? d.stock: []; // اختياري
     }else{
-      shootRequests = [];
+      shootRequests = []; stock = [];
     }
   }
   function subscribeLive(){
@@ -373,10 +556,28 @@
       if(!snap.exists()) return;
       const d = snap.data()||{};
       shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: shootRequests;
+      stock = Array.isArray(d.stock)? d.stock: stock;
       metrics(); render();
+      // لو المودال مفتوح، حدّث شريط الحالة
+      if(modalCurrentId!=null){
+        const r = shootRequests.find(x=> Number(x.id)===Number(modalCurrentId));
+        if(r){
+          reqStatus.textContent = `الحالة: ${r.status||'-'}`;
+          // تحديث حقول التواريخ المعروضة في الجدول الرئيسي سيتم عبر render()
+        }
+      }
     });
   }
+
+  // فلاتر
+  $('#q').addEventListener('input', render);
+  $('#f_status').addEventListener('change', render);
+  $('#date_from').addEventListener('change', render);
+  $('#date_to').addEventListener('change', render);
+  $('#f_reset').addEventListener('click', ()=>{ $('#q').value=''; $('#f_status').value=''; $('#date_from').value=''; $('#date_to').value=''; render(); });
+
+  // أخيرًا
+  document.body.style.opacity='1';
 </script>
 </body>
 </html>
-
