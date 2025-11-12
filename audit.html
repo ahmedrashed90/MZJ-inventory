@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MZJ — سجل حركة الأعضاء</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<style>
+  :root{ --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef; --text:#1f2937; --muted:#6b7280; --line:#e5e7eb; --radius:14px; --shadow:0 10px 25px rgba(62,36,32,.08); }
+  *{box-sizing:border-box}
+  body{font-family:'Tajawal',system-ui,Segoe UI,Arial;background:#f6f7f9;color:var(--text);margin:0}
+  header{background:var(--brown);color:#fff;padding:18px 20px;display:flex;align-items:center;gap:12px}
+  header h1{font-size:20px;margin:0}
+  main{max-width:1100px;margin:20px auto;padding:0 16px}
+  .card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:16px}
+  .filters{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+  .filters label{font-size:13px;color:var(--muted)}
+  .filters input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .filters button{border:0;border-radius:12px;padding:10px 14px;cursor:pointer;background:var(--beige);color:#fff}
+  .summary{font-size:13px;color:var(--muted);margin-bottom:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .status{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--line)}
+  .status.ok{background:#ecfdf5;border-color:#d1fae5;color:#065f46}
+  .status.err{background:#fef2f2;border-color:#fee2e2;color:#991b1b}
+  table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  thead th{background:#fafafa;color:#111827;text-align:right;font-weight:700;font-size:13px;border-bottom:1px solid var(--line);padding:10px}
+  tbody td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}
+  tbody tr:hover{background:#fcfcfc}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#374151;white-space:pre-wrap;word-break:break-word}
+  .muted{color:var(--muted);font-size:12px}
+  .pill{display:inline-block;background:var(--cream);border:1px solid #f0e3da;border-radius:999px;padding:4px 8px;color:var(--brown);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <i class="fa-solid fa-clipboard-list"></i>
+  <h1>سجل حركة الأعضاء</h1>
+</header>
+
+<main>
+  <section class="card">
+    <div class="filters">
+      <div>
+        <label>من التاريخ</label>
+        <input id="dateFrom" type="date"/>
+      </div>
+      <div>
+        <label>إلى التاريخ</label>
+        <input id="dateTo" type="date"/>
+      </div>
+      <div>
+        <button id="btnApply"><i class="fa-solid fa-filter"></i> تطبيق</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="summary">
+      <span id="rangeText">—</span>
+      <span class="pill" id="countText">0 نتيجة</span>
+      <span id="conn" class="status">جاري فحص الاتصال…</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:190px">الوقت</th>
+          <th style="width:220px">المستخدم</th>
+          <th style="width:160px">الأكشن</th>
+          <th style="width:180px">المستهدف</th>
+          <th>تفاصيل</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="5" class="muted">لا توجد نتائج</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<script type="module">
+  // ====== Firebase SDKs
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import {
+    getFirestore, collection, query, where, orderBy, getDocs, serverTimestamp, addDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  // ====== إعدادات مشروعك (بدّل القيم)
+  const firebaseConfig = {
+    apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
+    authDomain: "mzj-agenda.firebaseapp.com",
+    projectId: "mzj-agenda",
+    storageBucket: "mzj-agenda.firebasestorage.app",
+    messagingSenderId: "834700407721",
+    appId: "1:834700407721:web:75c17665d4f032fd65cab8"
+  };
+
+  // (اختياري) اشترط تسجيل الدخول، غيّرها لـ false لو عايز تشغّل قراءة عامة مؤقتًا لاختبار الاتصال
+  const REQUIRE_AUTH = true;
+
+  // ====== Bootstrap
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  const $ = (s)=>document.querySelector(s);
+  const tbody     = $("#tbody");
+  const dateFrom  = $("#dateFrom");
+  const dateTo    = $("#dateTo");
+  const btnApply  = $("#btnApply");
+  const rangeText = $("#rangeText");
+  const countText = $("#countText");
+  const conn      = $("#conn");
+
+  // افتراضي: اليوم
+  const todayISO = (d = new Date()) => d.toISOString().slice(0,10);
+  dateFrom.value = todayISO();
+  dateTo.value   = todayISO();
+
+  const fmtTime = (date) => new Date(date).toLocaleString("ar-SA", { hour12:false });
+  const sanitize = (v) => (v===undefined||v===null) ? "" : (typeof v==='string'? v : JSON.stringify(v));
+
+  function setRangeText(){ rangeText.textContent = من ${dateFrom.value || "—"} إلى ${dateTo.value || "—"}; }
+
+  // ====== فحص الاتصال بـ Firebase
+  async function connectivityCheck(){
+    try{
+      await addDoc(collection(db,"__health"), { ts: serverTimestamp(), ok:true });
+      conn.textContent = "متصل بـ Firebase ✓";
+      conn.className = "status ok";
+    }catch(e){
+      console.error("Firebase connection error:", e);
+      conn.textContent = "غير متصل — تحقّق من firebaseConfig / القواعد / الدومين";
+      conn.className = "status err";
+    }
+  }
+
+  // ====== تحميل السجل
+  async function loadAudit(){
+    setRangeText();
+    tbody.innerHTML = <tr><td colspan="5" class="muted">جاري التحميل...</td></tr>;
+
+    const from = dateFrom.value ? new Date(dateFrom.value + "T00:00:00") : new Date("2000-01-01T00:00:00");
+    const to   = dateTo.value   ? new Date(dateTo.value   + "T23:59:59") : new Date();
+
+    try{
+      // قد يطلب Firestore فهرسًا لأول مرة (هيظهر رابط الإنشاء في Console)
+      const qy = query(
+        collection(db, "audit_logs"),
+        where("ts", ">=", from),
+        where("ts", "<=", to),
+        orderBy("ts", "desc")
+      );
+
+      const snap = await getDocs(qy);
+
+      if(!snap.size){
+        tbody.innerHTML = <tr><td colspan="5" class="muted">لا توجد نتائج</td></tr>;
+        countText.textContent = "0 نتيجة";
+        return;
+      }
+
+      const rows = [];
+      snap.forEach(doc => {
+        const x = doc.data();
+        const ts = (x.ts && x.ts.toDate) ? x.ts.toDate() : (x.ts ? new Date(x.ts) : null);
+        rows.push(`
+          <tr>
+            <td>${ts ? fmtTime(ts) : "-"}</td>
+            <td>
+              <div>${sanitize(x.actorEmail || x.actorName || x.actorUid || "-")}</div>
+              <div class="muted">${sanitize(x.actorUid || "")}</div>
+            </td>
+            <td>${sanitize(x.action || "-")}</td>
+            <td>
+              <div>${sanitize(x.targetType || "-")}</div>
+              <div class="muted">${sanitize(x.targetId || "")}</div>
+            </td>
+            <td class="mono">${sanitize(typeof x.meta === "string" ? x.meta : (x.meta ? JSON.stringify(x.meta, null, 2) : ""))}</td>
+          </tr>
+        `);
+      });
+
+      tbody.innerHTML = rows.join("");
+      countText.textContent = ${snap.size} نتيجة;
+
+    }catch(err){
+      console.error(err);
+      tbody.innerHTML = <tr><td colspan="5" class="muted">تعذر التحميل. تأكد من الفهارس (Index) وقواعد Firestore.</td></tr>;
+      countText.textContent = "—";
+    }
+  }
+
+  btnApply.addEventListener("click", loadAudit);
+
+  // تشغيل
+  connectivityCheck();
+
+  if(REQUIRE_AUTH){
+    onAuthStateChanged(auth, async (u)=>{
+      if(!u){ location.href="login.html"; return; }
+      // (اختياري) فحص الدور:
+      // const token = await u.getIdTokenResult(true);
+      // const role = token.claims.role || "viewer";
+      // if(!["superadmin","inv_admin","shoot_admin","auditor"].includes(role)){ alert("لا تملك صلاحية"); location.href="dashboard.html"; return; }
+      loadAudit();
+    });
+  }else{
+    loadAudit();
+  }
+</script>
+
+<!-- ملاحظة: من صفحاتك الثانية، سجّل أي حدث باستدعاء دالة مشابهة:
+<script type="module">
+  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  const db = getFirestore(); const auth = getAuth();
+  async function logAction(action, targetType, targetId, meta={}){
+    const u = auth.currentUser;
+    await addDoc(collection(db,"audit_logs"),{
+      actorUid: u?.uid || null,
+      actorEmail: u?.email || null,
+      action, targetType, targetId,
+      meta, ts: serverTimestamp()
+    });
+  }
+  // مثال استخدام: await logAction("PHOTOSHOOT_PREPARED","shootRequest","REQ_123",{status:"prepared"});
+</script>
+-->
+</body>
+</html>
