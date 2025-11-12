@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>المخزون — MZJ Cars</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+
+<style>
+  :root{
+    --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef;
+    --text:#1f2937; --muted:#6b7280; --line:#e8e5e2;
+    --card:#ffffff; --bg:#faf7f3; --radius:12px;
+    --shadow:0 10px 24px rgba(0,0,0,.06);
+    --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:"Tajawal",system-ui,Arial}
+
+  /* Topbar + Tabs */
+  .topbar{position:sticky;top:0;z-index:60;background:#fff;border-bottom:1px solid var(--line)}
+  .topbar-inner{max-width:1280px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:12px 18px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand h1{margin:0;font-size:18px;color:var(--brown);font-weight:800}
+  .brand small{color:var(--muted)}
+  .tabs{display:flex;gap:8px}
+  .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;text-decoration:none;color:inherit;font-weight:800}
+  .tab.active{background:var(--brown);border-color:var(--brown);color:#fff}
+  .status-badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;font-size:12px}
+  .dot{width:10px;height:10px;border-radius:999px;background:#f59e0b}
+  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)} .dot.warn{background:#f59e0b}
+
+  /* Buttons */
+  .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700;display:inline-flex;gap:8px;align-items:center;transition:.15s}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--beige);border-color:var(--beige);color:#fff}
+  .btn-ghost{background:#fff}
+  .btn-outline{background:#fff;border-color:var(--brown);color:#brown}
+
+  .container{max-width:1280px;margin:18px auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+
+  .summary{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  @media (max-width:640px){.summary{grid-template-columns:1fr}}
+  .stat{display:flex;align-items:center;gap:12px;padding:10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .stat i{color:var(--beige)}
+  .stat-title{font-size:12px;color:var(--muted)}
+  .stat-num{font-size:22px;font-weight:800;color:var(--brown)}
+
+  .card h3{margin:0 0 10px;color:var(--brown);font-size:16px;display:flex;align-items:center;gap:8px}
+
+  /* Filters */
+  .filter-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px}
+  @media(max-width:1100px){.filter-grid{grid-template-columns:1fr 1fr 1fr}}
+  @media(max-width:800px){.filter-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:560px){.filter-grid{grid-template-columns:1fr}}
+  .input,.select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .search{position:relative}
+  .search i{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  .search input{padding-right:34px}
+  .under-field{margin-top:8px;display:flex;justify-content:flex-start}
+
+  /* Table */
+  .table{width:100%;border-collapse:separate;border-spacing:0}
+  .table th,.table td{border:1px solid var(--line);padding:8px 10px;text-align:right;vertical-align:top}
+  .table thead th{position:sticky;top:0;background:#fff;border-bottom:2px solid var(--line);z-index:1}
+  .table tbody tr:nth-child(odd){background:#fff}
+  .table tbody tr:nth-child(even){background:#fffdfb}
+  .tag{display:inline-block;background:#f6f6f6;border:1px solid var(--line);padding:2px 8px;border-radius:999px;font-size:12px;color:#444}
+  .vin{cursor:pointer;color:var(--beige)} .vin:hover{text-decoration:underline}
+  .short{background:#fff4f4} /* تمييز النقص اللوني لكل مكان (اختياري تبقيه) */
+
+  .badge{display:inline-block;background:#fff2e9;border:1px solid #f1d0bd;color:var(--brown);padding:2px 8px;border-radius:999px;font-size:12px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:10px;display:none}
+  .toast.show{display:block;animation:fade .2s ease-out}
+  @keyframes fade{from{opacity:0;transform:translate(-50%,6px)} to{opacity:1;transform:translate(-50%,0)}}
+
+  /* Auth */
+  .auth-wrap{min-height:60vh;display:grid;place-items:center;padding:24px}
+  .auth-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px;max-width:420px;width:96%}
+  .auth-card h2{margin:0 0 10px;color:var(--brown)}
+  .auth-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .hint{color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- Topbar + Tabs -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <i class="fa-solid fa-star" style="color:var(--beige)"></i>
+      <div>
+        <h1>إدارة المخزون</h1>
+        <small>مجموعة محمد بن ذعار العجمي للسيارات</small>
+      </div>
+    </div>
+    <div class="tabs">
+      <a class="tab" href="admin.html">الإدارة</a>
+      <a class="tab active" href="inventory.html">المخزون</a>
+      <a class="tab" href="dashboard.html">الداش بورد</a>
+      <a class="tab" href="photoshoot.html">طلبات التصوير</a>
+    </div>
+    <div class="tabs" style="gap:10px">
+      <div class="status-badge" id="connBadge">
+        <span class="dot warn" id="connDot"></span>
+        <span id="connText">جارِ الاتصال…</span>
+      </div>
+      <button class="btn btn-ghost" id="btnSignOut" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+    </div>
+  </div>
+</div>
+
+<!-- Auth Gate -->
+<div id="authGate" class="auth-wrap">
+  <div class="auth-card">
+    <h2>تسجيل الدخول</h2>
+    <label for="email">البريد الإلكتروني</label>
+    <input id="email" type="email" placeholder="you@example.com"/>
+    <label for="password" style="margin-top:8px">كلمة المرور</label>
+    <input id="password" type="password" placeholder="••••••••"/>
+    <div class="auth-actions">
+      <button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
+      <button class="btn btn-outline" id="btnSignup">إنشاء حساب</button>
+    </div>
+    <p class="hint" id="authHint" style="margin-top:10px"></p>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app" style="display:none">
+  <div class="container">
+
+    <!-- Summary (kept minimal) -->
+    <div class="card">
+      <div class="summary">
+        <div class="stat">
+          <i class="fa-solid fa-car"></i>
+          <div>
+            <div class="stat-title">إجمالي السيارات (بعد الفلاتر)</div>
+            <div class="stat-num" id="totalCount">0</div>
+          </div>
+        </div>
+        <div class="stat">
+          <i class="fa-solid fa-location-dot"></i>
+          <div>
+            <div class="stat-title">عدد الأماكن (بعد الفلاتر)</div>
+            <div class="stat-num" id="placesCount">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card">
+      <h3><i class="fa-solid fa-filter" style="color:var(--beige)"></i> الفلاتر</h3>
+      <div class="filter-grid">
+        <div class="search">
+          <input id="search" class="input" placeholder="بحث في: سيارة/بيان/وكيل/ألوان/موديل/لوحة/مكان/رقم الهيكل">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <select id="modelFilter" class="select"><option value="">كل السيارات</option></select>
+        <input id="yearFilter" class="input" type="number" min="2000" max="2100" placeholder="الموديل (سنة)">
+        <input id="dealerFilter" class="input" placeholder="الوكيل">
+        <div>
+          <select id="locationFilter" class="select"><option value="">كل الأماكن</option></select>
+          <div class="under-field">
+            <button id="exportAll" class="btn btn-primary"><i class="fa-regular fa-file-excel"></i> تصدير Excel (حسب الفلاتر)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Table -->
+    <div class="card table-wrap">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <h3><i class="fa-solid fa-table" style="color:var(--beige)"></i> جدول السيارات</h3>
+        <div class="tools">
+          <span class="badge" id="visibleCount">0 صف</span>
+        </div>
+      </div>
+      <div style="overflow:auto;border:1px solid var(--line);border-radius:10px">
+        <table class="table" id="carsTable">
+          <thead>
+            <tr>
+              <th>م</th>
+              <th>السيارة</th>
+              <th>البيان</th>
+              <th>الوكيل</th>
+              <th>اللون الخارجي</th>
+              <th>اللون الداخلي</th>
+              <th>الموديل</th>
+              <th>اللوحة</th>
+              <th>المكان</th>
+              <th>رقم الهيكل</th>
+              <th>الملاحظات</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast" class="toast"><i class="fa-regular fa-copy"></i> تم النسخ</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- Firebase (Modules) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
+    authDomain: "mzj-agenda.firebaseapp.com",
+    projectId: "mzj-agenda",
+    storageBucket: "mzj-agenda.firebasestorage.app",
+    messagingSenderId: "834700407721",
+    appId: "1:834700407721:web:75c17665d4f032fd65cab8"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+  const STATE_REF = doc(db, "mzj_admin_state", "v1");
+
+  /* DOM helpers */
+  const $ = s => document.querySelector(s);
+  const connDot  = $('#connDot');
+  const connText = $('#connText');
+  const authGate = $('#authGate');
+  const appRoot  = $('#app');
+  const btnLogin = $('#btnLogin');
+  const btnSignup= $('#btnSignup');
+  const btnSignOut = $('#btnSignOut');
+  const emailEl  = $('#email');
+  const passEl   = $('#password');
+  const authHint = $('#authHint');
+  const toast    = $('#toast');
+
+  /* State */
+  let stock=[], moves=[], models=[], variantsMap={};
+  const uniq = arr => [...new Set(arr)];
+  const pad = n => n<10?'0'+n:n;
+  const now = ()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`};
+
+  function setStatus(mode, txt){
+    connDot.className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'warn');
+    connText.textContent = txt;
+  }
+  function showToastMsg(text){
+    toast.textContent = text;
+    toast.classList.add('show');
+    setTimeout(()=> toast.classList.remove('show'), 1200);
+  }
+
+  /* Auth gate */
+  onAuthStateChanged(auth, async (user)=>{
+    if(user){
+      authGate.style.display='none';
+      appRoot.style.display='block';
+      btnSignOut.style.display='inline-flex';
+      setStatus('ok', `متصل كمستخدم: ${user.email}`);
+      await initData();
+      subscribeLive();
+    }else{
+      appRoot.style.display='none';
+      authGate.style.display='grid';
+      btnSignOut.style.display='none';
+      setStatus('warn','لم يتم تسجيل الدخول');
+    }
+  });
+  btnLogin.addEventListener('click', async ()=>{
+    authHint.textContent='';
+    try{ await signInWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value); }
+    catch(e){ authHint.textContent='فشل تسجيل الدخول: '+(e?.message||e); }
+  });
+  btnSignup.addEventListener('click', async ()=>{
+    authHint.textContent='';
+    try{ await createUserWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value); }
+    catch(e){ authHint.textContent='تعذّر إنشاء الحساب: '+(e?.message||e); }
+  });
+  btnSignOut.addEventListener('click', ()=> signOut(auth));
+
+  /* Load+subscribe */
+  async function initData(){
+    try{
+      const s=await getDoc(STATE_REF);
+      if(s.exists()){
+        const d=s.data()||{};
+        stock = Array.isArray(d.stock)? d.stock: [];
+        moves = Array.isArray(d.moves)? d.moves: [];
+        models = Array.isArray(d.models)? d.models: [];
+        variantsMap = d.variantsMap || {};
+      }else{
+        stock=[]; moves=[]; models=[]; variantsMap={};
+      }
+      initFilters();
+      renderAll();
+    }catch(e){
+      setStatus('warn','تعذّر الاتصال — عرض آخر نسخة محفوظة غير متاحة');
+    }
+  }
+  function subscribeLive(){
+    try{
+      onSnapshot(STATE_REF,(snap)=>{
+        if(!snap.exists()) return;
+        const d=snap.data()||{};
+        stock = Array.isArray(d.stock)? d.stock: stock;
+        moves = Array.isArray(d.moves)? d.moves: moves;
+        models= Array.isArray(d.models)? d.models: models;
+        variantsMap = d.variantsMap || variantsMap;
+        initFilters();
+        renderAll();
+        setStatus('ok','متصل — مزامنة حيّة');
+      },(err)=>{
+        console.warn('snapshot error', err);
+        setStatus('warn','تعذّر الاتصال — مزامنة متوقفة مؤقتًا');
+      });
+    }catch(e){ /* ignore */ }
+  }
+
+  /* Filters logic */
+  const filters = { q:'', model:'', year:'', dealer:'', location:'' };
+  const searchEl = $('#search'), modelFilter=$('#modelFilter'), yearFilter=$('#yearFilter'), dealerFilter=$('#dealerFilter'), locationFilter=$('#locationFilter');
+
+  function initFilters(){
+    const modelsList = uniq(stock.map(r=> r.car).filter(Boolean)).sort((a,b)=> a.localeCompare(b,'ar'));
+    modelFilter.innerHTML = '<option value="">كل السيارات</option>' + modelsList.map(m=> `<option value="${m}">${m}</option>`).join('');
+    const locs = uniq(stock.map(r=> r.location || 'غير محدد')).sort((a,b)=> a.localeCompare(b,'ar'));
+    locationFilter.innerHTML = '<option value="">كل الأماكن</option>' + locs.map(l=> `<option value="${l==='غير محدد'?'':l}">${l}</option>`).join('');
+  }
+
+  function applyFilters(rows){
+    return rows.filter(r=>{
+      if (filters.q){
+        const hay = [r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.vin,r.notes].join(' ').toLowerCase();
+        if (!hay.includes(filters.q.toLowerCase())) return false;
+      }
+      if (filters.model && r.car !== filters.model) return false;
+      if (filters.year && String(r.modelYear) !== String(filters.year)) return false;
+      if (filters.dealer && (!r.dealer || !r.dealer.toLowerCase().includes(filters.dealer.toLowerCase()))) return false;
+      if (filters.location && (r.location||'') !== filters.location) return false;
+      return true;
+    });
+  }
+
+  /* Summary */
+  function renderSummary(filteredRows){
+    $('#totalCount').textContent   = filteredRows.length.toLocaleString('ar-SA');
+    const locsFiltered = new Set(filteredRows.map(r=> r.location || 'غير محدد')).size;
+    $('#placesCount').textContent  = locsFiltered.toLocaleString('ar-SA');
+  }
+
+  /* Table render (with optional per-location color shortage highlight) */
+  const tb = $('#carsTable tbody');
+  function renderTable(filteredRows){
+    tb.innerHTML = '';
+    const colorKey = r => `${r.car||''}⇢${r.variant||''}⇢${r.extColor||''}/${r.intColor||''}⇢${r.location||'غير محدد'}`;
+    const colorCount = {};
+    stock.forEach(r=>{
+      const k=colorKey(r);
+      colorCount[k]=(colorCount[k]||0)+1;
+    });
+
+    filteredRows.slice().sort((a,b)=> (a.id||0)-(b.id||0)).forEach(r=>{
+      const k=colorKey(r);
+      const isColorShort = (colorCount[k]||0) < 2; // يمكنك إزالة هذا السطر لو حابب تشيل التمييز
+      const tr = document.createElement('tr');
+      if(isColorShort) tr.classList.add('short');
+      tr.innerHTML = `
+        <td>${r.id||''}</td>
+        <td>${r.car||''}</td>
+        <td>${r.variant||''}</td>
+        <td><span class="tag">${r.dealer||'-'}</span></td>
+        <td>${r.extColor||''}</td>
+        <td>${r.intColor||''}</td>
+        <td>${r.modelYear||''}</td>
+        <td>${r.plate||''}</td>
+        <td>${r.location||''}</td>
+        <td class="vin" data-vin="${r.vin||''}">${r.vin||''}</td>
+        <td>${r.notes||''}</td>
+      `;
+      tb.appendChild(tr);
+    });
+    $('#visibleCount').textContent = `${filteredRows.length} صف`;
+  }
+
+  function renderAll(){
+    const filtered = applyFilters(stock);
+    renderSummary(filtered);
+    renderTable(filtered);
+  }
+
+  /* Events: filters */
+  $('#search').addEventListener('input', e=>{ filters.q=e.target.value.trim(); renderAll(); });
+  $('#modelFilter').addEventListener('change', e=>{ filters.model=e.target.value; renderAll(); });
+  $('#yearFilter').addEventListener('input', e=>{ filters.year=e.target.value.trim(); renderAll(); });
+  $('#dealerFilter').addEventListener('input', e=>{ filters.dealer=e.target.value.trim(); renderAll(); });
+  $('#locationFilter').addEventListener('change', e=>{ filters.location=e.target.value; renderAll(); });
+
+  /* VIN copy */
+  document.addEventListener('click', (e)=>{
+    const vinEl = e.target.closest('.vin');
+    if (vinEl){
+      const vin = vinEl.getAttribute('data-vin');
+      if(vin){ navigator.clipboard.writeText(vin).then(()=> showToastMsg('تم نسخ رقم الهيكل')); }
+    }
+  });
+
+  /* Export (filtered) */
+  function exportExcel(rows){
+    const header = ["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","رقم الهيكل","الملاحظات"];
+    const data = [header];
+    rows.forEach(r=>{
+      data.push([r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.vin,r.notes]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [{wch:5},{wch:24},{wch:30},{wch:18},{wch:16},{wch:16},{wch:10},{wch:10},{wch:18},{wch:22},{wch:26}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Inventory");
+    XLSX.writeFile(wb, "mzj-inventory.xlsx");
+  }
+  $('#exportAll').addEventListener('click', ()=>{
+    const rows = applyFilters(stock).slice().sort((a,b)=> (a.id||0)-(b.id||0));
+    exportExcel(rows);
+  });
+
+  /* Keyboard helpers */
+  document.addEventListener('keydown',(e)=>{
+    if(e.key==='/'){e.preventDefault(); $('#search').focus();}
+  });
+
+  setStatus('warn','جارِ الاتصال…');
+</script>
+</body>
+</html>
+

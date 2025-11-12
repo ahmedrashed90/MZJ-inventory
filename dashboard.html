@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>لوحة المؤشرات — MZJ Cars</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+
+<style>
+  :root{
+    --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef;
+    --text:#1f2937; --muted:#6b7280; --line:#e8e5e2;
+    --card:#ffffff; --bg:#faf7f3; --radius:14px;
+    --shadow:0 12px 28px rgba(0,0,0,.06);
+    --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9; --warn:#f59e0b;
+    --black:#0b0b0b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:"Tajawal",system-ui,Arial}
+
+  /* Topbar + Tabs */
+  .topbar{position:sticky;top:0;z-index:60;background:#fff;border-bottom:1px solid var(--line)}
+  .topbar-inner{max-width:1280px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:12px 18px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brown),#2a1613);display:grid;place-items:center;color:#fff;font-weight:900}
+  .brand h1{margin:0;font-size:18px;color:var(--brown);font-weight:800}
+  .brand small{color:var(--muted)}
+  .tabs{display:flex;gap:8px}
+  .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;text-decoration:none;color:inherit;font-weight:800}
+  .tab.active{background:var(--brown);border-color:var(--brown);color:#fff}
+  .status-badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;font-size:12px}
+  .dot{width:10px;height:10px;border-radius:999px;background:var(--warn)}
+  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)} .dot.warn{background:var(--warn)}
+
+  .container{max-width:1280px;margin:18px auto;padding:0 16px;display:grid;gap:16px}
+
+  /* Cards grid */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media (max-width:1100px){.cards{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:680px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+  .group-card{cursor:pointer;transition:.15s;border:1px solid var(--line)}
+  .group-card:hover{transform:translateY(-2px);box-shadow:0 16px 36px rgba(0,0,0,.08)}
+
+  /* Group header */
+  .group-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .group-left{display:flex;flex-direction:column;gap:6px}
+  .group-title{display:flex;align-items:center;gap:8px;color:var(--brown);margin:0}
+  .group-title i{color:var(--beige)}
+  .group-total{font-weight:900;font-size:28px;color:var(--brown)}
+  .sub-metrics{display:flex;gap:8px;flex-wrap:wrap;margin-top:0}
+
+  /* أسود على أصفر للبادجات الرئيسية */
+  .metric{
+    display:inline-flex;gap:6px;align-items:center;
+    background:var(--warn);border:1px solid #000;border-radius:10px;
+    padding:4px 10px;font-weight:900;font-size:12px;color:#000
+  }
+  .metric i{color:#000}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px;cursor:pointer}
+  .chip i{color:var(--muted)}
+  .chip:hover{border-color:var(--beige);box-shadow:0 2px 0 rgba(0,0,0,.04)}
+
+  .short-card{cursor:pointer}
+  .short-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .pill{background:#fff;border:1px dashed var(--line);border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px}
+
+  .hint{color:var(--muted);font-size:12px}
+
+  /* Modal */
+  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.38);display:none;align-items:center;justify-content:center;z-index:80}
+  .modal{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 28px 70px rgba(0,0,0,.35);width:min(1100px,96vw);max-height:90vh;display:flex;flex-direction:column}
+  .modal header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
+  .modal h3{margin:0;color:var(--brown)}
+  .modal .body{padding:12px 14px;overflow:auto}
+  .modal .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700;display:inline-flex;gap:8px;align-items:center;transition:.15s}
+  .btn-primary{background:var(--beige);border-color:var(--beige);color:#fff}
+  .btn-ghost{background:#fff}
+  .btn-outline{background:#fff;border-color:var(--brown);color:var(--brown)}
+  .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
+  .input{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  /* Tabs inside shortages modal */
+  .tabs2{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .tabs2 .t{padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;cursor:pointer;font-weight:800}
+  .tabs2 .t.active{background:var(--brown);border-color:var(--brown);color:#fff}
+
+  /* Tables */
+  .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
+  table{width:100%;border-collapse:separate;border-spacing:0}
+  thead th{position:sticky;top:0;background:#fafafa;z-index:2;border-bottom:2px solid var(--line);text-align:right;color:#111827;font-size:13.5px;padding:10px}
+  tbody td{border-top:1px solid var(--line);padding:10px;vertical-align:top}
+  tbody tr:nth-child(odd){background:#fff}
+  tbody tr:nth-child(even){background:#fffdfb}
+  td,th{border-left:1px solid var(--line)}
+  td:last-child,th:last-child{border-left:0}
+  .tag{display:inline-block;background:#f6f6f6;border:1px solid var(--line);padding:2px 8px;border-radius:999px;font-size:12px;color:#444}
+
+  /* Toast */
+  .toast{position:fixed;bottom:18px;right:18px;background:#111827;color:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.25);display:none;z-index:100}
+  .toast.show{display:block;animation:fade .2s ease-out}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="logo">MZJ</div>
+      <div>
+        <h1>لوحة المؤشرات</h1>
+        <small class="hint">مجموعة محمد بن ذعار العجمي للسيارات</small>
+      </div>
+    </div>
+    <div class="tabs">
+      <a class="tab" href="admin.html">الإدارة</a>
+      <a class="tab" href="inventory.html">المخزون</a>
+      <a class="tab active" href="dashboard.html">الداش بورد</a>
+      <a class="tab" href="photoshoot.html">طلبات التصوير</a>
+    </div>
+    <div class="row">
+      <div class="status-badge"><span id="connDot" class="dot warn"></span><span id="connText">جارِ الاتصال…</span></div>
+      <button id="btnSignOut" class="btn btn-ghost" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+    </div>
+  </div>
+</div>
+
+<!-- Auth Gate -->
+<div id="authGate" style="min-height:60vh;display:grid;place-items:center;padding:24px">
+  <div class="card" style="max-width:440px;width:96%">
+    <h2 style="margin:0 0 10px;color:var(--brown)">تسجيل الدخول</h2>
+    <label>البريد الإلكتروني</label>
+    <input id="email" class="input" type="email" placeholder="you@example.com"/>
+    <label style="margin-top:8px">كلمة المرور</label>
+    <input id="password" class="input" type="password" placeholder="••••••••"/>
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
+      <button class="btn btn-outline" id="btnSignup">إنشاء حساب</button>
+    </div>
+    <p class="hint" id="authHint" style="margin-top:10px"></p>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app" style="display:none">
+  <div class="container">
+
+    <!-- Shortages Summary Card (Branches only) -->
+    <div class="card short-card" id="shortagesCard" title="عرض النواقص لأفرع المعارض (حسب السيارة + البيان + الألوان + الموديل | العدد داخل الفرع = 1)">
+      <div class="group-head">
+        <div class="group-left">
+          <h3 class="group-title"><i class="fa-solid fa-list-check"></i> النواقص — الفروع فقط</h3>
+          <div class="sub-metrics">
+            <span class="metric"><i class="fa-solid fa-equals"></i> ملخص</span>
+          </div>
+        </div>
+        <div class="group-total" id="shortagesTotal">0</div>
+      </div>
+      <div class="short-pills" id="shortagesPills"></div>
+      <p class="hint" style="margin:8px 0 0">اضغط على البطاقة لعرض تبويبات النواقص لكل فرع (فرع 1، فرع 2، فرع 3).</p>
+    </div>
+
+    <!-- Group Cards + تصوير -->
+    <div class="cards" id="groupsGrid"></div>
+
+    <div class="card">
+      <p class="hint" style="margin:0">
+        اضغط على بطاقة الجهة لعرض كل السيارات، أو اضغط على الشرائح “متاح / ملاحظات / تحت التسليم / تم التسليم” لعرضها مباشرة.  
+        بطاقة “النواقص” تشمل الأفرع فقط، والمنطق: (<b>السيارة + البيان + اللون الخارجي + اللون الداخلي + الموديل</b>) إذا العدد داخل الفرع = 1 تعتبر ناقصة.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="backdrop" class="backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <header>
+      <h3 id="modalTitle">عرض</h3>
+      <div class="tools">
+        <input id="modalSearch" class="input" placeholder="بحث..." style="min-width:280px">
+        <button id="btnExportGroup" class="btn"><i class="fa-regular fa-file-excel"></i> تصدير Excel</button>
+        <button id="btnCloseModal" class="btn btn-danger"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+      </div>
+    </header>
+    <div class="body">
+      <!-- تبويبات لنواقص الفروع فقط -->
+      <div id="shortTabs" class="tabs2" style="display:none"></div>
+
+      <!-- جدول السيارات (rows) -->
+      <div id="tableRowsWrap" class="table-wrap" style="display:none">
+        <table id="modalTableRows">
+          <thead>
+            <tr id="rowsHeadTr"></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- جدول النواقص (Shortages) -->
+      <div id="tableShortWrap" class="table-wrap" style="display:none">
+        <table id="modalTableShort">
+          <thead>
+            <tr>
+              <th>السيارة</th>
+              <th>البيان</th>
+              <th>اللون الخارجي</th>
+              <th>اللون الداخلي</th>
+              <th>الموديل</th>
+              <th>عدد الفرع</th>
+              <th>الإجمالي العام</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- جدول طلبات التصوير -->
+      <div id="tableShootWrap" class="table-wrap" style="display:none">
+        <table id="modalTableShoot">
+          <thead>
+            <tr>
+              <th>رقم</th>
+              <th>التاريخ</th>
+              <th>مقدّم</th>
+              <th>عدد الهياكل</th>
+              <th>الحالة</th>
+              <th>استلام إداري</th>
+              <th>تجهيز</th>
+              <th>ملاحظات الإدارة</th>
+              <th>تفاصيل الطلب</th> <!-- جديد -->
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <p class="hint" id="modalCount" style="margin-top:8px"></p>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast">تم</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+  /* ===== Firebase ===== */
+  const firebaseConfig = {
+    apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
+    authDomain: "mzj-agenda.firebaseapp.com",
+    projectId: "mzj-agenda",
+    storageBucket: "mzj-agenda.firebasestorage.app",
+    messagingSenderId: "834700407721",
+    appId: "1:834700407721:web:75c17665d4f032fd65cab8"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+  const STATE_REF = doc(db, "mzj_admin_state", "v1");
+
+  /* ===== Helpers ===== */
+  const $ = s => document.querySelector(s);
+  const toast = $('#toast');
+  const pad = n => n<10?'0'+n:n;
+  const now = ()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`};
+  function setStatus(mode,txt){ $('#connDot').className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'warn'); $('#connText').textContent=txt; }
+  function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1200); }
+  const trim = v => (v||'').toString().trim();
+
+  /* ===== State ===== */
+  let stock=[], moves=[], models=[], variantsMap={};
+  let shootRequests=[];
+  let currentFilterKey = null;
+
+  // الجهات
+  const groupsDef = [
+    { key:'AGENCY', title:'الوكالة', icon:'fa-building-columns', members:[
+      'الوكالة : المخزون المتاح','الوكالة : سيارات بها ملاحظات','الوكالة : مباع تحت التسليم','الوكالة : مباع تم التسليم'
+    ]},
+    { key:'WAREHOUSE', title:'المستودع', icon:'fa-warehouse', members:[
+      'المستودع : المخزون المتاح','المستودع : سيارات بها ملاحظات','المستودع : مباع تحت التسليم','المستودع : مباع تم التسليم'
+    ]},
+    { key:'BR1', title:'فرع 1 : الصالة', icon:'fa-store', members:[
+      'فرع 1 الصالة : المخزون المتاح','فرع 1 الصالة : سيارات بها ملاحظات','فرع 1 الصالة : مباع تحت التسليم','فرع 1 الصالة : مباع تم التسليم'
+    ]},
+    { key:'BR2', title:'فرع 2 : الملتقى', icon:'fa-store', members:[
+      'فرع 2 الملتقى : المخزون المتاح','فرع 2 الملتقى : سيارات بها ملاحظات','فرع 2 الملتقى : مباع تحت التسليم','فرع 2 الملتقى : مباع تم التسليم'
+    ]},
+    { key:'BR3', title:'فرع 3 : القادسية', icon:'fa-store', members:[
+      'فرع 3 القادسية : المخزون المتاح','فرع 3 القادسية : سيارات بها ملاحظات','فرع 3 القادسية : مباع تحت التسليم','فرع 3 القادسية : مباع تم التسليم'
+    ]}
+  ];
+
+  // فروع لبطاقة النواقص
+  const branchKeys = ['BR1','BR2','BR3'];
+  const branchGroups = () => groupsDef.filter(g=> branchKeys.includes(g.key));
+
+  /* ===== Auth Gate ===== */
+  onAuthStateChanged(auth, async (user)=>{
+    if(user){
+      $('#authGate').style.display='none';
+      $('#app').style.display='block';
+      $('#btnSignOut').style.display='inline-flex';
+      setStatus('ok', `متصل: ${user.email}`);
+      await initData();
+      subscribeLive();
+    }else{
+      $('#app').style.display='none';
+      $('#authGate').style.display='grid';
+      $('#btnSignOut').style.display='none';
+      setStatus('warn','لم يتم تسجيل الدخول');
+    }
+  });
+  $('#btnLogin').addEventListener('click', async ()=>{
+    $('#authHint').textContent='';
+    try{ await signInWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
+    catch(e){ $('#authHint').textContent='فشل تسجيل الدخول: '+(e?.message||e); }
+  });
+  $('#btnSignup').addEventListener('click', async ()=>{
+    $('#authHint').textContent='';
+    try{ await createUserWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
+    catch(e){ $('#authHint').textContent='تعذّر إنشاء الحساب: '+(e?.message||e); }
+  });
+  $('#btnSignOut').addEventListener('click', ()=> signOut(auth));
+
+  /* ===== Data ===== */
+  async function initData(){
+    try{
+      const s=await getDoc(STATE_REF);
+      if(s.exists()){
+        const d=s.data()||{};
+        stock = Array.isArray(d.stock)? d.stock: [];
+        moves = Array.isArray(d.moves)? d.moves: [];
+        models = Array.isArray(d.models)? d.models: [];
+        variantsMap = d.variantsMap || {};
+        shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: [];
+      }else{
+        stock=[]; moves=[]; models=[]; variantsMap={}; shootRequests=[];
+      }
+      renderAll();
+    }catch(e){
+      setStatus('warn','تعذّر تحميل البيانات');
+    }
+  }
+  function subscribeLive(){
+    try{
+      onSnapshot(STATE_REF,(snap)=>{
+        if(!snap.exists()) return;
+        const d=snap.data()||{};
+        stock = Array.isArray(d.stock)? d.stock: stock;
+        moves = Array.isArray(d.moves)? d.moves: moves;
+        models= Array.isArray(d.models)? d.models: models;
+        variantsMap = d.variantsMap || variantsMap;
+        shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: shootRequests;
+        renderAll();
+        setStatus('ok','مزامنة حيّة');
+      },()=> setStatus('warn','انقطاع المزامنة مؤقتًا'));
+    }catch(e){}
+  }
+
+  /* ===== Utilities ===== */
+  function rowsForMembers(members){ return stock.filter(r => members.includes(r.location||'')); }
+  function labelForFilter(key){
+    if(key==='available') return 'المخزون المتاح';
+    if(key==='notes')     return 'سيارات بها ملاحظات';
+    if(key==='pending')   return 'مباع تحت التسليم';
+    if(key==='delivered') return 'مباع تم التسليم';
+    return '';
+  }
+
+  /* ===== Shortages logic (branches) ===== */
+  const comboKey = r => [trim(r.car), trim(r.variant), trim(r.extColor), trim(r.intColor), trim(r.modelYear)].join('⇢');
+  function countByCombo(rows){
+    const m=new Map();
+    rows.forEach(r=>{ const k=comboKey(r); if(!k) return; m.set(k,(m.get(k)||0)+1); });
+    return m;
+  }
+  function globalTotalsByCombo(){ return countByCombo(stock); }
+  function computeBranchShortages(group){
+    const rows = rowsForMembers(group.members);
+    const byCombo = countByCombo(rows);
+    const glob    = globalTotalsByCombo();
+    const res=[];
+    byCombo.forEach((cnt,k)=>{
+      if(cnt===1){
+        const [car,variant,extColor,intColor,modelYear] = k.split('⇢');
+        res.push({ car, variant, extColor, intColor, modelYear, countBranch: cnt, countGlobal: glob.get(k)||cnt });
+      }
+    });
+    res.sort((a,b)=>
+      (a.car||'').localeCompare(b.car||'','ar') ||
+      (a.variant||'').localeCompare(b.variant||'','ar') ||
+      (a.modelYear||'').localeCompare(b.modelYear||'','ar') ||
+      (a.extColor||'').localeCompare(b.extColor||'','ar') ||
+      (a.intColor||'').localeCompare(b.intColor||'','ar')
+    );
+    return res;
+  }
+  function computeShortagesSummaryBranches(){
+    const summary=[]; let total=0;
+    branchGroups().forEach(g=>{
+      const items=computeBranchShortages(g);
+      summary.push({ key:g.key, title:g.title, count:items.length });
+      total += items.length;
+    });
+    return { total, summary };
+  }
+
+  /* ===== Group counts ===== */
+  function groupBreakdownCounts(group){
+    const rows = rowsForMembers(group.members);
+    const available = rows.filter(r => (r.location||'').endsWith('المخزون المتاح')).length;
+    const notes     = rows.filter(r => (r.location||'').includes('سيارات بها ملاحظات')).length;
+    const pending   = rows.filter(r => (r.location||'').includes('مباع تحت التسليم')).length;
+    const delivered = rows.filter(r => (r.location||'').includes('مباع تم التسليم')).length;
+    const actualTotal = available + notes;
+    const keysTotal   = available + notes + pending;
+    return { available, notes, pending, delivered, actualTotal, keysTotal };
+  }
+
+  /* ===== تصوير: إحصائيات + بطاقة ===== */
+  function shootStats(){
+    const total = shootRequests.length;
+    const drafts = shootRequests.filter(r=> (r.status||'')==='مسودة').length;
+    const inprog = shootRequests.filter(r=> (r.status||'')==='تحت الإجراء').length;
+    const done   = shootRequests.filter(r=> (r.status||'')==='تم').length;
+    const received = shootRequests.filter(r=> r?.admin?.received).length;
+    const prepared = shootRequests.filter(r=> r?.admin?.prepared).length;
+    return { total, drafts, inprog, done, received, prepared };
+  }
+
+  function renderShootCard(gridEl){
+    const st = shootStats();
+    const card = document.createElement('div');
+    card.className='card group-card';
+    card.id = 'shootCard';
+    card.innerHTML = `
+      <div class="group-head">
+        <div class="group-left">
+          <h3 class="group-title"><i class="fa-solid fa-camera-retro"></i> طلبات التصوير</h3>
+          <div class="sub-metrics">
+            <span class="metric"><i class="fa-solid fa-list-ol"></i> الإجمالي: <b>${st.total.toLocaleString('ar-SA')}</b></span>
+            <span class="metric"><i class="fa-solid fa-inbox"></i> استلام إداري: <b>${st.received.toLocaleString('ar-SA')}</b></span>
+            <span class="metric"><i class="fa-solid fa-screwdriver-wrench"></i> تجهيز: <b>${st.prepared.toLocaleString('ar-SA')}</b></span>
+            <span class="metric"><i class="fa-solid fa-check"></i> تم: <b>${st.done.toLocaleString('ar-SA')}</b></span>
+          </div>
+        </div>
+        <div class="group-total" title="إجمالي الطلبات">${st.total.toLocaleString('ar-SA')}</div>
+      </div>
+
+      <div class="chips">
+        <span class="chip" data-shoot="ALL"><i class="fa-solid fa-layer-group"></i> الكل</span>
+        <span class="chip" data-shoot="مسودة"><i class="fa-regular fa-file-lines"></i> مسودة: <b>${st.drafts}</b></span>
+        <span class="chip" data-shoot="تحت الإجراء"><i class="fa-solid fa-hourglass-half"></i> تحت الإجراء: <b>${st.inprog}</b></span>
+        <span class="chip" data-shoot="تم"><i class="fa-solid fa-circle-check"></i> تم: <b>${st.done}</b></span>
+      </div>
+      <p class="hint" style="margin:10px 0 0">اضغط على البطاقة لعرض كل الطلبات، أو استخدم الشرائح للتصفية حسب الحالة.</p>
+    `;
+    card.addEventListener('click', (ev)=>{ if(ev.target.closest('.chip')) return; openShootModal('ALL'); });
+    card.addEventListener('click', (e)=>{
+      const chip = e.target.closest('.chip'); if(!chip) return;
+      e.stopPropagation();
+      openShootModal(chip.getAttribute('data-shoot')||'ALL');
+    });
+    gridEl.appendChild(card);
+  }
+
+  /* ===== Render ===== */
+  function renderShortagesCard(){
+    const { total, summary } = computeShortagesSummaryBranches();
+    $('#shortagesTotal').textContent = total.toLocaleString('ar-SA');
+    const pills = summary.map(s=> `<span class="pill"><i class="fa-solid fa-store"></i> ${s.title}: <b>${s.count.toLocaleString('ar-SA')}</b></span>`).join('');
+    $('#shortagesPills').innerHTML = pills;
+  }
+
+  function renderGroups(){
+    const grid = $('#groupsGrid');
+    grid.innerHTML='';
+
+    groupsDef.forEach(g=>{
+      const { available, notes, pending, delivered, actualTotal, keysTotal } = groupBreakdownCounts(g);
+      const card = document.createElement('div');
+      card.className='card group-card';
+      card.innerHTML = `
+        <div class="group-head">
+          <div class="group-left">
+            <h3 class="group-title"><i class="fa-solid ${g.icon}"></i> ${g.title}</h3>
+            <div class="sub-metrics">
+              <span class="metric" title="الإجمالي الفعلي"><i class="fa-solid fa-equals"></i> الإجمالي الفعلي: <b>${actualTotal.toLocaleString('ar-SA')}</b></span>
+              <span class="metric" title="إجمالي المفاتيح"><i class="fa-solid fa-key"></i> إجمالي المفاتيح: <b>${keysTotal.toLocaleString('ar-SA')}</b></span>
+            </div>
+          </div>
+          <div class="group-total" title="الإجمالي الفعلي">${actualTotal.toLocaleString('ar-SA')}</div>
+        </div>
+
+        <div class="chips">
+          <span class="chip" data-group="${g.key}" data-mode="rows" data-filter="available" title="المخزون المتاح">
+            <i class="fa-solid fa-boxes-stacked"></i> متاح: <b>${available.toLocaleString('ar-SA')}</b>
+          </span>
+          <span class="chip" data-group="${g.key}" data-mode="rows" data-filter="notes" title="سيارات بها ملاحظات">
+            <i class="fa-solid fa-triangle-exclamation"></i> ملاحظات: <b>${notes.toLocaleString('ar-SA')}</b>
+          </span>
+          <span class="chip" data-group="${g.key}" data-mode="rows" data-filter="pending" title="مباع تحت التسليم">
+            <i class="fa-solid fa-truck"></i> تحت التسليم: <b>${pending.toLocaleString('ar-SA')}</b>
+          </span>
+          <span class="chip" data-group="${g.key}" data-mode="rows" data-filter="delivered" title="مباع تم التسليم">
+            <i class="fa-solid fa-circle-check"></i> تم التسليم: <b>${delivered.toLocaleString('ar-SA')}</b>
+          </span>
+        </div>
+        <p class="hint" style="margin:10px 0 0">اضغط على بطاقة الجهة لعرض كل السيارات، أو اضغط على الشرائح لعرض الفئة فقط.</p>
+      `;
+      card.addEventListener('click', (ev)=>{ if(ev.target.closest('.chip')) return; openModalForGroupRows(g, null); });
+      grid.appendChild(card);
+    });
+
+    /* بطاقة طلبات التصوير */
+    renderShootCard(grid);
+
+    // حدث الشرائح للجهات
+    grid.addEventListener('click',(e)=>{
+      const chip = e.target.closest('.chip');
+      if(!chip || chip.hasAttribute('data-shoot')) return;
+      e.stopPropagation();
+      const key   = chip.getAttribute('data-group');
+      const filt  = chip.getAttribute('data-filter');
+      const g = groupsDef.find(x=>x.key===key);
+      if(!g) return;
+      openModalForGroupRows(g, filt);
+    });
+  }
+
+  function renderAll(){
+    renderShortagesCard();
+    renderGroups();
+  }
+
+  /* ===== Modal: rows + shortages (branches) + shoot ===== */
+  const backdrop = $('#backdrop');
+  const modalTitle = $('#modalTitle');
+  const modalSearch = $('#modalSearch');
+  const btnCloseModal = $('#btnCloseModal');
+  const btnExportGroup = $('#btnExportGroup');
+
+  const tableRowsWrap = $('#tableRowsWrap');
+  const tableShortWrap= $('#tableShortWrap');
+  const tableShootWrap= $('#tableShootWrap');
+
+  const modalTableRowsHead = $('#rowsHeadTr');
+  const modalTableRowsBody  = document.querySelector('#modalTableRows tbody');
+  const modalTableShortBody = document.querySelector('#modalTableShort tbody');
+  const modalTableShootBody = document.querySelector('#modalTableShoot tbody');
+  const modalCount = $('#modalCount');
+
+  const shortTabs = $('#shortTabs');
+
+  let currentMode = 'rows'; // 'rows' | 'shortagesBranches' | 'shoot'
+  let currentRows = []; let filteredRows = [];
+  let shortDataByKey = new Map(); let shortActiveKey = 'ALL'; let shortFiltered = [];
+  let currentShoot = []; let filteredShoot = []; let currentShootFilter = 'ALL';
+
+  function openModal(mode, title){
+    currentMode = mode;
+    modalTitle.textContent = title || (mode==='rows'?'السيارات': mode==='shoot'?'طلبات التصوير':'النواقص — الفروع');
+    if(mode==='rows'){
+      shortTabs.style.display='none';
+      tableRowsWrap.style.display='block';
+      tableShortWrap.style.display='none';
+      tableShootWrap.style.display='none';
+    }else if(mode==='shortagesBranches'){
+      shortTabs.style.display='flex';
+      tableRowsWrap.style.display='none';
+      tableShortWrap.style.display='block';
+      tableShootWrap.style.display='none';
+    }else{
+      shortTabs.style.display='none';
+      tableRowsWrap.style.display='none';
+      tableShortWrap.style.display='none';
+      tableShootWrap.style.display='block';
+    }
+    modalSearch.value='';
+    renderModal();
+    backdrop.style.display='flex';
+  }
+  function closeModal(){
+    backdrop.style.display='none';
+    currentRows=[]; filteredRows=[];
+    shortDataByKey.clear(); shortFiltered=[];
+    currentShoot=[]; filteredShoot=[];
+    currentFilterKey=null;
+  }
+  btnCloseModal.addEventListener('click', closeModal);
+  backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) closeModal(); });
+
+  /* ===== Rows table (cars) ===== */
+  function buildRowsHeader(){
+    const common = `
+      <th>م</th>
+      <th>السيارة</th>
+      <th>البيان</th>
+      <th>الوكيل</th>
+      <th>اللون الخارجي</th>
+      <th>اللون الداخلي</th>
+      <th>الموديل</th>
+      <th>اللوحة</th>
+      <th>المكان</th>
+      <th>اسم الدفعة</th>
+      <th>رقم الهيكل</th>
+      <th>الملاحظات</th>
+    `;
+    const approvals = `
+      <th>الموافقة الإدارية</th>
+      <th>ملاحظات الإدارة</th>
+      <th>الموافقة المالية</th>
+      <th>ملاحظات المالية</th>
+    `;
+    modalTableRowsHead.innerHTML = currentFilterKey==='pending' ? common + approvals : common;
+  }
+  function renderRowsTable(){
+    buildRowsHeader();
+    modalTableRowsBody.innerHTML='';
+    filteredRows.forEach(r=>{
+      const isApprovedAdmin   = (r.adminApproved===true || r.adminApproved==='true') ? '✅' : (r.adminApproved===false || r.adminApproved==='false') ? '❌' : '-';
+      const isApprovedFinance = (r.financeApproved===true || r.financeApproved==='true') ? '✅' : (r.financeApproved===false || r.financeApproved==='false') ? '❌' : '-';
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td>${r.id||''}</td>
+        <td>${r.car||''}</td>
+        <td>${r.variant||''}</td>
+        <td><span class="tag">${r.dealer||'-'}</span></td>
+        <td>${r.extColor||''}</td>
+        <td>${r.intColor||''}</td>
+        <td>${r.modelYear||''}</td>
+        <td>${r.plate||''}</td>
+        <td>${r.location||''}</td>
+        <td>${r.batchName||''}</td>
+        <td>${r.vin||''}</td>
+        <td>${r.notes||''}</td>
+        ${currentFilterKey==='pending' ? `
+          <td style="text-align:center">${isApprovedAdmin}</td>
+          <td>${r.adminNotes||'-'}</td>
+          <td style="text-align:center">${isApprovedFinance}</td>
+          <td>${r.financeNotes||'-'}</td>
+        `:''}
+      `;
+      modalTableRowsBody.appendChild(tr);
+    });
+    modalCount.textContent = `عدد السيارات الظاهرة: ${filteredRows.length.toLocaleString('ar-SA')} من ${currentRows.length.toLocaleString('ar-SA')}`;
+  }
+
+  /* ===== Shortages table ===== */
+  function renderShortTable(){
+    modalTableShortBody.innerHTML='';
+    shortFiltered.forEach(s=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
+        <td>${s.car||''}</td>
+        <td>${s.variant||''}</td>
+        <td>${s.extColor||''}</td>
+        <td>${s.intColor||''}</td>
+        <td>${s.modelYear||''}</td>
+        <td style="text-align:center"><span class="tag">${s.countBranch}</span></td>
+        <td style="text-align:center"><span class="tag">${s.countGlobal}</span></td>
+      `;
+      modalTableShortBody.appendChild(tr);
+    });
+    const totalAll = (shortDataByKey.get(shortActiveKey)||[]).length;
+    modalCount.textContent = `عدد التركيبات الناقصة الظاهرة: ${shortFiltered.length.toLocaleString('ar-SA')} من ${totalAll.toLocaleString('ar-SA')} — ${tabTitle(shortActiveKey)}`;
+  }
+
+  function renderModal(){
+    if(currentMode==='rows'){ renderRowsTable(); }
+    else if(currentMode==='shortagesBranches'){ renderShortTable(); }
+    else { renderShootTable(); }
+  }
+
+  // فتح سيارات الجهة
+  function rowsForFilter(rows, filterKey){
+    if(filterKey==='available'){ return rows.filter(r => (r.location||'').endsWith('المخزون المتاح')); }
+    if(filterKey==='notes'){ return rows.filter(r => (r.location||'').includes('سيارات بها ملاحظات')); }
+    if(filterKey==='pending'){ return rows.filter(r => (r.location||'').includes('مباع تحت التسليم')); }
+    if(filterKey==='delivered'){ return rows.filter(r => (r.location||'').includes('مباع تم التسليم')); }
+    return rows;
+  }
+  function openModalForGroupRows(group, filterKey=null){
+    const rows = rowsForMembers(group.members);
+    const list = rowsForFilter(rows, filterKey);
+    currentRows = list.slice().sort((a,b)=> (a.id||0)-(b.id||0));
+    filteredRows= currentRows.slice();
+    currentFilterKey = filterKey;
+    openModal('rows', filterKey ? `${group.title} — ${labelForFilter(filterKey)}` : `${group.title} — كل السيارات`);
+  }
+
+  /* ===== Shortages Branches Modal (tabs: ALL + BR1 + BR2 + BR3) ===== */
+  function tabTitle(key){
+    if(key==='ALL') return 'الكل (الفروع)';
+    const g=groupsDef.find(x=>x.key===key);
+    return g?g.title:key;
+  }
+  function openShortagesModalBranches(){
+    shortDataByKey = new Map();
+    branchGroups().forEach(g=>{ shortDataByKey.set(g.key, computeBranchShortages(g)); });
+    const uniq = new Map();
+    branchGroups().forEach(g=>{
+      (shortDataByKey.get(g.key)||[]).forEach(item=>{
+        const k = [item.car,item.variant,item.extColor,item.intColor,item.modelYear].join('⇢');
+        if(!uniq.has(k)) uniq.set(k, item);
+      });
+    });
+    const allList = Array.from(uniq.values()).sort((a,b)=>
+      (a.car||'').localeCompare(b.car||'','ar') ||
+      (a.variant||'').localeCompare(b.variant||'','ar') ||
+      (a.modelYear||'').localeCompare(b.modelYear||'','ar') ||
+      (a.extColor||'').localeCompare(b.extColor||'','ar') ||
+      (a.intColor||'').localeCompare(b.intColor||'','ar')
+    );
+    shortDataByKey.set('ALL', allList);
+
+    shortTabs.innerHTML='';
+    const mk = (id, txt)=>`<button class="t" data-tab="${id}">${txt}</button>`;
+    shortTabs.insertAdjacentHTML('beforeend', mk('ALL','الكل (الفروع)'));
+    branchGroups().forEach(g=> shortTabs.insertAdjacentHTML('beforeend', mk(g.key,g.title)));
+    activateShortTab('ALL');
+    openModal('shortagesBranches', 'النواقص — الفروع فقط');
+  }
+  function activateShortTab(key){
+    shortActiveKey = key;
+    shortTabs.querySelectorAll('.t').forEach(b=> b.classList.toggle('active', b.getAttribute('data-tab')===key));
+    shortFiltered = (shortDataByKey.get(key)||[]).slice();
+    renderModal();
+  }
+  shortTabs.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.t'); if(!btn) return;
+    const key = btn.getAttribute('data-tab'); if(!key) return;
+    activateShortTab(key);
+  });
+
+  /* ===== SHOOT modal ===== */
+  function openShootModal(filter='ALL'){
+    currentShootFilter = filter;
+    currentShoot = shootRequests.slice().sort((a,b)=> Number(b.id) - Number(a.id));
+    filteredShoot = currentShoot.filter(r=> filter==='ALL' ? true : (r.status||'')===filter);
+    openModal('shoot', filter==='ALL' ? 'طلبات التصوير — الكل' : `طلبات التصوير — ${filter}`);
+  }
+
+  function renderShootTable(){
+    modalTableShootBody.innerHTML='';
+    filteredShoot.forEach(r=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `
+        <td>#${r.id}</td>
+        <td>${r.createdAt||''}</td>
+        <td>${r.createdBy||'-'}</td>
+        <td>${(r.rows||[]).length}</td>
+        <td>${r.status||'-'}</td>
+        <td>${r?.admin?.received? '✅ '+r.admin.received : '—'}</td>
+        <td>${r?.admin?.prepared? '✅ '+r.admin.prepared : '—'}</td>
+        <td>${r?.admin?.notes||''}</td>
+        <td>
+          <button class="btn btn-outline" data-view-id="${String(r.id)}" title="عرض تفاصيل الطلب">
+            <i class="fa-solid fa-up-right-from-square"></i> تفاصيل
+          </button>
+        </td>
+      `;
+      modalTableShootBody.appendChild(tr);
+    });
+    modalCount.textContent = `عدد الطلبات الظاهرة: ${filteredShoot.length.toLocaleString('ar-SA')} من ${currentShoot.length.toLocaleString('ar-SA')}`;
+  }
+
+  // انتقال لصفحة تفاصيل الطلب
+  document.getElementById('tableShootWrap').addEventListener('click', (e)=>{
+    const btn = e.target.closest('button[data-view-id]');
+    if(!btn) return;
+    const id = btn.getAttribute('data-view-id');
+    if(!id) return;
+    // نفس التبويب:
+    window.location.href = `photoshoot.html?id=${encodeURIComponent(id)}`;
+  });
+
+  // بحث موحّد في المودال
+  modalSearch.addEventListener('input', ()=>{
+    const q = (modalSearch.value||'').trim().toLowerCase();
+    if(currentMode==='rows'){
+      if(!q){ filteredRows = currentRows.slice(); return renderModal(); }
+      filteredRows = currentRows.filter(r=>{
+        const hay=[r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName,r.vin,r.notes,
+                   r.adminNotes,r.financeNotes, String(r.adminApproved), String(r.financeApproved)].join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+    }else if(currentMode==='shortagesBranches'){
+      if(!q){ shortFiltered = (shortDataByKey.get(shortActiveKey)||[]).slice(); return renderModal(); }
+      shortFiltered = (shortDataByKey.get(shortActiveKey)||[]).filter(s=>{
+        const hay=[s.car,s.variant,s.extColor,s.intColor,s.modelYear, String(s.countBranch), String(s.countGlobal)].join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+    }else{
+      if(!q){ filteredShoot = currentShoot.filter(r=> currentShootFilter==='ALL'?true:(r.status||'')===currentShootFilter); return renderModal(); }
+      filteredShoot = currentShoot.filter(r=>{
+        const hay=[
+          r.id,r.createdAt,r.createdBy,r.status,(r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),
+          ...(r.rows||[]).flatMap(x=>[x.vin,x.car,x.variant,x.extColor,x.modelYear,x.currentLocation,x.shootPlace,x.note])
+        ].join(' ').toLowerCase();
+        return hay.includes(q);
+      }).filter(r=> currentShootFilter==='ALL'?true:(r.status||'')===currentShootFilter);
+    }
+    renderModal();
+  });
+
+  // تصدير Excel حسب الوضع
+  document.getElementById('btnExportGroup').addEventListener('click', ()=>{
+    if(currentMode==='rows'){
+      const headerCommon = ["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
+      const headerPending= ["الموافقة الإدارية","ملاحظات الإدارة","الموافقة المالية","ملاحظات المالية"];
+      const header = currentFilterKey==='pending' ? [...headerCommon, ...headerPending] : headerCommon;
+      const data=[header];
+      filteredRows.forEach(r=>{
+        const row = [r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName||'',r.vin,r.notes];
+        if(currentFilterKey==='pending'){
+          const adminA = (r.adminApproved===true || r.adminApproved==='true') ? 'موافق' : (r.adminApproved===false || r.adminApproved==='false') ? 'مرفوض' : '-';
+          const finA   = (r.financeApproved===true || r.financeApproved==='true') ? 'موافق' : (r.financeApproved===false || r.financeApproved==='false') ? 'مرفوض' : '-';
+          row.push(adminA, r.adminNotes||'', finA, r.financeNotes||'');
+        }
+        data.push(row);
+      });
+      const ws=XLSX.utils.aoa_to_sheet(data);
+      ws['!cols']=[{wch:5},{wch:24},{wch:30},{wch:18},{wch:16},{wch:16},{wch:10},{wch:10},{wch:20},{wch:16},{wch:22},{wch:26}];
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Rows");
+      XLSX.writeFile(wb, `mzj-dashboard-${modalTitle.textContent.replace(/\s+/g,'-')}.xlsx`);
+    }else if(currentMode==='shortagesBranches'){
+      const header=["السيارة","البيان","اللون الخارجي","اللون الداخلي","الموديل","عدد الفرع","الإجمالي العام"];
+      const data=[header];
+      shortFiltered.forEach(s=> data.push([s.car,s.variant,s.extColor,s.intColor,s.modelYear,s.countBranch,s.countGlobal]));
+      const ws=XLSX.utils.aoa_to_sheet(data);
+      ws['!cols']=[{wch:24},{wch:20},{wch:16},{wch:16},{wch:10},{wch:12},{wch:14}];
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws, tabTitle(shortActiveKey));
+      XLSX.writeFile(wb, `mzj-shortages-branches-${tabTitle(shortActiveKey).replace(/\s+/g,'-')}.xlsx`);
+    }else{ // shoot
+      const header=["رقم الطلب","التاريخ","مقدّم","عدد الهياكل","الحالة","استلام إداري","تجهيز","ملاحظات الإدارة"];
+      const data=[header];
+      filteredShoot.forEach(r=>{
+        data.push([r.id,r.createdAt||'',r.createdBy||'',(r.rows||[]).length,r.status||'',
+          r?.admin?.received||'', r?.admin?.prepared||'', r?.admin?.notes||'']);
+      });
+      const ws=XLSX.utils.aoa_to_sheet(data);
+      ws['!cols']=[{wch:8},{wch:18},{wch:14},{wch:10},{wch:12},{wch:18},{wch:14},{wch:22}];
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Shoot Requests");
+      XLSX.writeFile(wb, `mzj-photoshoot-requests-${(currentShootFilter||'ALL')}.xlsx`);
+    }
+  });
+
+  /* ===== Events ===== */
+  document.getElementById('shortagesCard').addEventListener('click', ()=> openShortagesModalBranches());
+
+  /* ===== Start ===== */
+  setStatus('warn','جارِ الاتصال…');
+</script>
+</body>
+</html>
