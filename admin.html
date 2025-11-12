@@ -145,7 +145,7 @@ html{background:#fff8ef}body{opacity:0;transition:opacity .12s ease}</style>
       <a class="tab" href="photoshoot-user.html">ادارة الطلبات</a>
     </div>
     <div class="row">
-      <div class="status-badge"><span id="connDot" class="dot warn"></span><span id="connText">جارِ الاتصال…</span></div>
+      <div class="status-badge"><span id="connDot" class="dot warn"></span><span id="connText">جارِ التحقق من الجلسة…</span></div>
       <button id="btnSignOut" class="btn btn-ghost" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
     </div>
   </div>
@@ -536,7 +536,7 @@ html{background:#fff8ef}body{opacity:0;transition:opacity .12s ease}</style>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import {getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut , setPersistence, browserLocalPersistence} from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   /* ===== Firebase ===== */
@@ -550,7 +550,9 @@ html{background:#fff8ef}body{opacity:0;transition:opacity .12s ease}</style>
   };
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const db   = getFirestore(app);
+  
+  // Persist auth across tabs/pages
+  try{ setPersistence(auth, browserLocalPersistence).catch(()=>{}); }catch(e){}const db   = getFirestore(app);
   const STATE_REF = doc(db, "mzj_admin_state", "v1");
 
   /* ===== Helpers / State ===== */
@@ -615,7 +617,8 @@ html{background:#fff8ef}body{opacity:0;transition:opacity .12s ease}</style>
   }
 
   /* ===== Auth Gate ===== */
-  onAuthStateChanged(auth, async (user)=>{
+  let __authInitDone=false;
+  onAuthStateChanged(auth, async (user)=>{ __authInitDone=true;
     if(user){
       authGate.style.display='none';
       appRoot.style.display='block';
