@@ -7,16 +7,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 <style>
-  :root{
-    --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef; --text:#1f2937; --muted:#6b7280;
-    --line:#e5e7eb; --radius:14px; --shadow:0 10px 25px rgba(62,36,32,.08);
-  }
+  :root{ --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef; --text:#1f2937; --muted:#6b7280; --line:#e5e7eb; --radius:14px; --shadow:0 10px 25px rgba(62,36,32,.08); }
   *{box-sizing:border-box}
   body{font-family:'Tajawal',system-ui,Segoe UI,Arial;background:#f6f7f9;color:var(--text);margin:0}
-  header{background:var(--brown);color:#fff;padding:18px 20px;display:flex;align-items:center;gap:12px;justify-content:space-between}
+  header{background:var(--brown);color:#fff;padding:18px 20px;display:flex;align-items:center;gap:12px}
   header h1{font-size:20px;margin:0}
-  .user-status{font-size:13px;opacity:.9}
-  .user-status .email{font-weight:700}
   main{max-width:1100px;margin:20px auto;padding:0 16px}
   .card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;margin-bottom:16px}
   .filters{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
@@ -25,8 +20,8 @@
   .filters button{border:0;border-radius:12px;padding:10px 14px;cursor:pointer;background:var(--beige);color:#fff}
   .summary{font-size:13px;color:var(--muted);margin-bottom:10px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .status{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--line)}
-  .ok{background:#ecfdf5;border-color:#d1fae5;color:#065f46}
-  .err{background:#fef2f2;border-color:#fee2e2;color:#991b1b}
+  .status.ok{background:#ecfdf5;border-color:#d1fae5;color:#065f46}
+  .status.err{background:#fef2f2;border-color:#fee2e2;color:#991b1b}
   table{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
   thead th{background:#fafafa;color:#111827;text-align:right;font-weight:700;font-size:13px;border-bottom:1px solid var(--line);padding:10px}
   tbody td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}
@@ -34,52 +29,16 @@
   .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;color:#374151;white-space:pre-wrap;word-break:break-word}
   .muted{color:var(--muted);font-size:12px}
   .pill{display:inline-block;background:var(--cream);border:1px solid #f0e3da;border-radius:999px;padding:4px 8px;color:var(--brown);font-size:12px}
-
-  /* Login card */
-  #loginCard{max-width:420px;margin:40px auto;padding:18px;border:1px solid var(--line);display:none}
-  #loginCard h2{margin:0 0 8px 0;font-size:18px}
-  #loginCard .row{display:grid;gap:8px;margin:10px 0}
-  #loginCard input{padding:10px 12px;border:1px solid var(--line);border-radius:10px}
-  #loginCard button{padding:10px 12px;border-radius:10px;border:0;cursor:pointer}
-  #btnLogin{background:var(--beige);color:#fff}
-  #btnGoogle{background:#fff;border:1px solid var(--line)}
-  #loginError{font-size:12px;color:#991b1b;display:none}
 </style>
 </head>
 <body>
 <header>
-  <div style="display:flex;align-items:center;gap:12px">
-    <i class="fa-solid fa-clipboard-list"></i>
-    <h1>سجل حركة الأعضاء</h1>
-  </div>
-  <div class="user-status">
-    <span id="authState">غير مسجل</span>
-    <span id="userEmail" class="email"></span>
-  </div>
+  <i class="fa-solid fa-clipboard-list"></i>
+  <h1>سجل حركة الأعضاء</h1>
 </header>
 
 <main>
-  <!-- Login (inline) -->
-  <section id="loginCard" class="card">
-    <h2>تسجيل الدخول</h2>
-    <div class="row">
-      <label>البريد الإلكتروني</label>
-      <input id="email" type="email" placeholder="name@company.com"/>
-    </div>
-    <div class="row">
-      <label>كلمة المرور</label>
-      <input id="password" type="password" placeholder="••••••••"/>
-    </div>
-    <div class="row" style="display:flex;gap:8px">
-      <button id="btnLogin"><i class="fa-solid fa-right-to-bracket"></i> دخول</button>
-      <button id="btnGoogle"><i class="fa-brands fa-google"></i> دخول Google</button>
-    </div>
-    <div id="loginError"></div>
-    <div class="muted" style="margin-top:8px">* لازم يكون الإيميل مُفعل داخل Firebase Auth.</div>
-  </section>
-
-  <!-- Filters -->
-  <section id="filtersCard" class="card" style="display:none">
+  <section class="card">
     <div class="filters">
       <div>
         <label>من التاريخ</label>
@@ -95,13 +54,11 @@
     </div>
   </section>
 
-  <!-- Table -->
-  <section id="tableCard" class="card" style="display:none">
+  <section class="card">
     <div class="summary">
       <span id="rangeText">—</span>
       <span class="pill" id="countText">0 نتيجة</span>
       <span id="conn" class="status">جاري فحص الاتصال…</span>
-      <span id="connErr" class="muted"></span>
     </div>
     <table>
       <thead>
@@ -122,14 +79,12 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import {
-    getAuth, onAuthStateChanged, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+  import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import {
     getFirestore, collection, query, where, orderBy, getDocs, limit
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // إعدادات Firebase — مشروعك
+  // إعدادات Firebase الخاصة بمشروعك
   const firebaseConfig = {
     apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
     authDomain: "mzj-agenda.firebaseapp.com",
@@ -144,19 +99,7 @@
   const auth = getAuth(app);
   const db   = getFirestore(app);
 
-  // UI refs
   const $ = (s)=>document.querySelector(s);
-  const loginCard = $("#loginCard");
-  const filtersCard = $("#filtersCard");
-  const tableCard = $("#tableCard");
-  const authState = $("#authState");
-  const userEmailSpan = $("#userEmail");
-  const loginErr = $("#loginError");
-  const emailInp = $("#email");
-  const passInp = $("#password");
-  const btnLogin = $("#btnLogin");
-  const btnGoogle = $("#btnGoogle");
-
   const tbody     = $("#tbody");
   const dateFrom  = $("#dateFrom");
   const dateTo    = $("#dateTo");
@@ -164,58 +107,27 @@
   const rangeText = $("#rangeText");
   const countText = $("#countText");
   const conn      = $("#conn");
-  const connErr   = $("#connErr");
 
-  // افتراضي: اليوم
   const todayISO = (d = new Date()) => d.toISOString().slice(0,10);
-  const fmtTime  = (date) => new Date(date).toLocaleString("ar-SA", { hour12:false });
-  const sanitize = (v) => (v===undefined||v===null) ? "" : (typeof v==='string'? v : JSON.stringify(v));
-  function setRangeText(){ rangeText.textContent = من ${dateFrom.value || "—"} إلى ${dateTo.value || "—"}; }
-
   dateFrom.value = todayISO();
   dateTo.value   = todayISO();
 
-  // ====== Auth UI
-  btnLogin.addEventListener("click", async ()=>{
-    loginErr.style.display = "none";
-    try{
-      await signInWithEmailAndPassword(auth, emailInp.value.trim(), passInp.value);
-    }catch(e){
-      loginErr.style.display = "block";
-      loginErr.textContent = "خطأ تسجيل الدخول: " + (e?.message || e?.code || "غير معروف");
-    }
-  });
+  const fmtTime  = (date) => new Date(date).toLocaleString("ar-SA", { hour12:false });
+  const sanitize = (v) => (v===undefined||v===null) ? "" : (typeof v==='string'? v : JSON.stringify(v));
+  const setRangeText = () => rangeText.textContent = من ${dateFrom.value || "—"} إلى ${dateTo.value || "—"};
 
-  btnGoogle.addEventListener("click", async ()=>{
-    loginErr.style.display = "none";
-    try{
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-    }catch(e){
-      loginErr.style.display = "block";
-      loginErr.textContent = "خطأ Google: " + (e?.message || e?.code || "غير معروف");
-    }
-  });
-
-  // ====== Connectivity Check (after auth)
   async function connectivityCheck(){
-    conn.className = "status";
-    conn.textContent = "جاري فحص الاتصال…";
-    connErr.textContent = "";
     try{
       await getDocs(query(collection(db, "audit_logs"), orderBy("ts","desc"), limit(1)));
       conn.textContent = "متصل بـ Firebase ✓";
-      conn.classList.add("ok");
+      conn.className = "status ok";
     }catch(e){
-      console.error("Firestore read error:", e);
-      conn.textContent = "غير متصل";
-      conn.classList.add("err");
-      connErr.textContent = (e?.message || e?.code || "خطأ غير معروف")
-        + " — تأكد من: Authorized domains / قواعد Firestore / وجود المجموعة audit_logs";
+      console.error(e);
+      conn.textContent = "غير متصل — تأكد من القواعد/الدومين/الفهارس";
+      conn.className = "status err";
     }
   }
 
-  // ====== Load audit
   async function loadAudit(){
     setRangeText();
     tbody.innerHTML = <tr><td colspan="5" class="muted">جاري التحميل...</td></tr>;
@@ -260,37 +172,20 @@
       tbody.innerHTML = rows.join("");
       countText.textContent = ${snap.size} نتيجة;
     }catch(e){
-      console.error("Query error:", e);
+      console.error(e);
       tbody.innerHTML = <tr><td colspan="5" class="muted">تعذر التحميل — راجع الفهارس (Index) وقواعد Firestore.</td></tr>;
       countText.textContent = "—";
-      conn.classList.add("err");
-      connErr.textContent = e?.message || e?.code || "خطأ غير معروف";
     }
   }
 
-  // ====== Auth gate
-  onAuthStateChanged(auth, async (u)=>{
-    if(!u){
-      // show login card
-      authState.textContent = "غير مسجل";
-      userEmailSpan.textContent = "";
-      loginCard.style.display = "block";
-      filtersCard.style.display = "none";
-      tableCard.style.display = "none";
-      return;
-    }
-    // logged in
-    authState.textContent = "مسجل";
-    userEmailSpan.textContent = u.email || "";
-    loginCard.style.display = "none";
-    filtersCard.style.display = "block";
-    tableCard.style.display = "block";
+  btnApply.addEventListener("click", loadAudit);
 
+  // فحص الاتصال وتشغيل بعد تسجيل الدخول
+  onAuthStateChanged(auth, async (u)=>{
+    if(!u){ location.href="login.html"; return; }
     await connectivityCheck();
     await loadAudit();
   });
-
-  btnApply.addEventListener("click", loadAudit);
 </script>
 </body>
 </html>
