@@ -1,8 +1,18 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" data-theme="light">
 <head>
+<link rel="prefetch" href="admin.html">
+<link rel="prefetch" href="inventory.html">
+<link rel="prefetch" href="dashboard.html">
+<link rel="prefetch" href="photoshoot.html">
+<link rel="prefetch" href="index.html">
+
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style id="noFlash">
+#authGate{display:none!important}
+html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
+<meta name="color-scheme" content="light">
 <title>المخزون — MZJ Cars</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
@@ -114,7 +124,7 @@
 </div>
 
 <!-- Auth Gate -->
-<div id="authGate" class="auth-wrap">
+<div id="authGate" style="display:none" class="auth-wrap">
   <div class="auth-card">
     <h2>تسجيل الدخول</h2>
     <label for="email">البريد الإلكتروني</label>
@@ -268,12 +278,14 @@
       setStatus('ok', `متصل كمستخدم: ${user.email}`);
       await initData();
       subscribeLive();
-    }else{
+    
+      document.body.style.opacity='1';}else{
       appRoot.style.display='none';
       authGate.style.display='grid';
       btnSignOut.style.display='none';
       setStatus('warn','لم يتم تسجيل الدخول');
-    }
+    
+      document.body.style.opacity='1';}
   });
   btnLogin.addEventListener('click', async ()=>{
     authHint.textContent='';
