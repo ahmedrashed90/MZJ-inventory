@@ -82,20 +82,20 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   import {
-    getFirestore, collection, query, where, orderBy, getDocs, serverTimestamp, addDoc
+    getFirestore, collection, query, where, orderBy, getDocs
   } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // ====== إعدادات مشروعك (بدّل القيم)
+  // ====== إعدادات مشروع MZJ
   const firebaseConfig = {
     apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
     authDomain: "mzj-agenda.firebaseapp.com",
     projectId: "mzj-agenda",
-    storageBucket: "mzj-agenda.firebasestorage.app",
+    storageBucket: "mzj-agenda.appspot.com",   // ← المصحّح
     messagingSenderId: "834700407721",
-    appId: "1:834700407721:web:75c17665d4f032fd65cab8"
+    appId: "1:834700407721:web:75c17665d4f032fd65cab8",
+    measurementId: "G-770YFMGWQ4"
   };
 
-  // (اختياري) اشترط تسجيل الدخول، غيّرها لـ false لو عايز تشغّل قراءة عامة مؤقتًا لاختبار الاتصال
   const REQUIRE_AUTH = true;
 
   // ====== Bootstrap
@@ -122,20 +122,24 @@
 
   function setRangeText(){ rangeText.textContent = من ${dateFrom.value || "—"} إلى ${dateTo.value || "—"}; }
 
-  // ====== فحص الاتصال بـ Firebase
+  // ====== فحص الاتصال (قراءة فقط)
   async function connectivityCheck(){
     try{
-      await addDoc(collection(db,"__health"), { ts: serverTimestamp(), ok:true });
+      const qy = query(collection(db, "audit_logs"), orderBy("ts","desc"), /* limit */ {limit:1}.limit || undefined);
+      // workaround صغير لأن limit كـ object ما يشتغل—نعمل استيراد ثاني:
+    }catch(e){}
+    try{
+      const snap = await getDocs(query(collection(db,"audit_logs"), orderBy("ts","desc")));
       conn.textContent = "متصل بـ Firebase ✓";
       conn.className = "status ok";
     }catch(e){
       console.error("Firebase connection error:", e);
-      conn.textContent = "غير متصل — تحقّق من firebaseConfig / القواعد / الدومين";
+      conn.textContent = "غير متصل — تأكد من firebaseConfig / القواعد / الدومين";
       conn.className = "status err";
     }
   }
 
-  // ====== تحميل السجل
+  // ====== تحميل السجل (من–إلى)
   async function loadAudit(){
     setRangeText();
     tbody.innerHTML = <tr><td colspan="5" class="muted">جاري التحميل...</td></tr>;
@@ -144,7 +148,6 @@
     const to   = dateTo.value   ? new Date(dateTo.value   + "T23:59:59") : new Date();
 
     try{
-      // قد يطلب Firestore فهرسًا لأول مرة (هيظهر رابط الإنشاء في Console)
       const qy = query(
         collection(db, "audit_logs"),
         where("ts", ">=", from),
@@ -199,33 +202,11 @@
   if(REQUIRE_AUTH){
     onAuthStateChanged(auth, async (u)=>{
       if(!u){ location.href="login.html"; return; }
-      // (اختياري) فحص الدور:
-      // const token = await u.getIdTokenResult(true);
-      // const role = token.claims.role || "viewer";
-      // if(!["superadmin","inv_admin","shoot_admin","auditor"].includes(role)){ alert("لا تملك صلاحية"); location.href="dashboard.html"; return; }
       loadAudit();
     });
   }else{
     loadAudit();
   }
 </script>
-
-<!-- ملاحظة: من صفحاتك الثانية، سجّل أي حدث باستدعاء دالة مشابهة:
-<script type="module">
-  import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-  const db = getFirestore(); const auth = getAuth();
-  async function logAction(action, targetType, targetId, meta={}){
-    const u = auth.currentUser;
-    await addDoc(collection(db,"audit_logs"),{
-      actorUid: u?.uid || null,
-      actorEmail: u?.email || null,
-      action, targetType, targetId,
-      meta, ts: serverTimestamp()
-    });
-  }
-  // مثال استخدام: await logAction("PHOTOSHOOT_PREPARED","shootRequest","REQ_123",{status:"prepared"});
-</script>
--->
 </body>
 </html>
