@@ -16,7 +16,13 @@
   }
   *{box-sizing:border-box}
   html,body{height:100%}
-  body{margin:0;background:var(--cream);color:var(--text);font-family:"Tajawal",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;line-height:1.75}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--text);
+    font-family:"Tajawal",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+    line-height:1.75;
+  }
   a{text-decoration:none;color:var(--brown)}
   .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
 
@@ -24,13 +30,20 @@
   .top{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);z-index:10}
   .top .inner{max-width:1240px;margin:auto;padding:12px;display:flex;align-items:center;justify-content:space-between}
   .brand{display:flex;align-items:center;gap:10px}
-  .logo{width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#3e2420,#bc8f74);display:grid;place-items:center;color:#fff;font-weight:900;box-shadow:var(--shadow)}
+  .logo{
+    width:36px;height:36px;border-radius:12px;
+    background:linear-gradient(135deg,#3e2420,#bc8f74);
+    display:grid;place-items:center;color:#fff;font-weight:900;box-shadow:var(--shadow);
+  }
   h1{margin:0;font-size:19px;color:var(--brown)}
   .chip{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
   .dot{width:8px;height:8px;border-radius:999px;background:#f59e0b}
   .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)}
-  .btn{background:var(--brown);color:#fff;border:none;border-radius:10px;padding:8px 11px;font-weight:800;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
-  .btn.secondary{background:#fff;color:#fff;border:1px solid var(--line);color:var(--brown)}
+  .btn{
+    background:var(--brown);color:#fff;border:none;border-radius:10px;
+    padding:8px 11px;font-weight:800;cursor:pointer;display:inline-flex;gap:8px;align-items:center;
+  }
+  .btn.secondary{background:#fff;color:var(--brown);border:1px solid var(--line)}
   .btn.ghost{background:transparent;color:var(--brown);border:1px dashed var(--line)}
   .btn.beige{background:var(--beige)}
   .btn.danger{background:var(--danger)}
@@ -53,34 +66,70 @@
 
   .filters{display:flex;gap:8px;flex-wrap:wrap;padding:10px;background:#fff8ef;border-bottom:1px dashed var(--line)}
   input,select,button,textarea{font-family:inherit}
-  input[type="search"], select, input[type="date"], input[type="text"]{height:36px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  input[type="search"], select, input[type="date"], input[type="text"]{
+    height:36px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#fff;
+  }
 
   .table-wrap{overflow:auto}
   table{width:100%;border-collapse:separate;border-spacing:0}
-  th,td{border-bottom:1px solid var(--line);padding:10px 8px;font-size:13px;vertical-align:top}
+  th,td{border-bottom:1px solid var(--line);padding:8px 6px;font-size:12px;vertical-align:top}
   th{position:sticky;top:0;background:var(--table-head);text-align:right;z-index:1}
   tr:hover td{background:#fffdf8}
   .center{text-align:center}
 
   .muted{color:var(--muted)}
-  .pill{display:inline-flex;gap:8px;align-items:center;padding:3px 9px;border-radius:999px;border:1px solid var(--line);font-size:12px}
+  .pill{display:inline-flex;gap:8px;align-items:center;padding:3px 9px;border-radius:999px;border:1px solid var(--line);font-size:11px}
   .pill-draft{background:#FEF3C7}
   .pill-prog{background:#DBEAFE}
   .pill-done{background:#DCFCE7}
 
   /* Modal */
-  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.38);display:none;align-items:center;justify-content:center;z-index:50}
-  .modal{background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.35);width:min(1100px,96vw);border:1px solid var(--line)}
-  .modal header{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--line)}
-  .modal .content{padding:12px}
+  .modal-backdrop{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.38);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+  }
+  .modal{
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 24px 60px rgba(0,0,0,.35);
+    width:min(1100px,98vw);
+    border:1px solid var(--line);
+
+    /* تصغير المودال على الشاشة العادية */
+    transform:scale(.85);
+    transform-origin:top center;
+  }
+  .modal header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 12px;
+    border-bottom:1px solid var(--line);
+  }
+  .modal .content{
+    padding:10px 12px;
+    max-height:calc(100vh - 140px);       /* Scroll رأسي فقط لو الطلب طويل */
+    overflow:auto;
+  }
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
   .subhint{font-size:12px;color:var(--muted)}
 
   /* ملاحظات في الطباعة */
   .req-note-print{
-    font-size:13px;
+    font-size:12px;
     color:#111827;
     white-space:pre-wrap;
+  }
+
+  /* تصغير جدول المودال نفسه شوية */
+  #reqModal table th,
+  #reqModal table td{
+    font-size:11px;
+    padding:6px 4px;
   }
 
   /* Auth */
@@ -88,16 +137,51 @@
   #authCard{width:min(420px,92vw);padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow)}
 
   /* Responsive */
-  @media(max-width:1000px){ .cards{grid-template-columns:1fr} }
+  @media(max-width:1000px){
+    .cards{grid-template-columns:1fr}
+  }
 
   /* ===== طباعة الطلب ===== */
   @media print {
-    @page { size: A4 landscape; margin: 10mm; }
+    @page {
+      size: A4 portrait;
+      margin-top: 0.4in;
+      margin-right: 0.03in;
+      margin-bottom: 0.33in;
+      margin-left: 0in;
+    }
+
     body{background:#fff;}
     body *{visibility:hidden;}
     #reqModal, #reqModal *{visibility:visible;}
-    #reqModal{position:static;inset:auto;background:#fff;display:block !important;}
-    #reqModal .modal{width:100%;max-width:none;box-shadow:none;border:none;border-radius:0;}
+    #reqModal{
+      position:static;
+      inset:auto;
+      background:#fff;
+      display:block !important;
+    }
+
+    /* إلغاء الـ scale في الطباعة + استخدام العرض الكامل */
+    #reqModal .modal{
+      width:100%;
+      max-width:none;
+      box-shadow:none;
+      border:none;
+      border-radius:0;
+      transform:none !important;
+    }
+    #reqModal .content{
+      padding:6px;
+      max-height:none;
+      overflow:visible;
+    }
+
+    #reqModal table th,
+    #reqModal table td{
+      padding:4px 3px;
+      font-size:10px;
+    }
+
     #reqModal .table-wrap{overflow:visible;}
     .no-print{display:none !important;}
     .top, .wrap > :not(#reqModal){display:none !important;}
@@ -166,15 +250,15 @@
             <thead>
               <tr>
                 <th class="center">#</th>
-                <th>الطلب</th>
-                <th>المنشئ</th>
-                <th>الحالة</th>
-                <th>تاريخ الإنشاء</th>
-                <th>مكان التصوير</th>
-                <th>استلام الإدارة</th>
-                <th>جاهزية السيارات</th>
-                <th>ملاحظات الإدارة</th>
-                <th>إجراءات</th>
+                <th style="min-width:80px">الطلب</th>
+                <th style="min-width:110px">المنشئ</th>
+                <th style="min-width:90px">الحالة</th>
+                <th style="min-width:130px">تاريخ الإنشاء</th>
+                <th style="min-width:130px">مكان التصوير</th>
+                <th style="min-width:160px">استلام الإدارة</th>
+                <th style="min-width:160px">جاهزية السيارات</th>
+                <th style="min-width:140px">ملاحظات الإدارة</th>
+                <th style="min-width:140px">إجراءات</th>
               </tr>
             </thead>
             <tbody id="reqTable"></tbody>
@@ -221,13 +305,13 @@
           <table>
             <thead>
               <tr>
-                <th style="min-width:40px">#</th>
-                <th style="min-width:160px">رقم الهيكل (VIN)</th>
-                <th style="min-width:200px">السيارة + البيان</th>
-                <th style="min-width:200px">الخارجي / الداخلي / الموديل</th>
-                <th style="min-width:200px">مكان السيارة (حالي)</th>
-                <th style="min-width:200px">مكان التصوير</th>
-                <th style="min-width:220px">ملاحظات + إجراء</th>
+                <th style="min-width:35px">#</th>
+                <th style="min-width:130px">رقم الهيكل (VIN)</th>
+                <th style="min-width:180px">السيارة + البيان</th>
+                <th style="min-width:180px">الخارجي / الداخلي / الموديل</th>
+                <th style="min-width:170px">مكان السيارة (حالي)</th>
+                <th style="min-width:160px">مكان التصوير</th>
+                <th style="min-width:200px">ملاحظات + إجراء</th>
               </tr>
             </thead>
             <tbody id="reqCarsTable"></tbody>
@@ -526,10 +610,7 @@
         <td class="mono js-current-loc" data-vin-norm="${normVin}">${loc}</td>
         <td class="mono">${requested || ''}</td>
         <td>
-          <!-- الملاحظات تظهر في الطباعة -->
           <div class="req-note-print">${note || ''}</div>
-
-          <!-- زر النقل مخفي في الطباعة -->
           <div class="no-print" style="margin-top:6px">
             <button class="btn js-move-one" data-vin="${vin}">
               <i class="fa-solid fa-right-left"></i> نقل لمكان التصوير
@@ -539,7 +620,6 @@
       reqCarsTable.appendChild(tr);
     });
 
-    // ربط أزرار النقل لكل VIN
     reqCarsTable.querySelectorAll('.js-move-one').forEach(btn=>{
       btn.addEventListener('click', async (e)=>{
         const vin = e.currentTarget.getAttribute('data-vin')||'';
@@ -548,11 +628,8 @@
     });
 
     btnMoveAll.onclick = async ()=>{ await moveAllVINsToRequested(r); };
-
     btnModalReceived.onclick = async ()=>{ if(modalCurrentId!=null) await markReceived(modalCurrentId); };
     btnModalPrepared.onclick = async ()=>{ if(modalCurrentId!=null) await markPrepared(modalCurrentId); };
-
-    // زر الطباعة
     btnPrintReq.onclick = ()=>{ window.print(); };
 
     reqModal.style.display='flex';
@@ -682,7 +759,10 @@
   $('#f_status').addEventListener('change', render);
   $('#date_from').addEventListener('change', render);
   $('#date_to').addEventListener('change', render);
-  $('#f_reset').addEventListener('click', ()=>{ $('#q').value=''; $('#f_status').value=''; $('#date_from').value=''; $('#date_to').value=''; render(); });
+  $('#f_reset').addEventListener('click', ()=>{
+    $('#q').value=''; $('#f_status').value=''; $('#date_from').value=''; $('#date_to').value='';
+    render();
+  });
 
   // أخيرًا
   document.body.style.opacity='1';
