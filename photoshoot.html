@@ -171,7 +171,7 @@ body{opacity:0;transition:opacity .12s ease}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7h16M4 17h10"/><circle cx="17" cy="17" r="3"/></svg>
           <h2>إنشاء طلب تصوير</h2>
         </div>
-        <span class="hint">اكتب رقم الهيكل — تعبئة تلقائية | حتى 8 هياكل</span>
+        <span class="hint">اكتب رقم الهيكل</span>
       </div>
 
       <div class="row" style="margin-bottom:8px">
@@ -234,7 +234,7 @@ body{opacity:0;transition:opacity .12s ease}
             <option value="ALL">كل الحالات</option>
             <option value="مسودة">مسودة</option>
             <option value="تحت الإجراء">تحت الإجراء</option>
-            <option value="تم">تم</option>
+            <option value="تم التصوير">تم التصوير</option>
           </select>
           <input id="searchRequests" class="small-input" placeholder="بحث سريع" style="min-width:220px">
           <button id="btnExport" class="btn btn-ghost"><i class="fa-regular fa-file-excel"></i> تصدير</button>
@@ -267,7 +267,7 @@ body{opacity:0;transition:opacity .12s ease}
         </table>
       </div>
       <p class="hint" style="margin:6px 0 0">
-        الإجراءات: <b>تم</b> / <b>حذف</b>.
+        الإجراءات: <b>تم التصوير</b> / <b>حذف</b>.
       </p>
     </div>
 
@@ -303,7 +303,7 @@ body{opacity:0;transition:opacity .12s ease}
           <select id="m_status" class="small-input">
             <option>مسودة</option>
             <option>تحت الإجراء</option>
-            <option>تم</option>
+            <option>تم التصوير</option>
           </select>
         </div>
         <div class="kv">
@@ -372,7 +372,7 @@ body{opacity:0;transition:opacity .12s ease}
   </div>
 </div>
 
-<div id="toast" class="toast">تم</div>
+<div id="toast" class="toast">تم التصوير</div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
@@ -644,7 +644,7 @@ body{opacity:0;transition:opacity .12s ease}
     if(done){
       const id=Number(done.getAttribute('data-done'));
       const req = shootRequests.find(r=>r.id===id); if(!req) return;
-      req.status='تم';
+      req.status='تم التصوير';
       await persistAll(); renderRequestsTable(); showToast('تم إكمال الطلب');
     }
   });
