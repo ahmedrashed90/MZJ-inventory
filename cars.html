@@ -455,7 +455,7 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}
       authGate.style.display='none';
       appRoot.style.display='block';
       btnSignOut.style.display='inline-flex';
-      setStatus('ok', متصل: ${user.email});
+      setStatus('ok', `متصل: ${user.email}`);
       await initData();
       subscribeLive();
       document.body.style.opacity='1';
@@ -543,11 +543,11 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}
 
     carFilterEl.innerHTML = '<option value="">كل السيارات</option>' +
       cars.sort((a,b)=> String(a).localeCompare(String(b),'ar'))
-          .map(v=> <option value="${v}">${v}</option>).join('');
+          .map(v=> `<option value="${v}">${v}</option>`).join('');
 
     modelFilterEl.innerHTML = '<option value="">كل الموديلات</option>' +
       models.sort((a,b)=> String(a).localeCompare(String(b),'ar'))
-            .map(v=> <option value="${v}">${v}</option>).join('');
+            .map(v=> `<option value="${v}">${v}</option>`).join('');
   }
 
   function updateVariantOptionsForSelectedCar(){
@@ -560,7 +560,7 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}
 
     variantFilterEl.innerHTML = '<option value="">كل البيانات</option>' +
       variants.sort((a,b)=> String(a).localeCompare(String(b),'ar'))
-              .map(v=> <option value="${v}">${v}</option>).join('');
+              .map(v=> `<option value="${v}">${v}</option>`).join('');
 
     if(currentVariant && variants.includes(currentVariant)){
       variantFilterEl.value = currentVariant;
@@ -598,7 +598,7 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}
       const car   = r.car || '-';
       const varnt = r.variant || '-';
       const model = r.modelYear!=null ? String(r.modelYear) : '-';
-      const key = ${car}||${varnt}||${model};
+      const key = `${car}||${varnt}||${model}`;
       const current = map.get(key) || { car, variant:varnt, model, total:0 };
       current.total += 1;
       map.set(key,current);
