@@ -1,3 +1,6 @@
+تمام يا بطل! ضفت لك زر **"تصدير قالب فاضي"** جنب زر **"تصدير"**، وبينشئ ملف Excel فيه صف العناوين فقط، جاهز للتعبئة والاستيراد بعدين. الكود كامل بعد التعديل:
+
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -132,8 +135,6 @@
       <a class="tab" href="inventory.html">المخزون</a>
       <a class="tab" href="dashboard.html">الداش بورد</a>
       <a class="tab" href="photoshoot.html">طلبات التصوير</a>
-      <a class="tab" href="cars.html">كل السيارات</a>
-
     </div>
     <div class="row">
       <div class="status-badge"><span id="connDot" class="dot warn"></span><span id="connText">جارِ الاتصال…</span></div>
@@ -167,7 +168,7 @@
       <div class="card-header">
         <div class="section-title">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          <h2 style="margin:0">إضافة سيارة</h2>
+          <h2 style="margin:0">إضافة / تعديل سيارة</h2>
         </div>
         <div class="row">
           <button class="btn btn-ghost" id="btnExport" title="تصدير إلى Excel">
@@ -175,7 +176,7 @@
           </button>
           <!-- الجديد: زر تصدير قالب فاضي -->
           <button class="btn btn-ghost" id="btnExportBlank" title="تصدير قالب فاضي">
-            <i class="fa-regular fa-file"></i> تصدير قالب البيانات
+            <i class="fa-regular fa-file"></i> تصدير قالب فاضي
           </button>
           <div class="import-menu">
             <button class="btn btn-ghost" id="btnImportMenu" title="استيراد من Excel">
@@ -455,7 +456,7 @@
       <div class="card-header">
         <div class="section-title">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10"/></svg>
-          <h2 style="margin:0">تعديل السيارات</h2>
+          <h2 style="margin:0">جدول السيارات</h2>
         </div>
         <span class="hint">اضغط على “اللوحة” أو “رقم الهيكل” للنسخ السريع</span>
       </div>
@@ -1143,4 +1144,4 @@
 </script>
 </body>
 </html>
-
+```
