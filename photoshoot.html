@@ -9,84 +9,112 @@
 
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<style id="noFlash">
-#authGate{display:none!important}
-html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
+<style id="noflash">
+html{background:#fff8ef}
+body{opacity:0;transition:opacity .12s ease}
+</style>
 <meta name="color-scheme" content="light">
-<title>MZJ — طلبات التصوير</title>
+<title>لوحة طلبات التصوير — MZJ Cars</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 
 <style>
   :root{
-    --brown:#3e2420; --beige:#bc8f74; --bg:#faf7f3; --card:#fff; --line:#e7e5e4;
-    --text:#1f2937; --muted:#6b7280; --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9; --warn:#f59e0b;
-    --radius:12px; --shadow:0 10px 28px rgba(0,0,0,.06);
+    --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef; --text:#1f2937; --muted:#6b7280;
+    --line:#e5e7eb; --line-strong:#d1d5db; --table-head:#fafafa;
+    --card:#fff; --radius:14px; --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9;
+    --shadow:0 10px 24px rgba(0,0,0,.06);
   }
   *{box-sizing:border-box}
   html,body{height:100%}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:"Tajawal",system-ui,Arial}
+  body{margin:0;background:var(--cream);color:var(--text);font-family:"Tajawal",system-ui,Arial}
 
-  /* Topbar */
-  .topbar{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid var(--line)}
-  .topbar-inner{max-width:1240px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:10px 14px}
+  /* Topbar + tabs + auth badge (نفس admin.html) */
+  .topbar{position:sticky;top:0;z-index:1000;background:#fff;border-bottom:1px solid var(--line)}
+  .topbar-inner{max-width:1240px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:10px 16px}
   .brand{display:flex;align-items:center;gap:10px}
-  .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--brown),#271713);display:grid;place-items:center;color:#fff;font-weight:900}
-  .brand h1{margin:0;font-size:17px;color:var(--brown)}
-  .tabs{display:flex;gap:6px}
-  .tab{font-size:12px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;color:inherit;text-decoration:none;font-weight:800}
+  .brand .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brown),#2a1613);
+    display:grid;place-items:center;color:#fff;font-weight:800}
+  .brand h1{margin:0;font-size:18px;color:var(--brown)}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;text-decoration:none;color:inherit;font-weight:800;font-size:13px}
   .tab.active{background:var(--brown);border-color:var(--brown);color:#fff}
-  .status-badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:5px 8px;font-size:12px;background:#fff}
-  .dot{width:8px;height:8px;border-radius:999px;background:var(--warn)}
-  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)}
+  .status-badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;font-size:12px}
+  .dot{width:10px;height:10px;border-radius:999px;background:#f59e0b}
+  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)} .dot.warn{background:#f59e0b}
 
-  .container{max-width:1240px;margin:14px auto;padding:0 12px;display:grid;gap:12px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px}
-  .card header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-  .title{margin:0;font-size:15px;color:var(--brown);display:flex;align-items:center;gap:8px}
-  .hint{color:var(--muted);font-size:12px}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 10px;cursor:pointer;font-weight:800;font-size:13px}
-  .btn:hover{transform:translateY(-1px)}
-  .btn:active{transform:translateY(0)}
+  /* Buttons (نفس admin.html) */
+  .btn{position:relative;border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;cursor:pointer;font-weight:700;display:inline-flex;gap:6px;align-items:center;transition:.15s;font-size:13px}
+  .btn:hover{transform:translateY(-1px)} .btn:active{transform:translateY(0)}
   .btn-primary{background:var(--brown);border-color:var(--brown);color:#fff}
+  .btn-beige{background:var(--beige);border-color:var(--beige);color:#fff}
+  .btn-ghost{background:#fff}
+  .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
+  .btn-outline{background:#fff;border:1px solid var(--brown);color:var(--brown)}
   .btn-success{background:var(--ok);border-color:var(--ok);color:#fff}
   .btn-info{background:var(--info);border-color:var(--info);color:#fff}
-  .btn-warn{background:var(--warn);border-color:var(--warn);color:#fff}
-  .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
-  input,select,textarea{width:100%;padding:8px 9px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px}
-  input[readonly]{background:#fafafa;color:#6b7280}
+  .btn-warn{background:#f59e0b;border-color:#f59e0b;color:#fff}
 
-  /* جدول مضغوط بدون سكرول أفقي */
-  .table-wrap{border:1px solid var(--line);border-radius:10px;overflow:hidden}
-  table{border-collapse:separate;border-spacing:0;width:100%;table-layout:fixed}
-  thead th{position:sticky;top:0;background:#fcfbf9;border-bottom:2px solid var(--line);text-align:right;
-           font-size:12px;padding:6px 8px;color:#111827;white-space:normal;line-height:1.3}
-  tbody td{border-top:1px solid var(--line);padding:6px 8px;font-size:13px;vertical-align:middle;white-space:normal;
-           word-break:break-word;line-height:1.45}
-  tbody tr:nth-child(even){background:#fffdfb}
-  tbody tr:hover{background:#f7fafc}
+  /* Layout (نفس admin.html) */
+  .container{max-width:1240px;margin:18px auto;padding:0 16px 48px;display:grid;gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+  .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap}
+  .section-title{display:flex;align-items:center;gap:8px;margin:0}
+  .section-title svg{width:20px;height:20px;color:var(--brown)}
+  .section-title h2{margin:0;font-size:16px;color:var(--brown)}
+  .hint{color:var(--muted);font-size:12px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  /* Inputs (نفس admin.html + small-input) */
+  label{font-weight:800;margin-bottom:6px;display:block;color:var(--brown)}
+  .input-wrap{position:relative}
+  .input-wrap .i{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#9ca3af}
+  .input-wrap input{padding-right:36px}
+  input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:#fff;outline:none;transition:.15s;font-size:14px}
+  input:focus,select:focus,textarea:focus{border-color:var(--beige);box-shadow:0 0 0 3px rgba(188,143,116,.15)}
+  textarea{min-height:44px}
+  input[readonly]{background:#f9fafb;color:#6b7280}
+  .small-input{padding:6px 9px;border-radius:10px;font-size:13px}
+
+  /* Tables (أساس admin + ضبط للصفحة دي) */
+  .table-wrap{overflow:hidden;border:1px solid var(--line);border-radius:14px}
+  table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+  thead th{position:sticky;top:0;background:var(--table-head);z-index:2;border-bottom:1px solid var(--line-strong);
+    text-align:right;color:#111827;font-size:12px;padding:8px 8px;white-space:normal;line-height:1.35}
+  tbody td{border-top:1px solid var(--line);padding:6px 8px;vertical-align:middle;font-size:13px;white-space:normal;word-break:break-word;line-height:1.45}
+  tbody tr:nth-child(odd){background:#fff}
+  tbody tr:nth-child(even){background:#fcfcfc}
+  tbody tr:hover{background:#f8fafc}
   td,th{border-left:1px solid var(--line)}
   td:last-child,th:last-child{border-left:0}
   .center{text-align:center}
   .mono{font-family:ui-monospace,Consolas,Menlo,monospace;letter-spacing:.2px}
   .nowrap{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cell-actions .btn{padding:4px 8px;font-size:12px}
 
-  .cell-actions .btn{padding:6px 8px;font-size:12px}
+  /* Auth (نفس admin.html) */
+  .auth-wrap{min-height:60vh;display:grid;place-items:center;padding:24px}
+  .auth-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px;max-width:420px;width:96%}
+  .auth-card h2{margin:0 0 10px;color:var(--brown);font-size:18px}
+  .auth-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 
-  /* Modal */
-  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.38);display:none;align-items:center;justify-content:center;z-index:80}
-  .modal{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 28px 70px rgba(0,0,0,.35);width:min(1100px,96vw);max-height:92vh;display:flex;flex-direction:column}
-  .modal header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line)}
-  .modal .body{padding:10px 12px;overflow:auto}
+  /* Modal (نفس admin مع إضافات بسيطة) */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.38);display:none;align-items:center;justify-content:center;z-index:50}
+  .modal{background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.35);width:min(1100px,96vw);max-height:92vh;border:1px solid var(--line);display:flex;flex-direction:column}
+  .modal header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0;padding:10px 14px;border-bottom:1px solid var(--line)}
+  .modal h3{margin:0;font-size:18px;color:var(--brown)}
+  .modal .body{padding:12px 14px;overflow:auto}
+  .modal .actions{display:flex;gap:8px;justify-content:flex-start;margin-top:12px}
+
   .subgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  @media (max-width:900px){.subgrid{grid-template-columns:1fr 1fr}}
+  @media (max-width:900px){.subgrid{grid-template-columns:repeat(2,1fr)}}
   @media (max-width:620px){.subgrid{grid-template-columns:1fr}}
   .kv{display:grid;grid-template-columns:140px 1fr;gap:6px;align-items:center}
   .hr{height:1px;background:var(--line);margin:10px 0}
 
-  /* Toast */
-  .toast{position:fixed;bottom:16px;right:16px;background:#111827;color:#fff;padding:8px 12px;border-radius:10px;display:none;font-size:13px}
+  /* Toast (نفس admin) */
+  .toast{position:fixed;bottom:16px;right:16px;background:#111827;color:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.25);display:none;z-index:60;font-size:13px}
+  .toast.ok{background:var(--ok)} .toast.info{background:var(--info)} .toast.err{background:var(--danger)}
 </style>
 </head>
 <body>
@@ -95,7 +123,7 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
 <div class="topbar">
   <div class="topbar-inner">
     <div class="brand">
-      <div class="logo">MZJ</div>
+      <div class="logo" title="MZJ">MZJ</div>
       <div>
         <h1>طلبات التصوير</h1>
         <small class="hint">مجموعة محمد بن ذعار العجمي للسيارات</small>
@@ -105,30 +133,30 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
       <a class="tab" href="admin.html">الإدارة</a>
       <a class="tab" href="inventory.html">المخزون</a>
       <a class="tab" href="dashboard.html">الداش بورد</a>
-      <a class="tab" href="photoshoot-user.html">ادارة الطلبات</a>
+      <a class="tab active" href="photoshoot.html">طلبات التصوير</a>
+      <a class="tab" href="photoshoot-user.html">إدارة الطلبات</a>
       <a class="tab" href="cars.html">كل السيارات</a>
-
     </div>
     <div class="row">
-      <div class="status-badge"><span id="connDot" class="dot"></span><span id="connText">جارِ الاتصال…</span></div>
-      <button id="btnSignOut" class="btn" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> خروج</button>
+      <div class="status-badge"><span id="connDot" class="dot warn"></span><span id="connText">جارِ الاتصال…</span></div>
+      <button id="btnSignOut" class="btn btn-ghost" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
     </div>
   </div>
 </div>
 
 <!-- Auth Gate -->
-<div id="authGate" style="min-height:60vh;display:grid;place-items:center;padding:20px;display:none">
-  <div class="card" style="max-width:420px;width:96%">
-    <h2 class="title" style="margin-bottom:8px"><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</h2>
-    <label>البريد الإلكتروني</label>
+<div id="authGate" class="auth-wrap" style="display:none">
+  <div class="auth-card">
+    <h2><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</h2>
+    <label for="email">البريد الإلكتروني</label>
     <input id="email" type="email" placeholder="you@example.com"/>
-    <label style="margin-top:8px">كلمة المرور</label>
+    <label for="password" style="margin-top:8px">كلمة المرور</label>
     <input id="password" type="password" placeholder="••••••••"/>
-    <div class="row" style="margin-top:8px">
+    <div class="auth-actions">
       <button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
-      <button class="btn" id="btnSignup">إنشاء حساب</button>
+      <button class="btn btn-outline" id="btnSignup">إنشاء حساب</button>
     </div>
-    <p class="hint" id="authHint" style="margin-top:8px"></p>
+    <p class="hint" id="authHint" style="margin-top:10px"></p>
   </div>
 </div>
 
@@ -138,19 +166,22 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
 
     <!-- إنشاء طلب -->
     <div class="card">
-      <header>
-        <h3 class="title"><i class="fa-solid fa-camera-retro"></i> إنشاء طلب تصوير</h3>
-        <small class="hint">اكتب رقم الهيكل — تعبئة تلقائية | حتى 8 هياكل</small>
-      </header>
+      <div class="card-header">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7h16M4 17h10"/><circle cx="17" cy="17" r="3"/></svg>
+          <h2>إنشاء طلب تصوير</h2>
+        </div>
+        <span class="hint">اكتب رقم الهيكل — تعبئة تلقائية | حتى 8 هياكل</span>
+      </div>
 
-      <div class="row">
+      <div class="row" style="margin-bottom:8px">
         <div style="flex:1;min-width:220px">
-          <label>مقدّم الطلب</label>
+          <label for="reqBy">مقدّم الطلب</label>
           <input id="reqBy" class="small-input" value="أحمد ناجي" readonly title="محدد تلقائيًا"/>
         </div>
       </div>
 
-      <div class="table-wrap" style="margin-top:8px">
+      <div class="table-wrap">
         <table id="entryTable">
           <colgroup>
             <col style="width:4ch">
@@ -184,17 +215,20 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
         </table>
       </div>
 
-      <div class="row" style="margin-top:8px">
-        <button class="btn" id="btnDraft"><i class="fa-regular fa-floppy-disk"></i> حفظ كمسودة</button>
+      <div class="row" style="margin-top:12px">
+        <button class="btn btn-ghost" id="btnDraft"><i class="fa-regular fa-floppy-disk"></i> حفظ كمسودة</button>
         <button class="btn btn-primary" id="btnSubmit"><i class="fa-solid fa-paper-plane"></i> إرسال الطلب</button>
-        <button class="btn" id="btnClear"><i class="fa-solid fa-rotate"></i> تفريغ</button>
+        <button class="btn btn-ghost" id="btnClear"><i class="fa-solid fa-rotate"></i> تفريغ</button>
       </div>
     </div>
 
     <!-- متابعة الطلبات -->
     <div class="card">
-      <header>
-        <h3 class="title"><i class="fa-solid fa-clipboard-list"></i> متابعة الطلبات</h3>
+      <div class="card-header">
+        <div class="section-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
+          <h2>متابعة الطلبات</h2>
+        </div>
         <div class="row">
           <select id="statusFilter" class="small-input" style="width:170px">
             <option value="ALL">كل الحالات</option>
@@ -203,9 +237,9 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
             <option value="تم">تم</option>
           </select>
           <input id="searchRequests" class="small-input" placeholder="بحث سريع" style="min-width:220px">
-          <button id="btnExport" class="btn"><i class="fa-regular fa-file-excel"></i> تصدير</button>
+          <button id="btnExport" class="btn btn-ghost"><i class="fa-regular fa-file-excel"></i> تصدير</button>
         </div>
-      </header>
+      </div>
 
       <div class="table-wrap">
         <table id="requestsTable">
@@ -232,17 +266,19 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
           <tbody></tbody>
         </table>
       </div>
-      <p class="hint" style="margin:6px 0 0">الإجراءات: <b>عرض</b> / <b>استلام</b> / <b>تجهيز</b> / <b>تم</b> / <b>حذف</b>.</p>
+      <p class="hint" style="margin:6px 0 0">
+        الإجراءات: <b>عرض</b> / <b>استلام</b> / <b>تجهيز</b> / <b>تم</b> / <b>حذف</b>.
+      </p>
     </div>
 
   </div>
 </div>
 
 <!-- Modal: تفاصيل وتعديل الطلب -->
-<div id="backdrop" class="backdrop" aria-hidden="true">
+<div id="backdrop" class="modal-backdrop" aria-hidden="true">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <header>
-      <h3 id="modalTitle" class="title"><i class="fa-regular fa-rectangle-list"></i> تفاصيل الطلب</h3>
+      <h3 id="modalTitle"><i class="fa-regular fa-rectangle-list"></i> تفاصيل الطلب</h3>
       <div class="row">
         <button id="btnSaveModal" class="btn btn-success"><i class="fa-solid fa-check"></i> حفظ</button>
         <button id="btnCloseModal" class="btn btn-danger"><i class="fa-solid fa-xmark"></i> إغلاق</button>
@@ -250,24 +286,46 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
     </header>
     <div class="body">
       <div class="subgrid">
-        <div class="kv"><div class="hint">رقم الطلب</div><input id="m_id" class="small-input" readonly></div>
-        <div class="kv"><div class="hint">التاريخ</div><input id="m_createdAt" class="small-input" readonly></div>
-        <div class="kv"><div class="hint">مقدّم الطلب</div><input id="m_createdBy" class="small-input" readonly></div>
-        <div class="kv"><div class="hint">الحالة</div>
+        <div class="kv">
+          <div class="hint">رقم الطلب</div>
+          <input id="m_id" class="small-input" readonly>
+        </div>
+        <div class="kv">
+          <div class="hint">التاريخ</div>
+          <input id="m_createdAt" class="small-input" readonly>
+        </div>
+        <div class="kv">
+          <div class="hint">مقدّم الطلب</div>
+          <input id="m_createdBy" class="small-input" readonly>
+        </div>
+        <div class="kv">
+          <div class="hint">الحالة</div>
           <select id="m_status" class="small-input">
             <option>مسودة</option>
             <option>تحت الإجراء</option>
             <option>تم</option>
           </select>
         </div>
-        <div class="kv"><div class="hint">ملاحظات الإدارة</div><input id="m_adminNotes" class="small-input" placeholder="اختياري"></div>
+        <div class="kv">
+          <div class="hint">ملاحظات الإدارة</div>
+          <input id="m_adminNotes" class="small-input" placeholder="اختياري">
+        </div>
       </div>
 
       <div class="hr"></div>
-      <h4 class="title" style="font-size:14px"><i class="fa-solid fa-user-shield"></i> متابعة إدارية</h4>
+      <h4 class="section-title" style="font-size:14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2l7 4v6c0 5-3 9-7 10C8 21 5 17 5 12V6l7-4z"/></svg>
+        <span>متابعة إدارية</span>
+      </h4>
       <div class="subgrid">
-        <div class="kv"><div class="hint">استلام إداري</div><input id="m_adminReceived" class="small-input" readonly placeholder="—"></div>
-        <div class="kv"><div class="hint">تجهيز السيارات</div><input id="m_adminPrepared" class="small-input" readonly placeholder="—"></div>
+        <div class="kv">
+          <div class="hint">استلام إداري</div>
+          <input id="m_adminReceived" class="small-input" readonly placeholder="—">
+        </div>
+        <div class="kv">
+          <div class="hint">تجهيز السيارات</div>
+          <input id="m_adminPrepared" class="small-input" readonly placeholder="—">
+        </div>
       </div>
       <div class="row" style="margin-top:6px">
         <button id="m_btnMarkReceived" class="btn btn-info"><i class="fa-solid fa-inbox"></i> تأكيد الاستلام</button>
@@ -275,7 +333,10 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
       </div>
 
       <div class="hr"></div>
-      <h4 class="title" style="font-size:14px"><i class="fa-regular fa-list-ul"></i> هياكل الطلب</h4>
+      <h4 class="section-title" style="font-size:14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <span>هياكل الطلب</span>
+      </h4>
       <div class="table-wrap">
         <table id="modalRows">
           <colgroup>
@@ -307,7 +368,6 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
           <tbody></tbody>
         </table>
       </div>
-
     </div>
   </div>
 </div>
@@ -337,11 +397,22 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
   /* ===== Helpers ===== */
   const $ = s => document.querySelector(s);
   const pad = n => n<10?'0'+n:n;
-  const now = ()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`};
-  function setStatus(mode,txt){ $('#connDot').className='dot '+(mode==='ok'?'ok':mode==='err'?'err':''); $('#connText').textContent=txt; }
+  const now = ()=>{
+    const d=new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+  };
+  function setStatus(mode,txt){
+    const dot = $('#connDot');
+    dot.className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'warn');
+    $('#connText').textContent=txt;
+  }
   const toast = $('#toast');
   const showToast = (msg)=>{ toast.textContent=msg; toast.style.display='block'; setTimeout(()=>toast.style.display='none',1200); };
-  function normalizeVin(v){ if(!v) return ''; const ar={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'}; return v.toString().replace(/[٠-٩]/g,d=>ar[d]).toUpperCase().replace(/[\s\-\._]/g,'').trim(); }
+  function normalizeVin(v){
+    if(!v) return '';
+    const ar={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
+    return v.toString().replace(/[٠-٩]/g,d=>ar[d]).toUpperCase().replace(/[\s\-\._]/g,'').trim();
+  }
 
   /* ===== State ===== */
   let stock=[], shootRequests=[];
@@ -352,25 +423,30 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
     if(user){
       $('#authGate').style.display='none';
       $('#app').style.display='block';
-      $('#btnSignOut').style.display='inline-block';
+      $('#btnSignOut').style.display='inline-flex';
       setStatus('ok', `متصل: ${user.email}`);
-      await initData(); subscribeLive(); buildFormRows(); renderRequestsTable();
+      await initData();
+      subscribeLive();
+      buildFormRows();
+      renderRequestsTable();
       const rb = $('#reqBy'); rb.value='أحمد ناجي'; rb.setAttribute('readonly','readonly');
-    
-      document.body.style.opacity='1';}else{
+      document.body.style.opacity='1';
+    }else{
       $('#app').style.display='none';
       $('#authGate').style.display='grid';
       $('#btnSignOut').style.display='none';
-      setStatus('', 'لم يتم تسجيل الدخول');
-    
-      document.body.style.opacity='1';}
+      setStatus('warn', 'لم يتم تسجيل الدخول');
+      document.body.style.opacity='1';
+    }
   });
   $('#btnLogin').addEventListener('click', async ()=>{
-    $('#authHint').textContent=''; try{ await signInWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
+    $('#authHint').textContent='';
+    try{ await signInWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
     catch(e){ $('#authHint').textContent='خطأ: '+(e?.message||e); }
   });
   $('#btnSignup').addEventListener('click', async ()=>{
-    $('#authHint').textContent=''; try{ await createUserWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
+    $('#authHint').textContent='';
+    try{ await createUserWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
     catch(e){ $('#authHint').textContent='خطأ: '+(e?.message||e); }
   });
   $('#btnSignOut').addEventListener('click', ()=> signOut(auth));
@@ -383,9 +459,13 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
         const d=s.data()||{};
         stock = Array.isArray(d.stock)? d.stock: [];
         shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: [];
-      }else{ stock=[]; shootRequests=[]; }
-      setStatus('ok','تم التحميل');
-    }catch(e){ setStatus('','تعذّر تحميل البيانات'); }
+      }else{
+        stock=[]; shootRequests=[];
+      }
+      setStatus('ok','تم تحميل البيانات');
+    }catch(e){
+      setStatus('warn','تعذّر تحميل البيانات');
+    }
   }
   function subscribeLive(){
     try{
@@ -395,12 +475,15 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
         stock = Array.isArray(d.stock)? d.stock: stock;
         shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: shootRequests;
         renderRequestsTable();
-      });
+      },()=> setStatus('warn','انقطاع المزامنة مؤقتًا'));
     }catch(e){}
   }
   async function persistAll(){
-    try{ await setDoc(STATE_REF, { stock, shootRequests, updatedAt: now() }, { merge:true }); }
-    catch(e){ showToast('تعذّر الحفظ إلى السحابة'); }
+    try{
+      await setDoc(STATE_REF, { stock, shootRequests, updatedAt: now() }, { merge:true });
+    }catch(e){
+      showToast('تعذّر الحفظ إلى السحابة');
+    }
   }
 
   /* ===== إنشاء الطلب (8 صفوف) ===== */
@@ -426,7 +509,7 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
         </td>
         <td><input class="note small-input" placeholder="اختياري"></td>
         <td class="center">
-          <button class="btn btn-danger btn-row-del"><i class="fa-solid fa-xmark"></i> حذف</button>
+          <button class="btn btn-danger btn-ghost btn-row-del"><i class="fa-solid fa-xmark"></i> حذف</button>
         </td>
       `;
       reqRowsBody.appendChild(tr);
@@ -517,7 +600,7 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
       list = list.filter(r=>{
         const hay=[
           r.id,r.createdAt,r.createdBy,r.status,(r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),
-          ...r.rows.flatMap(x=>[x.vin,x.car,x.variant,x.extColor,x.intColor,x.modelYear,x.currentLocation,x.shootPlace,x.note])
+          ...(r.rows||[]).flatMap(x=>[x.vin,x.car,x.variant,x.extColor,x.intColor,x.modelYear,x.currentLocation,x.shootPlace,x.note])
         ].join(' ').toLowerCase();
         return hay.includes(q);
       });
@@ -530,12 +613,15 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
         <td class="nowrap">#${r.id}</td>
         <td class="nowrap">${r.createdAt}</td>
         <td class="nowrap">${r.createdBy||'-'}</td>
-        <td class="center">${r.rows.length}</td>
+        <td class="center">${r.rows?.length||0}</td>
         <td class="nowrap">${r.status||'-'}</td>
-        <td class="nowrap">${r.admin?.received? '✅ '+r.admin.received : '—'}<br>${r.admin?.prepared? '✅ '+r.admin.prepared : '—'}</td>
+        <td class="nowrap">
+          ${r.admin?.received? '✅ '+r.admin.received : '—'}<br>
+          ${r.admin?.prepared? '✅ '+r.admin.prepared : '—'}
+        </td>
         <td class="center cell-actions">
           <button class="btn btn-info" data-view="${r.id}"><i class="fa-regular fa-pen-to-square"></i> عرض</button>
-          <button class="btn" data-recv="${r.id}"><i class="fa-solid fa-inbox"></i> استلام</button>
+          <button class="btn btn-ghost" data-recv="${r.id}"><i class="fa-solid fa-inbox"></i> استلام</button>
           <button class="btn btn-warn" data-prep="${r.id}"><i class="fa-solid fa-screwdriver-wrench"></i> تجهيز</button>
           <button class="btn btn-success" data-done="${r.id}"><i class="fa-solid fa-check"></i> تم</button>
           <button class="btn btn-danger" data-del="${r.id}"><i class="fa-solid fa-trash"></i> حذف</button>
@@ -597,7 +683,6 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
     $('#m_adminPrepared').value = (req.admin?.prepared)||'';
     $('#m_adminNotes').value = (req.admin?.notes)||'';
 
-    // rows
     modalRowsBody.innerHTML='';
     (req.rows||[]).forEach((x,i)=>{
       const tr=document.createElement('tr');
@@ -628,7 +713,6 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
     $('#modalTitle').innerHTML = `<i class="fa-regular fa-rectangle-list"></i> تفاصيل الطلب #${id}`;
     fillModal(req);
 
-    // أزرار الإدارة داخل المودال
     $('#m_btnMarkReceived').onclick = async ()=>{
       req.admin = req.admin||{}; req.admin.received = now();
       if(req.status==='مسودة') req.status='تحت الإجراء';
@@ -640,13 +724,11 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
       await persistAll(); fillModal(req); renderRequestsTable(); showToast('تم تأكيد التجهيز');
     };
 
-    // حفظ شامل
     $('#btnSaveModal').onclick = async ()=>{
       req.status     = $('#m_status').value||'مسودة';
       req.admin = req.admin||{};
       req.admin.notes = $('#m_adminNotes').value||'';
 
-      // تحديث مكان التصوير + ملاحظة لكل صف (مع الحفاظ على الألوان الداخلية/الخارجية)
       const newRows=[];
       modalRowsBody.querySelectorAll('tr').forEach(tr=>{
         const vin = tr.querySelector('.m_vin').value||'';
@@ -673,34 +755,48 @@ html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}</style>
 
   /* ===== تصدير Excel ===== */
   $('#btnExport').addEventListener('click', ()=>{
-    const header=["رقم الطلب","التاريخ","مقدّم","عدد الهياكل","الحالة",
+    const header=[
+      "رقم الطلب","التاريخ","مقدّم","عدد الهياكل","الحالة",
       "استلام إداري","تجهيز","ملاحظات الإدارة",
-      "VIN","السيارة","البيان","الخارجي","الداخلي","الموديل","مكان السيارة","مكان التصوير (صف)","ملاحظة الصف"];
+      "VIN","السيارة","البيان","الخارجي","الداخلي","الموديل","مكان السيارة","مكان التصوير (صف)","ملاحظة الصف"
+    ];
     const data=[header];
     (shootRequests||[]).forEach(r=>{
       if(!r.rows?.length){
-        data.push([r.id,r.createdAt,r.createdBy,0,r.status,(r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),"","","","","","","","",""]);
+        data.push([
+          r.id,r.createdAt,r.createdBy,0,r.status,
+          (r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),
+          "","","","","","","","",""
+        ]);
       }else{
         r.rows.forEach((x,i)=>{
           data.push([
-            i===0?r.id:"", i===0?r.createdAt:"", i===0?r.createdBy:"", i===0?r.rows.length:"", i===0?(r.status||""):"",
-            i===0?(r.admin?.received||""):"", i===0?(r.admin?.prepared||""):"", i===0?(r.admin?.notes||""):"",
+            i===0?r.id:"",
+            i===0?r.createdAt:"",
+            i===0?r.createdBy:"",
+            i===0?r.rows.length:"",
+            i===0?(r.status||""):"",
+            i===0?(r.admin?.received||""):"",
+            i===0?(r.admin?.prepared||""):"",
+            i===0?(r.admin?.notes||""):"",
             x.vin,x.car,x.variant,x.extColor,x.intColor,x.modelYear,x.currentLocation,x.shootPlace||"",x.note||""
           ]);
         });
       }
     });
     const ws=XLSX.utils.aoa_to_sheet(data);
-    ws['!cols']=[{wch:8},{wch:18},{wch:14},{wch:8},{wch:10},{wch:16},{wch:18},{wch:16},{wch:20},{wch:14},{wch:10},{wch:10},{wch:16},{wch:16},{wch:18}];
+    ws['!cols']=[
+      {wch:8},{wch:18},{wch:14},{wch:8},{wch:10},
+      {wch:16},{wch:16},{wch:18},
+      {wch:20},{wch:18},{wch:12},{wch:12},{wch:10},{wch:10},{wch:16},{wch:18},{wch:20}
+    ];
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,"Shoot Requests");
     XLSX.writeFile(wb,"mzj-photoshoot-requests.xlsx");
   });
 
   /* ===== Start ===== */
-  setStatus('', 'جارِ الاتصال…');
+  setStatus('warn', 'جارِ الاتصال…');
 </script>
 </body>
 </html>
-
-
