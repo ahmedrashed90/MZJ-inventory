@@ -1,103 +1,246 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" data-theme="light">
+<html lang="ar" dir="rtl">
 <head>
+<link rel="prefetch" href="admin.html">
+<link rel="prefetch" href="inventory.html">
+<link rel="prefetch" href="dashboard.html">
+<link rel="prefetch" href="photoshoot.html">
+
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>تقرير السيارات (تجميع) — MZJ Cars</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style id="noFlash">
+#authGate{display:none!important}
+html{background:#faf7f3}body{opacity:0;transition:opacity .12s ease}
+</style>
+<meta name="color-scheme" content="light">
+<title>MZJ — تقرير السيارات (تجميع)</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 
 <style>
   :root{
-    --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef;
-    --text:#1f2937; --muted:#6b7280; --line:#e8e5e2;
-    --card:#ffffff; --bg:#faf7f3; --radius:12px;
-    --shadow:0 10px 24px rgba(0,0,0,.06);
-    --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9;
+    --brown:#3e2420; --beige:#bc8f74; --bg:#faf7f3; --card:#fff; --line:#e7e5e4;
+    --text:#1f2937; --muted:#6b7280; --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9; --warn:#f59e0b;
+    --radius:12px; --shadow:0 10px 24px rgba(0,0,0,.06);
   }
   *{box-sizing:border-box}
   html,body{height:100%}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:"Tajawal",system-ui,Arial}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Tajawal",system-ui,Arial;
+  }
 
-  /* Topbar + Tabs */
-  .topbar{position:sticky;top:0;z-index:60;background:#fff;border-bottom:1px solid var(--line)}
-  .topbar-inner{max-width:1280px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:12px 18px}
+  /* Topbar */
+  .topbar{position:sticky;top:0;z-index:40;background:#fff;border-bottom:1px solid var(--line)}
+  .topbar-inner{
+    max-width:1240px;
+    margin:auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 14px;
+  }
   .brand{display:flex;align-items:center;gap:10px}
-  .brand h1{margin:0;font-size:18px;color:var(--brown);font-weight:800}
-  .brand small{color:var(--muted)}
-  .tabs{display:flex;gap:8px;flex-wrap:wrap}
-  .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;text-decoration:none;color:inherit;font-weight:800;font-size:13px}
+  .logo{
+    width:34px;height:34px;border-radius:10px;
+    background:linear-gradient(135deg,var(--brown),#271713);
+    display:grid;place-items:center;color:#fff;
+    font-weight:900;
+  }
+  .brand h1{margin:0;font-size:17px;color:var(--brown)}
+  .brand small{color:var(--muted);font-size:12px;display:block}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap}
+  .tab{
+    font-size:12px;
+    padding:6px 10px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:#fff;
+    color:inherit;
+    text-decoration:none;
+    font-weight:800;
+  }
   .tab.active{background:var(--brown);border-color:var(--brown);color:#fff}
-  .status-badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;font-size:12px}
-  .dot{width:10px;height:10px;border-radius:999px;background:#f59e0b}
-  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)} .dot.warn{background:#f59e0b}
+  .status-badge{
+    display:inline-flex;gap:8px;align-items:center;
+    border:1px solid var(--line);border-radius:10px;
+    padding:5px 8px;font-size:12px;background:#fff;
+  }
+  .dot{width:8px;height:8px;border-radius:999px;background:var(--warn)}
+  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)}
+
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  /* Layout & cards */
+  .container{
+    max-width:1240px;
+    margin:14px auto;
+    padding:0 12px;
+    display:grid;
+    gap:12px;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:12px;
+  }
+  .card header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:8px;
+  }
+  .title{
+    margin:0;
+    font-size:15px;
+    color:var(--brown);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .hint{color:var(--muted);font-size:12px}
 
   /* Buttons */
-  .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700;display:inline-flex;gap:8px;align-items:center;transition:.15s;font-size:13px}
-  .btn:active{transform:translateY(1px)}
-  .btn-primary{background:var(--beige);border-color:var(--beige);color:#fff}
-  .btn-ghost{background:#fff}
-  .btn-outline{background:#fff;border-color:var(--brown);color:#brown}
+  .btn{
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:9px;
+    padding:7px 10px;
+    cursor:pointer;
+    font-weight:800;
+    font-size:13px;
+    display:inline-flex;
+    gap:6px;
+    align-items:center;
+    transition:.12s;
+  }
+  .btn:hover{transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn-primary{background:var(--brown);border-color:var(--brown);color:#fff}
+  .btn-success{background:var(--ok);border-color:var(--ok);color:#fff}
+  .btn-info{background:var(--info);border-color:var(--info);color:#fff}
 
-  .container{max-width:1280px;margin:18px auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:16px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
-
-  .card h3{margin:0 0 10px;color:var(--brown);font-size:16px;display:flex;align-items:center;gap:8px}
+  input,select,textarea{
+    width:100%;
+    padding:8px 9px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#fff;
+    font-size:14px;
+    font-family:inherit;
+  }
 
   /* Summary badges */
-  .summary-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px}
-  .summary-left{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .summary-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:6px;
+  }
+  .summary-left{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
   .badge-total{
     display:inline-flex;align-items:center;gap:8px;
-    border-radius:999px;padding:6px 12px;
-    background:#fff8ef;border:1px solid #f1d0bd;
-    font-size:13px;color:var(--brown);
+    border-radius:999px;
+    padding:5px 10px;
+    background:#fff8ef;
+    border:1px solid #f1d0bd;
+    font-size:13px;
+    color:var(--brown);
   }
   .badge-total span.num{
     background:var(--brown);color:#fff;
     border-radius:999px;padding:2px 9px;
-    min-width:28px;text-align:center;font-size:12px;
+    min-width:28px;text-align:center;
+    font-size:12px;
   }
-  .hint{color:var(--muted);font-size:12px}
 
-  /* Filters */
-  .filter-grid{display:grid;grid-template-columns:1.6fr 1.6fr 1fr auto;gap:10px;align-items:flex-end}
-  @media(max-width:1000px){.filter-grid{grid-template-columns:1fr 1fr}}
-  @media(max-width:640px){.filter-grid{grid-template-columns:1fr}}
-  .form-group{display:flex;flex-direction:column;gap:6px;font-size:13px}
+  /* Filters grid */
+  .filter-grid{
+    display:grid;
+    grid-template-columns:1.4fr 1.4fr 1fr auto;
+    gap:8px;
+    align-items:flex-end;
+  }
+  @media(max-width:900px){.filter-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:620px){.filter-grid{grid-template-columns:1fr}}
+  .form-group{display:flex;flex-direction:column;gap:4px;font-size:13px}
   .label{font-weight:700;color:var(--brown);display:flex;gap:6px;align-items:center}
   .label span.icon{
     width:18px;height:18px;border-radius:999px;
-    background:rgba(188,143,116,.18);display:flex;align-items:center;justify-content:center;
+    background:rgba(188,143,116,.18);
+    display:flex;align-items:center;justify-content:center;
     font-size:11px;
-  }
-  .select{
-    width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:13px;
   }
 
   /* Table */
-  .table-wrap{overflow:auto;border-radius:10px;border:1px solid var(--line);background:#fff}
-  table{width:100%;border-collapse:separate;border-spacing:0;min-width:520px}
-  th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:right;font-size:13px;white-space:nowrap}
-  thead th{background:#f9fafb;font-weight:700;color:var(--brown);position:sticky;top:0;z-index:1}
+  .table-wrap{
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:auto;
+    background:#fff;
+  }
+  table{
+    border-collapse:separate;
+    border-spacing:0;
+    width:100%;
+    min-width:520px;
+  }
+  th,td{
+    border-bottom:1px solid var(--line);
+    padding:8px 10px;
+    font-size:13px;
+    text-align:right;
+    white-space:nowrap;
+  }
+  thead th{
+    background:#f9fafb;
+    font-weight:700;
+    color:var(--brown);
+    position:sticky;
+    top:0;
+    z-index:1;
+  }
   tbody tr:nth-child(odd){background:#fff}
   tbody tr:nth-child(even){background:#fffdfb}
   tbody tr:last-child td{border-bottom:none}
-
-  .chip{
-    display:inline-block;background:#f9fafb;border-radius:999px;border:1px solid #e5e7eb;
-    padding:2px 8px;font-size:12px;
-  }
   .empty-row{text-align:center;color:var(--muted);padding:14px 8px;font-size:13px}
+  .chip{
+    display:inline-block;
+    background:#f9fafb;
+    border-radius:999px;
+    border:1px solid #e5e7eb;
+    padding:2px 8px;
+    font-size:12px;
+  }
+
+  /* Toast (لو حبيت تستخدمه بعدين) */
+  .toast{
+    position:fixed;
+    bottom:16px;
+    right:16px;
+    background:#111827;
+    color:#fff;
+    padding:8px 12px;
+    border-radius:10px;
+    display:none;
+    font-size:13px;
+    z-index:60;
+  }
 </style>
 </head>
 <body>
 
-<!-- Topbar + Tabs -->
+<!-- Topbar -->
 <div class="topbar">
   <div class="topbar-inner">
     <div class="brand">
-      <i class="fa-solid fa-star" style="color:var(--beige)"></i>
+      <div class="logo">MZJ</div>
       <div>
         <h1>تقرير السيارات (تجميع)</h1>
         <small>مجموعة محمد بن ذعار العجمي للسيارات</small>
@@ -109,35 +252,33 @@
       <a class="tab" href="dashboard.html">الداش بورد</a>
       <a class="tab" href="photoshoot.html">طلبات التصوير</a>
     </div>
-    <div class="tabs" style="gap:10px">
-      <div class="status-badge" id="connBadge">
-        <span class="dot warn" id="connDot"></span>
+    <div class="row">
+      <div class="status-badge">
+        <span id="connDot" class="dot"></span>
         <span id="connText">جارِ الاتصال…</span>
       </div>
-      <button class="btn btn-ghost" id="btnSignOut" style="display:none">
-        <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
+      <button id="btnSignOut" class="btn" style="display:none">
+        <i class="fa-solid fa-right-from-bracket"></i> خروج
       </button>
     </div>
   </div>
 </div>
 
 <!-- Auth Gate -->
-<div id="authGate" style="min-height:60vh;display:grid;place-items:center;padding:24px">
+<div id="authGate" style="min-height:60vh;display:grid;place-items:center;padding:20px;display:none">
   <div class="card" style="max-width:420px;width:96%">
-    <h3><i class="fa-solid fa-user-lock" style="color:var(--beige)"></i> تسجيل الدخول</h3>
-    <div class="form-group">
-      <label class="label" for="email"><span class="icon">@</span> البريد الإلكتروني</label>
-      <input id="email" type="email" class="select" placeholder="you@example.com"/>
-    </div>
-    <div class="form-group">
-      <label class="label" for="password"><span class="icon"><i class="fa-solid fa-key"></i></span> كلمة المرور</label>
-      <input id="password" type="password" class="select" placeholder="••••••••"/>
-    </div>
-    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+    <h2 class="title" style="margin-bottom:8px">
+      <i class="fa-solid fa-user-lock"></i> تسجيل الدخول
+    </h2>
+    <label>البريد الإلكتروني</label>
+    <input id="email" type="email" placeholder="you@example.com"/>
+    <label style="margin-top:8px">كلمة المرور</label>
+    <input id="password" type="password" placeholder="••••••••"/>
+    <div class="row" style="margin-top:8px">
       <button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
-      <button class="btn btn-outline" id="btnSignup">إنشاء حساب</button>
+      <button class="btn" id="btnSignup">إنشاء حساب</button>
     </div>
-    <p class="hint" id="authHint" style="margin-top:10px"></p>
+    <p class="hint" id="authHint" style="margin-top:8px"></p>
   </div>
 </div>
 
@@ -145,15 +286,19 @@
 <div id="app" style="display:none">
   <div class="container">
 
-    <!-- Filters -->
+    <!-- فلاتر -->
     <div class="card">
-      <h3><i class="fa-solid fa-filter" style="color:var(--beige)"></i> فلتر حسب السيارة / البيان / الموديل</h3>
-      <div class="filter-grid" style="margin-top:10px">
+      <header>
+        <h3 class="title">
+          <i class="fa-solid fa-filter"></i> فلتر حسب السيارة / البيان / الموديل
+        </h3>
+      </header>
+      <div class="filter-grid" style="margin-top:6px">
         <div class="form-group">
           <label class="label">
             <span class="icon"><i class="fa-solid fa-car-side"></i></span> السيارة
           </label>
-          <select id="carFilter" class="select">
+          <select id="carFilter">
             <option value="">كل السيارات</option>
           </select>
         </div>
@@ -161,7 +306,7 @@
           <label class="label">
             <span class="icon"><i class="fa-solid fa-file-lines"></i></span> البيان
           </label>
-          <select id="variantFilter" class="select">
+          <select id="variantFilter">
             <option value="">كل البيانات</option>
           </select>
         </div>
@@ -169,24 +314,32 @@
           <label class="label">
             <span class="icon"><i class="fa-solid fa-calendar"></i></span> الموديل
           </label>
-          <select id="modelFilter" class="select">
+          <select id="modelFilter">
             <option value="">كل الموديلات</option>
           </select>
         </div>
         <div class="form-group">
-          <button class="btn btn-primary" id="btnApply">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            تطبيق الفلتر
+          <button class="btn btn-primary" id="btnApply" style="width:100%;justify-content:center">
+            <i class="fa-solid fa-magnifying-glass"></i> تطبيق الفلتر
           </button>
         </div>
       </div>
-      <p class="hint" style="margin-top:8px">
+      <p class="hint" style="margin-top:6px">
         اختر سيارة + بيان + موديل (أو أي جزء منهم)، وسيتم تجميع كل السجلات المطابقة في جدول واحد مع إجمالي العدد.
       </p>
     </div>
 
-    <!-- Result -->
+    <!-- نتيجة التجميع -->
     <div class="card">
+      <header>
+        <h3 class="title">
+          <i class="fa-solid fa-table-list"></i> نتيجة التجميع حسب الفلتر
+        </h3>
+        <button class="btn btn-info" id="btnExport">
+          <i class="fa-regular fa-file-excel"></i> تصدير Excel (حسب الفلتر)
+        </button>
+      </header>
+
       <div class="summary-row">
         <div class="summary-left">
           <div class="badge-total">
@@ -198,10 +351,6 @@
             <span class="num" id="groupsCount">0</span>
           </div>
         </div>
-        <button class="btn btn-primary" id="btnExport">
-          <i class="fa-regular fa-file-excel"></i>
-          تصدير Excel (حسب الفلتر)
-        </button>
       </div>
 
       <div class="table-wrap">
@@ -227,10 +376,11 @@
   </div>
 </div>
 
-<!-- XLSX for Excel export -->
+<div id="toast" class="toast">تم</div>
+
+<!-- XLSX -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-<!-- Firebase (Modules) -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
@@ -247,7 +397,7 @@
     onSnapshot
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-  // نفس إعدادات مشروعك
+  /* ===== Firebase ===== */
   const firebaseConfig = {
     apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
     authDomain: "mzj-agenda.firebaseapp.com",
@@ -256,15 +406,13 @@
     messagingSenderId: "834700407721",
     appId: "1:834700407721:web:75c17665d4f032fd65cab8"
   };
-
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getFirestore(app);
-
   const STATE_REF = doc(db, "mzj_admin_state", "v1");
 
-  /* DOM helpers */
   const $ = s => document.querySelector(s);
+
   const connDot   = $('#connDot');
   const connText  = $('#connText');
   const authGate  = $('#authGate');
@@ -284,29 +432,39 @@
   const resultsBody     = $('#resultsBody');
   const grandTotalEl    = $('#grandTotal');
   const groupsCountEl   = $('#groupsCount');
+  const toast           = $('#toast');
 
   let stock = [];
-  let lastGroups = []; // آخر نتيجة تجميع للتصدير
+  let lastGroups = [];
+  const filters = { car:'', variant:'', model:'' };
 
   function setStatus(mode, txt){
-    connDot.className = 'dot ' + (mode==='ok'?'ok':mode==='err'?'err':'warn');
+    connDot.className = 'dot ' + (mode==='ok'?'ok':mode==='err'?'err':'');
     connText.textContent = txt;
   }
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(()=> toast.style.display='none', 1300);
+  }
+  function uniq(arr){ return [...new Set(arr.filter(Boolean))]; }
 
-  /* Auth gate */
+  /* ===== Auth ===== */
   onAuthStateChanged(auth, async (user)=>{
     if(user){
       authGate.style.display='none';
       appRoot.style.display='block';
       btnSignOut.style.display='inline-flex';
-      setStatus('ok', `متصل كمستخدم: ${user.email}`);
+      setStatus('ok', متصل: ${user.email});
       await initData();
       subscribeLive();
+      document.body.style.opacity='1';
     }else{
       appRoot.style.display='none';
       authGate.style.display='grid';
       btnSignOut.style.display='none';
-      setStatus('warn','لم يتم تسجيل الدخول');
+      setStatus('', 'لم يتم تسجيل الدخول');
+      document.body.style.opacity='1';
     }
   });
 
@@ -315,7 +473,7 @@
     try{
       await signInWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value);
     }catch(e){
-      authHint.textContent = 'فشل تسجيل الدخول: ' + (e?.message||e);
+      authHint.textContent='فشل تسجيل الدخول: '+(e?.message||e);
     }
   });
 
@@ -324,16 +482,13 @@
     try{
       await createUserWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value);
     }catch(e){
-      authHint.textContent = 'تعذّر إنشاء الحساب: ' + (e?.message||e);
+      authHint.textContent='تعذّر إنشاء الحساب: '+(e?.message||e);
     }
   });
 
   btnSignOut.addEventListener('click', ()=> signOut(auth));
 
-  /* Helpers */
-  function uniq(arr){ return [...new Set(arr.filter(Boolean))]; }
-
-  /* Load+subscribe data */
+  /* ===== Data ===== */
   async function initData(){
     try{
       const snap = await getDoc(STATE_REF);
@@ -344,7 +499,7 @@
         stock = [];
       }
       initFilters();
-      updateVariantOptionsForSelectedCar(); // علشان أول مرة
+      updateVariantOptionsForSelectedCar();
       applyFilterAndRender();
     }catch(e){
       console.error('initData error', e);
@@ -356,7 +511,7 @@
         </tr>`;
       grandTotalEl.textContent  = '0';
       groupsCountEl.textContent = '0';
-      setStatus('warn','تعذّر الاتصال — عرض آخر نسخة محفوظة غير متاحة');
+      setStatus('', 'تعذّر الاتصال — البيانات غير متاحة');
     }
   }
 
@@ -374,52 +529,38 @@
         setStatus('ok','متصل — مزامنة حيّة');
       },(err)=>{
         console.warn('snapshot error', err);
-        setStatus('warn','تعذّر الاتصال — مزامنة متوقفة مؤقتًا');
+        setStatus('', 'تعذّر الاتصال — التحديث الحي متوقف مؤقتًا');
       });
     }catch(e){
       console.error('subscribe error', e);
     }
   }
 
-  /* Filters */
-  const filters = { car:'', variant:'', model:'' };
-
+  /* ===== Filters ===== */
   function initFilters(){
-    const cars    = uniq(stock.map(r=> r.car));
-    const models  = uniq(stock.map(r=> r.modelYear));
+    const cars   = uniq(stock.map(r=> r.car));
+    const models = uniq(stock.map(r=> r.modelYear));
 
-    // السيارات
     carFilterEl.innerHTML = '<option value="">كل السيارات</option>' +
-      cars
-        .sort((a,b)=> String(a).localeCompare(String(b),'ar'))
-        .map(v=> `<option value="${v}">${v}</option>`)
-        .join('');
+      cars.sort((a,b)=> String(a).localeCompare(String(b),'ar'))
+          .map(v=> <option value="${v}">${v}</option>).join('');
 
-    // الموديلات (كلها)
     modelFilterEl.innerHTML = '<option value="">كل الموديلات</option>' +
-      models
-        .sort((a,b)=> String(a).localeCompare(String(b),'ar'))
-        .map(v=> `<option value="${v}">${v}</option>`)
-        .join('');
-
-    // البيان هيتم تحديثه حسب السيارة
-    updateVariantOptionsForSelectedCar();
+      models.sort((a,b)=> String(a).localeCompare(String(b),'ar'))
+            .map(v=> <option value="${v}">${v}</option>).join('');
   }
 
-  // تحديث قائمة البيان بناءً على السيارة المختارة
   function updateVariantOptionsForSelectedCar(){
     const baseRows = filters.car
-      ? stock.filter(r => r.car === filters.car)
+      ? stock.filter(r=> r.car === filters.car)
       : stock;
 
     const variants = uniq(baseRows.map(r=> r.variant));
+    const currentVariant = filters.variant;
 
-    const currentVariant = filters.variant; // لو حابب نحافظ على الاختيار لو موجود
     variantFilterEl.innerHTML = '<option value="">كل البيانات</option>' +
-      variants
-        .sort((a,b)=> String(a).localeCompare(String(b),'ar'))
-        .map(v=> `<option value="${v}">${v}</option>`)
-        .join('');
+      variants.sort((a,b)=> String(a).localeCompare(String(b),'ar'))
+              .map(v=> <option value="${v}">${v}</option>).join('');
 
     if(currentVariant && variants.includes(currentVariant)){
       variantFilterEl.value = currentVariant;
@@ -442,9 +583,9 @@
     }
 
     const filtered = stock.filter(r=>{
-      const car    = r.car || '';
-      const varnt  = r.variant || '';
-      const model  = r.modelYear!=null ? String(r.modelYear) : '';
+      const car   = r.car || '';
+      const varnt = r.variant || '';
+      const model = r.modelYear!=null ? String(r.modelYear) : '';
 
       if(filters.car && car !== filters.car) return false;
       if(filters.variant && varnt !== filters.variant) return false;
@@ -457,11 +598,10 @@
       const car   = r.car || '-';
       const varnt = r.variant || '-';
       const model = r.modelYear!=null ? String(r.modelYear) : '-';
-
-      const key = `${car}||${varnt}||${model}`;
+      const key = ${car}||${varnt}||${model};
       const current = map.get(key) || { car, variant:varnt, model, total:0 };
-      current.total += 1;   // كل سجل = 1
-      map.set(key, current);
+      current.total += 1;
+      map.set(key,current);
     });
 
     const groups = Array.from(map.values());
@@ -497,57 +637,45 @@
     groupsCountEl.textContent = groups.length;
   }
 
-  // Events
-  carFilterEl.addEventListener('change', e=>{
+  carFilterEl.addEventListener('change',e=>{
     filters.car = e.target.value;
-    // أول ما نغيّر السيارة، نحدّث قائمة البيان الخاصة بيها
     updateVariantOptionsForSelectedCar();
   });
-
-  variantFilterEl.addEventListener('change', e=>{
+  variantFilterEl.addEventListener('change',e=>{
     filters.variant = e.target.value;
   });
-
-  modelFilterEl.addEventListener('change', e=>{
+  modelFilterEl .addEventListener('change',e=>{
     filters.model = e.target.value;
   });
+  btnApply.addEventListener('click', applyFilterAndRender);
 
-  btnApply.addEventListener('click', ()=>{
-    applyFilterAndRender();
-  });
-
-  // تصدير Excel (نفس الجدول المتجمّع)
+  /* ===== Excel Export ===== */
   function exportExcelFromGroups(groups){
     if(!groups || groups.length===0){
       alert('لا يوجد بيانات حالية للتصدير. جرّب تغيير الفلاتر أو عرض النتيجة أولاً.');
       return;
     }
-
     const header = ["السيارة","البيان","الموديل","إجمالي العدد"];
     const data   = [header];
-
     groups.forEach(g=>{
       data.push([g.car, g.variant, g.model, g.total]);
     });
-
     const ws = XLSX.utils.aoa_to_sheet(data);
     ws['!cols'] = [
-      {wch:30}, // سيارة
-      {wch:30}, // بيان
-      {wch:10}, // موديل
-      {wch:14}  // إجمالي
+      {wch:30},
+      {wch:30},
+      {wch:10},
+      {wch:14}
     ];
-
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Summary");
     XLSX.writeFile(wb, "mzj-inventory-summary.xlsx");
   }
+  btnExport.addEventListener('click', ()=> exportExcelFromGroups(lastGroups));
 
-  btnExport.addEventListener('click', ()=>{
-    exportExcelFromGroups(lastGroups);
-  });
-
-  setStatus('warn','جارِ الاتصال…');
+  /* Start */
+  setStatus('', 'جارِ الاتصال…');
+  document.body.style.opacity='1';
 </script>
 </body>
 </html>
