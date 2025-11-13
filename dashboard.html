@@ -251,7 +251,7 @@
   </div>
 </div>
 
-<div id="toast" class="toast">تم</div>
+<div id="toast" class="toast">تم التصوير</div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
@@ -438,7 +438,7 @@
     const total = shootRequests.length;
     const drafts = shootRequests.filter(r=> (r.status||'')==='مسودة').length;
     const inprog = shootRequests.filter(r=> (r.status||'')==='تحت الإجراء').length;
-    const done   = shootRequests.filter(r=> (r.status||'')==='تم').length;
+    const done   = shootRequests.filter(r=> (r.status||'')==='تم التصوير').length;
     const received = shootRequests.filter(r=> r?.admin?.received).length;
     const prepared = shootRequests.filter(r=> r?.admin?.prepared).length;
     return { total, drafts, inprog, done, received, prepared };
