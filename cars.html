@@ -299,7 +299,7 @@
       authGate.style.display='none';
       appRoot.style.display='block';
       btnSignOut.style.display='inline-flex';
-      setStatus('ok', متصل كمستخدم: ${user.email});
+      setStatus('ok', `متصل كمستخدم: ${user.email}`);
       await initData();
       subscribeLive();
     }else{
@@ -390,13 +390,17 @@
 
     // السيارات
     carFilterEl.innerHTML = '<option value="">كل السيارات</option>' +
-      cars.sort((a,b)=> String(a).localeCompare(String(b),'ar'))
-          .map(v=> <option value="${v}">${v}</option>).join('');
+      cars
+        .sort((a,b)=> String(a).localeCompare(String(b),'ar'))
+        .map(v=> `<option value="${v}">${v}</option>`)
+        .join('');
 
     // الموديلات (كلها)
     modelFilterEl.innerHTML = '<option value="">كل الموديلات</option>' +
-      models.sort((a,b)=> String(a).localeCompare(String(b),'ar'))
-            .map(v=> <option value="${v}">${v}</option>).join('');
+      models
+        .sort((a,b)=> String(a).localeCompare(String(b),'ar'))
+        .map(v=> `<option value="${v}">${v}</option>`)
+        .join('');
 
     // البيان هيتم تحديثه حسب السيارة
     updateVariantOptionsForSelectedCar();
@@ -412,8 +416,10 @@
 
     const currentVariant = filters.variant; // لو حابب نحافظ على الاختيار لو موجود
     variantFilterEl.innerHTML = '<option value="">كل البيانات</option>' +
-      variants.sort((a,b)=> String(a).localeCompare(String(b),'ar'))
-              .map(v=> <option value="${v}">${v}</option>).join('');
+      variants
+        .sort((a,b)=> String(a).localeCompare(String(b),'ar'))
+        .map(v=> `<option value="${v}">${v}</option>`)
+        .join('');
 
     if(currentVariant && variants.includes(currentVariant)){
       variantFilterEl.value = currentVariant;
@@ -452,7 +458,7 @@
       const varnt = r.variant || '-';
       const model = r.modelYear!=null ? String(r.modelYear) : '-';
 
-      const key = ${car}||${varnt}||${model};
+      const key = `${car}||${varnt}||${model}`;
       const current = map.get(key) || { car, variant:varnt, model, total:0 };
       current.total += 1;   // كل سجل = 1
       map.set(key, current);
@@ -544,5 +550,4 @@
   setStatus('warn','جارِ الاتصال…');
 </script>
 </body>
-
 </html>
