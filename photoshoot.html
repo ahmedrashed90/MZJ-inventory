@@ -267,7 +267,7 @@ body{opacity:0;transition:opacity .12s ease}
         </table>
       </div>
       <p class="hint" style="margin:6px 0 0">
-        الإجراءات: <b>عرض</b> / <b>استلام</b> / <b>تجهيز</b> / <b>تم</b> / <b>حذف</b>.
+        الإجراءات: <b>تم</b> / <b>حذف</b>.
       </p>
     </div>
 
@@ -620,9 +620,6 @@ body{opacity:0;transition:opacity .12s ease}
           ${r.admin?.prepared? '✅ '+r.admin.prepared : '—'}
         </td>
         <td class="center cell-actions">
-          <button class="btn btn-info" data-view="${r.id}"><i class="fa-regular fa-pen-to-square"></i> عرض</button>
-          <button class="btn btn-ghost" data-recv="${r.id}"><i class="fa-solid fa-inbox"></i> استلام</button>
-          <button class="btn btn-warn" data-prep="${r.id}"><i class="fa-solid fa-screwdriver-wrench"></i> تجهيز</button>
           <button class="btn btn-success" data-done="${r.id}"><i class="fa-solid fa-check"></i> تم</button>
           <button class="btn btn-danger" data-del="${r.id}"><i class="fa-solid fa-trash"></i> حذف</button>
         </td>
@@ -633,34 +630,16 @@ body{opacity:0;transition:opacity .12s ease}
   $('#statusFilter').addEventListener('change', renderRequestsTable);
   $('#searchRequests').addEventListener('input', renderRequestsTable);
 
-  /* ===== إجراءات سريعة من الجدول ===== */
+  /* ===== إجراءات سريعة من الجدول (تم / حذف فقط) ===== */
   document.addEventListener('click', async (e)=>{
-    const v=e.target.closest('button[data-view]');
     const del=e.target.closest('button[data-del]');
-    const recv=e.target.closest('button[data-recv]');
-    const prep=e.target.closest('button[data-prep]');
     const done=e.target.closest('button[data-done]');
 
-    if(v){ openModal(Number(v.getAttribute('data-view'))); }
     if(del){
       const id=Number(del.getAttribute('data-del'));
       if(!confirm(`حذف الطلب #${id}؟`)) return;
       shootRequests = shootRequests.filter(r=> r.id!==id);
       await persistAll(); renderRequestsTable(); showToast('تم حذف الطلب');
-    }
-    if(recv){
-      const id=Number(recv.getAttribute('data-recv'));
-      const req = shootRequests.find(r=>r.id===id); if(!req) return;
-      req.admin = req.admin||{}; req.admin.received = now();
-      if(req.status==='مسودة') req.status='تحت الإجراء';
-      await persistAll(); renderRequestsTable(); showToast('تم تأكيد الاستلام');
-    }
-    if(prep){
-      const id=Number(prep.getAttribute('data-prep'));
-      const req = shootRequests.find(r=>r.id===id); if(!req) return;
-      req.admin = req.admin||{}; req.admin.prepared = now();
-      if(req.status==='مسودة') req.status='تحت الإجراء';
-      await persistAll(); renderRequestsTable(); showToast('تم تأكيد التجهيز');
     }
     if(done){
       const id=Number(done.getAttribute('data-done'));
@@ -670,7 +649,7 @@ body{opacity:0;transition:opacity .12s ease}
     }
   });
 
-  /* ===== Modal (عرض/تعديل) ===== */
+  /* ===== Modal (عرض/تعديل) — لسه موجود لو احتجته من مكان تاني ===== */
   const backdrop = $('#backdrop');
   const modalRowsBody = document.querySelector('#modalRows tbody');
 
