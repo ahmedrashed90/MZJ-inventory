@@ -279,7 +279,7 @@
   /* ===== State ===== */
   let allLogs = [];
   let filteredLogs = [];
-  let membersSet = new Set();
+  let membersMap = new Map(); // memberKey -> memberLabel
   let actionsSet = new Set();
 
   /* ===== Auth Gate ===== */
@@ -325,12 +325,19 @@
       const qLogs = query(col, orderBy('createdAtTs','desc'), limit(1000));
       onSnapshot(qLogs,(snap)=>{
         allLogs = [];
-        snap.forEach(doc=>{
-          const d = doc.data() || {};
+        snap.forEach(docSnap=>{
+          const d = docSnap.data() || {};
+          const email = (d.userEmail || '').trim();
+          const name  = (d.userName  || '').trim();
+          const memberKey   = (email || name).toLowerCase();
+          const memberLabel = name 
+            ? (email ? `${name} (${email})` : name)
+            : (email || '-');
+
           allLogs.push({
-            _id: doc.id,
-            userEmail: d.userEmail || '',
-            userName : d.userName  || '',
+            _id: docSnap.id,
+            userEmail: email,
+            userName : name,
             role     : d.role      || '',
             action   : d.action    || '',
             entityType: d.entityType || '',
@@ -339,7 +346,9 @@
             createdAt: d.createdAt || '',
             createdAtTs: d.createdAtTs || null,
             ip       : d.ip        || '',
-            userAgent: d.userAgent || ''
+            userAgent: d.userAgent || '',
+            memberKey,
+            memberLabel
           });
         });
         buildFiltersLists();
@@ -363,36 +372,39 @@
   const searchInputEl = $('#searchInput');
 
   function buildFiltersLists(){
-    membersSet = new Set();
+    membersMap = new Map();
     actionsSet = new Set();
+
     allLogs.forEach(l=>{
-      if(l.userEmail || l.userName) membersSet.add(l.userName ? `${l.userName} (${l.userEmail||''})` : l.userEmail);
+      if(l.memberKey){
+        membersMap.set(l.memberKey, l.memberLabel || l.userEmail || l.userName || l.memberKey);
+      }
       if(l.action) actionsSet.add(l.action);
     });
 
-    // حفظ القيمة الحالية
     const prevMember = memberFilterEl.value || 'ALL';
     const prevAction = actionFilterEl.value || 'ALL';
 
-    // بناء أعضاء
+    // أعضاء
     memberFilterEl.innerHTML = '<option value="ALL">الكل</option>';
-    Array.from(membersSet).sort().forEach(m=>{
-      const opt = document.createElement('option');
-      opt.value = m;
-      opt.textContent = m;
-      memberFilterEl.appendChild(opt);
-    });
+    Array.from(membersMap.entries())
+      .sort((a,b)=> a[1].localeCompare(b[1],'ar'))
+      .forEach(([key,label])=>{
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = label;
+        memberFilterEl.appendChild(opt);
+      });
 
-    // بناء الأكشن
+    // الأكشن
     actionFilterEl.innerHTML = '<option value="ALL">الكل</option>';
-    Array.from(actionsSet).sort().forEach(a=>{
+    Array.from(actionsSet).sort((a,b)=>a.localeCompare(b,'ar')).forEach(a=>{
       const opt = document.createElement('option');
       opt.value = a;
       opt.textContent = a;
       actionFilterEl.appendChild(opt);
     });
 
-    // إعادة القيمة السابقة لو كانت موجودة
     if([...memberFilterEl.options].some(o=>o.value===prevMember)) memberFilterEl.value = prevMember;
     if([...actionFilterEl.options].some(o=>o.value===prevAction)) actionFilterEl.value = prevAction;
   }
@@ -406,10 +418,8 @@
 
     filteredLogs = allLogs.filter((l)=>{
       // عضو
-      if(memberVal !== 'ALL'){
-        const label = l.userName ? `${l.userName} (${l.userEmail||''})` : l.userEmail;
-        if(label !== memberVal) return false;
-      }
+      if(memberVal !== 'ALL' && l.memberKey !== memberVal) return false;
+
       // أكشن
       if(actionVal !== 'ALL' && l.action !== actionVal) return false;
 
@@ -471,7 +481,7 @@
     logsTableBody.innerHTML = '';
     filteredLogs.forEach((l,idx)=>{
       const tr = document.createElement('tr');
-      const memberLabel = l.userName ? `${l.userName} (${l.userEmail||''})` : (l.userEmail || '-');
+      const memberLabel = l.memberLabel || l.userEmail || l.userName || '-';
       const entityLabel = l.entityType ? `${l.entityType}${l.entityId ? ' #' + l.entityId : ''}` : (l.entityId || '-');
       const shortUA = l.userAgent ? (l.userAgent.length>35 ? l.userAgent.slice(0,35)+'…' : l.userAgent) : '';
       tr.innerHTML = `
@@ -502,8 +512,8 @@
 
     const uniqMembers = new Set();
     allLogs.forEach(l=>{
-      if(l.userEmail || l.userName){
-        uniqMembers.add(l.userName ? `${l.userName} (${l.userEmail||''})` : l.userEmail);
+      if(l.memberKey){
+        uniqMembers.add(l.memberKey);
       }
     });
     $('#sumMembers').textContent = uniqMembers.size.toLocaleString('ar-SA');
