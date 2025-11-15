@@ -18,18 +18,23 @@
   body{margin:0;background:var(--cream);color:var(--text);font-family:"Tajawal",system-ui,Arial}
 
   /* Topbar + tabs + auth badge */
-  .topbar{position:sticky;top:0;z-index:1000;background:#fff;border-bottom:1px solid var(--line)}
-  .topbar-inner{max-width:1240px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:10px 16px}
+  .topbar{position:sticky;top:0;z-index:60;background:#fff;border-bottom:1px solid var(--line)}
+  .topbar-inner{max-width:1280px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:12px 18px}
   .brand{display:flex;align-items:center;gap:10px}
-  .brand .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brown),#2a1613);
-    display:grid;place-items:center;color:#fff;font-weight:800}
-  .brand h1{margin:0;font-size:18px;color:var(--brown)}
-  .tabs{display:flex;gap:8px}
-  .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;text-decoration:none;color:inherit;font-weight:800}
+  .brand .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brown),#2a1613);display:grid;place-items:center;color:#fff;font-weight:900}
+  .brand h1{margin:0;font-size:18px;color:var(--brown);font-weight:800}
+  .brand small{color:var(--muted)}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;text-decoration:none;color:inherit;font-weight:800;font-size:13px;white-space:nowrap}
   .tab.active{background:var(--brown);border-color:var(--brown);color:#fff}
   .status-badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;font-size:12px}
-  .dot{width:10px;height:10px;border-radius:999px;background:#f59e0b}
-  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)} .dot.warn{background:#f59e0b}
+  .dot{width:10px;height:10px;border-radius:999px;background:var(--warn)}
+  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)} .dot.warn{background:var(--warn)}
+
+  .container{max-width:1280px;margin:18px auto;padding:0 16px;display:grid;gap:16px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+  .hint{color:var(--muted);font-size:12px}
 
   /* Buttons */
   .btn{position:relative;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:700;display:inline-flex;gap:8px;align-items:center;transition:.15s}
@@ -560,7 +565,7 @@
   function pad(n){return n<10?'0'+n:n}
   function now(){
     const d=new Date();
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    return ${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())};
   }
   function onlyDate(str){return (str||'').toString().slice(0,10)}
   function normalizeVin(v){
@@ -655,7 +660,7 @@
       authGate.style.display='none';
       appRoot.style.display='block';
       btnSignOut.style.display='inline-flex';
-      setStatus('ok', `متصل: ${user.email}`);
+      setStatus('ok', متصل: ${user.email});
       await initData();
       subscribeLive();
     }else{
@@ -767,7 +772,7 @@
         action:'إضافة موديل جديد',
         entityType:'model',
         entityId:name,
-        details:`إضافة موديل: ${name}`
+        details:إضافة موديل: ${name}
       });
     } else {
       showToast('الموديل موجود بالفعل','info');
@@ -793,8 +798,8 @@
       await logActivity({
         action:'إضافة بيان جديد',
         entityType:'variant',
-        entityId:`${modelFor} - ${vName}`,
-        details:`إضافة بيان "${vName}" للموديل "${modelFor}"`
+        entityId:${modelFor} - ${vName},
+        details:إضافة بيان "${vName}" للموديل "${modelFor}"
       });
     } else {
       showToast('البيان مسجّل مسبقًا','info');
@@ -871,7 +876,7 @@
             action:'حذف سيارة',
             entityType:'car',
             entityId:id,
-            details: rec ? `حذف سيارة ${rec.car||''} - VIN: ${rec.vin || 'بدون'}` : `حذف سيارة ID=${id}`
+            details: rec ? حذف سيارة ${rec.car||''} - VIN: ${rec.vin || 'بدون'} : حذف سيارة ID=${id}
           });
         }
       }
@@ -907,7 +912,7 @@
         action:'تعديل سيارة',
         entityType:'car',
         entityId: record.id,
-        details:`تعديل سيارة ${record.car||''} - VIN: ${record.vin || 'بدون'}`
+        details:تعديل سيارة ${record.car||''} - VIN: ${record.vin || 'بدون'}
       });
     } else {
       stock.push(record);
@@ -917,7 +922,7 @@
         action:'إضافة سيارة جديدة',
         entityType:'car',
         entityId: record.id,
-        details:`إضافة سيارة ${record.car||''} - VIN: ${record.vin || 'بدون'}`
+        details:إضافة سيارة ${record.car||''} - VIN: ${record.vin || 'بدون'}
       });
     }
     renderTable(); clearForm();
@@ -1046,7 +1051,7 @@
           action: importMode==='replace' ? 'استيراد مخزون (استبدال كامل)' : 'استيراد مخزون (إضافة)',
           entityType:'import',
           entityId:'',
-          details:`عدد السيارات المستوردة: ${importedCount}`
+          details:عدد السيارات المستوردة: ${importedCount}
         });
 
       }catch(err){
@@ -1067,7 +1072,7 @@
 "فرع 3 القادسية : المخزون المتاح","فرع 3 القادسية : سيارات بها ملاحظات","فرع 3 القادسية : مباع تحت التسليم","فرع 3 القادسية : مباع تم التسليم"
   ];
   function fillMoveLists(){
-    const opts = FIXED_LOCATIONS.map(l=> `<option value="${l}">${l}</option>`).join('');
+    const opts = FIXED_LOCATIONS.map(l=> <option value="${l}">${l}</option>).join('');
     moveFrom.innerHTML = opts;
     moveTo.innerHTML   = opts;
   }
@@ -1086,7 +1091,7 @@
       <div><b>اسم الدفعة:</b> ${rec.batchName??""}</div>
       <div style="grid-column:1/-1"><b>رقم الهيكل:</b> ${rec.vin??""}</div>
       <div style="grid-column:1/-1"><b>الملاحظات:</b> ${rec.notes??""}</div>`;
-    carDetailsHint.textContent=rec.vin?`رقم الهيكل: ${rec.vin}`:'لا يوجد رقم هيكل محفوظ لهذه السيارة.';
+    carDetailsHint.textContent=rec.vin?رقم الهيكل: ${rec.vin}:'لا يوجد رقم هيكل محفوظ لهذه السيارة.';
     carDetailsBox.style.display='block';
   }
 
@@ -1100,7 +1105,7 @@
       if(v && v.startsWith(prefix)) set.add(v);
     });
     const list = Array.from(set).sort().slice(0,30);
-    vinHints.innerHTML = list.map(v=>`<option value="${v}"></option>`).join('');
+    vinHints.innerHTML = list.map(v=><option value="${v}"></option>).join('');
   }
   moveVin.addEventListener('input', debounce(()=>{
     updateVinSuggestions();
@@ -1134,10 +1139,10 @@
       if(currentLoc){
         moveFrom.value = currentLoc;
         moveFrom.disabled = true;
-        moveStatus.textContent = `تم العثور: ${match.car} — المكان الحالي: ${currentLoc}`;
+        moveStatus.textContent = تم العثور: ${match.car} — المكان الحالي: ${currentLoc};
       }else{
         moveFrom.disabled = false;
-        moveStatus.textContent = `تم العثور: ${match.car} — لا يوجد مكان مسجل. اختر المكان يدويًا.`;
+        moveStatus.textContent = تم العثور: ${match.car} — لا يوجد مكان مسجل. اختر المكان يدويًا.;
       }
     }else{
       carDetailsBox.style.display='none';
@@ -1166,10 +1171,10 @@
     if(currentLoc){
       moveFrom.value = currentLoc;
       moveFrom.disabled = true;
-      moveStatus.textContent=`تم العثور: ${match.car} — المكان الحالي: ${currentLoc}`;
+      moveStatus.textContent=تم العثور: ${match.car} — المكان الحالي: ${currentLoc};
     }else{
       moveFrom.disabled = false;
-      moveStatus.textContent=`تم العثور: ${match.car} — لا يوجد مكان مسجل. اختر المكان يدويًا.`;
+      moveStatus.textContent=تم العثور: ${match.car} — لا يوجد مكان مسجل. اختر المكان يدويًا.;
     }
   });
 
@@ -1219,7 +1224,7 @@
     renderMoves();
     renderTrack();
 
-    moveStatus.textContent=`تم النقل: ${rec.car} — من "${from||oldLoc||'غير محدد'}" إلى "${to}".`;
+    moveStatus.textContent=تم النقل: ${rec.car} — من "${from||oldLoc||'غير محدد'}" إلى "${to}".;
     carDetailsBox.style.display='none';
     moveVin.value='';
     moveFrom.disabled = false;
@@ -1233,7 +1238,7 @@
       action:'نقل سيارة',
       entityType:'move',
       entityId: rec.id,
-      details:`نقل ${rec.car||''} - VIN: ${rec.vin || ''} من "${from||oldLoc||'غير محدد'}" إلى "${to}"`
+      details:نقل ${rec.car||''} - VIN: ${rec.vin || ''} من "${from||oldLoc||'غير محدد'}" إلى "${to}"
     });
   });
 
