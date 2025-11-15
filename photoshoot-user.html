@@ -317,7 +317,10 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { 
+    getFirestore, doc, getDoc, setDoc, onSnapshot,
+    collection, addDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   /* ===== Firebase ===== */
   const firebaseConfig = {
@@ -332,6 +335,7 @@
   const auth = getAuth(app);
   const db   = getFirestore(app);
   const STATE_REF = doc(db, "mzj_admin_state", "v1");
+  const ACTIVITY_COL = collection(db, "mzj_activity_log");
 
   /* ===== Admin Name Logic ===== */
   const ADMIN_MAP = { };
@@ -354,10 +358,22 @@
   const pad = n=>n<10?'0'+n:n;
   const toast=$('#toast');
   const showToast=(m)=>{ toast.textContent=m; toast.style.display='block'; setTimeout(()=>toast.style.display='none',1600); };
-  function now(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`; }
+  function now(){
+    const d=new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
   function onlyDate(str){return (str||'').toString().slice(0,10)}
-  function setStatus(mode,txt){ $('#connDot').className='dot '+(mode==='ok'?'ok':mode==='err'?'err':''); $('#connText').textContent=txt; }
-  function toDateOnly(s){ if(!s) return null; const d=s.slice(0,10); const [y,m,dd]=d.split('-').map(n=>parseInt(n,10)); if(!y||!m||!dd) return null; return new Date(y,m-1,dd); }
+  function setStatus(mode,txt){
+    $('#connDot').className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'');
+    $('#connText').textContent=txt;
+  }
+  function toDateOnly(s){
+    if(!s) return null;
+    const d=s.slice(0,10);
+    const [y,m,dd]=d.split('-').map(n=>parseInt(n,10));
+    if(!y||!m||!dd) return null;
+    return new Date(y,m-1,dd);
+  }
   function inRange(createdAt, from, to){
     if(!from && !to) return true;
     const d = toDateOnly(createdAt); if(!d) return false;
@@ -377,8 +393,36 @@
     $('#m_done').textContent = shootRequests.filter(x=>x.status==='تم').length;
   }
 
+  // تسجيل في Collection mzj_activity_log
+  async function logActivity(actionType, details, extra={}){
+    try{
+      const user = auth.currentUser;
+      const email = user?.email || '';
+      const name  = displayNameFor(user);
+      await addDoc(ACTIVITY_COL, {
+        userEmail: email,
+        userName : name,
+        role     : extra.role || '',
+        action   : actionType,         // نوع الحركة (يظهر في الفلتر)
+        entityType: extra.entityType || 'photoshoot_request',
+        entityId : extra.requestId != null ? String(extra.requestId) : (extra.entityId || ''),
+        details  : details || '',
+        createdAt: now(),              // نص
+        createdAtTs: serverTimestamp(),// للترتيب
+        ip       : extra.ip || '',
+        userAgent: navigator.userAgent || ''
+      });
+    }catch(e){
+      console.error('logActivity error', e);
+    }
+  }
+
   async function persistAll(){
-    await setDoc(STATE_REF, { shootRequests, stock, moves, updatedAt: now() }, { merge:true });
+    await setDoc(
+      STATE_REF,
+      { shootRequests, stock, moves, updatedAt: now() },
+      { merge:true }
+    );
   }
 
   /* ===== استخراج مكان التصوير بشكل عميق من الطلب ===== */
@@ -392,7 +436,7 @@
         if(t) return t;
       }
     }
-    for(const [k,v] of Object.entries(obj)){
+    for(const [,v] of Object.entries(obj)){
       if(v && typeof v==='object'){
         const found = findPlaceDeep(v, depth+1);
         if(found) return found;
@@ -444,14 +488,18 @@
 
     const tb = $('#reqTable'); tb.innerHTML='';
     list.forEach((r,i)=>{
-      const pillClass = r.status==='تم' ? 'pill-done' : (r.status==='تحت الإجراء'?'pill-prog':'pill-draft');
+      const st = r.status||'';
+      const pillClass =
+        st==='تم'
+          ? 'pill-done'
+          : (st==='تحت الإجراء' ? 'pill-prog' : 'pill-draft');
       const placeReq = requestedPlaceOf(r) || '';
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="center">${i+1}</td>
         <td><span class="mono" style="font-weight:700">#${r.id||'?'}</span></td>
         <td>${r.createdBy||''}</td>
-        <td><span class="pill ${pillClass}">${r.status||''}</span></td>
+        <td><span class="pill ${pillClass}">${st}</span></td>
         <td>${r.createdAt||''}</td>
         <td>${placeReq || '-'}</td>
         <td>
@@ -479,6 +527,11 @@
         ? ({...x, admin:{...(x.admin||{}), notes:(noteEl?.value||'')}})
         : x
       );
+      await logActivity(
+        'تعديل ملاحظات طلب تصوير',
+        `تعديل ملاحظات طلب التصوير #${id}`,
+        { requestId:id }
+      );
       await persistAll();
       showToast('تم حفظ الطلب');
     }));
@@ -495,7 +548,14 @@
     shootRequests = shootRequests.map(x=> Number(x.id)===Number(id)
       ? ({...x, status:'تحت الإجراء', admin:{...(x.admin||{}), received: stamp}})
       : x);
+    await logActivity(
+      'تأكيد استلام طلب تصوير',
+      `تأكيد استلام طلب التصوير #${id}`,
+      { requestId:id, entityType:'photoshoot_request' }
+    );
     await persistAll();
+    metrics();
+    render();
     showToast('تم تأكيد الاستلام ✅');
   }
 
@@ -620,6 +680,13 @@
 
     await recordMove(rec.vin||norm, rec.car||'', from, to, rec.id);
     setLocationByVIN(norm, to);
+
+    await logActivity(
+      'نقل سيارة لمكان التصوير',
+      `نقل سيارة (${rec.car||'بدون اسم'}) رقم هيكل ${norm} من "${from||'غير مسجل'}" إلى "${to}" للطلب #${req.id}`,
+      { requestId:req.id, entityType:'photoshoot_request', entityId:req.id }
+    );
+
     await persistAll();
 
     const cell = reqCarsTable.querySelector(`.js-current-loc[data-vin-norm="${norm}"]`);
@@ -652,6 +719,11 @@
     }
 
     if(moved>0){
+      await logActivity(
+        'نقل كل السيارات لمكان التصوير',
+        `نقل ${moved} سيارة إلى مكان التصوير "${requested}" للطلب #${req.id}`,
+        { requestId:req.id, entityType:'photoshoot_request', entityId:req.id }
+      );
       await persistAll();
       openReqModal(req.id);
       showToast(`تم نقل ${moved} سيارة إلى "${requested}"`);
@@ -701,19 +773,22 @@
     if(snap.exists()){
       const d = snap.data()||{};
       shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: [];
-      stock = Array.isArray(d.stock)? d.stock: [];
-      moves = Array.isArray(d.moves)? d.moves: [];
+      stock         = Array.isArray(d.stock)? d.stock: [];
+      moves         = Array.isArray(d.moves)? d.moves: [];
     }else{
-      shootRequests = []; stock = []; moves = [];
+      shootRequests = [];
+      stock = [];
+      moves = [];
     }
   }
   function subscribeLive(){
     onSnapshot(STATE_REF,(snap)=>{
       if(!snap.exists()) return;
       const d = snap.data()||{};
-      shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: shootRequests;
-      stock = Array.isArray(d.stock)? d.stock: stock;
-      moves = Array.isArray(d.moves)? d.moves: moves;
+      shootRequests  = Array.isArray(d.shootRequests)? d.shootRequests: shootRequests;
+      stock          = Array.isArray(d.stock)? d.stock: stock;
+      moves          = Array.isArray(d.moves)? d.moves: moves;
+
       metrics(); render();
 
       if(modalCurrentId!=null){
@@ -729,7 +804,10 @@
   $('#date_from').addEventListener('change', render);
   $('#date_to').addEventListener('change', render);
   $('#f_reset').addEventListener('click', ()=>{
-    $('#q').value=''; $('#f_status').value=''; $('#date_from').value=''; $('#date_to').value='';
+    $('#q').value='';
+    $('#f_status').value='';
+    $('#date_from').value='';
+    $('#date_to').value='';
     render();
   });
 
