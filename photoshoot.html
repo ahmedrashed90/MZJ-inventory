@@ -76,7 +76,7 @@ body{opacity:0;transition:opacity .12s ease}
   input[readonly]{background:#f9fafb;color:#6b7280}
   .small-input{padding:6px 9px;border-radius:10px;font-size:13px}
 
-  /* Tables (أساس admin + ضبط للصفحة دي) */
+  /* Tables */
   .table-wrap{overflow:hidden;border:1px solid var(--line);border-radius:14px}
   table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
   thead th{position:sticky;top:0;background:var(--table-head);z-index:2;border-bottom:1px solid var(--line-strong);
@@ -92,13 +92,13 @@ body{opacity:0;transition:opacity .12s ease}
   .nowrap{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .cell-actions .btn{padding:4px 8px;font-size:12px}
 
-  /* Auth (نفس admin.html) */
+  /* Auth */
   .auth-wrap{min-height:60vh;display:grid;place-items:center;padding:24px}
   .auth-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px;max-width:420px;width:96%}
   .auth-card h2{margin:0 0 10px;color:var(--brown);font-size:18px}
   .auth-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 
-  /* Modal (نفس admin مع إضافات بسيطة) */
+  /* Modal */
   .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.38);display:none;align-items:center;justify-content:center;z-index:50}
   .modal{background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.35);width:min(1100px,96vw);max-height:92vh;border:1px solid var(--line);display:flex;flex-direction:column}
   .modal header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0;padding:10px 14px;border-bottom:1px solid var(--line)}
@@ -112,7 +112,7 @@ body{opacity:0;transition:opacity .12s ease}
   .kv{display:grid;grid-template-columns:140px 1fr;gap:6px;align-items:center}
   .hr{height:1px;background:var(--line);margin:10px 0}
 
-  /* Toast (نفس admin) */
+  /* Toast */
   .toast{position:fixed;bottom:16px;right:16px;background:#111827;color:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.25);display:none;z-index:60;font-size:13px}
   .toast.ok{background:var(--ok)} .toast.info{background:var(--info)} .toast.err{background:var(--danger)}
 </style>
@@ -267,7 +267,7 @@ body{opacity:0;transition:opacity .12s ease}
         </table>
       </div>
       <p class="hint" style="margin:6px 0 0">
-        الإجراءات: <b>تم التصوير</b> / <b>حذف</b>.
+        الإجراءات: <b>تم التصوير</b> / <b>حذف</b>. اضغط على الصف لعرض التفاصيل الكاملة.
       </p>
     </div>
 
@@ -378,7 +378,10 @@ body{opacity:0;transition:opacity .12s ease}
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { 
+    getFirestore, doc, getDoc, setDoc, onSnapshot,
+    collection, addDoc, serverTimestamp
+  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   /* ===== Firebase ===== */
   const firebaseConfig = {
@@ -414,6 +417,33 @@ body{opacity:0;transition:opacity .12s ease}
     return v.toString().replace(/[٠-٩]/g,d=>ar[d]).toUpperCase().replace(/[\s\-\._]/g,'').trim();
   }
 
+  /* ===== Activity Log helper ===== */
+  async function logActivity({ action, entityType, entityId, details }){
+    try{
+      const u = auth.currentUser;
+      const userEmail = u?.email || '';
+      const userName  = u?.displayName || '';
+      const role      = "طلبات التصوير"; // ممكن تغيرها لو حابب
+
+      await addDoc(collection(db,"mzj_activity_log"),{
+        userEmail,
+        userName,
+        role,
+        action: action || '',
+        entityType: entityType || '',
+        entityId: entityId != null ? String(entityId) : '',
+        details: details || '',
+        createdAt: now(),
+        createdAtTs: serverTimestamp(),
+        ip: '',
+        userAgent: navigator.userAgent || ''
+      });
+    }catch(e){
+      // ما نوقفش الشغل عشان اللوج، بس ممكن تبص في الكونسول لو حبيت
+      console.warn("logActivity error",e);
+    }
+  }
+
   /* ===== State ===== */
   let stock=[], shootRequests=[];
   const SHOOT_PLACES = ["المعرض","الاستديو","الصالة الاساسية","صالة القادسية","معرض الملتقى"];
@@ -429,7 +459,8 @@ body{opacity:0;transition:opacity .12s ease}
       subscribeLive();
       buildFormRows();
       renderRequestsTable();
-      const rb = $('#reqBy'); rb.value='أحمد ناجي'; rb.setAttribute('readonly','readonly');
+      const rb = $('#reqBy'); 
+      if(rb){ rb.value= user.displayName || 'أحمد ناجي'; rb.setAttribute('readonly','readonly'); }
       document.body.style.opacity='1';
     }else{
       $('#app').style.display='none';
@@ -514,7 +545,12 @@ body{opacity:0;transition:opacity .12s ease}
       `;
       reqRowsBody.appendChild(tr);
     }
-    const rb = $('#reqBy'); if(rb){ rb.value='أحمد ناجي'; rb.setAttribute('readonly','readonly'); }
+    const rb = $('#reqBy'); 
+    if(rb){ 
+      const u = auth.currentUser;
+      rb.value = (u?.displayName)||'أحمد ناجي'; 
+      rb.setAttribute('readonly','readonly'); 
+    }
   }
   $('#btnClear').addEventListener('click', buildFormRows);
 
@@ -575,11 +611,17 @@ body{opacity:0;transition:opacity .12s ease}
       createdAt: now(),
       createdBy: by,
       rows,
-      status: statusLabel, // "مسودة" | "تحت الإجراء" | "تم"
+      status: statusLabel, // "مسودة" | "تحت الإجراء" | "تم التصوير"
       admin: { received:null, prepared:null, notes:'' }
     };
     shootRequests.push(req);
     await persistAll();
+    await logActivity({
+      action: statusLabel==='مسودة' ? 'إنشاء طلب تصوير (مسودة)' : 'إرسال طلب تصوير',
+      entityType: 'photoshootRequest',
+      entityId: nextId,
+      details: `عدد الهياكل: ${rows.length}`
+    });
     buildFormRows();
     renderRequestsTable();
     showToast(statusLabel==='مسودة'?'تم حفظ المسودة':'تم إرسال الطلب');
@@ -630,6 +672,18 @@ body{opacity:0;transition:opacity .12s ease}
   $('#statusFilter').addEventListener('change', renderRequestsTable);
   $('#searchRequests').addEventListener('input', renderRequestsTable);
 
+  /* ===== فتح تفاصيل الطلب بالضغط على الصف ===== */
+  tblBody.addEventListener('click',(e)=>{
+    // لو كليك على زر "تم" أو "حذف" سيبه للهاندلر التاني
+    if(e.target.closest('button')) return;
+    const row = e.target.closest('tr'); if(!row) return;
+    const firstCell = row.querySelector('td'); if(!firstCell) return;
+    const txt = (firstCell.textContent||'').trim(); // "#5"
+    const id  = Number(txt.replace('#','').trim());
+    if(!id) return;
+    openModal(id);
+  });
+
   /* ===== إجراءات سريعة من الجدول (تم / حذف فقط) ===== */
   document.addEventListener('click', async (e)=>{
     const del=e.target.closest('button[data-del]');
@@ -639,17 +693,33 @@ body{opacity:0;transition:opacity .12s ease}
       const id=Number(del.getAttribute('data-del'));
       if(!confirm(`حذف الطلب #${id}؟`)) return;
       shootRequests = shootRequests.filter(r=> r.id!==id);
-      await persistAll(); renderRequestsTable(); showToast('تم حذف الطلب');
+      await persistAll(); 
+      await logActivity({
+        action: 'حذف طلب تصوير',
+        entityType: 'photoshootRequest',
+        entityId: id,
+        details: ''
+      });
+      renderRequestsTable(); 
+      showToast('تم حذف الطلب');
     }
     if(done){
       const id=Number(done.getAttribute('data-done'));
       const req = shootRequests.find(r=>r.id===id); if(!req) return;
       req.status='تم التصوير';
-      await persistAll(); renderRequestsTable(); showToast('تم إكمال الطلب');
+      await persistAll(); 
+      await logActivity({
+        action: 'تحديث حالة طلب تصوير إلى تم التصوير',
+        entityType: 'photoshootRequest',
+        entityId: id,
+        details: `عدد الهياكل: ${req.rows?.length||0}`
+      });
+      renderRequestsTable(); 
+      showToast('تم إكمال الطلب');
     }
   });
 
-  /* ===== Modal (عرض/تعديل) — لسه موجود لو احتجته من مكان تاني ===== */
+  /* ===== Modal (عرض/تعديل) ===== */
   const backdrop = $('#backdrop');
   const modalRowsBody = document.querySelector('#modalRows tbody');
 
@@ -690,17 +760,38 @@ body{opacity:0;transition:opacity .12s ease}
     const req=shootRequests.find(r=>r.id===id); if(!req) return;
     backdrop.style.display='flex';
     $('#modalTitle').innerHTML = `<i class="fa-regular fa-rectangle-list"></i> تفاصيل الطلب #${id}`;
+
     fillModal(req);
 
     $('#m_btnMarkReceived').onclick = async ()=>{
-      req.admin = req.admin||{}; req.admin.received = now();
+      req.admin = req.admin||{}; 
+      req.admin.received = now();
       if(req.status==='مسودة') req.status='تحت الإجراء';
-      await persistAll(); fillModal(req); renderRequestsTable(); showToast('تم تأكيد الاستلام');
+      await persistAll(); 
+      await logActivity({
+        action: 'تأكيد استلام طلب تصوير',
+        entityType: 'photoshootRequest',
+        entityId: id,
+        details: ''
+      });
+      fillModal(req); 
+      renderRequestsTable(); 
+      showToast('تم تأكيد الاستلام');
     };
     $('#m_btnMarkPrepared').onclick = async ()=>{
-      req.admin = req.admin||{}; req.admin.prepared = now();
+      req.admin = req.admin||{}; 
+      req.admin.prepared = now();
       if(req.status==='مسودة') req.status='تحت الإجراء';
-      await persistAll(); fillModal(req); renderRequestsTable(); showToast('تم تأكيد التجهيز');
+      await persistAll(); 
+      await logActivity({
+        action: 'تأكيد تجهيز سيارات لطلب تصوير',
+        entityType: 'photoshootRequest',
+        entityId: id,
+        details: ''
+      });
+      fillModal(req); 
+      renderRequestsTable(); 
+      showToast('تم تأكيد التجهيز');
     };
 
     $('#btnSaveModal').onclick = async ()=>{
@@ -726,7 +817,15 @@ body{opacity:0;transition:opacity .12s ease}
       });
       req.rows = newRows;
 
-      await persistAll(); renderRequestsTable(); showToast('تم الحفظ');
+      await persistAll(); 
+      await logActivity({
+        action: 'تعديل بيانات طلب تصوير',
+        entityType: 'photoshootRequest',
+        entityId: id,
+        details: `عدد الهياكل: ${req.rows?.length||0}`
+      });
+      renderRequestsTable(); 
+      showToast('تم الحفظ');
     };
   }
   $('#btnCloseModal').addEventListener('click', ()=> backdrop.style.display='none');
