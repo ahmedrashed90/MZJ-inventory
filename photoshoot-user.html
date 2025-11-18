@@ -185,7 +185,7 @@
     <div class="inner">
       <div class="brand">
         <div class="logo">MZJ</div>
-        <h1>إدارة طلبات التصوير</h1>
+        <h1>إدارة الطلبات</h1>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
         <span class="chip"><span id="connDot" class="dot"></span><span id="connText">جارِ الاتصال…</span></span>
@@ -209,7 +209,7 @@
       <div class="card">
         <div class="inner metric">
           <div>
-            <div class="l">تحت الإجراء / تم التجهيز</div>
+            <div class="l">تحت الإجراء / تم التجهيز / قيد المراجعة</div>
             <div id="m_prog" class="k">0</div>
           </div>
           <i class="fa-solid fa-gears"></i>
@@ -244,7 +244,7 @@
     <!-- Main Table -->
     <section id="app" class="panel" style="display:none">
       <div class="head">
-        <strong>الطلبات (عرض + نقل للمكان المطلوب)</strong>
+        <strong>الطلبات (تصوير + نقل)</strong>
         <div class="muted"><span id="countShown">0</span> من <span id="countTotal">0</span></div>
       </div>
       <div class="body">
@@ -256,9 +256,10 @@
             <option>مسودة</option>
             <option>تحت الإجراء</option>
             <option>تم التجهيز</option>
+            <option>قيد المراجعة</option>
             <option>تم</option>
           </select>
-          <input id="q" type="search" placeholder="بحث: VIN / السيارة / المكان / ملاحظة / منشئ الطلب">
+          <input id="q" type="search" placeholder="بحث: نوع الطلب / VIN / المكان / المنشئ / ملاحظة">
           <button id="f_reset" class="btn ghost"><i class="fa-solid fa-rotate-right"></i> إعادة التصفية</button>
         </div>
 
@@ -268,11 +269,12 @@
               <tr>
                 <th class="center">#</th>
                 <th style="min-width:80px">الطلب</th>
+                <th style="min-width:110px">نوع الطلب</th>
                 <th style="min-width:110px">المنشئ</th>
                 <th style="min-width:90px">الحالة</th>
                 <th style="min-width:130px">تاريخ الإنشاء</th>
-                <th style="min-width:130px">مكان التصوير</th>
-                <th style="min-width:160px">استلام الإدارة</th>
+                <th style="min-width:160px">المكان</th>
+                <th style="min-width:160px">استلام / موافقات</th>
                 <th style="min-width:140px">ملاحظات الإدارة</th>
                 <th style="min-width:140px">إجراءات</th>
               </tr>
@@ -284,7 +286,7 @@
     </section>
   </main>
 
-  <!-- Modal: عرض الطلب + نقل -->
+  <!-- Modal: عرض طلب تصوير + نقل للّتصوير -->
   <div id="reqModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <header>
@@ -313,7 +315,7 @@
           </div>
         </div>
 
-        <!-- جدول تفاصيل السيارات داخل الطلب -->
+        <!-- جدول تفاصيل السيارات داخل طلب التصوير -->
         <div class="table-wrap" style="margin-top:10px">
           <table>
             <thead>
@@ -375,6 +377,7 @@
   let shootRequests = [];
   let stock = [];
   let moves = [];
+  let moveRequests = [];
 
   const $ = s=>document.querySelector(s);
   const $$ = s=>Array.from(document.querySelectorAll(s));
@@ -411,9 +414,21 @@
   }
 
   function metrics(){
-    $('#m_all').textContent = shootRequests.length;
-    $('#m_prog').textContent = shootRequests.filter(x=>x.status==='تحت الإجراء' || x.status==='تم التجهيز').length;
-    $('#m_done').textContent = shootRequests.filter(x=>x.status==='تم').length;
+    const allCount = shootRequests.length + moveRequests.length;
+    const progStatuses = new Set(['تحت الإجراء','تم التجهيز','قيد المراجعة']);
+    const doneStatuses = new Set(['تم','منفّذ']);
+
+    const progCount =
+      shootRequests.filter(x=> progStatuses.has(x.status||'')).length +
+      moveRequests.filter(x=> progStatuses.has(x.status||'')).length;
+
+    const doneCount =
+      shootRequests.filter(x=> doneStatuses.has(x.status||'')).length +
+      moveRequests.filter(x=> doneStatuses.has(x.status||'')).length;
+
+    $('#m_all').textContent  = allCount;
+    $('#m_prog').textContent = progCount;
+    $('#m_done').textContent = doneCount;
   }
 
   // تسجيل في Collection mzj_activity_log
@@ -441,6 +456,7 @@
   }
 
   async function persistAll(){
+    // هذه الصفحة تعدّل فقط على shootRequests و stock و moves
     await setDoc(
       STATE_REF,
       { shootRequests, stock, moves, updatedAt: now() },
@@ -448,7 +464,7 @@
     );
   }
 
-  /* ===== استخراج مكان التصوير من الطلب ===== */
+  /* ===== استخراج مكان التصوير من طلب التصوير ===== */
   function findPlaceDeep(obj, depth=0){
     if(!obj || typeof obj!=='object' || depth>4) return null;
     const regexKey = /(place|shoot|تصوير|مكان.?التصوير|موقع)/i;
@@ -480,7 +496,22 @@
     return deep || '';
   }
 
-  /* ===== جدول الطلبات الرئيسية ===== */
+  /* ===== ملخص مكان طلب النقل (من / إلى) ===== */
+  function moveRequestLocationSummary(mr){
+    const rows = Array.isArray(mr.rows)? mr.rows : [];
+    if(!rows.length) return '-';
+    const fromSet = new Set();
+    const toSet   = new Set();
+    rows.forEach(r=>{
+      if(r.fromLocation) fromSet.add(r.fromLocation);
+      if(r.toLocation)   toSet.add(r.toLocation);
+    });
+    const from = [...fromSet].join(' ، ') || 'غير محدد';
+    const to   = [...toSet].join(' ، ')   || 'غير محدد';
+    return `من: ${from} → إلى: ${to}`;
+  }
+
+  /* ===== جدول الطلبات الرئيسية (تصوير + نقل) ===== */
   function render(){
     const q = ($('#q').value||'').trim().toLowerCase();
     const s = $('#f_status').value||'';
@@ -489,59 +520,92 @@
     const fromD = fromVal ? new Date(fromVal+"T00:00:00") : null;
     const toD   = toVal   ? new Date(toVal+"T23:59:59") : null;
 
-    let list = [...shootRequests];
-    if(s) list = list.filter(r=> (r.status||'')===s );
-    list = list.filter(r=> inRange(r.createdAt, fromD, toD) );
+    let list = [
+      ...shootRequests.map(r=>({kind:'shoot', data:r})),
+      ...moveRequests.map(r=>({kind:'move', data:r}))
+    ];
+
+    if(s){
+      list = list.filter(w=> (w.data.status||'')===s);
+    }
+
+    list = list.filter(w=> inRange(w.data.createdAt, fromD, toD));
 
     if(q){
-      list = list.filter(r=>{
-        const hay = [
+      list = list.filter(w=>{
+        const r = w.data;
+        const base = [
           r.id, r.createdBy, r.createdAt, r.status,
-          requestedPlaceOf(r), (r.admin?.received)||'', (r.admin?.notes)||'',
           ...(r.rows||[]).flatMap(x=>[
-            x.vin||'',x.car||'',x.variant||'',x.extColor||'',x.intColor||'',x.modelYear||'',x.note||''
+            x.vin||'',x.car||'',x.variant||'',x.extColor||'',x.intColor||'',x.modelYear||'',
+            x.note||'',x.fromLocation||'',x.toLocation||''
           ])
         ].join(' ').toLowerCase();
-        return hay.includes(q);
+        const typeText = (w.kind==='shoot'?'طلب تصوير':'طلب نقل');
+        const extra = typeText + ' ' + (moveRequestLocationSummary(r)||'');
+        return (base+' '+extra).toLowerCase().includes(q);
       });
     }
-    list.sort((a,b)=> (b.id||0)-(a.id||0) );
-    $('#countTotal').textContent = shootRequests.length;
+
+    list.sort((a,b)=> (Number(b.data.id)||0)-(Number(a.data.id)||0) );
+    $('#countTotal').textContent = shootRequests.length + moveRequests.length;
     $('#countShown').textContent = list.length;
 
     const tb = $('#reqTable'); tb.innerHTML='';
-    list.forEach((r,i)=>{
-      const st = r.status||'';
+
+    list.forEach((w,i)=>{
+      const kind = w.kind;
+      const r    = w.data;
+      const st   = r.status||'';
       const pillClass =
         st==='تم'
           ? 'pill-done'
-          : (st==='تحت الإجراء' || st==='تم التجهيز' ? 'pill-prog' : 'pill-draft');
-      const placeReq = requestedPlaceOf(r) || '';
+          : (st==='تحت الإجراء' || st==='تم التجهيز' || st==='قيد المراجعة' ? 'pill-prog' : 'pill-draft');
+
+      const typeLabel = (kind==='shoot' ? 'طلب تصوير' : 'طلب نقل');
+      const placeCol  = (kind==='shoot'
+        ? (requestedPlaceOf(r) || '-')
+        : moveRequestLocationSummary(r));
+
+      let adminCell = '-';
+      if(kind==='shoot'){
+        adminCell = r.admin?.received || '-';
+      }else{
+        const a = r.approvals || {};
+        const parts=[];
+        if(a.adminApproved)   parts.push(`إداري: ${a.adminApproved}`);
+        if(a.financeApproved) parts.push(`مالية: ${a.financeApproved}`);
+        adminCell = parts.join(' | ') || (r.status||'-');
+      }
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="center">${i+1}</td>
         <td><span class="mono" style="font-weight:700">#${r.id||'?'}</span></td>
+        <td>${typeLabel}</td>
         <td>${r.createdBy||''}</td>
         <td><span class="pill ${pillClass}">${st || 'مسودة'}</span></td>
         <td>${r.createdAt||''}</td>
-        <td>${placeReq || '-'}</td>
+        <td>${placeCol}</td>
+        <td><div class="muted">${adminCell}</div></td>
         <td>
-          <div class="muted">${r.admin?.received||'-'}</div>
-        </td>
-        <td>
-          <input class="js-note" data-id="${r.id}" type="text" placeholder="ملاحظات…" value="${(r.admin?.notes||'').replace(/"/g,'&quot;')}">
+          <input class="js-note" data-kind="${kind}" data-id="${r.id}" type="text" placeholder="ملاحظات…" value="${kind==='shoot' ? (r.admin?.notes||'').replace(/"/g,'&quot;') : ''}">
         </td>
         <td style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn js-save" data-id="${r.id}"><i class="fa-solid fa-floppy-disk"></i> حفظ</button>
-          <button class="btn secondary js-view" data-id="${r.id}"><i class="fa-regular fa-eye"></i> عرض</button>
+          ${
+            kind==='shoot'
+              ? `<button class="btn js-save" data-id="${r.id}"><i class="fa-solid fa-floppy-disk"></i> حفظ</button>
+                 <button class="btn secondary js-view" data-id="${r.id}"><i class="fa-regular fa-eye"></i> عرض</button>`
+              : `<span class="muted">يُدار من صفحة الطلبات</span>`
+          }
         </td>`;
       tb.appendChild(tr);
     });
 
-    // حفظ الملاحظات
+    // حفظ ملاحظات طلبات التصوير فقط
     $$('.js-save').forEach(el=> el.addEventListener('click', async e=>{
       const id = Number(e.currentTarget.getAttribute('data-id'));
-      const noteEl = document.querySelector(`.js-note[data-id="${id}"]`);
+      const noteEl = document.querySelector(`.js-note[data-kind="shoot"][data-id="${id}"]`);
       shootRequests = shootRequests.map(x=> Number(x.id)===Number(id)
         ? ({...x, admin:{...(x.admin||{}), notes:(noteEl?.value||'')}})
         : x
@@ -555,7 +619,7 @@
       showToast('تم حفظ الطلب');
     }));
 
-    // فتح المودال
+    // فتح المودال لطلبات التصوير فقط
     $$('.js-view').forEach(el=> el.addEventListener('click', e=>{
       const id = Number(e.currentTarget.getAttribute('data-id'));
       openReqModal(id);
@@ -580,7 +644,7 @@
     showToast('تم تأكيد الاستلام ✅');
   }
 
-  /* ===== المودال: عرض الطلب + نقل ===== */
+  /* ===== المودال: طلبات التصوير فقط ===== */
   const reqModal = $('#reqModal');
   const reqModalClose = $('#reqModalClose');
   const reqModalTitle = $('#reqModalTitle');
@@ -590,8 +654,8 @@
   const reqCarsTable = $('#reqCarsTable');
   const btnModalReceived = $('#btnModalReceived');
   const btnReceiveAndMove = $('#btnReceiveAndMove');
-  const btnMoveAll = $('#btnMoveAll'); // لن يوجد في الـ DOM لكن نحافظ على السطر؛ لن نستخدمه
   const btnPrintReq = $('#btnPrintReq');
+  const btnMoveAll = $('#btnMoveAll'); // غير موجود حاليًا، احتياطي لو رجع مستقبلاً
 
   let modalCurrentId = null;
 
@@ -627,7 +691,7 @@
 
     const requested = requestedPlaceOf(r) || '';
 
-    reqModalTitle.textContent = `عرض الطلب #${r.id||'?'}`;
+    reqModalTitle.textContent = `عرض طلب التصوير #${r.id||'?'}`;
     reqMeta.textContent = `المنشئ: ${r.createdBy||'-'} — بتاريخ: ${r.createdAt||'-'}`;
     reqStatus.textContent = `الحالة: ${r.status||'-'}`;
 
@@ -649,7 +713,7 @@
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${i+1}</td>
-        <td class="mono">${vin}</td>
+        <td class="mono js-vin" data-vin-norm="${normVin}">${vin}</td>
         <td>
           <div>${car||'—'}</div>
           <div class="muted">${variant||''}</div>
@@ -667,7 +731,6 @@
       reqCarsTable.appendChild(tr);
     });
 
-    // لم نعد نستخدم أزرار نقل منفصلة
     if(btnMoveAll){
       btnMoveAll.onclick = async ()=>{ await moveAllVINsToRequested(r); };
     }
@@ -677,36 +740,6 @@
 
     reqModal.style.display='flex';
     reqModal.setAttribute('aria-hidden','false');
-  }
-
-  async function moveSingleVINToRequested(req, vin){
-    const requested = requestedPlaceOf(req) || '';
-    if(!requested){ showToast('لا يوجد مكان تصوير في هذا الطلب'); return; }
-
-    const norm = normalizeVin(vin);
-    const recIdx = stock.findIndex(s=> normalizeVin(s.vin)===norm);
-    if(recIdx<0){ showToast('السيارة غير موجودة في المخزون'); return; }
-
-    const rec = stock[recIdx];
-    const from = rec.location || '';
-    const to = requested;
-    if(from === to){ showToast('السيارة موجودة بالفعل في مكان التصوير'); return; }
-
-    await recordMove(rec.vin||norm, rec.car||'', from, to, rec.id);
-    setLocationByVIN(norm, to);
-
-    await logActivity(
-      'موافقة على نقل سيارة',
-      `موافقة على نقل سيارة (${rec.car||'بدون اسم'}) رقم هيكل ${norm} من "${from||'غير مسجل'}" إلى "${to}" للطلب #${req.id}`,
-      { requestId:req.id, entityType:'photoshoot_request', entityId:req.id }
-    );
-
-    await persistAll();
-
-    const cell = reqCarsTable.querySelector(`.js-current-loc[data-vin-norm="${norm}"]`);
-    if(cell) cell.textContent = to;
-
-    showToast(`تم نقل ${rec.car||'السيارة'} إلى "${to}"`);
   }
 
   async function moveAllVINsToRequested(req){
@@ -734,8 +767,8 @@
 
     if(moved>0){
       await logActivity(
-        'موافقة على نقل كل السيارات',
-        `موافقة على نقل ${moved} سيارة إلى مكان التصوير "${requested}" للطلب #${req.id}`,
+        'نقل كل السيارات لمكان التصوير',
+        `نقل ${moved} سيارة إلى مكان التصوير "${requested}" للطلب #${req.id}`,
         { requestId:req.id, entityType:'photoshoot_request', entityId:req.id }
       );
       await persistAll();
@@ -746,7 +779,6 @@
     }
   }
 
-  // تأكيد الاستلام + تغيير الحالة لتم التجهيز + نقل السيارات لمكان التصوير
   async function receiveAndMoveAndMoveCars(id){
     const idx = shootRequests.findIndex(x=> Number(x.id)===Number(id));
     if(idx<0){ showToast('الطلب غير موجود'); return; }
@@ -818,10 +850,12 @@
       shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: [];
       stock         = Array.isArray(d.stock)? d.stock: [];
       moves         = Array.isArray(d.moves)? d.moves: [];
+      moveRequests  = Array.isArray(d.moveRequests)? d.moveRequests: [];
     }else{
       shootRequests = [];
       stock = [];
       moves = [];
+      moveRequests = [];
     }
   }
   function subscribeLive(){
@@ -831,6 +865,7 @@
       shootRequests  = Array.isArray(d.shootRequests)? d.shootRequests: shootRequests;
       stock          = Array.isArray(d.stock)? d.stock: stock;
       moves          = Array.isArray(d.moves)? d.moves: moves;
+      moveRequests   = Array.isArray(d.moveRequests)? d.moveRequests: moveRequests;
 
       metrics(); render();
 
