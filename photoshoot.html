@@ -865,7 +865,7 @@ body{opacity:0;transition:opacity .12s ease}
     if(q){
       list = list.filter(r=>{
         const hay=[
-          r.id,r.createdAt,r.createdBy,r.status,(r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),
+          r.id,r.createdAt,r.createdBy,r.status,(r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),(r.adminReceived||''),(r.adminPrepared||''),
           ...(r.rows||[]).flatMap(x=>[x.vin,x.car,x.variant,x.extColor,x.intColor,x.modelYear,x.currentLocation,x.shootPlace,x.note])
         ].join(' ').toLowerCase();
         return hay.includes(q);
@@ -874,8 +874,12 @@ body{opacity:0;transition:opacity .12s ease}
 
     tblBody.innerHTML='';
     list.forEach(r=>{
-      const receivedText = r.admin?.received ? `📥 استلام: ${r.admin.received}` : '📥 استلام: —';
-      const preparedText = r.admin?.prepared ? `🛠 تجهيز: ${r.admin.prepared}` : '🛠 تجهيز: —';
+      const adminInfo = r.admin || {};
+      const receivedVal = adminInfo.received || r.adminReceived || '';
+      const preparedVal = adminInfo.prepared || r.adminPrepared || '';
+
+      const receivedText = receivedVal ? `📥 استلام: ${receivedVal}` : '📥 استلام: —';
+      const preparedText = preparedVal ? `🛠 تجهيز: ${preparedVal}` : '🛠 تجهيز: —';
 
       const tr=document.createElement('tr');
       tr.innerHTML = `
