@@ -85,6 +85,7 @@
   .btn-ghost{background:#fff}
   .btn-outline{background:#fff;border-color:var(--brown);color:var(--brown)}
   .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
+  .btn-xs{padding:4px 8px;font-size:11px;border-radius:999px}
   .input{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
   .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
@@ -668,9 +669,11 @@
       <th>ملاحظات الإدارة</th>
       <th>الموافقة المالية</th>
       <th>ملاحظات المالية</th>
+      <th>الإجراءات</th>
     `;
     modalTableRowsHead.innerHTML = currentFilterKey==='pending' ? common + approvals : common;
   }
+
   function renderRowsTable(){
     buildRowsHeader();
     modalTableRowsBody.innerHTML='';
@@ -691,17 +694,84 @@
         <td>${r.batchName||''}</td>
         <td>${r.vin||''}</td>
         <td>${r.notes||''}</td>
-        ${currentFilterKey==='pending' ? `
-          <td style="text-align:center">${isApprovedAdmin}</td>
-          <td>${r.adminNotes||'-'}</td>
-          <td style="text-align:center">${isApprovedFinance}</td>
-          <td>${r.financeNotes||'-'}</td>
-        `:''}
+        ${
+          currentFilterKey==='pending'
+          ? `
+            <td style="text-align:center">${isApprovedAdmin}</td>
+            <td>${r.adminNotes||'-'}</td>
+            <td style="text-align:center">${isApprovedFinance}</td>
+            <td>${r.financeNotes||'-'}</td>
+            <td>
+              <button class="btn btn-outline btn-xs" data-approve="admin" data-vin="${r.vin||''}">
+                <i class="fa-solid fa-user-check"></i> إداري
+              </button>
+              <button class="btn btn-outline btn-xs" data-approve="finance" data-vin="${r.vin||''}">
+                <i class="fa-solid fa-coins"></i> مالية
+              </button>
+            </td>
+          `
+          : ''
+        }
       `;
       modalTableRowsBody.appendChild(tr);
     });
     modalCount.textContent = `عدد السيارات الظاهرة: ${filteredRows.length.toLocaleString('ar-SA')} من ${currentRows.length.toLocaleString('ar-SA')}`;
   }
+
+  /* تحديث الموافقات وكتابة في Firestore */
+  async function updateApproval(vin, kind){
+    if(!vin) {
+      showToast('لا يوجد رقم هيكل للسيارة');
+      return;
+    }
+    const idx = stock.findIndex(r => String(r.vin)===String(vin));
+    if(idx===-1){
+      showToast('تعذّر العثور على السيارة في المخزون');
+      return;
+    }
+    const row = stock[idx];
+    const isAdmin = kind==='admin';
+    const apprKey = isAdmin ? 'adminApproved' : 'financeApproved';
+    const noteKey = isAdmin ? 'adminNotes' : 'financeNotes';
+    const label   = isAdmin ? 'الإدارية' : 'المالية';
+
+    const currentVal = (row[apprKey]===true || row[apprKey]==='true');
+    const newVal = !currentVal;
+
+    const defaultNote = row[noteKey] || '';
+    const msg = newVal
+      ? `إضافة ملاحظة للموافقة ${label} (اختياري):`
+      : `إلغاء/تعديل الموافقة ${label}، اكتب ملاحظة (اختياري):`;
+
+    const note = window.prompt(msg, defaultNote);
+
+    row[apprKey] = newVal;
+    if(note!==null) row[noteKey] = note;
+
+    stock[idx] = row;
+
+    try{
+      await setDoc(STATE_REF,{stock},{merge:true});
+      showToast(`تم تحديث الموافقة ${label}`);
+      // نعيد رسم الجدول فقط، لأن الكائنات نفسها محدثة
+      if(currentMode==='rows' && currentFilterKey==='pending'){
+        renderRowsTable();
+      }
+    }catch(e){
+      console.error(e);
+      setStatus('warn','تعذّر حفظ الموافقات، حاول مرة أخرى');
+    }
+  }
+
+  // حدث أزرار الموافقة داخل جدول السيارات
+  modalTableRowsBody.addEventListener('click', (e)=>{
+    const btn = e.target.closest('button[data-approve]');
+    if(!btn) return;
+    if(currentFilterKey!=='pending') return;
+    const kind = btn.getAttribute('data-approve');
+    const vin  = btn.getAttribute('data-vin');
+    updateApproval(vin, kind);
+  });
 
   /* ===== Shortages table ===== */
   function renderShortTable(){
@@ -965,4 +1035,3 @@
 </script>
 </body>
 </html>
-
