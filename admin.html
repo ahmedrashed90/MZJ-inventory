@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -25,15 +24,15 @@
   .brand .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brown),#2a1613);
     display:grid;place-items:center;color:#fff;font-weight:800}
   .brand h1{margin:0;font-size:18px;color:var(--brown)}
-  .tabs{display:flex;gap:8px}
-  .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;text-decoration:none;color:inherit;font-weight:800}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;text-decoration:none;color:inherit;font-weight:800;white-space:nowrap}
   .tab.active{background:var(--brown);border-color:var(--brown);color:#fff}
   .status-badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;font-size:12px}
   .dot{width:10px;height:10px;border-radius:999px;background:#f59e0b}
   .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)} .dot.warn{background:#f59e0b}
 
   /* Buttons */
-  .btn{position:relative;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:700;display:inline-flex;gap:8px;align-items:center;transition:.15s}
+  .btn{position:relative;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:700;display:inline-flex;gap:8px;align-items:center;transition:.15s;font-size:13px}
   .btn:hover{transform:translateY(-1px)} .btn:active{transform:translateY(0)}
   .btn-primary{background:var(--brown);border-color:var(--brown);color:#fff}
   .btn-beige{background:var(--beige);border-color:var(--beige);color:#fff}
@@ -44,17 +43,17 @@
   /* Layout */
   .container{max-width:1240px;margin:18px auto;padding:0 16px 48px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
-  .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .card-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
   .section-title{display:flex;align-items:center;gap:8px;margin:0}
   .section-title svg{width:20px;height:20px;color:var(--brown)}
   .hint{color:var(--muted);font-size:12px}
 
   /* Inputs */
-  label{font-weight:800;margin-bottom:6px;display:block;color:var(--brown)}
+  label{font-weight:800;margin-bottom:6px;display:block;color:var(--brown);font-size:13px}
   .input-wrap{position:relative}
   .input-wrap .i{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#9ca3af}
   .input-wrap input{padding-right:36px}
-  input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;outline:none;transition:.15s}
+  input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;outline:none;transition:.15s;font-family:"Tajawal",system-ui,Arial;font-size:13px}
   input:focus,select:focus,textarea:focus{border-color:var(--beige);box-shadow:0 0 0 3px rgba(188,143,116,.15)}
   #vin{height:44px} #notes{height:44px;resize:none}
   textarea{min-height:44px}
@@ -71,7 +70,7 @@
 
   /* Tables */
   .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
-  table{width:100%;border-collapse:separate;border-spacing:0}
+  table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px}
   thead th{position:sticky;top:0;background:var(--table-head);z-index:2;border-bottom:1px solid var(--line-strong);
     text-align:right;color:#111827;font-size:13.5px;padding:12px 10px}
   tbody td{border-top:1px solid var(--line);padding:10px;vertical-align:top}
@@ -100,7 +99,7 @@
   .modal .actions{display:flex;gap:8px;justify-content:flex-start;margin-top:12px}
 
   /* Toast */
-  .toast{position:fixed;bottom:16px;right:16px;background:#111827;color:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.25);display:none;z-index:60}
+  .toast{position:fixed;bottom:16px;right:16px;background:#111827;color:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.25);display:none;z-index:60;font-size:13px}
   .toast.ok{background:var(--ok)} .toast.info{background:var(--info)} .toast.err{background:var(--danger)}
 
   /* Auth */
@@ -114,6 +113,8 @@
   .checklist h4{margin:0 0 8px 0;color:var(--brown);font-size:14px}
   .check-row{display:grid;grid-template-columns:18px 1fr;gap:8px;align-items:start}
   .check-row label{margin:0;display:flex;align-items:center;gap:8px}
+
+  .copyable{cursor:pointer;border-bottom:1px dashed rgba(0,0,0,.2)}
 </style>
 </head>
 <body>
@@ -317,24 +318,109 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 10l5-5 5 5"/><path d="M7 14l5 5 5-5"/></svg>
           <h2 style="margin:0">حركة نقل السيارات (برقم الهيكل)</h2>
         </div>
-        <span class="hint">يتم تحديد <b>من</b> تلقائيًا بمجرد كتابة رقم الهيكل.</span>
+        <span class="hint">يمكن نقل حتى 8 سيارات في نفس الحركة — يتم تحديد <b>من</b> تلقائيًا لكل رقم هيكل.</span>
       </div>
 
       <div class="grid grid-3">
-        <div>
-          <label for="moveVin">رقم الهيكل</label>
-          <input id="moveVin" list="vinHints" placeholder="اكتب بداية رقم الهيكل" title="VIN يبدأ بـ"/>
-          <datalist id="vinHints"></datalist>
+        <div class="grid grid-2" style="grid-column:1/3;gap:10px">
+          <!-- 8 صفوف لرقم الهيكل + من -->
+          <!-- صف 1 -->
+          <div class="row" style="align-items:flex-end">
+            <div style="flex:1">
+              <label for="moveVin1">رقم الهيكل 1</label>
+              <input id="moveVin1" class="move-vin-input" list="vinHints" placeholder="اكتب بداية رقم الهيكل" title="VIN يبدأ بـ"/>
+            </div>
+            <div style="flex:1">
+              <label for="moveFrom1">من (محدّد تلقائيًا)</label>
+              <select id="moveFrom1" class="move-from-select" title="المكان الحالي" disabled></select>
+            </div>
+          </div>
+          <!-- صف 2 -->
+          <div class="row" style="align-items:flex-end">
+            <div style="flex:1">
+              <label for="moveVin2">رقم الهيكل 2</label>
+              <input id="moveVin2" class="move-vin-input" list="vinHints" placeholder="اكتب بداية رقم الهيكل" title="VIN يبدأ بـ"/>
+            </div>
+            <div style="flex:1">
+              <label for="moveFrom2">من (محدّد تلقائيًا)</label>
+              <select id="moveFrom2" class="move-from-select" title="المكان الحالي" disabled></select>
+            </div>
+          </div>
+          <!-- صف 3 -->
+          <div class="row" style="align-items:flex-end">
+            <div style="flex:1">
+              <label for="moveVin3">رقم الهيكل 3</label>
+              <input id="moveVin3" class="move-vin-input" list="vinHints" placeholder="اكتب بداية رقم الهيكل" title="VIN يبدأ بـ"/>
+            </div>
+            <div style="flex:1">
+              <label for="moveFrom3">من (محدّد تلقائيًا)</label>
+              <select id="moveFrom3" class="move-from-select" title="المكان الحالي" disabled></select>
+            </div>
+          </div>
+          <!-- صف 4 -->
+          <div class="row" style="align-items:flex-end">
+            <div style="flex:1">
+              <label for="moveVin4">رقم الهيكل 4</label>
+              <input id="moveVin4" class="move-vin-input" list="vinHints" placeholder="اكتب بداية رقم الهيكل" title="VIN يبدأ بـ"/>
+            </div>
+            <div style="flex:1">
+              <label for="moveFrom4">من (محدّد تلقائيًا)</label>
+              <select id="moveFrom4" class="move-from-select" title="المكان الحالي" disabled></select>
+            </div>
+          </div>
+          <!-- صف 5 -->
+          <div class="row" style="align-items:flex-end">
+            <div style="flex:1">
+              <label for="moveVin5">رقم الهيكل 5</label>
+              <input id="moveVin5" class="move-vin-input" list="vinHints" placeholder="اكتب بداية رقم الهيكل" title="VIN يبدأ بـ"/>
+            </div>
+            <div style="flex:1">
+              <label for="moveFrom5">من (محدّد تلقائيًا)</label>
+              <select id="moveFrom5" class="move-from-select" title="المكان الحالي" disabled></select>
+            </div>
+          </div>
+          <!-- صف 6 -->
+          <div class="row" style="align-items:flex-end">
+            <div style="flex:1">
+              <label for="moveVin6">رقم الهيكل 6</label>
+              <input id="moveVin6" class="move-vin-input" list="vinHints" placeholder="اكتب بداية رقم الهيكل" title="VIN يبدأ بـ"/>
+            </div>
+            <div style="flex:1">
+              <label for="moveFrom6">من (محدّد تلقائيًا)</label>
+              <select id="moveFrom6" class="move-from-select" title="المكان الحالي" disabled></select>
+            </div>
+          </div>
+          <!-- صف 7 -->
+          <div class="row" style="align-items:flex-end">
+            <div style="flex:1">
+              <label for="moveVin7">رقم الهيكل 7</label>
+              <input id="moveVin7" class="move-vin-input" list="vinHints" placeholder="اكتب بداية رقم الهيكل" title="VIN يبدأ بـ"/>
+            </div>
+            <div style="flex:1">
+              <label for="moveFrom7">من (محدّد تلقائيًا)</label>
+              <select id="moveFrom7" class="move-from-select" title="المكان الحالي" disabled></select>
+            </div>
+          </div>
+          <!-- صف 8 -->
+          <div class="row" style="align-items:flex-end">
+            <div style="flex:1">
+              <label for="moveVin8">رقم الهيكل 8</label>
+              <input id="moveVin8" class="move-vin-input" list="vinHints" placeholder="اكتب بداية رقم الهيكل" title="VIN يبدأ بـ"/>
+            </div>
+            <div style="flex:1">
+              <label for="moveFrom8">من (محدّد تلقائيًا)</label>
+              <select id="moveFrom8" class="move-from-select" title="المكان الحالي" disabled></select>
+            </div>
+          </div>
         </div>
-        <div>
-          <label for="moveFrom">من (محدّد تلقائيًا)</label>
-          <select id="moveFrom" title="المكان الحالي" disabled></select>
-        </div>
+
         <div>
           <label for="moveTo">إلى</label>
           <select id="moveTo" title="المكان الجديد"></select>
         </div>
       </div>
+
+      <datalist id="vinHints"></datalist>
 
       <!-- Checklist يظهر فقط مع 'مباع تحت التسليم' -->
       <div id="underDeliveryBox" class="checklist" style="display:none; margin-top:10px">
@@ -357,6 +443,13 @@
             <textarea id="financeNotes" placeholder="اكتب أي ملاحظات مالية…"></textarea>
           </div>
         </div>
+      </div>
+
+      <!-- ملاحظات عند النقل إلى سيارات بها ملاحظات -->
+      <div id="notesIssuesBox" class="checklist" style="display:none; margin-top:10px">
+        <h4>ملاحظات عند النقل إلى <b>سيارات بها ملاحظات</b></h4>
+        <label for="issuesNotes">ملاحظات على السيارة في هذا المكان</label>
+        <textarea id="issuesNotes" placeholder="اكتب ملاحظات الحالة أو السبب…"></textarea>
       </div>
 
       <div class="row" style="margin-top:12px">
@@ -598,14 +691,19 @@
   const confirmAddVariant = $('#confirmAddVariant');
 
   // حركة النقل
-  const moveVin=$('#moveVin'), moveFrom=$('#moveFrom'), moveTo=$('#moveTo'), btnFindByVin=$('#btnFindByVin'), btnMove=$('#btnMove');
+  const moveTo = $('#moveTo');
+  const btnFindByVin=$('#btnFindByVin'), btnMove=$('#btnMove');
   const moveStatus=$('#moveStatus'), carDetailsBox=$('#carDetailsBox'), carDetails=$('#carDetails'), carDetailsHint=$('#carDetailsHint');
   const vinHints = $('#vinHints'); // datalist
+  const moveVinInputs = Array.from(document.querySelectorAll('.move-vin-input'));
+  const moveFromSelects = Array.from(document.querySelectorAll('.move-from-select'));
 
   // Checklist DOM
   const underDeliveryBox=$('#underDeliveryBox');
   const chkAdminApproved=$('#chkAdminApproved'), adminNotes=$('#adminNotes');
   const chkFinanceApproved=$('#chkFinanceApproved'), financeNotes=$('#financeNotes');
+  const notesIssuesBox = $('#notesIssuesBox');
+  const issuesNotes = $('#issuesNotes');
 
   /* ===== Connection status ===== */
   function setStatus(mode, txt){
@@ -658,7 +756,6 @@
       if(carSelect.value) populateVariants(carSelect.value);
       renderTable(); renderMoves(); renderTrack();
       fillMoveLists();
-      updateVinSuggestions();
       setStatus('ok','تم تحميل البيانات');
     }catch(e){ setStatus('warn','تعذّر تحميل البيانات'); }
   }
@@ -674,7 +771,7 @@
         loadModelsIntoSelects();
         if(carSelect.value) populateVariants(carSelect.value);
         renderTable(); renderMoves(); renderTrack();
-        updateVinSuggestions();
+        fillMoveLists();
         setStatus('ok','مزامنة حيّة');
       },()=> setStatus('warn','انقطاع المزامنة مؤقتًا'));
     }catch(e){}
@@ -896,7 +993,7 @@
         if(importMode==='replace'){stock=[]; imported.forEach(r=>{r.id=nextId(); stock.push(r);});}
         else {imported.forEach(r=>{r.id=nextId(); stock.push(r);});}
         await persistAll(); loadModelsIntoSelects(); if(carSelect.value) populateVariants(carSelect.value);
-        renderTable(); updateVinSuggestions(); showToast(importMode==='replace'?'تم الاستبدال الكامل بالبيانات الجديدة':'تمت الإضافة إلى البيانات الحالية','ok');
+        renderTable(); fillMoveLists(); showToast(importMode==='replace'?'تم الاستبدال الكامل بالبيانات الجديدة':'تمت الإضافة إلى البيانات الحالية','ok');
       }catch(err){ showToast((err?.message)||'فشل الاستيراد — راجع تنسيق الملف','err'); }
       finally{ fileImport.value=''; importMode=null; }
     };
@@ -913,8 +1010,8 @@
   ];
   function fillMoveLists(){
     const opts = FIXED_LOCATIONS.map(l=> `<option value="${l}">${l}</option>`).join('');
-    moveFrom.innerHTML = opts;
     moveTo.innerHTML   = opts;
+    moveFromSelects.forEach(sel=> sel.innerHTML = opts);
   }
   fillMoveLists();
 
@@ -935,10 +1032,11 @@
     carDetailsBox.style.display='block';
   }
 
-  /* اقتراح VIN يبدأ بما يكتبه المستخدم */
-  function updateVinSuggestions(){
-    const prefix = normalizeVin((moveVin.value||'').trim());
-    if(prefix.length < 2){ vinHints.innerHTML=''; return; }
+  function updateVinSuggestions(prefix){
+    if(!prefix || prefix.length<2){
+      vinHints.innerHTML='';
+      return;
+    }
     const set = new Set();
     stock.forEach(r=>{
       const v = normalizeVin(r.vin||'');
@@ -947,114 +1045,194 @@
     const list = Array.from(set).sort().slice(0,30);
     vinHints.innerHTML = list.map(v=>`<option value="${v}"></option>`).join('');
   }
-  moveVin.addEventListener('input', debounce(()=>{ updateVinSuggestions(); autoFindByVin(); }, 150));
 
-  /* إظهار المكان تلقائيًا أثناء كتابة VIN */
-  function autoFindByVin(){
-    const raw=(moveVin.value||'').trim();
+  function autoFindByVinForRow(rowIndex){
+    const inp = moveVinInputs[rowIndex];
+    const fromSel = moveFromSelects[rowIndex];
+    const raw = (inp.value||'').trim();
     if(!raw){
-      moveStatus.textContent='';
-      moveFrom.disabled=false;
-      carDetailsBox.style.display='none';
+      fromSel.disabled=false;
+      fromSel.value='';
+      if(!moveVinInputs.some(x=>(x.value||'').trim())){
+        carDetailsBox.style.display='none';
+        moveStatus.textContent='';
+      }
       return;
     }
     const norm = normalizeVin(raw);
     if(!norm){
-      moveStatus.textContent='';
-      moveFrom.disabled=false;
-      carDetailsBox.style.display='none';
+      fromSel.disabled=false;
+      fromSel.value='';
       return;
     }
-    let match = stock.find(r => normalizeVin(r.vin) === norm);
-    if(!match && norm.length >= 8){
-      const candidates = stock.filter(r => normalizeVin(r.vin).startsWith(norm));
-      if(candidates.length === 1) match = candidates[0];
+    let match = stock.find(r=> normalizeVin(r.vin) === norm);
+    if(!match && norm.length>=8){
+      const candidates = stock.filter(r=> normalizeVin(r.vin).startsWith(norm));
+      if(candidates.length===1) match = candidates[0];
     }
     if(match){
-      renderCarDetails(match);
       const currentLoc = match.location || '';
       if(currentLoc){
-        moveFrom.value = currentLoc;
-        moveFrom.disabled = true;
-        moveStatus.textContent = `تم العثور: ${match.car} — المكان الحالي: ${currentLoc}`;
+        fromSel.value = currentLoc;
+        fromSel.disabled = true;
       }else{
-        moveFrom.disabled = false;
-        moveStatus.textContent = `تم العثور: ${match.car} — لا يوجد مكان مسجل. اختر المكان يدويًا.`;
+        fromSel.disabled = false;
       }
+      renderCarDetails(match);
+      moveStatus.textContent = `تم العثور على السطر ${rowIndex+1}: ${match.car} — المكان الحالي: ${currentLoc || 'غير محدد'}`;
     }else{
-      carDetailsBox.style.display='none';
-      moveFrom.disabled=false;
-      moveStatus.textContent = '— لم يتم التعرف على السيارة بعد (أكمل رقم الهيكل).';
+      fromSel.disabled=false;
+      fromSel.value='';
+      moveStatus.textContent='— لم يتم التعرف على السيارة بعد (أكمل رقم الهيكل).';
+      if(!moveVinInputs.some(x=>(x.value||'').trim())){
+        carDetailsBox.style.display='none';
+      }
     }
   }
 
+  moveVinInputs.forEach((inp,index)=>{
+    inp.addEventListener('input', debounce(()=>{
+      const prefix = normalizeVin((inp.value||'').trim());
+      updateVinSuggestions(prefix);
+      autoFindByVinForRow(index);
+    },150));
+  });
+
   // عرض البيانات يدويًا
   btnFindByVin.addEventListener('click',()=>{
-    const vinRaw=(moveVin.value||'').trim(); if(!vinRaw){moveStatus.textContent='اكتب رقم الهيكل الكامل أولًا.'; return;}
-    const norm=normalizeVin(vinRaw); const match=stock.find(r=>normalizeVin(r.vin)===norm);
+    const rowIndex = moveVinInputs.findIndex(inp => (inp.value||'').trim());
+    if(rowIndex === -1){moveStatus.textContent='اكتب رقم الهيكل أولًا في أحد الحقول.';return;}
+    const vinRaw=(moveVinInputs[rowIndex].value||'').trim();
+    const norm=normalizeVin(vinRaw);
+    if(!norm){moveStatus.textContent='اكتب رقم الهيكل الكامل أولًا.';return;}
+    const match=stock.find(r=>normalizeVin(r.vin)===norm);
+    const fromSel = moveFromSelects[rowIndex];
     if(!match){moveStatus.textContent='لم يتم العثور على سيارة بهذا الرقم.'; carDetailsBox.style.display='none'; showToast('لا توجد سيارة بهذا VIN','err'); return;}
     renderCarDetails(match);
     const currentLoc = match.location || '';
     if(currentLoc){
-      moveFrom.value = currentLoc;
-      moveFrom.disabled = true;
+      fromSel.value = currentLoc;
+      fromSel.disabled = true;
       moveStatus.textContent=`تم العثور: ${match.car} — المكان الحالي: ${currentLoc}`;
     }else{
-      moveFrom.disabled = false;
+      fromSel.disabled = false;
       moveStatus.textContent=`تم العثور: ${match.car} — لا يوجد مكان مسجل. اختر المكان يدويًا.`;
     }
   });
 
-  // إظهار/إخفاء Checklist حسب "إلى"
-  function toggleUnderDeliveryBox(){
+  // إظهار/إخفاء الصناديق الإضافية حسب "إلى"
+  function toggleMoveExtras(){
     const toVal = moveTo.value || '';
-    const show = /مباع تحت التسليم/.test(toVal);
-    underDeliveryBox.style.display = show ? 'block' : 'none';
+    const showUnder = /مباع تحت التسليم/.test(toVal);
+    const showIssues = /سيارات بها ملاحظات/.test(toVal);
+    underDeliveryBox.style.display = showUnder ? 'block' : 'none';
+    notesIssuesBox.style.display   = showIssues ? 'block' : 'none';
   }
-  moveTo.addEventListener('change', toggleUnderDeliveryBox);
+  moveTo.addEventListener('change', toggleMoveExtras);
 
-  // تنفيذ النقل
-  $('#btnMove').addEventListener('click', async ()=>{
-    const norm=normalizeVin((moveVin.value||'').trim()); if(!norm) return showToast('اكتب رقم الهيكل الكامل','err');
-    const idx=stock.findIndex(r=>normalizeVin(r.vin)===norm); if(idx<0) return showToast('لم يتم العثور على سيارة بهذا VIN','err');
-    const rec=stock[idx];
-    const from = moveFrom.value || rec.location || '';
-    const to   = moveTo.value;
+  // تنفيذ النقل المتعدد
+  btnMove.addEventListener('click', async ()=>{
+    const to = moveTo.value;
     if(!to) return showToast('اختر وجهة النقل (إلى)','info');
-    if(from===to) return showToast('اختر مكانين مختلفين','info');
 
     const goingUnderDelivery = /مباع تحت التسليم/.test(to);
-    const moveMeta = {
+    const goingIssues        = /سيارات بها ملاحظات/.test(to);
+    const goingDelivered     = /مباع تم التسليم/.test(to);
+
+    if(goingIssues && !issuesNotes.value.trim()){
+      showToast('اكتب ملاحظات عند النقل إلى سيارات بها ملاحظات','info');
+      return;
+    }
+
+    const moveMetaTemplate = {
       adminApproved: goingUnderDelivery ? !!chkAdminApproved.checked : null,
-      adminNotes: goingUnderDelivery ? (adminNotes.value||'').trim() : '',
+      adminNotes:    goingUnderDelivery ? (adminNotes.value||'').trim() : '',
       financeApproved: goingUnderDelivery ? !!chkFinanceApproved.checked : null,
-      financeNotes: goingUnderDelivery ? (financeNotes.value||'').trim() : ''
+      financeNotes:    goingUnderDelivery ? (financeNotes.value||'').trim() : '',
+      issuesNotes:   goingIssues ? (issuesNotes.value||'').trim() : ''
     };
 
-    const oldLoc = rec.location || '';
-    rec.location = to;
-    const stamp = now();
-    moves.push({
-      when: stamp,
-      date: onlyDate(stamp),
-      vin: rec.vin||'',
-      car: rec.car||'',
-      from: from||oldLoc,
-      to,
-      id: rec.id,
-      ...moveMeta
-    });
-    await persistAll(); renderTable(); renderMoves(); renderTrack();
+    let movedCount = 0;
+    const errors = [];
 
-    moveStatus.textContent=`تم النقل: ${rec.car} — من "${from||oldLoc||'غير محدد'}" إلى "${to}".`;
+    moveVinInputs.forEach((inp,index)=>{
+      const raw = (inp.value||'').trim();
+      const norm = normalizeVin(raw);
+      if(!norm) return;
+
+      const recIdx = stock.findIndex(r=> normalizeVin(r.vin) === norm);
+      if(recIdx<0){
+        errors.push(`لم يتم العثور على سيارة بهذا VIN: ${raw}`);
+        return;
+      }
+      const rec = stock[recIdx];
+      const fromSel = moveFromSelects[index];
+      const from = (fromSel.value || rec.location || '').trim();
+
+      if(!from){
+        errors.push(`السيارة ${rec.car||''} (${rec.vin||raw}) لا يوجد لها مكان حالي؛ حدّد المكان يدويًا.`);
+        return;
+      }
+
+      if(from === to){
+        errors.push(`السيارة ${rec.car||''} (${rec.vin||raw}) موجودة بالفعل في نفس المكان.`);
+        return;
+      }
+
+      // شرط النقل إلى "مباع تم التسليم" — لازم موافقة مالية + إدارية سابقة
+      if(goingDelivered){
+        const history = moves.filter(m=> normalizeVin(m.vin||'') === norm);
+        const hasFullApproval = history.some(m=> m.adminApproved===true && m.financeApproved===true);
+        if(!hasFullApproval){
+          errors.push(`لا يمكن نقل ${rec.car||''} (${rec.vin||raw}) إلى "مباع تم التسليم" قبل الحصول على موافقة مالية وإدارية مكتملة.`);
+          return;
+        }
+      }
+
+      const moveMeta = {...moveMetaTemplate};
+      const oldLoc = rec.location || from;
+      rec.location = to;
+      const stamp = now();
+      moves.push({
+        when: stamp,
+        date: onlyDate(stamp),
+        vin: rec.vin||'',
+        car: rec.car||'',
+        from: oldLoc,
+        to,
+        id: rec.id,
+        ...moveMeta
+      });
+      movedCount++;
+    });
+
+    if(!movedCount){
+      moveStatus.textContent = errors.length ? errors.join(' | ') : 'لم يتم إدخال أي رقم هيكل للنقل.';
+      showToast('لم يتم تنفيذ أي حركة نقل','info');
+      return;
+    }
+
+    await persistAll();
+    renderTable();
+    renderMoves();
+    renderTrack();
+
+    moveStatus.textContent = `تم نقل ${movedCount} سيارة بنجاح.` + (errors.length ? ` بعض الحركات لم تُنفذ: ${errors.join(' | ')}` : '');
     carDetailsBox.style.display='none';
-    moveVin.value='';
-    moveFrom.disabled = false;
     vinHints.innerHTML='';
+
+    moveVinInputs.forEach((inp,index)=>{
+      inp.value='';
+      const sel = moveFromSelects[index];
+      sel.disabled=false;
+      sel.value='';
+    });
 
     chkAdminApproved.checked=false; adminNotes.value='';
     chkFinanceApproved.checked=false; financeNotes.value='';
+    issuesNotes.value='';
     underDeliveryBox.style.display='none';
+    notesIssuesBox.style.display='none';
   });
 
   /* ===== سجل الحركات (عرض + فلاتر التاريخ) ===== */
@@ -1105,6 +1283,7 @@
       if(m.financeApproved===true) notesParts.push('✔ موافقة مالية');
       if(m.financeApproved===false) notesParts.push('✖ موافقة مالية');
       if(m.financeNotes) notesParts.push('مالي: '+m.financeNotes);
+      if(m.issuesNotes) notesParts.push('ملاحظات: '+m.issuesNotes);
 
       const tr=document.createElement('tr');
       tr.innerHTML=`
@@ -1145,6 +1324,3 @@
 </script>
 </body>
 </html>
-```
-
-
