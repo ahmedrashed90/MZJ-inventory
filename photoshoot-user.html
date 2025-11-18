@@ -1,3 +1,8 @@
+حاضر يا نجم 👌 زوّدت توب بار بالصفحات كلها، وخليت **"إدارة الطلبات"** هي اللي Active في الصفحة دي، وضبطت لها ستايل مرتب تحت الهيدر مباشرة.
+
+ده الكود كامل بعد الإضافة (انسخه مكان ملف إدارة الطلبات الحالي):
+
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -28,7 +33,14 @@
 
   /* Header */
   .top{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);z-index:10}
-  .top .inner{max-width:1240px;margin:auto;padding:12px;display:flex;align-items:center;justify-content:space-between}
+  .top .inner{
+    max-width:1240px;
+    margin:auto;
+    padding:12px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
   .brand{display:flex;align-items:center;gap:10px}
   .logo{
     width:36px;height:36px;border-radius:12px;
@@ -58,6 +70,41 @@
     border-color:var(--brown);
   }
   .no-print{}
+
+  /* Top Tabs Bar */
+  .tabs-bar{
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    background:#fff;
+  }
+  .tabs{
+    max-width:1240px;
+    margin:0 auto;
+    padding:0 12px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .tab{
+    display:inline-flex;
+    align-items:center;
+    padding:7px 12px;
+    font-size:13px;
+    border-radius:999px;
+    border:1px solid transparent;
+    color:var(--muted);
+    margin:6px 0;
+  }
+  .tab:hover{
+    background:#f5f0eb;
+    color:var(--brown);
+  }
+  .tab.active{
+    background:var(--brown);
+    color:#fff;
+    border-color:var(--brown);
+    font-weight:700;
+  }
 
   /* Layout */
   .wrap{max-width:1240px;margin:14px auto;padding:0 12px}
@@ -191,7 +238,7 @@
 
     #reqModal .table-wrap{overflow:visible;}
     .no-print{display:none !important;}
-    .top, .wrap > :not(#reqModal){display:none !重要;}
+    .top, .wrap > :not(#reqModal){display:none !important;}
   }
 </style>
 </head>
@@ -205,6 +252,17 @@
       <div style="display:flex;gap:8px;align-items:center">
         <span class="chip"><span id="connDot" class="dot"></span><span id="connText">جارِ الاتصال…</span></span>
         <button id="btnSignOut" class="btn secondary" style="display:none">خروج</button>
+      </div>
+    </div>
+    <div class="tabs-bar">
+      <div class="tabs">
+        <a class="tab" href="admin.html">الإدارة</a>
+        <a class="tab" href="inventory.html">المخزون</a>
+        <a class="tab" href="dashboard.html">الداش بورد</a>
+        <a class="tab" href="photoshoot.html">الطلبات</a>
+        <a class="tab active" href="photoshoot-user.html">إدارة الطلبات</a>
+        <a class="tab" href="cars.html">كل السيارات</a>
+        <a class="tab" href="Activity.html">سجل النشاط</a>
       </div>
     </div>
   </header>
@@ -409,6 +467,7 @@
     </div>
   </div>
 
+  <!-- Toast -->
   <div id="toast" class="chip" style="position:fixed;bottom:18px;right:18px;display:none;background:#111827;color:#fff;border-color:#111827"></div>
 
 <script type="module">
@@ -599,7 +658,7 @@
     });
   }
 
-  // هل هذا الطلب فيه حركة على "تحت التسليم" أو "تم التسليم"؟
+  // طلب نقل يحتاج موافقة مالية + إدارية لو فيه تحت التسليم / تم التسليم
   function moveRequestNeedsStrictApproval(mr){
     const rows = Array.isArray(mr.rows)? mr.rows : [];
     const sensitive = ['تحت التسليم','تم التسليم'];
@@ -1011,7 +1070,6 @@
     let mr = moveRequests[idx];
     const approvals = {...(mr.approvals||{})};
 
-    // إضافة الموافقة الإدارية لو مش موجودة
     if(!approvals.adminApproved){
       approvals.adminApproved = stamp;
     }
@@ -1022,7 +1080,6 @@
     let movedCount = 0;
 
     if(needsStrict){
-      // حالة تتطلب موافقة مالية + إدارية عند "تحت التسليم / تم التسليم"
       if(hasFinance){
         movedCount = await executeMoveRequest(mr);
         if(movedCount>0){
@@ -1033,13 +1090,12 @@
         newStatus = 'قيد المراجعة';
       }
     }else{
-      // من فرع لفرع / مستودع فقط → نفّذ مباشرة بدون انتظار الموافقة المالية
       movedCount = await executeMoveRequest(mr);
       if(movedCount>0){
         newStatus = 'منفّذ';
         mr.executedAt = now();
       }else if(!mr.status){
-        newStatus = 'تم'; // ما اتحركش شيء لكن تمت الموافقة
+        newStatus = 'تم';
       }
     }
 
@@ -1156,3 +1212,4 @@
 </script>
 </body>
 </html>
+```
