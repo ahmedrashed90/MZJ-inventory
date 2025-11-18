@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -92,11 +93,6 @@ body{opacity:0;transition:opacity .12s ease}
   .nowrap{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .cell-actions .btn{padding:4px 8px;font-size:12px}
 
-  /* جدول الهياكل داخل المودال */
-  .modal .table-wrap table{table-layout:auto}
-  .modal thead th{font-size:12px}
-  .modal tbody td input{font-size:12px}
-
   /* Auth */
   .auth-wrap{min-height:60vh;display:grid;place-items:center;padding:24px}
   .auth-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px;max-width:420px;width:96%}
@@ -134,48 +130,6 @@ body{opacity:0;transition:opacity .12s ease}
   @media (max-width:900px){.grid-3{grid-template-columns:repeat(2,1fr)}}
   @media (max-width:620px){.grid-3{grid-template-columns:1fr}}
 
-  /* شكل قديم لحركة النقل (لو حاب تحتفظ بيه مستقبلاً) */
-  .move-row{border:1px dashed #e5e7eb;border-radius:10px;padding:8px 10px;background:#fffbf7}
-  .move-row-title{font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:600}
-
-  .move-alert{
-    margin-top:10px;
-    padding:10px 12px;
-    border-radius:12px;
-    display:none;
-    align-items:flex-start;
-    gap:10px;
-    font-size:13px;
-  }
-  .move-alert .icon{
-    margin-top:3px;
-    font-size:16px;
-  }
-  .move-alert .title{
-    font-weight:800;
-    margin-bottom:4px;
-    font-size:13.5px;
-  }
-  .move-alert ul{
-    margin:0;
-    padding-right:18px;
-    list-style:disc;
-  }
-  .move-alert.success{
-    background:#ecfdf3;
-    border:1px solid #bbf7d0;
-    color:#14532d;
-  }
-  .move-alert.error{
-    background:#fef2f2;
-    border:1px solid #fecaca;
-    color:#991b1b;
-  }
-  .move-alert.info{
-    background:#eff6ff;
-    border:1px solid #bfdbfe;
-    color:#1d4ed8;
-  }
 </style>
 </head>
 <body>
@@ -407,6 +361,54 @@ body{opacity:0;transition:opacity .12s ease}
         </p>
       </div>
 
+      <!-- سجل طلبات النقل -->
+      <div class="card">
+        <div class="card-header">
+          <div class="section-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <h2>سجل طلبات النقل</h2>
+          </div>
+          <div class="row">
+            <select id="moveStatusFilter" class="small-input" style="width:170px">
+              <option value="ALL">كل الحالات</option>
+              <option value="مسودة">مسودة</option>
+              <option value="قيد المراجعة">قيد المراجعة</option>
+              <option value="تم التنفيذ">تم التنفيذ</option>
+            </select>
+            <input id="moveSearch" class="small-input" placeholder="بحث سريع" style="min-width:220px">
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table id="moveRequestsTable">
+            <colgroup>
+              <col style="width:8ch">
+              <col style="width:18ch">
+              <col style="width:18ch">
+              <col style="width:8ch">
+              <col style="width:12ch">
+              <col style="width:auto">
+              <col style="width:14ch">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>رقم</th>
+                <th>التاريخ</th>
+                <th>مقدّم الطلب</th>
+                <th class="center">عدد السيارات</th>
+                <th>حالة الطلب</th>
+                <th>ملاحظات</th>
+                <th class="center">تفاصيل</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="hint" style="margin-top:6px">
+          اضغط على زر <b>عرض</b> أو على الصف لعرض تفاصيل السيارات داخل طلب النقل.
+        </p>
+      </div>
+
     </div>
 
   </div>
@@ -486,7 +488,77 @@ body{opacity:0;transition:opacity .12s ease}
   </div>
 </div>
 
-<div id="toast" class="toast">تم التصوير</div>
+<!-- Modal: تفاصيل طلب النقل -->
+<div id="moveBackdrop" class="modal-backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="moveModalTitle">
+    <header>
+      <h3 id="moveModalTitle"><i class="fa-regular fa-rectangle-list"></i> تفاصيل طلب النقل</h3>
+      <div class="row">
+        <button id="moveBtnCloseModal" class="btn btn-danger"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+      </div>
+    </header>
+    <div class="body">
+      <div class="subgrid">
+        <div class="kv">
+          <div class="hint">رقم الطلب</div>
+          <input id="moveModalId" class="small-input" readonly>
+        </div>
+        <div class="kv">
+          <div class="hint">التاريخ</div>
+          <input id="moveModalCreatedAt" class="small-input" readonly>
+        </div>
+        <div class="kv">
+          <div class="hint">مقدّم الطلب</div>
+          <input id="moveModalCreatedBy" class="small-input" readonly>
+        </div>
+        <div class="kv">
+          <div class="hint">حالة الطلب</div>
+          <input id="moveModalStatus" class="small-input" readonly>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <h4 class="section-title" style="font-size:14px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <span>تفاصيل السيارات داخل طلب النقل</span>
+      </h4>
+      <div class="table-wrap">
+        <table id="moveModalRows">
+          <colgroup>
+            <col style="width:4ch">
+            <col style="width:18ch">
+            <col style="width:18ch">
+            <col style="width:16ch">
+            <col style="width:10ch">
+            <col style="width:10ch">
+            <col style="width:8ch">
+            <col style="width:18ch">
+            <col style="width:18ch">
+            <col style="width:auto">
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="center">#</th>
+              <th>VIN</th>
+              <th>السيارة</th>
+              <th>البيان</th>
+              <th>الخارجي</th>
+              <th>الداخلي</th>
+              <th class="center">الموديل</th>
+              <th>من</th>
+              <th>إلى</th>
+              <th>ملاحظة</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast">تم</div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
@@ -584,6 +656,7 @@ body{opacity:0;transition:opacity .12s ease}
       buildFormRows();
       buildMoveRows();
       renderRequestsTable();
+      renderMoveRequestsTable();
 
       const rb = $('#reqBy'); 
       if(rb){ rb.value= user.displayName || 'أحمد ناجي'; rb.setAttribute('readonly','readonly'); }
@@ -626,6 +699,8 @@ body{opacity:0;transition:opacity .12s ease}
         stock=[]; shootRequests=[]; moves=[]; moveRequests=[];
       }
       setStatus('ok','تم تحميل البيانات');
+      renderRequestsTable();
+      renderMoveRequestsTable();
     }catch(e){
       setStatus('warn','تعذّر تحميل البيانات');
     }
@@ -640,6 +715,7 @@ body{opacity:0;transition:opacity .12s ease}
         moves = Array.isArray(d.moves)? d.moves: moves;
         moveRequests = Array.isArray(d.moveRequests)? d.moveRequests: moveRequests;
         renderRequestsTable();
+        renderMoveRequestsTable();
       },()=> setStatus('warn','انقطاع المزامنة مؤقتًا'));
     }catch(e){}
   }
@@ -781,6 +857,7 @@ body{opacity:0;transition:opacity .12s ease}
   /* ===== متابعة طلبات التصوير ===== */
   const tblBody = document.querySelector('#requestsTable tbody');
   function renderRequestsTable(){
+    if(!tblBody) return;
     const s = ($('#statusFilter').value||'ALL');
     const q = ($('#searchRequests').value||'').toLowerCase().trim();
 
@@ -801,7 +878,7 @@ body{opacity:0;transition:opacity .12s ease}
       const tr=document.createElement('tr');
       tr.innerHTML = `
         <td class="nowrap">#${r.id}</td>
-        <td class="nowrap">${r.createdAt}</td>
+        <td class="nowrap">${r.createdAt||''}</td>
         <td class="nowrap">${r.createdBy||'-'}</td>
         <td class="center">${r.rows?.length||0}</td>
         <td class="nowrap">${r.status||'-'}</td>
@@ -965,7 +1042,7 @@ body{opacity:0;transition:opacity .12s ease}
     XLSX.writeFile(wb,"mzj-photoshoot-requests.xlsx");
   });
 
-  /* ===== طلب نقل بنفس شكل طلب التصوير ===== */
+  /* ===== طلب نقل بنفس شكل طلب التصوير + سجل الطلبات ===== */
   const moveReqRowsBody = $('#moveReqRows');
 
   function buildMoveRows(){
@@ -1070,7 +1147,6 @@ body{opacity:0;transition:opacity .12s ease}
       return;
     }
 
-    // التأكد أن كل صف به "المكان الجديد"
     const errors=[];
     rows.forEach((r,idx)=>{
       if(!r.toLocation){
@@ -1091,7 +1167,7 @@ body{opacity:0;transition:opacity .12s ease}
       createdAt: now(),
       createdBy,
       rows,
-      status: statusLabel, // "مسودة" أو "قيد المراجعة"
+      status: statusLabel, // "مسودة" أو "قيد المراجعة" أو "تم التنفيذ"
       approvals: {
         adminApproved: null,
         financeApproved: null,
@@ -1112,6 +1188,7 @@ body{opacity:0;transition:opacity .12s ease}
     });
 
     buildMoveRows();
+    renderMoveRequestsTable();
     const msg = statusLabel==='مسودة'
       ? `تم حفظ مسودة طلب النقل #${nextId}.`
       : `تم إرسال طلب النقل رقم #${nextId} للمراجعة.`;
@@ -1120,6 +1197,106 @@ body{opacity:0;transition:opacity .12s ease}
 
   $('#moveBtnDraft').addEventListener('click', ()=> saveNewMoveRequest('مسودة'));
   $('#moveBtnSubmit').addEventListener('click', ()=> saveNewMoveRequest('قيد المراجعة'));
+
+  /* ===== سجل طلبات النقل ===== */
+  const moveTblBody = document.querySelector('#moveRequestsTable tbody');
+  const moveStatusFilter = $('#moveStatusFilter');
+  const moveSearch = $('#moveSearch');
+
+  function renderMoveRequestsTable(){
+    if(!moveTblBody) return;
+    const s = (moveStatusFilter?.value)||'ALL';
+    const q = (moveSearch?.value||'').toLowerCase().trim();
+
+    let list = moveRequests.slice().sort((a,b)=> b.id - a.id);
+    if(s!=='ALL') list = list.filter(r=> (r.status||'')===s);
+    if(q){
+      list = list.filter(r=>{
+        const ap = r.approvals||{};
+        const hay=[
+          r.id,r.createdAt,r.createdBy,r.status,
+          ap.adminNotes||'',ap.financeNotes||'',ap.issuesNotes||'',
+          ...(r.rows||[]).flatMap(x=>[x.vin,x.car,x.variant,x.extColor,x.intColor,x.modelYear,x.fromLocation,x.toLocation,x.note])
+        ].join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+    }
+
+    moveTblBody.innerHTML='';
+    list.forEach(r=>{
+      const ap = r.approvals || {};
+      const notesSummary = [ap.adminNotes, ap.financeNotes, ap.issuesNotes].filter(Boolean).join(' / ');
+      const tr=document.createElement('tr');
+      tr.innerHTML = `
+        <td class="nowrap">#${r.id}</td>
+        <td class="nowrap">${r.createdAt||''}</td>
+        <td class="nowrap">${r.createdBy||''}</td>
+        <td class="center">${r.rows?.length||0}</td>
+        <td class="nowrap">${r.status||''}</td>
+        <td class="nowrap">${notesSummary||'—'}</td>
+        <td class="center cell-actions">
+          <button class="btn btn-ghost" data-move="${r.id}"><i class="fa-regular fa-eye"></i> عرض</button>
+        </td>
+      `;
+      moveTblBody.appendChild(tr);
+    });
+  }
+
+  if(moveStatusFilter) moveStatusFilter.addEventListener('change', renderMoveRequestsTable);
+  if(moveSearch) moveSearch.addEventListener('input', renderMoveRequestsTable);
+
+  // فتح تفاصيل طلب النقل
+  const moveBackdrop = $('#moveBackdrop');
+  const moveModalRowsBody = document.querySelector('#moveModalRows tbody');
+
+  function openMoveModal(id){
+    const req = moveRequests.find(r=>r.id===id); if(!req) return;
+    moveBackdrop.style.display='flex';
+    $('#moveModalTitle').innerHTML = `<i class="fa-regular fa-rectangle-list"></i> تفاصيل طلب النقل #${id}`;
+
+    $('#moveModalId').value = '#'+req.id;
+    $('#moveModalCreatedAt').value = req.createdAt || '';
+    $('#moveModalCreatedBy').value = req.createdBy || '';
+    $('#moveModalStatus').value = req.status || '';
+
+    moveModalRowsBody.innerHTML='';
+    (req.rows||[]).forEach((x,i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `
+        <td class="center">${i+1}</td>
+        <td><input class="mono small-input" value="${x.vin||''}" readonly></td>
+        <td><input class="small-input" value="${x.car||''}" readonly></td>
+        <td><input class="small-input" value="${x.variant||''}" readonly></td>
+        <td><input class="small-input" value="${x.extColor||''}" readonly></td>
+        <td><input class="small-input" value="${x.intColor||''}" readonly></td>
+        <td class="center"><input class="small-input center" value="${x.modelYear||''}" readonly></td>
+        <td><input class="small-input" value="${x.fromLocation||''}" readonly></td>
+        <td><input class="small-input" value="${x.toLocation||''}" readonly></td>
+        <td><input class="small-input" value="${x.note||''}" readonly></td>
+      `;
+      moveModalRowsBody.appendChild(tr);
+    });
+  }
+
+  if(moveTblBody){
+    moveTblBody.addEventListener('click',(e)=>{
+      const btn = e.target.closest('button[data-move]');
+      if(btn){
+        const id = Number(btn.getAttribute('data-move'));
+        if(id) openMoveModal(id);
+        return;
+      }
+      const row = e.target.closest('tr');
+      if(!row) return;
+      const first = row.querySelector('td'); if(!first) return;
+      const txt = (first.textContent||'').trim();
+      const id  = Number(txt.replace('#','').trim());
+      if(id) openMoveModal(id);
+    });
+  }
+
+  $('#moveBtnCloseModal').addEventListener('click', ()=> moveBackdrop.style.display='none');
+  moveBackdrop.addEventListener('click',(e)=>{ if(e.target===moveBackdrop) moveBackdrop.style.display='none'; });
 
   /* ===== Start ===== */
   setStatus('warn', 'جارِ الاتصال…');
