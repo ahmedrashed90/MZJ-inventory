@@ -309,14 +309,14 @@
     </section>
   </main>
 
-  <!-- Modal: عرض طلب تصوير + نقل لمكان التصوير -->
+  <!-- Modal: طلب التصوير -->
   <div id="reqModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <header>
         <strong id="reqModalTitle">عرض طلب التصوير</strong>
         <div class="row no-print">
           <button class="btn secondary" id="btnModalReceived"><i class="fa-regular fa-handshake"></i> تأكيد الاستلام</button>
-          <button class="btn beige" id="btnReceiveAndMove"><i class="fa-solid fa-truck-fast"></i> تأكيد الاستلام ونقل السيارة</button>
+          <button class="btn beige" id="btnReceiveAndMove"><i class="fa-solid fa-truck-fast"></i> تأكيد التجهيز ونقل السيارة</button>
           <button class="btn" id="btnPrintReq"><i class="fa-solid fa-print"></i> طباعة الطلب</button>
           <button class="btn secondary" id="reqModalClose"><i class="fa-solid fa-xmark"></i> إغلاق</button>
         </div>
@@ -338,7 +338,6 @@
           </div>
         </div>
 
-        <!-- جدول تفاصيل السيارات داخل طلب التصوير -->
         <div class="table-wrap" style="margin-top:10px">
           <table>
             <thead>
@@ -359,7 +358,7 @@
     </div>
   </div>
 
-  <!-- Modal: عرض / موافقة طلب نقل -->
+  <!-- Modal: طلب النقل -->
   <div id="moveModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <header>
@@ -391,7 +390,6 @@
           </div>
         </div>
 
-        <!-- جدول تفاصيل السيارات داخل طلب النقل -->
         <div class="table-wrap" style="margin-top:10px">
           <table>
             <thead>
@@ -422,7 +420,6 @@
     collection, addDoc, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-  /* ===== Firebase ===== */
   const firebaseConfig = {
     apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
     authDomain: "mzj-agenda.firebaseapp.com",
@@ -437,7 +434,6 @@
   const STATE_REF = doc(db, "mzj_admin_state", "v1");
   const ACTIVITY_COL = collection(db, "mzj_activity_log");
 
-  /* ===== Admin Name Logic ===== */
   const ADMIN_MAP = { };
   function displayNameFor(user){
     if(!user) return "مسؤول";
@@ -448,7 +444,6 @@
     return local.replace(/[._-]+/g," ").replace(/\b\w/g, c=>c.toUpperCase());
   }
 
-  /* ===== State & Helpers ===== */
   let shootRequests = [];
   let stock = [];
   let moves = [];
@@ -488,7 +483,6 @@
     return v.toString().replace(/[٠-٩]/g,d=>ar[d]).toUpperCase().replace(/[\s\-\._]/g,'').trim();
   }
 
-  /* ===== Metrics ===== */
   function metrics(){
     const allCount = shootRequests.length + moveRequests.length;
     const progStatuses = new Set(['تحت الإجراء','تم التجهيز','قيد المراجعة']);
@@ -507,7 +501,6 @@
     $('#m_done').textContent = doneCount;
   }
 
-  // تسجيل في Collection mzj_activity_log
   async function logActivity(actionType, details, extra={}){
     try{
       const user = auth.currentUser;
@@ -539,11 +532,9 @@
     );
   }
 
-  /* ===== استخراج مكان التصوير من طلب التصوير ===== */
   function findPlaceDeep(obj, depth=0){
     if(!obj || typeof obj!=='object' || depth>4) return null;
     const regexKey = /(place|shoot|تصوير|مكان.?التصوير|موقع)/i;
-
     for(const [k,v] of Object.entries(obj)){
       if(typeof v==='string' && regexKey.test(k)){
         const t = v.trim();
@@ -566,12 +557,10 @@
       r.shoot_place || r.shootPlace || r['مكان التصوير'] ||
       (r.shoot && (r.shoot.placeRequested || r.shoot.requestedPlace || r.shoot.place || r.shoot['مكان التصوير']));
     if(direct && typeof direct==='string' && direct.trim()) return direct.trim();
-
     const deep = findPlaceDeep(r);
     return deep || '';
   }
 
-  /* ===== ملخص مكان طلب النقل (من / إلى) ===== */
   function moveRequestLocationSummary(mr){
     const rows = Array.isArray(mr.rows)? mr.rows : [];
     if(!rows.length) return '-';
@@ -586,7 +575,6 @@
     return `من: ${from} → إلى: ${to}`;
   }
 
-  /* ===== حركة المخزون ===== */
   function currentLocationByVIN(vin){
     if(!vin) return '';
     const norm = normalizeVin(vin);
@@ -612,8 +600,7 @@
     });
   }
 
-  /* ===== فلتر نوع الطلب ===== */
-  let filterKind = ''; // '' = الكل، 'shoot'، 'move'
+  let filterKind = '';
   function setKindFilter(kind){
     filterKind = kind || '';
     $$('.filter-kind').forEach(btn=> btn.classList.remove('active-kind'));
@@ -622,12 +609,10 @@
     else $('#kind_all').classList.add('active-kind');
     render();
   }
-
   $('#kind_all').addEventListener('click', ()=> setKindFilter(''));
   $('#kind_shoot').addEventListener('click', ()=> setKindFilter('shoot'));
   $('#kind_move').addEventListener('click', ()=> setKindFilter('move'));
 
-  /* ===== جدول الطلبات الرئيسية (تصوير + نقل) ===== */
   function render(){
     const q = ($('#q').value||'').trim().toLowerCase();
     const s = $('#f_status').value||'';
@@ -724,7 +709,6 @@
       tb.appendChild(tr);
     });
 
-    // حفظ ملاحظات طلبات التصوير فقط
     $$('.js-save').forEach(el=> el.addEventListener('click', async e=>{
       const id = Number(e.currentTarget.getAttribute('data-id'));
       const noteEl = document.querySelector(`.js-note[data-kind="shoot"][data-id="${id}"]`);
@@ -741,20 +725,17 @@
       showToast('تم حفظ الطلب');
     }));
 
-    // فتح مودال طلب تصوير
     $$('.js-view').forEach(el=> el.addEventListener('click', e=>{
       const id = Number(e.currentTarget.getAttribute('data-id'));
       openReqModal(id);
     }));
 
-    // فتح مودال طلب نقل
     $$('.js-view-move').forEach(el=> el.addEventListener('click', e=>{
       const id = Number(e.currentTarget.getAttribute('data-id'));
       openMoveModal(id);
     }));
   }
 
-  /* ===== تأكيد استلام طلب تصوير ===== */
   async function markReceived(id){
     const user = auth.currentUser;
     const who = displayNameFor(user);
@@ -773,7 +754,6 @@
     showToast('تم تأكيد الاستلام ✅');
   }
 
-  /* ===== مودال طلب التصوير ===== */
   const reqModal = $('#reqModal');
   const reqModalClose = $('#reqModalClose');
   const reqModalTitle = $('#reqModalTitle');
@@ -855,7 +835,7 @@
       if(recIdx<0) continue;
 
       const rec = stock[recIdx];
-      const from = rec.location || '';
+      const from = rec.location || row.location || '';
       const to = requested;
       if(!to || from===to) continue;
 
@@ -895,8 +875,8 @@
     shootRequests[idx] = updatedReq;
 
     await logActivity(
-      'تأكيد الاستلام ونقل السيارات',
-      `تأكيد الاستلام ونقل كل السيارات لمكان التصوير للطلب #${id}`,
+      'تأكيد التجهيز ونقل السيارات',
+      `تأكيد التجهيز ونقل كل السيارات لمكان التصوير للطلب #${id}`,
       { requestId:id, entityType:'photoshoot_request', entityId:id }
     );
     await persistAll();
@@ -914,7 +894,6 @@
   reqModal.addEventListener('click',(e)=>{ if(e.target===reqModal){ reqModalClose.click(); } });
   document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && reqModal.style.display==='flex'){ reqModalClose.click(); } });
 
-  /* ===== مودال طلب النقل ===== */
   const moveModal = $('#moveModal');
   const moveModalClose = $('#moveModalClose');
   const moveModalTitle = $('#moveModalTitle');
@@ -998,7 +977,6 @@
       );
       await persistAll();
 
-      // تحديث المواقع داخل المودال
       rows.forEach(row=>{
         const norm = normalizeVin(row.vin||'');
         const cell = moveCarsTable.querySelector(`.js-move-current[data-vin-norm="${norm}"]`);
@@ -1031,7 +1009,6 @@
     const hasFinance = !!approvals.financeApproved;
     let movedCount = 0;
 
-    // لو في موافقة مالية كمان ننفذ النقل
     if(hasFinance){
       movedCount = await executeMoveRequest(mr);
       if(movedCount>0){
@@ -1061,7 +1038,7 @@
     metrics();
     render();
 
-    openMoveModal(id); // إعادة فتح مع التحديث
+    openMoveModal(id);
     if(!hasFinance){
       showToast('تم تسجيل الموافقة الإدارية، بانتظار الموافقة المالية لإتمام النقل');
     }
@@ -1074,7 +1051,6 @@
   });
   moveModal.addEventListener('click',(e)=>{ if(e.target===moveModal){ moveModalClose.click(); } });
 
-  /* ===== Auth ===== */
   onAuthStateChanged(auth, async (user)=>{
     if(user){
       $('#authGate').style.display='none';
@@ -1101,7 +1077,6 @@
   });
   $('#btnSignOut').addEventListener('click', ()=> signOut(auth));
 
-  /* ===== Firestore ===== */
   async function initData(){
     const snap = await getDoc(STATE_REF);
     if(snap.exists()){
@@ -1139,7 +1114,6 @@
     });
   }
 
-  // فلاتر
   $('#q').addEventListener('input', render);
   $('#f_status').addEventListener('change', render);
   $('#date_from').addEventListener('change', render);
