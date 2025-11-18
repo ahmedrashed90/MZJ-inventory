@@ -59,6 +59,8 @@
     padding:4px 10px;font-weight:900;font-size:12px;color:#000
   }
   .metric i{color:#000}
+  /* مترك تفاعلية خاصة بكارت طلبات التصوير */
+  .shoot-metric{cursor:pointer}
 
   .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
   .chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px;cursor:pointer}
@@ -456,28 +458,42 @@
         <div class="group-left">
           <h3 class="group-title"><i class="fa-solid fa-camera-retro"></i> طلبات التصوير</h3>
           <div class="sub-metrics">
-            <span class="metric"><i class="fa-solid fa-list-ol"></i> الإجمالي: <b>${st.total.toLocaleString('ar-SA')}</b></span>
-            <span class="metric"><i class="fa-solid fa-inbox"></i> استلام إداري: <b>${st.received.toLocaleString('ar-SA')}</b></span>
-            <span class="metric"><i class="fa-solid fa-group"></i> تم التصوير: <b>${st.done.toLocaleString('ar-SA')}</b></span>
+            <span class="metric shoot-metric" data-metric="ALL">
+              <i class="fa-solid fa-list-ol"></i> الإجمالي: <b>${st.total.toLocaleString('ar-SA')}</b>
+            </span>
+            <span class="metric shoot-metric" data-metric="received">
+              <i class="fa-solid fa-inbox"></i> استلام إداري: <b>${st.received.toLocaleString('ar-SA')}</b>
+            </span>
+            <span class="metric shoot-metric" data-metric="prepared">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> تم التجهيز: <b>${st.prepared.toLocaleString('ar-SA')}</b>
+            </span>
+            <span class="metric shoot-metric" data-metric="done">
+              <i class="fa-solid fa-camera"></i> تم التصوير: <b>${st.done.toLocaleString('ar-SA')}</b>
+            </span>
           </div>
         </div>
         <div class="group-total" title="إجمالي الطلبات">${st.total.toLocaleString('ar-SA')}</div>
       </div>
-
-      <div class="chips">
-        <span class="chip" data-shoot="ALL"><i class="fa-solid fa-layer-group"></i> الكل</span>
-        <span class="chip" data-shoot="مسودة"><i class="fa-regular fa-file-lines"></i> مسودة: <b>${st.drafts}</b></span>
-        <span class="chip" data-shoot="تحت الإجراء"><i class="fa-solid fa-hourglass-half"></i> تحت الإجراء: <b>${st.inprog}</b></span>
-        <span class="chip" data-shoot="تم"><i class="fa-solid fa-circle-check"></i> تم: <b>${st.done}</b></span>
-      </div>
-      <p class="hint" style="margin:10px 0 0">اضغط على البطاقة لعرض كل الطلبات، أو استخدم الشرائح للتصفية حسب الحالة.</p>
+      <p class="hint" style="margin:10px 0 0">
+        اضغط على أي رقم لمشاهدة طلباته، أو اضغط على البطاقة كاملة لعرض جميع الطلبات.
+      </p>
     `;
-    card.addEventListener('click', (ev)=>{ if(ev.target.closest('.chip')) return; openShootModal('ALL'); });
-    card.addEventListener('click', (e)=>{
-      const chip = e.target.closest('.chip'); if(!chip) return;
-      e.stopPropagation();
-      openShootModal(chip.getAttribute('data-shoot')||'ALL');
+
+    // الضغط على البطاقة يفتح كل الطلبات
+    card.addEventListener('click', (ev)=>{
+      if(ev.target.closest('.shoot-metric')) return;
+      openShootModal('ALL');
     });
+
+    // الضغط على كل مترك يفلتر حسب النوع
+    card.querySelectorAll('.shoot-metric').forEach(el=>{
+      el.addEventListener('click',(e)=>{
+        e.stopPropagation();
+        const m = el.getAttribute('data-metric') || 'ALL';
+        openShootModal(m);
+      });
+    });
+
     gridEl.appendChild(card);
   }
 
@@ -751,11 +767,29 @@
   });
 
   /* ===== SHOOT modal ===== */
+
+  // دالة موحدة لتطبيق الفلتر على طلب التصوير
+  function matchesShootFilter(r, filter){
+    if(filter==='ALL' || !filter) return true;
+    if(filter==='received') return !!(r.admin && r.admin.received);
+    if(filter==='prepared') return !!(r.admin && r.admin.prepared);
+    if(filter==='done') return (r.status||'')==='تم التصوير';
+    return (r.status||'')===filter;
+  }
+
   function openShootModal(filter='ALL'){
     currentShootFilter = filter;
     currentShoot = shootRequests.slice().sort((a,b)=> Number(b.id) - Number(a.id));
-    filteredShoot = currentShoot.filter(r=> filter==='ALL' ? true : (r.status||'')===filter);
-    openModal('shoot', filter==='ALL' ? 'طلبات التصوير — الكل' : `طلبات التصوير — ${filter}`);
+    filteredShoot = currentShoot.filter(r=> matchesShootFilter(r, currentShootFilter));
+
+    let title;
+    if(filter==='ALL')          title='طلبات التصوير — الكل';
+    else if(filter==='received')title='طلبات التصوير — استلام إداري';
+    else if(filter==='prepared')title='طلبات التصوير — تم التجهيز';
+    else if(filter==='done')    title='طلبات التصوير — تم التصوير';
+    else                        title=`طلبات التصوير — ${filter}`;
+
+    openModal('shoot', title);
   }
 
   function renderShootTable(){
@@ -809,14 +843,19 @@
         return hay.includes(q);
       });
     }else{
-      if(!q){ filteredShoot = currentShoot.filter(r=> currentShootFilter==='ALL'?true:(r.status||'')===currentShootFilter); return renderModal(); }
-      filteredShoot = currentShoot.filter(r=>{
-        const hay=[
-          r.id,r.createdAt,r.createdBy,r.status,(r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),
-          ...(r.rows||[]).flatMap(x=>[x.vin,x.car,x.variant,x.extColor,x.modelYear,x.currentLocation,x.shootPlace,x.note])
-        ].join(' ').toLowerCase();
-        return hay.includes(q);
-      }).filter(r=> currentShootFilter==='ALL'?true:(r.status||'')===currentShootFilter);
+      if(!q){
+        filteredShoot = currentShoot.filter(r=> matchesShootFilter(r, currentShootFilter));
+        return renderModal();
+      }
+      filteredShoot = currentShoot
+        .filter(r=>{
+          const hay=[
+            r.id,r.createdAt,r.createdBy,r.status,(r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),
+            ...(r.rows||[]).flatMap(x=>[x.vin,x.car,x.variant,x.extColor,x.modelYear,x.currentLocation,x.shootPlace,x.note])
+          ].join(' ').toLowerCase();
+          return hay.includes(q);
+        })
+        .filter(r=> matchesShootFilter(r, currentShootFilter));
     }
     renderModal();
   });
@@ -871,5 +910,3 @@
 </script>
 </body>
 </html>
-
-
