@@ -934,7 +934,7 @@
     const updatedReq = {
       ...oldReq,
       status:'تم التجهيز',
-      admin:{...(oldReq.admin||{}), received:stamp}
+      admin:{...(oldReq.admin||{}), prepared:stamp}
     };
     shootRequests[idx] = updatedReq;
 
@@ -1207,5 +1207,5 @@
 </script>
 </body>
 </html>
-```
+
 
