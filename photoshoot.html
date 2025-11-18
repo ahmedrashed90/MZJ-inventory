@@ -92,6 +92,13 @@ body{opacity:0;transition:opacity .12s ease}
   .nowrap{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .cell-actions .btn{padding:4px 8px;font-size:12px}
 
+  /* خلية الإداري */
+  .admin-cell{font-size:12px;line-height:1.6}
+  .admin-line{display:flex;align-items:center;gap:4px;white-space:nowrap}
+  .admin-line i{font-size:11px;color:#2563eb}
+  .admin-line .lbl{font-weight:700;color:var(--brown)}
+  .admin-line .val{direction:ltr;font-family:ui-monospace,Consolas,Menlo,monospace;letter-spacing:.15px}
+
   /* Auth */
   .auth-wrap{min-height:60vh;display:grid;place-items:center;padding:24px}
   .auth-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px;max-width:420px;width:96%}
@@ -874,8 +881,8 @@ body{opacity:0;transition:opacity .12s ease}
 
     tblBody.innerHTML='';
     list.forEach(r=>{
-      const receivedText = r.admin?.received ? `📥 استلام: ${r.admin.received}` : '📥 استلام: —';
-      const preparedText = r.admin?.prepared ? `🛠 تجهيز: ${r.admin.prepared}` : '🛠 تجهيز: —';
+      const receivedVal = r.admin?.received || '—';
+      const preparedVal = r.admin?.prepared || '—';
 
       const tr=document.createElement('tr');
       tr.innerHTML = `
@@ -885,9 +892,17 @@ body{opacity:0;transition:opacity .12s ease}
         <td class="center">${r.rows?.length||0}</td>
         <td class="nowrap">${r.status||'-'}</td>
         <td>
-          <div style="font-size:12px;line-height:1.5">
-            <div>${receivedText}</div>
-            <div>${preparedText}</div>
+          <div class="admin-cell">
+            <div class="admin-line">
+              <i class="fa-solid fa-download"></i>
+              <span class="lbl">استلام:</span>
+              <span class="val">${receivedVal}</span>
+            </div>
+            <div class="admin-line">
+              <i class="fa-solid fa-wrench"></i>
+              <span class="lbl">تجهيز:</span>
+              <span class="val">${preparedVal}</span>
+            </div>
           </div>
         </td>
         <td class="center cell-actions">
@@ -1107,7 +1122,7 @@ body{opacity:0;transition:opacity .12s ease}
       row.querySelector('.mv_currentLoc').value = rec.location||'';
       showToast('تم جلب بيانات السيارة','ok');
     }else{
-      row.querySelectorAll('.mv_car,.mv_variant,.mv_ext,.mv_int,.mv_year,.mv_currentLoc').forEach(i=> i.value='');
+      row.querySelectorAll('.mv_car,.mv_variant,.mv_ext,.mv_int,.mv_year,.mv_currentLoc').forEach(i=> i.value='';
       showToast('لا يوجد هيكل مطابق','info');
     }
   }, true);
