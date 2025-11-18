@@ -1168,20 +1168,25 @@
 
   /* اقتراح VIN حسب البادئة/الأرقام المكتوبة */
   function updateVinSuggestionsForPrefix(rawPrefix){
-    if(!vinHints) return;
-    const prefix = normalizeVin(rawPrefix||'');
-    if(prefix.length < 1){
-      vinHints.innerHTML = '';
-      return;
-    }
-    const set = new Set();
-    stock.forEach(r=>{
-      const v = normalizeVin(r.vin||'');
-      if(v && v.includes(prefix)) set.add(v); // يحتوي على الأرقام المكتوبة
-    });
-    const list = Array.from(set).sort().slice(0,30);
-    vinHints.innerHTML = list.map(v=>`<option value="${v}"></option>`).join('');
+  if(!vinHints) return;
+  const prefix = normalizeVin(rawPrefix||'');
+  if(prefix.length < 1){
+    vinHints.innerHTML = '';
+    return;
   }
+  const set = new Set();
+  stock.forEach(r=>{
+    const v = normalizeVin(r.vin||'');
+    // 👇 عدّل السطر ده:
+    // if(v && v.includes(prefix)) set.add(v); // يحتوي على الأرقام المكتوبة
+
+    // ✅ خليه يبدأ بنفس اللي انت كاتبه (Prefix)
+    if(v && v.startsWith(prefix)) set.add(v);
+  });
+  const list = Array.from(set).sort().slice(0,30);
+  vinHints.innerHTML = list.map(v=>`<option value="${v}"></option>`).join('');
+}
+
 
   /* اقتراح المكان "من" لكل سطر عند كتابة VIN */
   function autoFindByVinForIndex(idx, strictMessage=false){
@@ -1488,3 +1493,4 @@
 </script>
 </body>
 </html>
+
