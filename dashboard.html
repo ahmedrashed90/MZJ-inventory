@@ -59,8 +59,7 @@
     padding:4px 10px;font-weight:900;font-size:12px;color:#000
   }
   .metric i{color:#000}
-  /* مترك تفاعلية خاصة بكارت طلبات التصوير */
-  .shoot-metric{cursor:pointer}
+  .shoot-metric{cursor:pointer;}
 
   .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
   .chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-weight:700;font-size:12px;cursor:pointer}
@@ -109,6 +108,26 @@
   .toast{position:fixed;bottom:18px;right:18px;background:#111827;color:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.25);display:none;z-index:100}
   .toast.show{display:block;animation:fade .2s ease-out}
   @keyframes fade{from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)}}
+
+  /* Approval box */
+  #approvalBox{
+    border-radius:12px;
+    border:1px solid var(--line);
+    padding:10px 12px;
+    margin-bottom:10px;
+    background:#fffbeb;
+    display:none;
+  }
+  #approvalBox h4{
+    margin:0 0 6px;
+    font-size:14px;
+    color:var(--brown);
+  }
+  #approvalBox small{
+    color:var(--muted);
+    display:block;
+    margin-bottom:6px;
+  }
 </style>
 </head>
 <body>
@@ -191,6 +210,30 @@
       </div>
     </header>
     <div class="body">
+      <!-- صندوق إجراءات الموافقات (يظهر فقط في تحت التسليم) -->
+      <div id="approvalBox">
+        <h4>إجراءات الموافقات للسيارة المختارة</h4>
+        <small id="approvalTarget">اختر "إداري" أو "مالية" من الجدول لتحديد السيارة.</small>
+        <div class="row" style="margin-bottom:6px">
+          <div style="flex:1;min-width:180px">
+            <label style="font-size:12px;display:block;margin-bottom:4px">حالة الموافقة</label>
+            <select id="approvalStatus" class="input" style="max-width:220px">
+              <option value="">— بدون حالة —</option>
+              <option value="true">✔ موافق</option>
+              <option value="false">✖ مرفوض</option>
+            </select>
+          </div>
+          <div style="flex:3;min-width:220px">
+            <label style="font-size:12px;display:block;margin-bottom:4px">ملاحظات</label>
+            <textarea id="approvalNotes" class="input" rows="2" placeholder="ملاحظات مختصرة توضح سبب الموافقة أو الرفض (اختياري)"></textarea>
+          </div>
+        </div>
+        <div class="row" style="justify-content:flex-end">
+          <button id="btnCancelApproval" class="btn btn-ghost"><i class="fa-solid fa-rotate-left"></i> إلغاء</button>
+          <button id="btnSaveApproval" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات</button>
+        </div>
+      </div>
+
       <!-- تبويبات لنواقص الفروع فقط -->
       <div id="shortTabs" class="tabs2" style="display:none"></div>
 
@@ -275,7 +318,7 @@
   </div>
 </div>
 
-<div id="toast" class="toast">تم التصوير</div>
+<div id="toast" class="toast">تم</div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
@@ -303,13 +346,16 @@
   const pad = n => n<10?'0'+n:n;
   const now = ()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`};
   function setStatus(mode,txt){ $('#connDot').className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'warn'); $('#connText').textContent=txt; }
-  function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1200); }
+  function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1400); }
   const trim = v => (v||'').toString().trim();
 
   /* ===== State ===== */
   let stock=[], moves=[], models=[], variantsMap={};
   let shootRequests=[];
   let currentFilterKey = null;
+
+  // سياق الموافقات
+  let approvalContext = null; // { vin, kind }
 
   // الجهات
   const groupsDef = [
@@ -496,13 +542,11 @@
       </div>
     `;
 
-    // الضغط على البطاقة يفتح كل الطلبات
     card.addEventListener('click', (ev)=>{
       if(ev.target.closest('.shoot-metric')) return;
       openShootModal('ALL');
     });
 
-    // الضغط على كل مترك يفلتر حسب النوع
     card.querySelectorAll('.shoot-metric').forEach(el=>{
       el.addEventListener('click',(e)=>{
         e.stopPropagation();
@@ -605,6 +649,13 @@
   const shootDetailsIdSpan = $('#shootDetailsId');
   const shootDetailsTableBody = document.querySelector('#shootDetailsTable tbody');
 
+  const approvalBox = $('#approvalBox');
+  const approvalStatus = $('#approvalStatus');
+  const approvalNotes  = $('#approvalNotes');
+  const approvalTarget = $('#approvalTarget');
+  const btnSaveApproval = $('#btnSaveApproval');
+  const btnCancelApproval = $('#btnCancelApproval');
+
   let currentMode = 'rows'; // 'rows' | 'shortagesBranches' | 'shoot'
   let currentRows = []; let filteredRows = [];
   let shortDataByKey = new Map(); let shortActiveKey = 'ALL'; let shortFiltered = [];
@@ -630,9 +681,12 @@
       tableShootWrap.style.display='block';
     }
     modalSearch.value='';
-    // إخفاء تفاصيل الطلب عند فتح أي مودال جديد غير التصوير
     if(mode!=='shoot' && shootDetailsBox){
       shootDetailsBox.style.display='none';
+    }
+    if(mode!=='rows' || currentFilterKey!=='pending'){
+      approvalBox.style.display='none';
+      approvalContext = null;
     }
     renderModal();
     backdrop.style.display='flex';
@@ -644,6 +698,8 @@
     currentShoot=[]; filteredShoot=[];
     currentFilterKey=null;
     if(shootDetailsBox) shootDetailsBox.style.display='none';
+    approvalBox.style.display='none';
+    approvalContext = null;
   }
   btnCloseModal.addEventListener('click', closeModal);
   backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) closeModal(); });
@@ -716,44 +772,81 @@
       modalTableRowsBody.appendChild(tr);
     });
     modalCount.textContent = `عدد السيارات الظاهرة: ${filteredRows.length.toLocaleString('ar-SA')} من ${currentRows.length.toLocaleString('ar-SA')}`;
+
+    if(currentFilterKey==='pending'){
+      approvalBox.style.display='block';
+      if(!approvalContext){
+        approvalTarget.textContent = 'اختر "إداري" أو "مالية" من الجدول لتحديد السيارة.';
+        approvalStatus.value='';
+        approvalNotes.value='';
+      }
+    }else{
+      approvalBox.style.display='none';
+      approvalContext=null;
+    }
   }
 
-  /* تحديث الموافقات وكتابة في Firestore */
-  async function updateApproval(vin, kind){
-    if(!vin) {
-      showToast('لا يوجد رقم هيكل للسيارة');
-      return;
-    }
+  function getApprovalText(kind){
+    return kind === 'admin' ? 'الإدارية' : 'المالية';
+  }
+
+  function openApprovalBoxFor(vin, kind){
+    if(!vin) return;
     const idx = stock.findIndex(r => String(r.vin)===String(vin));
     if(idx===-1){
       showToast('تعذّر العثور على السيارة في المخزون');
       return;
     }
     const row = stock[idx];
-    const isAdmin = kind==='admin';
+    const isAdmin = (kind==='admin');
     const apprKey = isAdmin ? 'adminApproved' : 'financeApproved';
     const noteKey = isAdmin ? 'adminNotes' : 'financeNotes';
-    const label   = isAdmin ? 'الإدارية' : 'المالية';
 
-    const currentVal = (row[apprKey]===true || row[apprKey]==='true');
-    const newVal = !currentVal;
+    const currentVal = row[apprKey];
+    let statusVal = '';
+    if(currentVal===true || currentVal==='true') statusVal='true';
+    else if(currentVal===false || currentVal==='false') statusVal='false';
 
-    const defaultNote = row[noteKey] || '';
-    const msg = newVal
-      ? `إضافة ملاحظة للموافقة ${label} (اختياري):`
-      : `إلغاء/تعديل الموافقة ${label}، اكتب ملاحظة (اختياري):`;
+    approvalContext = { vin, kind };
+    approvalStatus.value = statusVal;
+    approvalNotes.value  = row[noteKey] || '';
 
-    const note = window.prompt(msg, defaultNote);
+    const label = getApprovalText(kind);
+    approvalTarget.textContent = `تحديث الموافقة ${label} لرقم الهيكل: ${vin}`;
+    approvalBox.style.display='block';
+    approvalBox.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  async function saveApproval(){
+    if(!approvalContext){
+      showToast('اختر السيارة من زر "إداري" أو "مالية" أولاً');
+      return;
+    }
+    const { vin, kind } = approvalContext;
+    const idx = stock.findIndex(r => String(r.vin)===String(vin));
+    if(idx===-1){
+      showToast('تعذّر العثور على السيارة في المخزون');
+      return;
+    }
+    const row = stock[idx];
+    const isAdmin = (kind==='admin');
+    const apprKey = isAdmin ? 'adminApproved' : 'financeApproved';
+    const noteKey = isAdmin ? 'adminNotes' : 'financeNotes';
+
+    const statusVal = approvalStatus.value;
+    let newVal = null;
+    if(statusVal==='true') newVal = true;
+    else if(statusVal==='false') newVal = false;
+    else newVal = null;
 
     row[apprKey] = newVal;
-    if(note!==null) row[noteKey] = note;
+    row[noteKey] = approvalNotes.value || '';
 
     stock[idx] = row;
 
     try{
       await setDoc(STATE_REF,{stock},{merge:true});
-      showToast(`تم تحديث الموافقة ${label}`);
-      // نعيد رسم الجدول فقط، لأن الكائنات نفسها محدثة
+      showToast('تم حفظ الموافقات');
       if(currentMode==='rows' && currentFilterKey==='pending'){
         renderRowsTable();
       }
@@ -763,14 +856,23 @@
     }
   }
 
-  // حدث أزرار الموافقة داخل جدول السيارات
+  function cancelApproval(){
+    approvalContext = null;
+    approvalStatus.value='';
+    approvalNotes.value='';
+    approvalTarget.textContent = 'اختر "إداري" أو "مالية" من الجدول لتحديد السيارة.';
+  }
+
+  btnSaveApproval.addEventListener('click', saveApproval);
+  btnCancelApproval.addEventListener('click', cancelApproval);
+
   modalTableRowsBody.addEventListener('click', (e)=>{
     const btn = e.target.closest('button[data-approve]');
     if(!btn) return;
     if(currentFilterKey!=='pending') return;
     const kind = btn.getAttribute('data-approve');
     const vin  = btn.getAttribute('data-vin');
-    updateApproval(vin, kind);
+    openApprovalBoxFor(vin, kind);
   });
 
   /* ===== Shortages table ===== */
@@ -813,6 +915,7 @@
     currentRows = list.slice().sort((a,b)=> (a.id||0)-(b.id||0));
     filteredRows= currentRows.slice();
     currentFilterKey = filterKey;
+    approvalContext = null;
     openModal('rows', filterKey ? `${group.title} — ${labelForFilter(filterKey)}` : `${group.title} — كل السيارات`);
   }
 
@@ -861,8 +964,6 @@
   });
 
   /* ===== SHOOT modal ===== */
-
-  // دالة موحدة لتطبيق الفلتر على طلب التصوير
   function matchesShootFilter(r, filter){
     if(filter==='ALL' || !filter) return true;
     if(filter==='received') return !!(r.admin && r.admin.received);
@@ -883,9 +984,7 @@
     else if(filter==='done')    title='طلبات التصوير — تم التصوير';
     else                        title=`طلبات التصوير — ${filter}`;
 
-    // كل مرة نفتحه نخفي تفاصيل الطلب لحد ما يختار طلب جديد
     if(shootDetailsBox) shootDetailsBox.style.display='none';
-
     openModal('shoot', title);
   }
 
@@ -913,7 +1012,6 @@
     modalCount.textContent = `عدد الطلبات الظاهرة: ${filteredShoot.length.toLocaleString('ar-SA')} من ${currentShoot.length.toLocaleString('ar-SA')}`;
   }
 
-  // فتح تفاصيل الطلب في مربع داخل نفس المودال
   function openShootDetails(id){
     const req = shootRequests.find(r => String(r.id)===String(id));
     if(!req){
@@ -942,7 +1040,6 @@
     shootDetailsBox.scrollIntoView({behavior:'smooth',block:'center'});
   }
 
-  // حدث زر "تفاصيل" داخل جدول التصوير
   document.getElementById('tableShootWrap').addEventListener('click', (e)=>{
     const btn = e.target.closest('button[data-view-id]');
     if(!btn) return;
