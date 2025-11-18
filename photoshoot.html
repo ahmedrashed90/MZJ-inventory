@@ -883,7 +883,7 @@ body{opacity:0;transition:opacity .12s ease}
         <td class="nowrap">${r.createdAt||''}</td>
         <td class="nowrap">${r.createdBy||'-'}</td>
         <td class="center">${r.rows?.length||0}</td>
-        <td class="nowrap">${r.status||'-'}</td>
+        <td class="nowrap">${(r.admin?.prepared && r.status!=="تم التصوير") ? "تم التجهيز" : (r.status||'-')}</td>
         <td>
           <div style="font-size:12px;line-height:1.5">
             <div>${receivedText}</div>
@@ -1026,7 +1026,7 @@ body{opacity:0;transition:opacity .12s ease}
             i===0?r.createdAt:"",
             i===0?r.createdBy:"",
             i===0?r.rows.length:"",
-            i===0?(r.status||""):"",
+            i===0?((r.admin&&r.admin.prepared && r.status!=="تم التصوير") ? "تم التجهيز" : (r.status||"")):"",
             i===0?(r.admin?.received||""):"",
             i===0?(r.admin?.prepared||""):"",
             i===0?(r.admin?.notes||""):"",
