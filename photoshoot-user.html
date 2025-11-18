@@ -309,9 +309,6 @@
                 <label style="display:block;margin-bottom:6px">مكان التصوير</label>
                 <input id="reqPlaceRequested" type="text" readonly placeholder="—" />
               </div>
-              <div class="no-print" style="display:flex;align-items:flex-end;gap:8px">
-                <button class="btn" id="btnMoveAll"><i class="fa-solid fa-right-left"></i> نقل كل السيارات إلى مكان التصوير</button>
-              </div>
             </div>
           </div>
         </div>
@@ -327,7 +324,7 @@
                 <th style="min-width:180px">الخارجي / الداخلي / الموديل</th>
                 <th style="min-width:170px">مكان السيارة (حالي)</th>
                 <th style="min-width:160px">مكان التصوير</th>
-                <th style="min-width:200px">ملاحظات + إجراء</th>
+                <th style="min-width:200px">ملاحظات</th>
               </tr>
             </thead>
             <tbody id="reqCarsTable"></tbody>
@@ -415,7 +412,6 @@
 
   function metrics(){
     $('#m_all').textContent = shootRequests.length;
-    // تحت الإجراء + تم التجهيز
     $('#m_prog').textContent = shootRequests.filter(x=>x.status==='تحت الإجراء' || x.status==='تم التجهيز').length;
     $('#m_done').textContent = shootRequests.filter(x=>x.status==='تم').length;
   }
@@ -430,12 +426,12 @@
         userEmail: email,
         userName : name,
         role     : extra.role || '',
-        action   : actionType,         // نوع الحركة (يظهر في الفلتر)
+        action   : actionType,
         entityType: extra.entityType || 'photoshoot_request',
         entityId : extra.requestId != null ? String(extra.requestId) : (extra.entityId || ''),
         details  : details || '',
-        createdAt: now(),              // نص
-        createdAtTs: serverTimestamp(),// للترتيب
+        createdAt: now(),
+        createdAtTs: serverTimestamp(),
         ip       : extra.ip || '',
         userAgent: navigator.userAgent || ''
       });
@@ -452,7 +448,7 @@
     );
   }
 
-  /* ===== استخراج مكان التصوير بشكل عميق من الطلب ===== */
+  /* ===== استخراج مكان التصوير من الطلب ===== */
   function findPlaceDeep(obj, depth=0){
     if(!obj || typeof obj!=='object' || depth>4) return null;
     const regexKey = /(place|shoot|تصوير|مكان.?التصوير|موقع)/i;
@@ -531,7 +527,6 @@
         <td>${placeReq || '-'}</td>
         <td>
           <div class="muted">${r.admin?.received||'-'}</div>
-          <button class="btn secondary js-recv" data-id="${r.id}"><i class="fa-regular fa-handshake"></i> تأكيد الاستلام</button>
         </td>
         <td>
           <input class="js-note" data-id="${r.id}" type="text" placeholder="ملاحظات…" value="${(r.admin?.notes||'').replace(/"/g,'&quot;')}">
@@ -543,10 +538,7 @@
       tb.appendChild(tr);
     });
 
-    $$('.js-recv').forEach(el=> el.addEventListener('click', async e=>{
-      const id = Number(e.currentTarget.getAttribute('data-id'));
-      await markReceived(id);
-    }));
+    // حفظ الملاحظات
     $$('.js-save').forEach(el=> el.addEventListener('click', async e=>{
       const id = Number(e.currentTarget.getAttribute('data-id'));
       const noteEl = document.querySelector(`.js-note[data-id="${id}"]`);
@@ -562,6 +554,8 @@
       await persistAll();
       showToast('تم حفظ الطلب');
     }));
+
+    // فتح المودال
     $$('.js-view').forEach(el=> el.addEventListener('click', e=>{
       const id = Number(e.currentTarget.getAttribute('data-id'));
       openReqModal(id);
@@ -596,7 +590,7 @@
   const reqCarsTable = $('#reqCarsTable');
   const btnModalReceived = $('#btnModalReceived');
   const btnReceiveAndMove = $('#btnReceiveAndMove');
-  const btnMoveAll = $('#btnMoveAll');
+  const btnMoveAll = $('#btnMoveAll'); // لن يوجد في الـ DOM لكن نحافظ على السطر؛ لن نستخدمه
   const btnPrintReq = $('#btnPrintReq');
 
   let modalCurrentId = null;
@@ -669,23 +663,14 @@
         <td class="mono">${requested || ''}</td>
         <td>
           <div class="req-note-print">${note || ''}</div>
-          <div class="no-print" style="margin-top:6px">
-            <button class="btn js-move-one" data-vin="${vin}">
-              <i class="fa-solid fa-right-left"></i> نقل لمكان التصوير
-            </button>
-          </div>
         </td>`;
       reqCarsTable.appendChild(tr);
     });
 
-    reqCarsTable.querySelectorAll('.js-move-one').forEach(btn=>{
-      btn.addEventListener('click', async (e)=>{
-        const vin = e.currentTarget.getAttribute('data-vin')||'';
-        await moveSingleVINToRequested(r, vin);
-      });
-    });
-
-    btnMoveAll.onclick = async ()=>{ await moveAllVINsToRequested(r); };
+    // لم نعد نستخدم أزرار نقل منفصلة
+    if(btnMoveAll){
+      btnMoveAll.onclick = async ()=>{ await moveAllVINsToRequested(r); };
+    }
     btnModalReceived.onclick = async ()=>{ if(modalCurrentId!=null) await markReceived(modalCurrentId); };
     btnReceiveAndMove.onclick = async ()=>{ if(modalCurrentId!=null) await receiveAndMoveAndMoveCars(modalCurrentId); };
     btnPrintReq.onclick = ()=>{ window.print(); };
@@ -754,7 +739,6 @@
         { requestId:req.id, entityType:'photoshoot_request', entityId:req.id }
       );
       await persistAll();
-      // إعادة فتح المودال لتحديث الأماكن
       openReqModal(req.id);
       showToast(`تم نقل ${moved} سيارة إلى "${requested}"`);
     }else{
@@ -788,7 +772,6 @@
     metrics();
     render();
 
-    // نقل كل السيارات إلى مكان التصوير
     await moveAllVINsToRequested(updatedReq);
   }
 
