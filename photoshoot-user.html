@@ -45,7 +45,7 @@
   }
   .btn.secondary{background:#fff;color:var(--brown);border:1px solid var(--line)}
   .btn.ghost{background:transparent;color:var(--brown);border:1px dashed var(--line)}
-  .btn.beige{background:var(--beige)}
+  .btn.beige{background:var(--beige);color:#fff}
   .btn.danger{background:var(--danger)}
   .no-print{}
 
@@ -197,9 +197,33 @@
   <main class="wrap grid">
     <!-- Top metrics -->
     <section class="cards">
-      <div class="card"><div class="inner metric"><div><div class="l">إجمالي الطلبات</div><div id="m_all" class="k">0</div></div><i class="fa-solid fa-list-check"></i></div></div>
-      <div class="card"><div class="inner metric"><div><div class="l">تحت الإجراء</div><div id="m_prog" class="k">0</div></div><i class="fa-solid fa-gears"></i></div></div>
-      <div class="card"><div class="inner metric"><div><div class="l">تم</div><div id="m_done" class="k">0</div></div><i class="fa-regular fa-circle-check"></i></div></div>
+      <div class="card">
+        <div class="inner metric">
+          <div>
+            <div class="l">إجمالي الطلبات</div>
+            <div id="m_all" class="k">0</div>
+          </div>
+          <i class="fa-solid fa-list-check"></i>
+        </div>
+      </div>
+      <div class="card">
+        <div class="inner metric">
+          <div>
+            <div class="l">تحت الإجراء / تم التجهيز</div>
+            <div id="m_prog" class="k">0</div>
+          </div>
+          <i class="fa-solid fa-gears"></i>
+        </div>
+      </div>
+      <div class="card">
+        <div class="inner metric">
+          <div>
+            <div class="l">تم</div>
+            <div id="m_done" class="k">0</div>
+          </div>
+          <i class="fa-regular fa-circle-check"></i>
+        </div>
+      </div>
     </section>
 
     <!-- Auth Gate -->
@@ -231,6 +255,7 @@
             <option value="">كل الحالات</option>
             <option>مسودة</option>
             <option>تحت الإجراء</option>
+            <option>تم التجهيز</option>
             <option>تم</option>
           </select>
           <input id="q" type="search" placeholder="بحث: VIN / السيارة / المكان / ملاحظة / منشئ الطلب">
@@ -266,6 +291,7 @@
         <strong id="reqModalTitle">عرض الطلب</strong>
         <div class="row no-print">
           <button class="btn secondary" id="btnModalReceived"><i class="fa-regular fa-handshake"></i> تأكيد الاستلام</button>
+          <button class="btn beige" id="btnReceiveAndMove"><i class="fa-solid fa-truck-fast"></i> تأكيد الاستلام ونقل السيارة</button>
           <button class="btn" id="btnPrintReq"><i class="fa-solid fa-print"></i> طباعة الطلب</button>
           <button class="btn secondary" id="reqModalClose"><i class="fa-solid fa-xmark"></i> إغلاق</button>
         </div>
@@ -389,7 +415,8 @@
 
   function metrics(){
     $('#m_all').textContent = shootRequests.length;
-    $('#m_prog').textContent = shootRequests.filter(x=>x.status==='تحت الإجراء').length;
+    // تحت الإجراء + تم التجهيز
+    $('#m_prog').textContent = shootRequests.filter(x=>x.status==='تحت الإجراء' || x.status==='تم التجهيز').length;
     $('#m_done').textContent = shootRequests.filter(x=>x.status==='تم').length;
   }
 
@@ -492,14 +519,14 @@
       const pillClass =
         st==='تم'
           ? 'pill-done'
-          : (st==='تحت الإجراء' ? 'pill-prog' : 'pill-draft');
+          : (st==='تحت الإجراء' || st==='تم التجهيز' ? 'pill-prog' : 'pill-draft');
       const placeReq = requestedPlaceOf(r) || '';
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="center">${i+1}</td>
         <td><span class="mono" style="font-weight:700">#${r.id||'?'}</span></td>
         <td>${r.createdBy||''}</td>
-        <td><span class="pill ${pillClass}">${st}</span></td>
+        <td><span class="pill ${pillClass}">${st || 'مسودة'}</span></td>
         <td>${r.createdAt||''}</td>
         <td>${placeReq || '-'}</td>
         <td>
@@ -568,6 +595,7 @@
   const reqPlaceRequested = $('#reqPlaceRequested');
   const reqCarsTable = $('#reqCarsTable');
   const btnModalReceived = $('#btnModalReceived');
+  const btnReceiveAndMove = $('#btnReceiveAndMove');
   const btnMoveAll = $('#btnMoveAll');
   const btnPrintReq = $('#btnPrintReq');
 
@@ -659,6 +687,7 @@
 
     btnMoveAll.onclick = async ()=>{ await moveAllVINsToRequested(r); };
     btnModalReceived.onclick = async ()=>{ if(modalCurrentId!=null) await markReceived(modalCurrentId); };
+    btnReceiveAndMove.onclick = async ()=>{ if(modalCurrentId!=null) await receiveAndMoveAndMoveCars(modalCurrentId); };
     btnPrintReq.onclick = ()=>{ window.print(); };
 
     reqModal.style.display='flex';
@@ -682,8 +711,8 @@
     setLocationByVIN(norm, to);
 
     await logActivity(
-      'نقل سيارة لمكان التصوير',
-      `نقل سيارة (${rec.car||'بدون اسم'}) رقم هيكل ${norm} من "${from||'غير مسجل'}" إلى "${to}" للطلب #${req.id}`,
+      'موافقة على نقل سيارة',
+      `موافقة على نقل سيارة (${rec.car||'بدون اسم'}) رقم هيكل ${norm} من "${from||'غير مسجل'}" إلى "${to}" للطلب #${req.id}`,
       { requestId:req.id, entityType:'photoshoot_request', entityId:req.id }
     );
 
@@ -720,16 +749,47 @@
 
     if(moved>0){
       await logActivity(
-        'نقل كل السيارات لمكان التصوير',
-        `نقل ${moved} سيارة إلى مكان التصوير "${requested}" للطلب #${req.id}`,
+        'موافقة على نقل كل السيارات',
+        `موافقة على نقل ${moved} سيارة إلى مكان التصوير "${requested}" للطلب #${req.id}`,
         { requestId:req.id, entityType:'photoshoot_request', entityId:req.id }
       );
       await persistAll();
+      // إعادة فتح المودال لتحديث الأماكن
       openReqModal(req.id);
       showToast(`تم نقل ${moved} سيارة إلى "${requested}"`);
     }else{
       showToast('لا توجد سيارات قابلة للنقل أو كلها في مكان التصوير بالفعل');
     }
+  }
+
+  // تأكيد الاستلام + تغيير الحالة لتم التجهيز + نقل السيارات لمكان التصوير
+  async function receiveAndMoveAndMoveCars(id){
+    const idx = shootRequests.findIndex(x=> Number(x.id)===Number(id));
+    if(idx<0){ showToast('الطلب غير موجود'); return; }
+
+    const user = auth.currentUser;
+    const who = displayNameFor(user);
+    const stamp = `${now()} — ${who}`;
+
+    const oldReq = shootRequests[idx];
+    const updatedReq = {
+      ...oldReq,
+      status:'تم التجهيز',
+      admin:{...(oldReq.admin||{}), received:stamp}
+    };
+    shootRequests[idx] = updatedReq;
+
+    await logActivity(
+      'تأكيد الاستلام ونقل السيارات',
+      `تأكيد الاستلام ونقل كل السيارات لمكان التصوير للطلب #${id}`,
+      { requestId:id, entityType:'photoshoot_request', entityId:id }
+    );
+    await persistAll();
+    metrics();
+    render();
+
+    // نقل كل السيارات إلى مكان التصوير
+    await moveAllVINsToRequested(updatedReq);
   }
 
   reqModalClose.addEventListener('click', ()=>{
