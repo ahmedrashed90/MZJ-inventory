@@ -130,7 +130,6 @@
       <a class="tab" href="photoshoot-user.html">إدارة الطلبات</a>
       <a class="tab" href="cars.html">كل السيارات</a>
       <a class="tab" href="Activity.html">سجل النشاط</a>
-
     </div>
     <div class="row">
       <div class="status-badge"><span id="connDot" class="dot warn"></span><span id="connText">جارِ الاتصال…</span></div>
@@ -171,18 +170,10 @@
         <div class="group-total" id="shortagesTotal">0</div>
       </div>
       <div class="short-pills" id="shortagesPills"></div>
-      <p class="hint" style="margin:8px 0 0">اضغط على البطاقة لعرض تبويبات النواقص لكل فرع (فرع 1، فرع 2، فرع 3).</p>
     </div>
 
     <!-- Group Cards + تصوير -->
     <div class="cards" id="groupsGrid"></div>
-
-    <div class="card">
-      <p class="hint" style="margin:0">
-        اضغط على بطاقة الجهة لعرض كل السيارات، أو اضغط على الشرائح “متاح / ملاحظات / تحت التسليم / تم التسليم” لعرضها مباشرة.  
-        بطاقة “النواقص” تشمل الأفرع فقط، والمنطق: (<b>السيارة + البيان + اللون الخارجي + اللون الداخلي + الموديل</b>) إذا العدد داخل الفرع = 1 تعتبر ناقصة.
-      </p>
-    </div>
 
   </div>
 </div>
@@ -243,11 +234,39 @@
               <th>استلام إداري</th>
               <th>تجهيز</th>
               <th>ملاحظات الإدارة</th>
-              <th>تفاصيل الطلب</th> <!-- جديد -->
+              <th>تفاصيل الطلب</th>
             </tr>
           </thead>
           <tbody></tbody>
         </table>
+      </div>
+
+      <!-- مربع تفاصيل طلب التصوير -->
+      <div id="shootDetailsBox" class="card" style="margin-top:10px;display:none">
+        <h4 style="margin:0 0 8px;color:var(--brown)">
+          تفاصيل الطلب رقم <span id="shootDetailsId"></span>
+        </h4>
+        <p class="hint" style="margin:0 0 6px">
+          قائمة الهياكل ومسميات السيارات وأماكن التصوير الخاصة بهذا الطلب.
+        </p>
+        <div class="table-wrap">
+          <table id="shootDetailsTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>رقم الهيكل</th>
+                <th>السيارة</th>
+                <th>البيان</th>
+                <th>اللون الخارجي</th>
+                <th>الموديل</th>
+                <th>المكان الحالي</th>
+                <th>مكان التصوير</th>
+                <th>ملاحظات</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
 
       <p class="hint" id="modalCount" style="margin-top:8px"></p>
@@ -474,9 +493,6 @@
         </div>
         <div class="group-total" title="إجمالي الطلبات">${st.total.toLocaleString('ar-SA')}</div>
       </div>
-      <p class="hint" style="margin:10px 0 0">
-        اضغط على أي رقم لمشاهدة طلباته، أو اضغط على البطاقة كاملة لعرض جميع الطلبات.
-      </p>
     `;
 
     // الضغط على البطاقة يفتح كل الطلبات
@@ -539,7 +555,6 @@
             <i class="fa-solid fa-circle-check"></i> تم التسليم: <b>${delivered.toLocaleString('ar-SA')}</b>
           </span>
         </div>
-        <p class="hint" style="margin:10px 0 0">اضغط على بطاقة الجهة لعرض كل السيارات، أو اضغط على الشرائح لعرض الفئة فقط.</p>
       `;
       card.addEventListener('click', (ev)=>{ if(ev.target.closest('.chip')) return; openModalForGroupRows(g, null); });
       grid.appendChild(card);
@@ -585,6 +600,10 @@
 
   const shortTabs = $('#shortTabs');
 
+  const shootDetailsBox = $('#shootDetailsBox');
+  const shootDetailsIdSpan = $('#shootDetailsId');
+  const shootDetailsTableBody = document.querySelector('#shootDetailsTable tbody');
+
   let currentMode = 'rows'; // 'rows' | 'shortagesBranches' | 'shoot'
   let currentRows = []; let filteredRows = [];
   let shortDataByKey = new Map(); let shortActiveKey = 'ALL'; let shortFiltered = [];
@@ -610,6 +629,10 @@
       tableShootWrap.style.display='block';
     }
     modalSearch.value='';
+    // إخفاء تفاصيل الطلب عند فتح أي مودال جديد غير التصوير
+    if(mode!=='shoot' && shootDetailsBox){
+      shootDetailsBox.style.display='none';
+    }
     renderModal();
     backdrop.style.display='flex';
   }
@@ -619,6 +642,7 @@
     shortDataByKey.clear(); shortFiltered=[];
     currentShoot=[]; filteredShoot=[];
     currentFilterKey=null;
+    if(shootDetailsBox) shootDetailsBox.style.display='none';
   }
   btnCloseModal.addEventListener('click', closeModal);
   backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) closeModal(); });
@@ -789,6 +813,9 @@
     else if(filter==='done')    title='طلبات التصوير — تم التصوير';
     else                        title=`طلبات التصوير — ${filter}`;
 
+    // كل مرة نفتحه نخفي تفاصيل الطلب لحد ما يختار طلب جديد
+    if(shootDetailsBox) shootDetailsBox.style.display='none';
+
     openModal('shoot', title);
   }
 
@@ -816,14 +843,42 @@
     modalCount.textContent = `عدد الطلبات الظاهرة: ${filteredShoot.length.toLocaleString('ar-SA')} من ${currentShoot.length.toLocaleString('ar-SA')}`;
   }
 
-  // انتقال لصفحة تفاصيل الطلب
+  // فتح تفاصيل الطلب في مربع داخل نفس المودال
+  function openShootDetails(id){
+    const req = shootRequests.find(r => String(r.id)===String(id));
+    if(!req){
+      showToast('تعذّر العثور على هذا الطلب');
+      return;
+    }
+    shootDetailsIdSpan.textContent = '#'+id;
+    const rows = Array.isArray(req.rows)? req.rows: [];
+    shootDetailsTableBody.innerHTML='';
+    rows.forEach((row,idx)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML = `
+        <td>${idx+1}</td>
+        <td>${row.vin||''}</td>
+        <td>${row.car||''}</td>
+        <td>${row.variant||''}</td>
+        <td>${row.extColor||''}</td>
+        <td>${row.modelYear||''}</td>
+        <td>${row.currentLocation||''}</td>
+        <td>${row.shootPlace||''}</td>
+        <td>${row.note||''}</td>
+      `;
+      shootDetailsTableBody.appendChild(tr);
+    });
+    shootDetailsBox.style.display='block';
+    shootDetailsBox.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  // حدث زر "تفاصيل" داخل جدول التصوير
   document.getElementById('tableShootWrap').addEventListener('click', (e)=>{
     const btn = e.target.closest('button[data-view-id]');
     if(!btn) return;
     const id = btn.getAttribute('data-view-id');
     if(!id) return;
-    // نفس التبويب:
-    window.location.href = `photoshoot.html?id=${encodeURIComponent(id)}`;
+    openShootDetails(id);
   });
 
   // بحث موحّد في المودال
