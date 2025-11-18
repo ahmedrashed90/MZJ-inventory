@@ -373,7 +373,7 @@
           <div class="grid grid-3">
             <div>
               <label>رقم الهيكل</label>
-              <input class="move-vin" placeholder="اكتب رقم الهيكل"/>
+              <input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
             </div>
             <div>
               <label>من (محدّد تلقائيًا)</label>
@@ -391,7 +391,7 @@
           <div class="grid grid-3">
             <div>
               <label>رقم الهيكل</label>
-              <input class="move-vin" placeholder="اكتب رقم الهيكل"/>
+              <input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
             </div>
             <div>
               <label>من (محدّد تلقائيًا)</label>
@@ -409,7 +409,7 @@
           <div class="grid grid-3">
             <div>
               <label>رقم الهيكل</label>
-              <input class="move-vin" placeholder="اكتب رقم الهيكل"/>
+              <input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
             </div>
             <div>
               <label>من (محدّد تلقائيًا)</label>
@@ -427,7 +427,7 @@
           <div class="grid grid-3">
             <div>
               <label>رقم الهيكل</label>
-              <input class="move-vin" placeholder="اكتب رقم الهيكل"/>
+              <input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
             </div>
             <div>
               <label>من (محدّد تلقائيًا)</label>
@@ -445,7 +445,7 @@
           <div class="grid grid-3">
             <div>
               <label>رقم الهيكل</label>
-              <input class="move-vin" placeholder="اكتب رقم الهيكل"/>
+              <input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
             </div>
             <div>
               <label>من (محدّد تلقائيًا)</label>
@@ -463,7 +463,7 @@
           <div class="grid grid-3">
             <div>
               <label>رقم الهيكل</label>
-              <input class="move-vin" placeholder="اكتب رقم الهيكل"/>
+              <input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
             </div>
             <div>
               <label>من (محدّد تلقائيًا)</label>
@@ -481,7 +481,7 @@
           <div class="grid grid-3">
             <div>
               <label>رقم الهيكل</label>
-              <input class="move-vin" placeholder="اكتب رقم الهيكل"/>
+              <input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
             </div>
             <div>
               <label>من (محدّد تلقائيًا)</label>
@@ -499,7 +499,7 @@
           <div class="grid grid-3">
             <div>
               <label>رقم الهيكل</label>
-              <input class="move-vin" placeholder="اكتب رقم الهيكل"/>
+              <input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
             </div>
             <div>
               <label>من (محدّد تلقائيًا)</label>
@@ -512,6 +512,9 @@
           </div>
         </div>
       </div>
+
+      <!-- datalist للاقتراحات -->
+      <datalist id="vinHints"></datalist>
 
       <!-- Checklist يظهر فقط مع 'مباع تحت التسليم' -->
       <div id="underDeliveryBox" class="checklist" style="display:none; margin-top:10px">
@@ -612,7 +615,7 @@
       </div>
       <div class="row" style="margin-top:8px">
         <button class="btn btn-ghost" id="btnClearMoves" title="تفريغ السجل">
-          <i class="fa-regular fa-trash-can"></i> تفريغ
+          <i class="fa-regular ف-trash-can"></i> تفريغ
         </button>
       </div>
     </div>
@@ -805,6 +808,9 @@
 
   const notesIssuesBox = $('#notesIssuesBox');
   const issuesNotes = $('#issuesNotes');
+
+  // datalist للاقتراحات
+  const vinHints = $('#vinHints');
 
   // إشعار حركة النقل الكبير
   const moveAlert = $('#moveAlert');
@@ -1160,6 +1166,23 @@
     moveAlert.style.display = 'flex';
   }
 
+  /* اقتراح VIN حسب البادئة/الأرقام المكتوبة */
+  function updateVinSuggestionsForPrefix(rawPrefix){
+    if(!vinHints) return;
+    const prefix = normalizeVin(rawPrefix||'');
+    if(prefix.length < 1){
+      vinHints.innerHTML = '';
+      return;
+    }
+    const set = new Set();
+    stock.forEach(r=>{
+      const v = normalizeVin(r.vin||'');
+      if(v && v.includes(prefix)) set.add(v); // يحتوي على الأرقام المكتوبة
+    });
+    const list = Array.from(set).sort().slice(0,30);
+    vinHints.innerHTML = list.map(v=>`<option value="${v}"></option>`).join('');
+  }
+
   /* اقتراح المكان "من" لكل سطر عند كتابة VIN */
   function autoFindByVinForIndex(idx, strictMessage=false){
     const inp = moveVinInputs[idx];
@@ -1168,7 +1191,6 @@
     if(!vinRaw){
       fromSel.disabled=false;
       fromSel.value='';
-      // لو كل الأسطر فاضية، نخفي تفاصيل السيارة
       const anyVin = moveVinInputs.some(i=> normalizeVin(i.value));
       if(!anyVin){
         carDetailsBox.style.display='none';
@@ -1205,9 +1227,12 @@
     }
   }
 
-  // ربط الأحداث مع كل حقل VIN
+  // ربط الأحداث مع كل حقل VIN (اقتراح + تحديد "من")
   moveVinInputs.forEach((inp,idx)=>{
-    inp.addEventListener('input', debounce(()=> autoFindByVinForIndex(idx,false),150));
+    inp.addEventListener('input', debounce(()=>{
+      updateVinSuggestionsForPrefix(inp.value);
+      autoFindByVinForIndex(idx,false);
+    },150));
   });
 
   // عرض البيانات لأول VIN غير فارغ
@@ -1235,9 +1260,8 @@
 
   // تنفيذ النقل المتعدد
   btnMove.addEventListener('click', async ()=>{
-    hideMoveAlert(); // مسح أي إشعار قديم
+    hideMoveAlert();
 
-    // جهّز الصفوف
     const rows = moveVinInputs.map((inp,idx)=>({
       vinRaw:(inp.value||'').trim(),
       to:(moveToSelects[idx].value||'').trim(),
@@ -1356,7 +1380,6 @@
 
     carDetailsBox.style.display='none';
 
-    // تفريغ الأسطر
     moveVinInputs.forEach((inp,index)=>{
       inp.value='';
       const selFrom = moveFromSelects[index];
@@ -1371,6 +1394,7 @@
     issuesNotes.value='';
     underDeliveryBox.style.display='none';
     notesIssuesBox.style.display='none';
+    if(vinHints) vinHints.innerHTML='';
   });
 
   /* ===== سجل الحركات (عرض + فلاتر التاريخ) ===== */
