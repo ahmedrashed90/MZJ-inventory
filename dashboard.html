@@ -74,7 +74,16 @@
 
   /* Modal */
   .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.38);display:none;align-items:center;justify-content:center;z-index:80}
-  .modal{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 28px 70px rgba(0,0,0,.35);width:min(1100px,96vw);max-height:90vh;display:flex;flex-direction:column}
+  .modal{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:0 28px 70px rgba(0,0,0,.35);
+    width:min(1400px,98vw);   /* تم التكبير */
+    max-height:90vh;
+    display:flex;
+    flex-direction:column
+  }
   .modal header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
   .modal h3{margin:0;color:var(--brown)}
   .modal .body{padding:12px 14px;overflow:auto}
@@ -94,10 +103,15 @@
   .tabs2 .t.active{background:var(--brown);border-color:var(--brown);color:#fff}
 
   /* Tables */
-  .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px}
+  .table-wrap{
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow-y:auto;      /* سكرول رأسي فقط */
+    overflow-x:visible;   /* بدون سكرول أفقي */
+  }
   table{width:100%;border-collapse:separate;border-spacing:0}
   thead th{position:sticky;top:0;background:#fafafa;z-index:2;border-bottom:2px solid var(--line);text-align:right;color:#111827;font-size:13.5px;padding:10px}
-  tbody td{border-top:1px solid var(--line);padding:10px;vertical-align:top}
+  tbody td{border-top:1px solid var(--line);padding:10px;vertical-align:top;font-size:13px}
   tbody tr:nth-child(odd){background:#fff}
   tbody tr:nth-child(even){background:#fffdfb}
   td,th{border-left:1px solid var(--line)}
