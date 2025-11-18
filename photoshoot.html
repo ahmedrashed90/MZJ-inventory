@@ -875,11 +875,8 @@ body{opacity:0;transition:opacity .12s ease}
     tblBody.innerHTML='';
     list.forEach(r=>{
       const adminInfo = r.admin || {};
-      const receivedVal = adminInfo.received || r.adminReceived || '';
-      const preparedVal = adminInfo.prepared || r.adminPrepared || '';
-
-      const receivedText = receivedVal ? `📥 استلام: ${receivedVal}` : '📥 استلام: —';
-      const preparedText = preparedVal ? `🛠 تجهيز: ${preparedVal}` : '🛠 تجهيز: —';
+      const receivedText = adminInfo.received ? `📥 استلام: ${adminInfo.received}` : '📥 استلام: —';
+      const preparedText = adminInfo.prepared ? `🛠 تجهيز: ${adminInfo.prepared}` : '🛠 تجهيز: —';
 
       const tr=document.createElement('tr');
       tr.innerHTML = `
