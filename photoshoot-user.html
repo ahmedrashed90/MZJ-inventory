@@ -191,7 +191,7 @@
 
     #reqModal .table-wrap{overflow:visible;}
     .no-print{display:none !important;}
-    .top, .wrap > :not(#reqModal){display:none !important;}
+    .top, .wrap > :not(#reqModal){display:none !重要;}
   }
 </style>
 </head>
@@ -409,7 +409,6 @@
     </div>
   </div>
 
-  <!-- Toast -->
   <div id="toast" class="chip" style="position:fixed;bottom:18px;right:18px;display:none;background:#111827;color:#fff;border-color:#111827"></div>
 
 <script type="module">
@@ -597,6 +596,17 @@
       id: stockId || '',
       by: displayNameFor(auth.currentUser)||'مسؤول',
       reason: reason || ''
+    });
+  }
+
+  // هل هذا الطلب فيه حركة على "تحت التسليم" أو "تم التسليم"؟
+  function moveRequestNeedsStrictApproval(mr){
+    const rows = Array.isArray(mr.rows)? mr.rows : [];
+    const sensitive = ['تحت التسليم','تم التسليم'];
+    return rows.some(r=>{
+      const from = (r.fromLocation||'').trim();
+      const to   = (r.toLocation||'').trim();
+      return sensitive.includes(from) || sensitive.includes(to);
     });
   }
 
@@ -1001,22 +1011,36 @@
     let mr = moveRequests[idx];
     const approvals = {...(mr.approvals||{})};
 
+    // إضافة الموافقة الإدارية لو مش موجودة
     if(!approvals.adminApproved){
       approvals.adminApproved = stamp;
     }
 
+    const needsStrict = moveRequestNeedsStrictApproval(mr);
+    const hasFinance  = !!approvals.financeApproved;
     let newStatus = mr.status || '';
-    const hasFinance = !!approvals.financeApproved;
     let movedCount = 0;
 
-    if(hasFinance){
+    if(needsStrict){
+      // حالة تتطلب موافقة مالية + إدارية عند "تحت التسليم / تم التسليم"
+      if(hasFinance){
+        movedCount = await executeMoveRequest(mr);
+        if(movedCount>0){
+          newStatus = 'منفّذ';
+          mr.executedAt = now();
+        }
+      }else{
+        newStatus = 'قيد المراجعة';
+      }
+    }else{
+      // من فرع لفرع / مستودع فقط → نفّذ مباشرة بدون انتظار الموافقة المالية
       movedCount = await executeMoveRequest(mr);
       if(movedCount>0){
         newStatus = 'منفّذ';
         mr.executedAt = now();
+      }else if(!mr.status){
+        newStatus = 'تم'; // ما اتحركش شيء لكن تمت الموافقة
       }
-    }else{
-      newStatus = 'قيد المراجعة';
     }
 
     mr = {
@@ -1028,9 +1052,11 @@
 
     await logActivity(
       'موافقة على طلب نقل',
-      hasFinance
-        ? `موافقة إدارية وتنفيذ طلب نقل #${id} (عدد السيارات المنقولة: ${movedCount})`
-        : `تسجيل موافقة إدارية على طلب نقل #${id} (بانتظار الموافقة المالية)`,
+      needsStrict
+        ? (hasFinance
+            ? `موافقة إدارية + مالية وتنفيذ طلب نقل #${id} (عدد السيارات المنقولة: ${movedCount})`
+            : `تسجيل موافقة إدارية على طلب نقل #${id} (بانتظار الموافقة المالية، لوجود حركة على تحت التسليم / تم التسليم)`)
+        : `موافقة إدارية وتنفيذ مباشر لطلب نقل #${id} (عدد السيارات المنقولة: ${movedCount})`,
       { requestId:id, entityType:'move_request', entityId:id }
     );
 
@@ -1039,7 +1065,7 @@
     render();
 
     openMoveModal(id);
-    if(!hasFinance){
+    if(needsStrict && !hasFinance){
       showToast('تم تسجيل الموافقة الإدارية، بانتظار الموافقة المالية لإتمام النقل');
     }
   }
