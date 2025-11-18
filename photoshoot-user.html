@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>MZJ إدارة طلبات التصوير</title>
+<title>MZJ إدارة الطلبات</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 <style id="noflash">html{background:#fff8ef}body{opacity:0;transition:opacity .12s ease}</style>
@@ -47,6 +47,16 @@
   .btn.ghost{background:transparent;color:var(--brown);border:1px dashed var(--line)}
   .btn.beige{background:var(--beige);color:#fff}
   .btn.danger{background:var(--danger)}
+  .btn-mini{
+    padding:5px 10px;
+    font-size:11px;
+    border-radius:999px;
+  }
+  .filter-kind.active-kind{
+    background:var(--brown);
+    color:#fff;
+    border-color:var(--brown);
+  }
   .no-print{}
 
   /* Layout */
@@ -64,7 +74,9 @@
   .panel .head{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--line)}
   .panel .body{padding:0}
 
-  .filters{display:flex;gap:8px;flex-wrap:wrap;padding:10px;background:#fff8ef;border-bottom:1px dashed var(--line)}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;padding:10px;background:#fff8ef;border-bottom:1px dashed var(--line);align-items:center}
+  .filters-left{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .filters-right{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   input,select,button,textarea{font-family:inherit}
   input[type="search"], select, input[type="date"], input[type="text"]{
     height:36px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#fff;
@@ -123,7 +135,9 @@
   }
 
   #reqModal table th,
-  #reqModal table td{
+  #reqModal table td,
+  #moveModal table th,
+  #moveModal table td{
     font-size:11px;
     padding:6px 4px;
   }
@@ -133,6 +147,7 @@
 
   @media(max-width:1000px){
     .cards{grid-template-columns:1fr}
+    .panel .head{flex-direction:column;align-items:flex-start;gap:6px}
   }
 
   @media print {
@@ -218,7 +233,7 @@
       <div class="card">
         <div class="inner metric">
           <div>
-            <div class="l">تم</div>
+            <div class="l">تم / منفّذ</div>
             <div id="m_done" class="k">0</div>
           </div>
           <i class="fa-regular fa-circle-check"></i>
@@ -249,18 +264,26 @@
       </div>
       <div class="body">
         <div class="filters">
-          <input id="date_from" type="date" title="من تاريخ">
-          <input id="date_to" type="date" title="إلى تاريخ">
-          <select id="f_status" title="الحالة">
-            <option value="">كل الحالات</option>
-            <option>مسودة</option>
-            <option>تحت الإجراء</option>
-            <option>تم التجهيز</option>
-            <option>قيد المراجعة</option>
-            <option>تم</option>
-          </select>
-          <input id="q" type="search" placeholder="بحث: نوع الطلب / VIN / المكان / المنشئ / ملاحظة">
-          <button id="f_reset" class="btn ghost"><i class="fa-solid fa-rotate-right"></i> إعادة التصفية</button>
+          <div class="filters-left">
+            <input id="date_from" type="date" title="من تاريخ">
+            <input id="date_to" type="date" title="إلى تاريخ">
+            <select id="f_status" title="الحالة">
+              <option value="">كل الحالات</option>
+              <option>مسودة</option>
+              <option>تحت الإجراء</option>
+              <option>تم التجهيز</option>
+              <option>قيد المراجعة</option>
+              <option>تم</option>
+              <option>منفّذ</option>
+            </select>
+            <input id="q" type="search" placeholder="بحث: نوع الطلب / VIN / المكان / المنشئ / ملاحظة">
+            <button id="f_reset" class="btn ghost"><i class="fa-solid fa-rotate-right"></i> إعادة التصفية</button>
+          </div>
+          <div class="filters-right">
+            <button type="button" id="kind_all"   class="btn secondary btn-mini filter-kind active-kind">كل الأنواع</button>
+            <button type="button" id="kind_shoot" class="btn secondary btn-mini filter-kind">طلبات التصوير</button>
+            <button type="button" id="kind_move"  class="btn secondary btn-mini filter-kind">طلبات النقل</button>
+          </div>
         </div>
 
         <div class="table-wrap">
@@ -273,7 +296,7 @@
                 <th style="min-width:110px">المنشئ</th>
                 <th style="min-width:90px">الحالة</th>
                 <th style="min-width:130px">تاريخ الإنشاء</th>
-                <th style="min-width:160px">المكان</th>
+                <th style="min-width:160px">المكان / من → إلى</th>
                 <th style="min-width:160px">استلام / موافقات</th>
                 <th style="min-width:140px">ملاحظات الإدارة</th>
                 <th style="min-width:140px">إجراءات</th>
@@ -286,11 +309,11 @@
     </section>
   </main>
 
-  <!-- Modal: عرض طلب تصوير + نقل للّتصوير -->
+  <!-- Modal: عرض طلب تصوير + نقل لمكان التصوير -->
   <div id="reqModal" class="modal-backdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <header>
-        <strong id="reqModalTitle">عرض الطلب</strong>
+        <strong id="reqModalTitle">عرض طلب التصوير</strong>
         <div class="row no-print">
           <button class="btn secondary" id="btnModalReceived"><i class="fa-regular fa-handshake"></i> تأكيد الاستلام</button>
           <button class="btn beige" id="btnReceiveAndMove"><i class="fa-solid fa-truck-fast"></i> تأكيد الاستلام ونقل السيارة</button>
@@ -330,6 +353,58 @@
               </tr>
             </thead>
             <tbody id="reqCarsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: عرض / موافقة طلب نقل -->
+  <div id="moveModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <header>
+        <strong id="moveModalTitle">عرض طلب النقل</strong>
+        <div class="row no-print">
+          <button class="btn beige" id="btnMoveApproveExecute">
+            <i class="fa-solid fa-check-double"></i> موافقة إدارية وتنفيذ حركة المخزون
+          </button>
+          <button class="btn secondary" id="moveModalClose">
+            <i class="fa-solid fa-xmark"></i> إغلاق
+          </button>
+        </div>
+      </header>
+      <div class="content">
+        <div class="row" style="justify-content:space-between;margin-bottom:6px">
+          <div class="subhint" id="moveMeta"></div>
+          <div class="subhint" id="moveStatus"></div>
+        </div>
+        <div class="subhint" id="moveApprovals" style="margin-bottom:6px"></div>
+
+        <div class="card">
+          <div class="inner">
+            <div class="row" style="width:100%;justify-content:space-between">
+              <div style="flex:1;min-width:260px">
+                <label style="display:block;margin-bottom:4px">وصف المسار</label>
+                <div id="moveRouteSummary" class="muted"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- جدول تفاصيل السيارات داخل طلب النقل -->
+        <div class="table-wrap" style="margin-top:10px">
+          <table>
+            <thead>
+              <tr>
+                <th style="min-width:35px">#</th>
+                <th style="min-width:130px">رقم الهيكل (VIN)</th>
+                <th style="min-width:160px">الموقع الحالي بالمخزون</th>
+                <th style="min-width:160px">من (الطلب)</th>
+                <th style="min-width:160px">إلى (الطلب)</th>
+                <th style="min-width:180px">ملاحظات</th>
+              </tr>
+            </thead>
+            <tbody id="moveCarsTable"></tbody>
           </table>
         </div>
       </div>
@@ -383,7 +458,7 @@
   const $$ = s=>Array.from(document.querySelectorAll(s));
   const pad = n=>n<10?'0'+n:n;
   const toast=$('#toast');
-  const showToast=(m)=>{ toast.textContent=m; toast.style.display='block'; setTimeout(()=>toast.style.display='none',1600); };
+  const showToast=(m)=>{ toast.textContent=m; toast.style.display='block'; setTimeout(()=>toast.style.display='none',1800); };
   function now(){
     const d=new Date();
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
@@ -413,6 +488,7 @@
     return v.toString().replace(/[٠-٩]/g,d=>ar[d]).toUpperCase().replace(/[\s\-\._]/g,'').trim();
   }
 
+  /* ===== Metrics ===== */
   function metrics(){
     const allCount = shootRequests.length + moveRequests.length;
     const progStatuses = new Set(['تحت الإجراء','تم التجهيز','قيد المراجعة']);
@@ -442,7 +518,7 @@
         userName : name,
         role     : extra.role || '',
         action   : actionType,
-        entityType: extra.entityType || 'photoshoot_request',
+        entityType: extra.entityType || 'request',
         entityId : extra.requestId != null ? String(extra.requestId) : (extra.entityId || ''),
         details  : details || '',
         createdAt: now(),
@@ -456,10 +532,9 @@
   }
 
   async function persistAll(){
-    // هذه الصفحة تعدّل فقط على shootRequests و stock و moves
     await setDoc(
       STATE_REF,
-      { shootRequests, stock, moves, updatedAt: now() },
+      { shootRequests, stock, moves, moveRequests, updatedAt: now() },
       { merge:true }
     );
   }
@@ -511,6 +586,47 @@
     return `من: ${from} → إلى: ${to}`;
   }
 
+  /* ===== حركة المخزون ===== */
+  function currentLocationByVIN(vin){
+    if(!vin) return '';
+    const norm = normalizeVin(vin);
+    const rec = stock.find(s=> normalizeVin(s.vin)===norm);
+    return rec ? (rec.location || '') : '';
+  }
+
+  function setLocationByVIN(vinOrNorm, newLoc){
+    const norm = normalizeVin(vinOrNorm);
+    const idx = stock.findIndex(s=> normalizeVin(s.vin)===norm);
+    if(idx>=0){ stock[idx].location = newLoc; }
+  }
+
+  async function recordMove(vin, car, from, to, stockId, reason){
+    const stamp = now();
+    moves.push({
+      when: stamp,
+      date: onlyDate(stamp),
+      vin, car, from, to,
+      id: stockId || '',
+      by: displayNameFor(auth.currentUser)||'مسؤول',
+      reason: reason || ''
+    });
+  }
+
+  /* ===== فلتر نوع الطلب ===== */
+  let filterKind = ''; // '' = الكل، 'shoot'، 'move'
+  function setKindFilter(kind){
+    filterKind = kind || '';
+    $$('.filter-kind').forEach(btn=> btn.classList.remove('active-kind'));
+    if(filterKind==='shoot') $('#kind_shoot').classList.add('active-kind');
+    else if(filterKind==='move') $('#kind_move').classList.add('active-kind');
+    else $('#kind_all').classList.add('active-kind');
+    render();
+  }
+
+  $('#kind_all').addEventListener('click', ()=> setKindFilter(''));
+  $('#kind_shoot').addEventListener('click', ()=> setKindFilter('shoot'));
+  $('#kind_move').addEventListener('click', ()=> setKindFilter('move'));
+
   /* ===== جدول الطلبات الرئيسية (تصوير + نقل) ===== */
   function render(){
     const q = ($('#q').value||'').trim().toLowerCase();
@@ -524,6 +640,10 @@
       ...shootRequests.map(r=>({kind:'shoot', data:r})),
       ...moveRequests.map(r=>({kind:'move', data:r}))
     ];
+
+    if(filterKind){
+      list = list.filter(w=> w.kind===filterKind);
+    }
 
     if(s){
       list = list.filter(w=> (w.data.status||'')===s);
@@ -558,9 +678,9 @@
       const r    = w.data;
       const st   = r.status||'';
       const pillClass =
-        st==='تم'
+        st==='تم' || st==='منفّذ'
           ? 'pill-done'
-          : (st==='تحت الإجراء' || st==='تم التجهيز' || st==='قيد المراجعة' ? 'pill-prog' : 'pill-draft');
+          : (['تحت الإجراء','تم التجهيز','قيد المراجعة'].includes(st) ? 'pill-prog' : 'pill-draft');
 
       const typeLabel = (kind==='shoot' ? 'طلب تصوير' : 'طلب نقل');
       const placeCol  = (kind==='shoot'
@@ -578,6 +698,8 @@
         adminCell = parts.join(' | ') || (r.status||'-');
       }
 
+      const noteVal = (kind==='shoot' ? (r.admin?.notes||'') : '');
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="center">${i+1}</td>
@@ -589,14 +711,14 @@
         <td>${placeCol}</td>
         <td><div class="muted">${adminCell}</div></td>
         <td>
-          <input class="js-note" data-kind="${kind}" data-id="${r.id}" type="text" placeholder="ملاحظات…" value="${kind==='shoot' ? (r.admin?.notes||'').replace(/"/g,'&quot;') : ''}">
+          <input class="js-note" data-kind="${kind}" data-id="${r.id}" type="text" placeholder="ملاحظات…" value="${noteVal.replace(/"/g,'&quot;')}" ${kind==='move'?'readonly':''}>
         </td>
         <td style="display:flex;gap:6px;flex-wrap:wrap">
           ${
             kind==='shoot'
               ? `<button class="btn js-save" data-id="${r.id}"><i class="fa-solid fa-floppy-disk"></i> حفظ</button>
                  <button class="btn secondary js-view" data-id="${r.id}"><i class="fa-regular fa-eye"></i> عرض</button>`
-              : `<span class="muted">يُدار من صفحة الطلبات</span>`
+              : `<button class="btn secondary js-view-move" data-id="${r.id}"><i class="fa-regular fa-eye"></i> عرض</button>`
           }
         </td>`;
       tb.appendChild(tr);
@@ -619,13 +741,20 @@
       showToast('تم حفظ الطلب');
     }));
 
-    // فتح المودال لطلبات التصوير فقط
+    // فتح مودال طلب تصوير
     $$('.js-view').forEach(el=> el.addEventListener('click', e=>{
       const id = Number(e.currentTarget.getAttribute('data-id'));
       openReqModal(id);
     }));
+
+    // فتح مودال طلب نقل
+    $$('.js-view-move').forEach(el=> el.addEventListener('click', e=>{
+      const id = Number(e.currentTarget.getAttribute('data-id'));
+      openMoveModal(id);
+    }));
   }
 
+  /* ===== تأكيد استلام طلب تصوير ===== */
   async function markReceived(id){
     const user = auth.currentUser;
     const who = displayNameFor(user);
@@ -644,7 +773,7 @@
     showToast('تم تأكيد الاستلام ✅');
   }
 
-  /* ===== المودال: طلبات التصوير فقط ===== */
+  /* ===== مودال طلب التصوير ===== */
   const reqModal = $('#reqModal');
   const reqModalClose = $('#reqModalClose');
   const reqModalTitle = $('#reqModalTitle');
@@ -655,34 +784,9 @@
   const btnModalReceived = $('#btnModalReceived');
   const btnReceiveAndMove = $('#btnReceiveAndMove');
   const btnPrintReq = $('#btnPrintReq');
-  const btnMoveAll = $('#btnMoveAll'); // غير موجود حاليًا، احتياطي لو رجع مستقبلاً
 
   let modalCurrentId = null;
-
-  function currentLocationByVIN(vin){
-    if(!vin) return '';
-    const norm = normalizeVin(vin);
-    const rec = stock.find(s=> normalizeVin(s.vin)===norm);
-    return rec ? (rec.location || '') : '';
-  }
-
-  function setLocationByVIN(vinOrNorm, newLoc){
-    const norm = normalizeVin(vinOrNorm);
-    const idx = stock.findIndex(s=> normalizeVin(s.vin)===norm);
-    if(idx>=0){ stock[idx].location = newLoc; }
-  }
-
-  async function recordMove(vin, car, from, to, stockId){
-    const stamp = now();
-    moves.push({
-      when: stamp,
-      date: onlyDate(stamp),
-      vin, car, from, to,
-      id: stockId || '',
-      by: displayNameFor(auth.currentUser)||'مسؤول',
-      reason: 'نقل إلى مكان التصوير المطلوب'
-    });
-  }
+  let currentMoveId = null;
 
   function openReqModal(id){
     const r = shootRequests.find(x=> Number(x.id)===Number(id));
@@ -725,15 +829,10 @@
         </td>
         <td class="mono js-current-loc" data-vin-norm="${normVin}">${loc}</td>
         <td class="mono">${requested || ''}</td>
-        <td>
-          <div class="req-note-print">${note || ''}</div>
-        </td>`;
+        <td><div class="req-note-print">${note || ''}</div></td>`;
       reqCarsTable.appendChild(tr);
     });
 
-    if(btnMoveAll){
-      btnMoveAll.onclick = async ()=>{ await moveAllVINsToRequested(r); };
-    }
     btnModalReceived.onclick = async ()=>{ if(modalCurrentId!=null) await markReceived(modalCurrentId); };
     btnReceiveAndMove.onclick = async ()=>{ if(modalCurrentId!=null) await receiveAndMoveAndMoveCars(modalCurrentId); };
     btnPrintReq.onclick = ()=>{ window.print(); };
@@ -760,7 +859,7 @@
       const to = requested;
       if(!to || from===to) continue;
 
-      await recordMove(rec.vin||norm, rec.car||'', from, to, rec.id);
+      await recordMove(rec.vin||norm, rec.car||'', from, to, rec.id, 'نقل إلى مكان التصوير');
       setLocationByVIN(norm, to);
       moved++;
     }
@@ -814,6 +913,166 @@
   });
   reqModal.addEventListener('click',(e)=>{ if(e.target===reqModal){ reqModalClose.click(); } });
   document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && reqModal.style.display==='flex'){ reqModalClose.click(); } });
+
+  /* ===== مودال طلب النقل ===== */
+  const moveModal = $('#moveModal');
+  const moveModalClose = $('#moveModalClose');
+  const moveModalTitle = $('#moveModalTitle');
+  const moveMeta = $('#moveMeta');
+  const moveStatus = $('#moveStatus');
+  const moveApprovals = $('#moveApprovals');
+  const moveRouteSummary = $('#moveRouteSummary');
+  const moveCarsTable = $('#moveCarsTable');
+  const btnMoveApproveExecute = $('#btnMoveApproveExecute');
+
+  function openMoveModal(id){
+    const r = moveRequests.find(x=> Number(x.id)===Number(id));
+    if(!r){ showToast('طلب النقل غير موجود'); return; }
+    currentMoveId = id;
+
+    moveModalTitle.textContent = `عرض طلب النقل #${r.id||'?'}`;
+    moveMeta.textContent = `المنشئ: ${r.createdBy||'-'} — بتاريخ: ${r.createdAt||'-'}`;
+    moveStatus.textContent = `الحالة: ${r.status||'-'}`;
+
+    const a = r.approvals || {};
+    const adminTxt   = a.adminApproved   ? `✔ إداري: ${a.adminApproved}`   : '✖ لا يوجد موافقة إدارية بعد';
+    const financeTxt = a.financeApproved ? `✔ مالية: ${a.financeApproved}` : '✖ لا يوجد موافقة مالية بعد';
+    moveApprovals.textContent = adminTxt + ' | ' + financeTxt;
+
+    moveRouteSummary.textContent = moveRequestLocationSummary(r);
+
+    moveCarsTable.innerHTML = '';
+    const rows = Array.isArray(r.rows) ? r.rows : [];
+    rows.forEach((row,i)=>{
+      const vin = row.vin || '';
+      const normVin = normalizeVin(vin);
+      const car = row.car || '';
+      const fromReq = row.fromLocation || '';
+      const toReq   = row.toLocation || '';
+      const note    = row.note || '';
+      const currentLoc = currentLocationByVIN(vin) || fromReq || '— غير مسجل —';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td class="mono" data-vin-norm="${normVin}">${vin}</td>
+        <td class="mono js-move-current" data-vin-norm="${normVin}">${currentLoc}</td>
+        <td>${fromReq||''}</td>
+        <td>${toReq||''}</td>
+        <td><div class="req-note-print">${note}</div><div class="muted">${car||''}</div></td>`;
+      moveCarsTable.appendChild(tr);
+    });
+
+    btnMoveApproveExecute.onclick = async ()=>{ if(currentMoveId!=null) await approveMoveAndExecute(currentMoveId); };
+
+    moveModal.style.display='flex';
+    moveModal.setAttribute('aria-hidden','false');
+  }
+
+  async function executeMoveRequest(mr){
+    const rows = Array.isArray(mr.rows)? mr.rows : [];
+    if(!rows.length){ showToast('لا توجد سيارات في طلب النقل'); return 0; }
+
+    let moved = 0;
+    for(const row of rows){
+      const vin = row.vin || '';
+      const norm = normalizeVin(vin);
+      const recIdx = stock.findIndex(s=> normalizeVin(s.vin)===norm);
+      if(recIdx<0) continue;
+
+      const rec = stock[recIdx];
+      const from = rec.location || row.fromLocation || '';
+      const to   = row.toLocation || '';
+      if(!to || from===to) continue;
+
+      await recordMove(rec.vin||norm, rec.car||'', from, to, rec.id, `تنفيذ طلب نقل #${mr.id}`);
+      setLocationByVIN(norm, to);
+      moved++;
+    }
+
+    if(moved>0){
+      await logActivity(
+        'تنفيذ طلب نقل',
+        `تنفيذ طلب نقل #${mr.id} بعدد ${moved} سيارة`,
+        { requestId:mr.id, entityType:'move_request', entityId:mr.id }
+      );
+      await persistAll();
+
+      // تحديث المواقع داخل المودال
+      rows.forEach(row=>{
+        const norm = normalizeVin(row.vin||'');
+        const cell = moveCarsTable.querySelector(`.js-move-current[data-vin-norm="${norm}"]`);
+        if(cell && row.toLocation) cell.textContent = row.toLocation;
+      });
+
+      showToast(`تم تنفيذ نقل ${moved} سيارة`);
+    }else{
+      showToast('لا توجد سيارات قابلة للنقل أو المواقع متطابقة');
+    }
+    return moved;
+  }
+
+  async function approveMoveAndExecute(id){
+    const idx = moveRequests.findIndex(x=> Number(x.id)===Number(id));
+    if(idx<0){ showToast('طلب النقل غير موجود'); return; }
+
+    const user = auth.currentUser;
+    const who = displayNameFor(user);
+    const stamp = `${now()} — ${who}`;
+
+    let mr = moveRequests[idx];
+    const approvals = {...(mr.approvals||{})};
+
+    if(!approvals.adminApproved){
+      approvals.adminApproved = stamp;
+    }
+
+    let newStatus = mr.status || '';
+    const hasFinance = !!approvals.financeApproved;
+    let movedCount = 0;
+
+    // لو في موافقة مالية كمان ننفذ النقل
+    if(hasFinance){
+      movedCount = await executeMoveRequest(mr);
+      if(movedCount>0){
+        newStatus = 'منفّذ';
+        mr.executedAt = now();
+      }
+    }else{
+      newStatus = 'قيد المراجعة';
+    }
+
+    mr = {
+      ...mr,
+      approvals,
+      status:newStatus
+    };
+    moveRequests[idx] = mr;
+
+    await logActivity(
+      'موافقة على طلب نقل',
+      hasFinance
+        ? `موافقة إدارية وتنفيذ طلب نقل #${id} (عدد السيارات المنقولة: ${movedCount})`
+        : `تسجيل موافقة إدارية على طلب نقل #${id} (بانتظار الموافقة المالية)`,
+      { requestId:id, entityType:'move_request', entityId:id }
+    );
+
+    await persistAll();
+    metrics();
+    render();
+
+    openMoveModal(id); // إعادة فتح مع التحديث
+    if(!hasFinance){
+      showToast('تم تسجيل الموافقة الإدارية، بانتظار الموافقة المالية لإتمام النقل');
+    }
+  }
+
+  moveModalClose.addEventListener('click', ()=>{
+    moveModal.style.display='none';
+    moveModal.setAttribute('aria-hidden','true');
+    currentMoveId = null;
+  });
+  moveModal.addEventListener('click',(e)=>{ if(e.target===moveModal){ moveModalClose.click(); } });
 
   /* ===== Auth ===== */
   onAuthStateChanged(auth, async (user)=>{
@@ -873,6 +1132,10 @@
         const r = shootRequests.find(x=> Number(x.id)===Number(modalCurrentId));
         if(r){ reqStatus.textContent = `الحالة: ${r.status||'-'}`; }
       }
+      if(currentMoveId!=null){
+        const mr = moveRequests.find(x=> Number(x.id)===Number(currentMoveId));
+        if(mr){ moveStatus.textContent = `الحالة: ${mr.status||'-'}`; }
+      }
     });
   }
 
@@ -886,7 +1149,7 @@
     $('#f_status').value='';
     $('#date_from').value='';
     $('#date_to').value='';
-    render();
+    setKindFilter('');
   });
 
   document.body.style.opacity='1';
