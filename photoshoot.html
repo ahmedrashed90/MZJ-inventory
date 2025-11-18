@@ -874,8 +874,11 @@ body{opacity:0;transition:opacity .12s ease}
 
     tblBody.innerHTML='';
     list.forEach(r=>{
-      const receivedText = r.admin?.received ? `📥 استلام: ${r.admin.received}` : '📥 استلام: —';
-      const preparedText = r.admin?.prepared ? `🛠 تم التجهيز: ${r.admin.prepared}` : '🛠 تم التجهيز: —';
+      const adminObj = r.admin || {};
+      const adminReceivedVal = adminObj.received || r.adminReceived || adminObj.receivedAt || '';
+      const adminPreparedVal = adminObj.prepared || r.adminPrepared || adminObj.preparedAt || '';
+      const receivedText = adminReceivedVal ? `📥 استلام: ${adminReceivedVal}` : '📥 استلام: —';
+      const preparedText = adminPreparedVal ? `🛠 تم التجهيز: ${adminPreparedVal}` : '🛠 تم التجهيز: —';
 
       const tr=document.createElement('tr');
       tr.innerHTML = `
@@ -883,7 +886,7 @@ body{opacity:0;transition:opacity .12s ease}
         <td class="nowrap">${r.createdAt||''}</td>
         <td class="nowrap">${r.createdBy||'-'}</td>
         <td class="center">${r.rows?.length||0}</td>
-        <td class="nowrap">${(r.admin?.prepared && r.status!=="تم التصوير") ? "تم التجهيز" : (r.status||'-')}</td>
+        <td class="nowrap">${(adminPreparedVal && r.status!=="تم التصوير") ? "تم التجهيز" : (r.status||'-')}</td>
         <td>
           <div style="font-size:12px;line-height:1.5">
             <div>${receivedText}</div>
@@ -938,8 +941,13 @@ body{opacity:0;transition:opacity .12s ease}
     $('#m_id').value = '#'+req.id;
     $('#m_createdAt').value = req.createdAt||'';
     $('#m_createdBy').value = req.createdBy||'';
-    $('#m_adminReceived').value = (req.admin?.received)||'';
-    $('#m_adminPrepared').value = (req.admin?.prepared)||'';
+
+    const adminObj = req.admin || {};
+    const adminReceivedVal = adminObj.received || req.adminReceived || adminObj.receivedAt || '';
+    const adminPreparedVal = adminObj.prepared || req.adminPrepared || adminObj.preparedAt || '';
+
+    $('#m_adminReceived').value = adminReceivedVal || '';
+    $('#m_adminPrepared').value = adminPreparedVal || '';
 
     modalRowsBody.innerHTML='';
     (req.rows||[]).forEach((x,i)=>{
@@ -1014,9 +1022,12 @@ body{opacity:0;transition:opacity .12s ease}
     const data=[header];
     (shootRequests||[]).forEach(r=>{
       if(!r.rows?.length){
+        const adminObj = r.admin || {};
+        const adminReceivedVal = adminObj.received || r.adminReceived || adminObj.receivedAt || '';
+        const adminPreparedVal = adminObj.prepared || r.adminPrepared || adminObj.preparedAt || '';
         data.push([
           r.id,r.createdAt,r.createdBy,0,r.status,
-          (r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),
+          adminReceivedVal,adminPreparedVal,(r.admin?.notes||''),
           "","","","","","","","",""
         ]);
       }else{
@@ -1026,9 +1037,9 @@ body{opacity:0;transition:opacity .12s ease}
             i===0?r.createdAt:"",
             i===0?r.createdBy:"",
             i===0?r.rows.length:"",
-            i===0?((r.admin&&r.admin.prepared && r.status!=="تم التصوير") ? "تم التجهيز" : (r.status||"")):"",
-            i===0?(r.admin?.received||""):"",
-            i===0?(r.admin?.prepared||""):"",
+            i===0?(r.status||""):"",
+            i===0?((r.admin?.received || r.adminReceived || r.admin?.receivedAt || "") || ""):"",
+            i===0?((r.admin?.prepared || r.adminPrepared || r.admin?.preparedAt || "") || ""):"",
             i===0?(r.admin?.notes||""):"",
             x.vin,x.car,x.variant,x.extColor,x.intColor,x.modelYear,x.currentLocation,x.shootPlace||"",x.note||""
           ]);
