@@ -25,19 +25,19 @@
   .brand{display:flex;align-items:center;gap:10px}
   .brand h1{margin:0;font-size:18px;color:var(--brown);font-weight:800}
   .brand small{color:var(--muted)}
-  .tabs{display:flex;gap:8px}
-  .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;text-decoration:none;color:inherit;font-weight:800}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;text-decoration:none;color:inherit;font-weight:800;font-size:13px}
   .tab.active{background:var(--brown);border-color:var(--brown);color:#fff}
   .status-badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;font-size:12px}
   .dot{width:10px;height:10px;border-radius:999px;background:#f59e0b}
   .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)} .dot.warn{background:#f59e0b}
 
   /* Buttons */
-  .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700;display:inline-flex;gap:8px;align-items:center;transition:.15s}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer;font-weight:700;display:inline-flex;gap:8px;align-items:center;transition:.15s;font-size:13px}
   .btn:active{transform:translateY(1px)}
   .btn-primary{background:var(--beige);border-color:var(--beige);color:#fff}
   .btn-ghost{background:#fff}
-  .btn-outline{background:#fff;border-color:var(--brown);color:#brown}
+  .btn-outline{background:#fff;border-color:var(--brown);color:var(--brown)}
 
   .container{max-width:1280px;margin:18px auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:16px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
@@ -50,13 +50,14 @@
   .stat-num{font-size:22px;font-weight:800;color:var(--brown)}
 
   .card h3{margin:0 0 10px;color:var(--brown);font-size:16px;display:flex;align-items:center;gap:8px}
+  .hint-text{font-size:12px;color:var(--muted);margin:0 0 8px}
 
   /* Filters */
   .filter-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px}
   @media(max-width:1100px){.filter-grid{grid-template-columns:1fr 1fr 1fr}}
   @media(max-width:800px){.filter-grid{grid-template-columns:1fr 1fr}}
   @media(max-width:560px){.filter-grid{grid-template-columns:1fr}}
-  .input,.select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .input,.select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-family:inherit;font-size:13px}
   .search{position:relative}
   .search i{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--muted)}
   .search input{padding-right:34px}
@@ -64,16 +65,17 @@
 
   /* Table */
   .table{width:100%;border-collapse:separate;border-spacing:0}
-  .table th,.table td{border:1px solid var(--line);padding:8px 10px;text-align:right;vertical-align:top}
+  .table th,.table td{border:1px solid var(--line);padding:8px 10px;text-align:right;vertical-align:top;font-size:13px}
   .table thead th{position:sticky;top:0;background:#fff;border-bottom:2px solid var(--line);z-index:1}
   .table tbody tr:nth-child(odd){background:#fff}
   .table tbody tr:nth-child(even){background:#fffdfb}
   .tag{display:inline-block;background:#f6f6f6;border:1px solid var(--line);padding:2px 8px;border-radius:999px;font-size:12px;color:#444}
-  .vin{cursor:pointer;color:var(--beige)} .vin:hover{text-decoration:underline}
-  .short{background:#fff4f4} /* تمييز النقص اللوني لكل مكان (اختياري تبقيه) */
+  .vin{cursor:pointer;color:var(--beige);white-space:nowrap} 
+  .vin:hover{text-decoration:underline}
+  .short{background:#fff4f4} /* تمييز النقص اللوني لكل مكان (اختياري) */
 
   .badge{display:inline-block;background:#fff2e9;border:1px solid #f1d0bd;color:var(--brown);padding:2px 8px;border-radius:999px;font-size:12px}
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:10px;display:none}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 14px;border-radius:10px;display:none;font-size:13px;z-index:200}
   .toast.show{display:block;animation:fade .2s ease-out}
   @keyframes fade{from{opacity:0;transform:translate(-50%,6px)} to{opacity:1;transform:translate(-50%,0)}}
 
@@ -83,6 +85,28 @@
   .auth-card h2{margin:0 0 10px;color:var(--brown)}
   .auth-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
   .hint{color:var(--muted);font-size:12px}
+
+  .muted-text{color:var(--muted);font-size:12px}
+
+  /* حركة نقل السيارات */
+  .moves-grid{display:grid;grid-template-columns:1fr;gap:6px;margin-top:8px}
+  .move-row{display:grid;grid-template-columns:60px 1.5fr 1.1fr 1.6fr;gap:6px;align-items:center}
+  .move-label{font-size:12px;color:var(--muted);text-align:center}
+  .move-vin-wrap{position:relative}
+  .vin-suggestions{position:absolute;inset-inline:0;top:100%;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 18px rgba(0,0,0,.08);padding:4px;max-height:180px;overflow:auto;display:none;z-index:40}
+  .vin-suggestions button{width:100%;border:0;background:transparent;text-align:right;padding:4px 6px;border-radius:6px;font-family:inherit;font-size:12px;cursor:pointer}
+  .vin-suggestions button:hover{background:#f9f5f0}
+  .move-actions{margin-top:8px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+
+  @media(max-width:900px){
+    .move-row{grid-template-columns:40px 1.4fr 1.2fr 1.6fr}
+  }
+  @media(max-width:720px){
+    .move-row{grid-template-columns:40px 1.6fr 1.4fr}
+    .move-row .move-note{grid-column:2/4}
+  }
+
+  .cell-notes{cursor:pointer}
 </style>
 </head>
 <body>
@@ -104,8 +128,6 @@
       <a class="tab" href="photoshoot.html">طلبات التصوير</a>
       <a class="tab" href="cars.html">كل السيارات</a>
       <a class="tab" href="Activity.html">سجل النشاط</a>
-
-      
     </div>
     <div class="tabs" style="gap:10px">
       <div class="status-badge" id="connBadge">
@@ -122,9 +144,9 @@
   <div class="auth-card">
     <h2>تسجيل الدخول</h2>
     <label for="email">البريد الإلكتروني</label>
-    <input id="email" type="email" placeholder="you@example.com"/>
+    <input id="email" type="email" class="input" placeholder="you@example.com"/>
     <label for="password" style="margin-top:8px">كلمة المرور</label>
-    <input id="password" type="password" placeholder="••••••••"/>
+    <input id="password" type="password" class="input" placeholder="••••••••"/>
     <div class="auth-actions">
       <button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
       <button class="btn btn-outline" id="btnSignup">إنشاء حساب</button>
@@ -137,7 +159,7 @@
 <div id="app" style="display:none">
   <div class="container">
 
-    <!-- Summary (kept minimal) -->
+    <!-- Summary -->
     <div class="card">
       <div class="summary">
         <div class="stat">
@@ -154,6 +176,119 @@
             <div class="stat-num" id="placesCount">0</div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- حركة نقل السيارات برقم الهيكل -->
+    <div class="card">
+      <h3><i class="fa-solid fa-right-left" style="color:var(--beige)"></i> حركة نقل السيارات برقم الهيكل</h3>
+      <p class="hint-text">
+        اكتب رقم الهيكل أو بدايته، واختَر مكان <strong>إلى</strong>، وأضف ملاحظات عند الحاجة.
+        أي حركة إلى <strong>تم التسليم</strong> يشترط الموافقة المالية والإدارية معًا.
+      </p>
+      <div class="moves-grid" id="movesGrid">
+        <!-- 8 صفوف -->
+        <!-- تُبنَى يدويًا لتكون أوضح -->
+        <div class="move-row" data-index="0">
+          <div class="move-label">1</div>
+          <div class="move-vin-wrap">
+            <input class="input move-vin" data-index="0" placeholder="رقم الهيكل">
+            <div class="vin-suggestions" data-index="0"></div>
+          </div>
+          <select class="select move-to" data-index="0">
+            <option value="">إلى (المكان)</option>
+          </select>
+          <input class="input move-note" data-index="0" placeholder="ملاحظات (اختياري)">
+        </div>
+
+        <div class="move-row" data-index="1">
+          <div class="move-label">2</div>
+          <div class="move-vin-wrap">
+            <input class="input move-vin" data-index="1" placeholder="رقم الهيكل">
+            <div class="vin-suggestions" data-index="1"></div>
+          </div>
+          <select class="select move-to" data-index="1">
+            <option value="">إلى (المكان)</option>
+          </select>
+          <input class="input move-note" data-index="1" placeholder="ملاحظات (اختياري)">
+        </div>
+
+        <div class="move-row" data-index="2">
+          <div class="move-label">3</div>
+          <div class="move-vin-wrap">
+            <input class="input move-vin" data-index="2" placeholder="رقم الهيكل">
+            <div class="vin-suggestions" data-index="2"></div>
+          </div>
+          <select class="select move-to" data-index="2">
+            <option value="">إلى (المكان)</option>
+          </select>
+          <input class="input move-note" data-index="2" placeholder="ملاحظات (اختياري)">
+        </div>
+
+        <div class="move-row" data-index="3">
+          <div class="move-label">4</div>
+          <div class="move-vin-wrap">
+            <input class="input move-vin" data-index="3" placeholder="رقم الهيكل">
+            <div class="vin-suggestions" data-index="3"></div>
+          </div>
+          <select class="select move-to" data-index="3">
+            <option value="">إلى (المكان)</option>
+          </select>
+          <input class="input move-note" data-index="3" placeholder="ملاحظات (اختياري)">
+        </div>
+
+        <div class="move-row" data-index="4">
+          <div class="move-label">5</div>
+          <div class="move-vin-wrap">
+            <input class="input move-vin" data-index="4" placeholder="رقم الهيكل">
+            <div class="vin-suggestions" data-index="4"></div>
+          </div>
+          <select class="select move-to" data-index="4">
+            <option value="">إلى (المكان)</option>
+          </select>
+          <input class="input move-note" data-index="4" placeholder="ملاحظات (اختياري)">
+        </div>
+
+        <div class="move-row" data-index="5">
+          <div class="move-label">6</div>
+          <div class="move-vin-wrap">
+            <input class="input move-vin" data-index="5" placeholder="رقم الهيكل">
+            <div class="vin-suggestions" data-index="5"></div>
+          </div>
+          <select class="select move-to" data-index="5">
+            <option value="">إلى (المكان)</option>
+          </select>
+          <input class="input move-note" data-index="5" placeholder="ملاحظات (اختياري)">
+        </div>
+
+        <div class="move-row" data-index="6">
+          <div class="move-label">7</div>
+          <div class="move-vin-wrap">
+            <input class="input move-vin" data-index="6" placeholder="رقم الهيكل">
+            <div class="vin-suggestions" data-index="6"></div>
+          </div>
+          <select class="select move-to" data-index="6">
+            <option value="">إلى (المكان)</option>
+          </select>
+          <input class="input move-note" data-index="6" placeholder="ملاحظات (اختياري)">
+        </div>
+
+        <div class="move-row" data-index="7">
+          <div class="move-label">8</div>
+          <div class="move-vin-wrap">
+            <input class="input move-vin" data-index="7" placeholder="رقم الهيكل">
+            <div class="vin-suggestions" data-index="7"></div>
+          </div>
+          <select class="select move-to" data-index="7">
+            <option value="">إلى (المكان)</option>
+          </select>
+          <input class="input move-note" data-index="7" placeholder="ملاحظات (اختياري)">
+        </div>
+      </div>
+
+      <div class="move-actions">
+        <button class="btn btn-ghost" id="btnClearMoves"><i class="fa-regular fa-eraser"></i> مسح الحقول</button>
+        <button class="btn btn-primary" id="btnApplyMoves"><i class="fa-solid fa-check"></i> تنفيذ النقل</button>
       </div>
     </div>
 
@@ -199,7 +334,7 @@
               <th>اللوحة</th>
               <th>المكان</th>
               <th>رقم الهيكل</th>
-              <th>الملاحظات</th>
+              <th>الملاحظات (اضغط للتعديل)</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -210,7 +345,7 @@
   </div>
 </div>
 
-<div id="toast" class="toast"><i class="fa-regular fa-copy"></i> تم النسخ</div>
+<div id="toast" class="toast">تم</div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
@@ -218,7 +353,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
@@ -249,6 +384,8 @@
 
   /* State */
   let stock=[], moves=[], models=[], variantsMap={};
+  let allVins=[];
+
   const uniq = arr => [...new Set(arr)];
   const pad = n => n<10?'0'+n:n;
   const now = ()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`};
@@ -260,7 +397,7 @@
   function showToastMsg(text){
     toast.textContent = text;
     toast.classList.add('show');
-    setTimeout(()=> toast.classList.remove('show'), 1200);
+    setTimeout(()=> toast.classList.remove('show'), 1500);
   }
 
   /* Auth gate */
@@ -305,8 +442,10 @@
         stock=[]; moves=[]; models=[]; variantsMap={};
       }
       initFilters();
+      initMoveForm();
       renderAll();
     }catch(e){
+      console.error(e);
       setStatus('warn','تعذّر الاتصال — عرض آخر نسخة محفوظة غير متاحة');
     }
   }
@@ -320,6 +459,7 @@
         models= Array.isArray(d.models)? d.models: models;
         variantsMap = d.variantsMap || variantsMap;
         initFilters();
+        initMoveForm();
         renderAll();
         setStatus('ok','متصل — مزامنة حيّة');
       },(err)=>{
@@ -361,7 +501,7 @@
     $('#placesCount').textContent  = locsFiltered.toLocaleString('ar-SA');
   }
 
-  /* Table render (with optional per-location color shortage highlight) */
+  /* Table render */
   const tb = $('#carsTable tbody');
   function renderTable(filteredRows){
     tb.innerHTML = '';
@@ -374,9 +514,12 @@
 
     filteredRows.slice().sort((a,b)=> (a.id||0)-(b.id||0)).forEach(r=>{
       const k=colorKey(r);
-      const isColorShort = (colorCount[k]||0) < 2; // يمكنك إزالة هذا السطر لو حابب تشيل التمييز
+      const isColorShort = (colorCount[k]||0) < 2;
       const tr = document.createElement('tr');
       if(isColorShort) tr.classList.add('short');
+      const safeNotes = (r.notes && String(r.notes).trim().length>0)
+        ? String(r.notes)
+        : '<span class="muted-text">لا توجد ملاحظات</span>';
       tr.innerHTML = `
         <td>${r.id||''}</td>
         <td>${r.car||''}</td>
@@ -388,7 +531,7 @@
         <td>${r.plate||''}</td>
         <td>${r.location||''}</td>
         <td class="vin" data-vin="${r.vin||''}">${r.vin||''}</td>
-        <td>${r.notes||''}</td>
+        <td class="cell-notes" data-vin="${r.vin||''}">${safeNotes}</td>
       `;
       tb.appendChild(tr);
     });
@@ -401,19 +544,54 @@
     renderTable(filtered);
   }
 
+  /* Move form init (locations + vin list) */
+  function initMoveForm(){
+    allVins = uniq(stock.map(r=> r.vin).filter(Boolean));
+    const locs = uniq(stock.map(r=> r.location || '').filter(Boolean)).sort((a,b)=> a.localeCompare(b,'ar'));
+    const opts = '<option value="">إلى (المكان)</option>'
+      + locs.map(l=> `<option value="${l}">${l}</option>`).join('')
+      + '<option value="تم التسليم">تم التسليم</option>';
+    document.querySelectorAll('.move-to').forEach(sel=>{ sel.innerHTML = opts; });
+  }
+
   /* Events: filters */
-  $('#search').addEventListener('input', e=>{ filters.q=e.target.value.trim(); renderAll(); });
-  $('#modelFilter').addEventListener('change', e=>{ filters.model=e.target.value; renderAll(); });
-  $('#yearFilter').addEventListener('input', e=>{ filters.year=e.target.value.trim(); renderAll(); });
-  $('#dealerFilter').addEventListener('input', e=>{ filters.dealer=e.target.value.trim(); renderAll(); });
-  $('#locationFilter').addEventListener('change', e=>{ filters.location=e.target.value; renderAll(); });
+  searchEl.addEventListener('input', e=>{ filters.q=e.target.value.trim(); renderAll(); });
+  modelFilter.addEventListener('change', e=>{ filters.model=e.target.value; renderAll(); });
+  yearFilter.addEventListener('input', e=>{ filters.year=e.target.value.trim(); renderAll(); });
+  dealerFilter.addEventListener('input', e=>{ filters.dealer=e.target.value.trim(); renderAll(); });
+  locationFilter.addEventListener('change', e=>{ filters.location=e.target.value; renderAll(); });
 
   /* VIN copy */
   document.addEventListener('click', (e)=>{
     const vinEl = e.target.closest('.vin');
     if (vinEl){
       const vin = vinEl.getAttribute('data-vin');
-      if(vin){ navigator.clipboard.writeText(vin).then(()=> showToastMsg('تم نسخ رقم الهيكل')); }
+      if(vin){
+        navigator.clipboard.writeText(vin)
+          .then(()=> showToastMsg('تم نسخ رقم الهيكل'));
+      }
+    }
+  });
+
+  /* Edit notes in table */
+  document.addEventListener('click', async (e)=>{
+    const cell = e.target.closest('.cell-notes');
+    if(!cell) return;
+    const vin = cell.getAttribute('data-vin') || '';
+    if(!vin) return;
+    const idx = stock.findIndex(r=> (r.vin||'').toString() === vin.toString());
+    if(idx === -1) return;
+    const current = stock[idx].notes ? String(stock[idx].notes) : '';
+    const value = prompt('اكتب الملاحظات لهذه السيارة:', current);
+    if(value === null) return; // إلغاء
+    stock[idx] = { ...stock[idx], notes: value.trim() };
+    try{
+      await updateDoc(STATE_REF, { stock });
+      showToastMsg('تم حفظ الملاحظات');
+      renderAll();
+    }catch(err){
+      console.error(err);
+      showToastMsg('تعذّر حفظ الملاحظات');
     }
   });
 
@@ -422,7 +600,7 @@
     const header = ["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","رقم الهيكل","الملاحظات"];
     const data = [header];
     rows.forEach(r=>{
-      data.push([r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.vin,r.notes]);
+      data.push([r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.vin,r.notes||'']);
     });
     const ws = XLSX.utils.aoa_to_sheet(data);
     ws['!cols'] = [{wch:5},{wch:24},{wch:30},{wch:18},{wch:16},{wch:16},{wch:10},{wch:10},{wch:18},{wch:22},{wch:26}];
@@ -435,6 +613,115 @@
     exportExcel(rows);
   });
 
+  /* VIN suggestions for move form */
+  document.querySelectorAll('.move-vin').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const val = e.target.value.trim();
+      const idx = e.target.dataset.index;
+      const box = document.querySelector(`.vin-suggestions[data-index="${idx}"]`);
+      if(!box) return;
+      if(!val){
+        box.innerHTML=''; box.style.display='none'; return;
+      }
+      const matches = allVins
+        .filter(v=> v && v.toString().startsWith(val))
+        .slice(0,8);
+      if(matches.length===0){
+        box.innerHTML=''; box.style.display='none'; return;
+      }
+      box.innerHTML = matches.map(v=> `<button type="button" data-v="${v}">${v}</button>`).join('');
+      box.style.display='block';
+    });
+  });
+
+  document.addEventListener('click', e=>{
+    const btn = e.target.closest('.vin-suggestions button[data-v]');
+    if(btn){
+      const v = btn.getAttribute('data-v');
+      const box = btn.closest('.vin-suggestions');
+      const idx = box.dataset.index;
+      const inp = document.querySelector(`.move-vin[data-index="${idx}"]`);
+      if(inp){ inp.value = v; }
+      box.style.display='none';
+      return;
+    }
+    if(!e.target.closest('.move-vin-wrap')){
+      document.querySelectorAll('.vin-suggestions').forEach(box=>{ box.style.display='none'; });
+    }
+  });
+
+  /* Apply moves */
+  const btnApplyMoves = $('#btnApplyMoves');
+  const btnClearMoves = $('#btnClearMoves');
+
+  btnClearMoves.addEventListener('click', ()=>{
+    document.querySelectorAll('.move-vin,.move-to,.move-note').forEach(el=> el.value='');
+  });
+
+  btnApplyMoves.addEventListener('click', async ()=>{
+    let errors = [];
+    let applied = 0;
+    const newMoves = Array.isArray(moves)? [...moves]:[];
+
+    for(let i=0;i<8;i++){
+      const vin = (document.querySelector(`.move-vin[data-index="${i}"]`)?.value || '').trim();
+      const to  = (document.querySelector(`.move-to[data-index="${i}"]`)?.value || '').trim();
+      const note= (document.querySelector(`.move-note[data-index="${i}"]`)?.value || '').trim();
+      if(!vin || !to) continue;
+
+      const idx = stock.findIndex(r=> (r.vin||'').toString() === vin.toString());
+      if(idx === -1){
+        errors.push(`رقم الهيكل ${vin} غير موجود في المخزون`);
+        continue;
+      }
+      const item = stock[idx];
+      const from = item.location || '';
+
+      if(to === from) continue;
+
+      if(to === 'تم التسليم'){
+        const finOK = item.financeApproved === true || item.finApproved === true || item.financeOk === true;
+        const admOK = item.adminApproved === true || item.adApproved === true || item.adminOk === true;
+        if(!(finOK && admOK)){
+          errors.push(`لا يمكن نقل ${vin} إلى تم التسليم — الموافقة المالية والإدارية غير مكتملة`);
+          continue;
+        }
+      }
+
+      stock[idx] = { ...item, location: to };
+      newMoves.push({
+        vin,
+        from,
+        to,
+        note,
+        at: now(),
+        by: (auth.currentUser && auth.currentUser.email) || '',
+        source: 'inventory'
+      });
+      applied++;
+    }
+
+    if(applied===0){
+      showToastMsg(errors[0] || 'لا توجد حركات صالحة للتنفيذ');
+      return;
+    }
+
+    try{
+      await updateDoc(STATE_REF, { stock, moves: newMoves });
+      moves = newMoves;
+      showToastMsg(`تم تنفيذ ${applied} حركة نقل`);
+      document.querySelectorAll('.move-vin,.move-to,.move-note').forEach(el=> el.value='');
+      renderAll();
+    }catch(e){
+      console.error(e);
+      showToastMsg('تعذّر حفظ حركات النقل');
+    }
+
+    if(errors.length){
+      console.warn('Move errors:', errors);
+    }
+  });
+
   /* Keyboard helpers */
   document.addEventListener('keydown',(e)=>{
     if(e.key==='/'){e.preventDefault(); $('#search').focus();}
@@ -444,6 +731,3 @@
 </script>
 </body>
 </html>
-
-
-
