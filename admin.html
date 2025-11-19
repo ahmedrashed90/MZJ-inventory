@@ -205,7 +205,6 @@ html{background:#fff8ef;}
 body{opacity:0;transition:opacity .12s ease;}
 #authGate{display:none !important;}
 </style>
-
 </head>
 <body>
 <!-- Topbar -->
@@ -1235,7 +1234,10 @@ body{opacity:0;transition:opacity .12s ease;}
     const row = document.createElement('div');
     row.className = 'move-row';
     row.innerHTML = `
-      <div class="move-row-title">السيارة ${index}</div>
+      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="move-row-title">السيارة ${index}</div>
+        <button type="button" class="btn btn-ghost" data-remove-move-row="1" title="مسح هذه الحركة">مسح الحركة</button>
+      </div>
       <div class="grid grid-3">
         <div>
           <label>رقم الهيكل</label>
@@ -1282,7 +1284,19 @@ body{opacity:0;transition:opacity .12s ease;}
     });
   }
 
-  // عرض البيانات لأول VIN غير فارغ
+  
+  // مسح صف حركة نقل واحد
+  document.addEventListener('click',(e)=>{
+    const btn = e.target.closest('[data-remove-move-row]');
+    if(!btn) return;
+    const row = btn.closest('.move-row');
+    if(row){
+      row.remove();
+      renumberMoveRows();
+    }
+  });
+
+// عرض البيانات لأول VIN غير فارغ
   btnFindByVin.addEventListener('click',()=>{
     const rows = Array.from(moveRowsContainer.querySelectorAll('.move-row'));
     const firstRow = rows.find(r=> normalizeVin((r.querySelector('.move-vin')?.value||'').trim()));
@@ -1374,6 +1388,11 @@ body{opacity:0;transition:opacity .12s ease;}
       }
 
       const noteText = (rowData.notesInput?.value||'').trim();
+
+      if(goingIssuesRow && !noteText){
+        errors.push(`يجب كتابة ملاحظة للسيارة ${rec.car||''} (${rec.vin||rowData.vinRaw}) عند النقل إلى مكان "سيارات بها ملاحظات".`);
+        continue;
+      }
 
       const moveMeta = {
         adminApproved: goingUnderDeliveryRow ? !!chkAdminApproved.checked : null,
