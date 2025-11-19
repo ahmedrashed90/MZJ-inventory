@@ -6,7 +6,7 @@
 <meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>لوحة الإدارة — MZJ Cars</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 <style>
   :root{
     --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef; --text:#1f2937; --muted:#6b7280;
@@ -195,7 +195,7 @@
     resize:vertical;
   }
 </style>
-</link></head>
+</head>
 <body>
 <!-- Topbar -->
 <div class="topbar">
@@ -388,128 +388,7 @@
 <span class="hint"> <b></b> </span>
 <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><label>إلى</label><select id="moveToGlobal" title="المكان الجديد"></select></div></div>
 <!-- 8 صفوف نقل -->
-<div class="row" style="margin:8px 0 12px;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-ghost" id="btnAddMoveRow" type="button"><i class="fa-solid fa-plus"></i> إضافة حركة أخرى</button></div><div class="grid" id="moveRowsContainer" style="gap:10px">
-<!-- row 1 -->
-<div class="move-row">
-<div class="move-row-title">السيارة 1</div>
-<div class="grid grid-3">
-<div>
-<label>رقم الهيكل</label>
-<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
-</div>
-<div>
-<label>من (محدّد تلقائيًا)</label>
-<select class="move-from move-from" title="المكان الحالي"></select>
-</div>
-
-<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
-</div>
-<!-- row 2 -->
-<div class="move-row">
-<div class="move-row-title">السيارة 2</div>
-<div class="grid grid-3">
-<div>
-<label>رقم الهيكل</label>
-<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
-</div>
-<div>
-<label>من (محدّد تلقائيًا)</label>
-<select class="move-from move-from" title="المكان الحالي"></select>
-</div>
-
-<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
-</div>
-<!-- row 3 -->
-<div class="move-row">
-<div class="move-row-title">السيارة 3</div>
-<div class="grid grid-3">
-<div>
-<label>رقم الهيكل</label>
-<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
-</div>
-<div>
-<label>من (محدّد تلقائيًا)</label>
-<select class="move-from move-from" title="المكان الحالي"></select>
-</div>
-
-<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
-</div>
-<!-- row 4 -->
-<div class="move-row">
-<div class="move-row-title">السيارة 4</div>
-<div class="grid grid-3">
-<div>
-<label>رقم الهيكل</label>
-<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
-</div>
-<div>
-<label>من (محدّد تلقائيًا)</label>
-<select class="move-from move-from" title="المكان الحالي"></select>
-</div>
-
-<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
-</div>
-<!-- row 5 -->
-<div class="move-row">
-<div class="move-row-title">السيارة 5</div>
-<div class="grid grid-3">
-<div>
-<label>رقم الهيكل</label>
-<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
-</div>
-<div>
-<label>من (محدّد تلقائيًا)</label>
-<select class="move-from move-from" title="المكان الحالي"></select>
-</div>
-
-<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
-</div>
-<!-- row 6 -->
-<div class="move-row">
-<div class="move-row-title">السيارة 6</div>
-<div class="grid grid-3">
-<div>
-<label>رقم الهيكل</label>
-<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
-</div>
-<div>
-<label>من (محدّد تلقائيًا)</label>
-<select class="move-from move-from" title="المكان الحالي"></select>
-</div>
-
-<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
-</div>
-<!-- row 7 -->
-<div class="move-row">
-<div class="move-row-title">السيارة 7</div>
-<div class="grid grid-3">
-<div>
-<label>رقم الهيكل</label>
-<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
-</div>
-<div>
-<label>من (محدّد تلقائيًا)</label>
-<select class="move-from move-from" title="المكان الحالي"></select>
-</div>
-
-<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
-</div>
-<!-- row 8 -->
-<div class="move-row">
-<div class="move-row-title">السيارة 8</div>
-<div class="grid grid-3">
-<div>
-<label>رقم الهيكل</label>
-<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
-</div>
-<div>
-<label>من (محدّد تلقائيًا)</label>
-<select class="move-from move-from" title="المكان الحالي"></select>
-</div>
-
-<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
-</div>
-</div>
+<div class="row" style="margin:8px 0 12px;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-ghost" id="btnAddMoveRow" type="button"><i class="fa-solid fa-plus"></i> إضافة حركة أخرى</button></div><div class="grid" id="moveRowsContainer" style="gap:10px"></div>
 <!-- datalist للاقتراحات -->
 <datalist id="vinHints"></datalist>
 <!-- Checklist يظهر فقط مع 'مباع تحت التسليم' -->
@@ -535,7 +414,6 @@
 </div>
 </div>
 <!-- ملاحظات سيارات بها ملاحظات -->
-
 <div class="row" style="margin-top:12px">
 <button class="btn btn-ghost" id="btnFindByVin" title="عرض بيانات السيارة (أول سطر غير فارغ)">
 <i class="fa-solid fa-magnifying-glass"></i> عرض البيانات
@@ -613,9 +491,9 @@
 <h2 style="margin:0">تتبّع حركة رقم هيكل</h2>
 </div>
 <div class="row" style="gap:8px">
-<input id="trackVin" placeholder="اكتب رقم الهيكل لعرض جميع حركاته">
+<input id="trackVin" list="vinHints" placeholder="اكتب رقم الهيكل لعرض جميع حركاته"/>
 <button class="btn btn-ghost" id="btnClearTrack">مسح</button>
-</input></div>
+</div>
 </div>
 <div class="table-wrap">
 <table id="trackTable">
@@ -687,12 +565,12 @@
 <button class="btn btn-ghost" data-close="modelModal"><i class="fa-solid fa-xmark"></i></button>
 </header>
 <label for="modelName">اسم الموديل</label>
-<input id="modelName" placeholder="هيونداي توسان 2026 / سنتافي…">
+<input id="modelName" placeholder="هيونداي توسان 2026 / سنتافي…"/>
 <div class="actions">
 <button class="btn btn-primary" id="confirmAddModel"><i class="fa-solid fa-check"></i> إضافة</button>
 <button class="btn" data-close="modelModal">إلغاء</button>
 </div>
-</input></div>
+</div>
 </div>
 <!-- إضافة بيان -->
 <div class="modal-backdrop" id="variantModal">
@@ -704,12 +582,12 @@
 <label for="variantModelFor">الموديل</label>
 <select id="variantModelFor"></select>
 <label for="variantName" style="margin-top:8px">اسم البيان</label>
-<input id="variantName" placeholder="كومفورت / سمارت / رويال…">
+<input id="variantName" placeholder="كومفورت / سمارت / رويال…"/>
 <div class="actions">
 <button class="btn btn-primary" id="confirmAddVariant"><i class="fa-solid fa-check"></i> إضافة</button>
 <button class="btn" data-close="variantModal">إلغاء</button>
 </div>
-</input></div>
+</div>
 </div>
 <!-- Toast -->
 <div class="toast" id="toast"></div>
@@ -954,6 +832,67 @@
       tableBody.appendChild(tr);
     });
   }
+
+  const INLINE_EDIT_FIELDS = ['car','variant','dealer','extColor','intColor','modelYear','plate','location','batchName','vin','notes'];
+
+  function makeRowEditable(tr, rec){
+    if(!tr || !rec) return;
+    tr.dataset.editing = '1';
+    const tds = tr.querySelectorAll('td');
+    const fields = INLINE_EDIT_FIELDS;
+    fields.forEach((field, idx)=>{
+      const td = tds[idx];
+      if(!td) return;
+      const current = rec[field] || '';
+      if(field === 'location'){
+        const sel = document.createElement('select');
+        sel.className = 'edit-location';
+        if(Array.isArray(FIXED_LOCATIONS)){
+          FIXED_LOCATIONS.forEach(loc=>{
+            const opt = document.createElement('option');
+            opt.value = loc;
+            opt.textContent = loc;
+            if(loc === current) opt.selected = true;
+            sel.appendChild(opt);
+          });
+        }
+        td.innerHTML = '';
+        td.appendChild(sel);
+      }else if(field === 'notes'){
+        const ta = document.createElement('textarea');
+        ta.className = 'edit-notes';
+        ta.value = current;
+        ta.style.width = '100%';
+        ta.style.minHeight = '40px';
+        td.innerHTML = '';
+        td.appendChild(ta);
+      }else{
+        const inp = document.createElement('input');
+        inp.className = 'edit-'+field;
+        inp.value = current;
+        inp.style.width = '100%';
+        td.innerHTML = '';
+        td.appendChild(inp);
+      }
+    });
+    const actionsTd = tds[11];
+    if(actionsTd){
+      actionsTd.innerHTML = '';
+      const wrap = document.createElement('div');
+      wrap.className = 'cell-actions';
+      const btnSave = document.createElement('button');
+      btnSave.className = 'btn btn-primary';
+      btnSave.setAttribute('data-save-inline', rec.id);
+      btnSave.textContent = 'حفظ';
+      const btnCancel = document.createElement('button');
+      btnCancel.className = 'btn btn-ghost';
+      btnCancel.setAttribute('data-cancel-inline', rec.id);
+      btnCancel.textContent = 'إلغاء';
+      wrap.appendChild(btnSave);
+      wrap.appendChild(btnCancel);
+      actionsTd.appendChild(wrap);
+    }
+  }
   searchInput.addEventListener('input',renderTable);
   btnClearSearch.addEventListener('click',()=>{searchInput.value=''; renderTable();});
 
@@ -966,24 +905,67 @@
       if(txt){ navigator.clipboard.writeText(txt).then(()=>showToast('تم النسخ ✅','ok')); }
     }
     if(btn){
-      const edit=btn.getAttribute('data-edit'); const del=btn.getAttribute('data-del');
+      const del=btn.getAttribute('data-del');
+      const edit=btn.getAttribute('data-edit');
+      const saveInline=btn.getAttribute('data-save-inline');
+      const cancelInline=btn.getAttribute('data-cancel-inline');
+
       if(edit){
-        const id=Number(edit); const rec=stock.find(r=>r.id===id); if(!rec) return;
-        editId=id; carSelect.value=rec.car||''; populateVariants(rec.car||''); variantSelect.value=rec.variant||'';
-        dealerInput.value=rec.dealer||''; extColorInput.value=rec.extColor||''; intColorInput.value=rec.intColor||'';
-        modelYearInput.value=rec.modelYear||''; plateInput.value=rec.plate||'';
-        locationSelect.value=rec.location||locationSelect.options[0]?.value||'';
-        batchNameInput.value=rec.batchName||''; vinInput.value=rec.vin||''; notesInput.value=rec.notes||''; window.scrollTo({top:0,behavior:'smooth'});
+        const id=Number(edit);
+        const rec=stock.find(r=>r.id===id);
+        if(!rec) return;
+        const tr=btn.closest('tr');
+        makeRowEditable(tr, rec);
       }
+
+      if(saveInline){
+        const id=Number(saveInline);
+        const idx=stock.findIndex(r=>r.id===id);
+        if(idx<0) return;
+        const tr=btn.closest('tr');
+        const tds=tr.querySelectorAll('td');
+        const fields=['car','variant','dealer','extColor','intColor','modelYear','plate','location','batchName','vin','notes'];
+        const rec=stock[idx];
+        fields.forEach((field,idxField)=>{
+          const td=tds[idxField];
+          if(!td) return;
+          let val=rec[field]||'';
+          if(field==='location'){
+            const sel=td.querySelector('select');
+            if(sel) val=sel.value.trim();
+          }else if(field==='notes'){
+            const ta=td.querySelector('textarea');
+            if(ta) val=ta.value.trim();
+          }else{
+            const inp=td.querySelector('input');
+            if(inp) val=inp.value.trim();
+          }
+          rec[field]=val;
+        });
+        stock[idx]=rec;
+        persistAll();
+        renderTable();
+        showToast('تم التعديل بنجاح','ok');
+      }
+
+      if(cancelInline){
+        renderTable();
+      }
+
       if(del){
-        const id=Number(del); if(confirm('تأكيد الحذف؟')){
-          stock=stock.filter(r=>r.id!==id); persistAll(); renderTable(); showToast('تم الحذف','ok');
+        const id=Number(del);
+        if(confirm('تأكيد الحذف؟')){
+          stock=stock.filter(r=>r.id!==id);
+          persistAll();
+          renderTable();
+          showToast('تم الحذف','ok');
         }
       }
     }
   });
 
-  /* حفظ / تعديل */
+
+/* حفظ / تعديل */
   let editId=null;
   btnSave.addEventListener('click',async ()=>{
     const record={
@@ -1488,7 +1470,7 @@
     const v = normalizeVin((trackVin.value||'').trim());
     if(!v){ return; }
     const list = moves
-      .filter(m=> normalizeVin(m.vin||'') === v )
+      .filter(m=> normalizeVin(m.vin||'').startsWith(v) )
       .sort((a,b)=> (a.when||'').localeCompare(b.when||''));
     list.forEach((m,i)=>{
       const notesParts = [];
@@ -1511,7 +1493,7 @@
       trackTableBody.appendChild(tr);
     });
   }
-  trackVin.addEventListener('input', debounce(renderTrack, 200));
+  trackVin.addEventListener('input', debounce(()=>{ updateVinSuggestionsForPrefix(trackVin.value); renderTrack(); }, 200));
   btnClearTrack.addEventListener('click', ()=>{ trackVin.value=''; renderTrack(); });
 
   /* Modals helpers */
