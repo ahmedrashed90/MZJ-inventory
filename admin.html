@@ -200,6 +200,12 @@
     display:none;
   }
 </style>
+<style id="noFlash">
+html{background:#fff8ef;}
+body{opacity:0;transition:opacity .12s ease;}
+#authGate{display:none !important;}
+</style>
+
 </head>
 <body>
 <!-- Topbar -->
@@ -689,7 +695,10 @@
 
   /* ===== Auth Gate ===== */
   onAuthStateChanged(auth, async (user)=>{
+    const noFlash = document.getElementById('noFlash');
     if(user){
+      if(noFlash) noFlash.remove();
+      document.body.style.opacity='1';
       authGate.style.display='none';
       appRoot.style.display='block';
       btnSignOut.style.display='inline-flex';
@@ -697,6 +706,8 @@
       await initData();
       subscribeLive();
     }else{
+      if(noFlash) noFlash.remove();
+      document.body.style.opacity='1';
       appRoot.style.display='none';
       authGate.style.display='grid';
       btnSignOut.style.display='none';
