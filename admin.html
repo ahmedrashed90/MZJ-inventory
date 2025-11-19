@@ -1552,18 +1552,6 @@
     toggleNotesVisibility();
   }
 
-  // إظهار/إخفاء ملاحظات حسب اختيار (إلى)
-  function toggleNotesVisibility(){
-    const dest = (moveToGlobal?.value || '').trim();
-    const show = /سيارات بها ملاحظات/.test(dest);
-    document.querySelectorAll('.notes-col').forEach(col=>{
-      col.style.display = show ? 'block' : 'none';
-    });
-  }
-  if (moveToGlobal){
-    moveToGlobal.addEventListener('change', toggleNotesVisibility);
-    toggleNotesVisibility();
-  }
-</script>
+  </script>
 </div></body>
 </html>
