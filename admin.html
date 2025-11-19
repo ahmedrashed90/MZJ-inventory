@@ -1537,6 +1537,20 @@
   fillMoveLists();
   ensureAtLeastOneMoveRow();
   updateRequirementBoxes();
+
+  // إظهار/إخفاء ملاحظات كل سيارة حسب مكان (إلى)
+  function toggleNotesVisibility(){
+    const dest = (moveToGlobal?.value || '').trim();
+    const show = /سيارات بها ملاحظات/.test(dest);
+    const notesCols = document.querySelectorAll('.notes-col');
+    notesCols.forEach(col=>{
+      col.style.display = show ? 'block' : 'none';
+    });
+  }
+  if(moveToGlobal){
+    moveToGlobal.addEventListener('change', toggleNotesVisibility);
+    toggleNotesVisibility();
+  }
 </script>
 </div></body>
 </html>
