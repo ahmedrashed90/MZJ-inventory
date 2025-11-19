@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+
+<html dir="rtl" lang="ar">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
 <title>لوحة الإدارة — MZJ Cars</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <style>
   :root{
     --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef; --text:#1f2937; --muted:#6b7280;
@@ -39,7 +40,6 @@
   .btn-ghost{background:#fff}
   .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
   .btn-outline{background:#fff;border:1px solid var(--brown);color:var(--brown)}
-  .btn-sm{padding:6px 10px;font-size:12px;border-radius:999px}
 
   /* Layout */
   .container{max-width:1240px;margin:18px auto;padding:0 16px 48px}
@@ -160,435 +160,559 @@
   }
 
   .copyable{cursor:pointer;text-decoration:underline;text-decoration-style:dotted}
-</style>
-</head>
-<body>
 
+  .inner-tabs{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:16px;
+  }
+  .inner-tab{
+    border:1px solid var(--line);
+    background:#fff;
+    padding:6px 14px;
+    border-radius:999px;
+    font-size:14px;
+    cursor:pointer;
+    color:var(--text);
+  }
+  .inner-tab.active{
+    background:var(--brown);
+    color:#fff;
+    border-color:var(--brown);
+  }
+  .inner-tab-panel{display:none;}
+  .inner-tab-panel.active{display:block;}
+
+  .move-row-title{
+    font-weight:600;
+    margin-bottom:4px;
+    color:var(--brown);
+  }
+  .move-notes{
+    width:100%;
+    min-height:48px;
+    resize:vertical;
+  }
+</style>
+</link></head>
+<body>
 <!-- Topbar -->
 <div class="topbar">
-  <div class="topbar-inner">
-    <div class="brand">
-      <div class="logo" title="MZJ">MZJ</div>
-      <div>
-        <h1>لوحة إدارة السيارات</h1>
-        <small class="hint">مجموعة محمد بن ذعار العجمي للسيارات</small>
-      </div>
-    </div>
-    <div class="tabs">
-      <a class="tab active" href="admin.html">الإدارة</a>
-      <a class="tab" href="inventory.html">المخزون</a>
-      <a class="tab" href="dashboard.html">الداش بورد</a>
-      <a class="tab" href="photoshoot.html">الطلبات</a>
-      <a class="tab" href="photoshoot-user.html">إدارة الطلبات</a>
-      <a class="tab" href="cars.html">كل السيارات</a>
-      <a class="tab" href="Activity.html">سجل النشاط</a>
-    </div>
-    <div class="row">
-      <div class="status-badge"><span id="connDot" class="dot warn"></span><span id="connText">جارِ الاتصال…</span></div>
-      <button id="btnSignOut" class="btn btn-ghost" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
-    </div>
-  </div>
+<div class="topbar-inner">
+<div class="brand">
+<div class="logo" title="MZJ">MZJ</div>
+<div>
+<h1>لوحة إدارة السيارات</h1>
+<small class="hint">مجموعة محمد بن ذعار العجمي للسيارات</small>
 </div>
-
+</div>
+<div class="tabs">
+<a class="tab active" href="admin.html">الإدارة</a>
+<a class="tab" href="inventory.html">المخزون</a>
+<a class="tab" href="dashboard.html">الداش بورد</a>
+<a class="tab" href="photoshoot.html">الطلبات</a>
+<a class="tab" href="photoshoot-user.html">إدارة الطلبات</a>
+<a class="tab" href="cars.html">كل السيارات</a>
+<a class="tab" href="Activity.html">سجل النشاط</a>
+</div>
+<div class="row">
+<div class="status-badge"><span class="dot warn" id="connDot"></span><span id="connText">جارِ الاتصال…</span></div>
+<button class="btn btn-ghost" id="btnSignOut" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+</div>
+</div>
+</div>
 <!-- Auth Gate -->
-<div id="authGate" class="auth-wrap">
-  <div class="auth-card">
-    <h2>تسجيل الدخول</h2>
-    <label for="email">البريد الإلكتروني</label>
-    <input id="email" type="email" placeholder="you@example.com"/>
-    <label for="password" style="margin-top:8px">كلمة المرور</label>
-    <input id="password" type="password" placeholder="••••••••"/>
-    <div class="auth-actions">
-      <button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
-      <button class="btn btn-outline" id="btnSignup">إنشاء حساب</button>
-    </div>
-    <p class="hint" id="authHint" style="margin-top:10px"></p>
-  </div>
+<div class="auth-wrap" id="authGate">
+<div class="auth-card">
+<h2>تسجيل الدخول</h2>
+<label for="email">البريد الإلكتروني</label>
+<input id="email" placeholder="you@example.com" type="email"/>
+<label for="password" style="margin-top:8px">كلمة المرور</label>
+<input id="password" placeholder="••••••••" type="password"/>
+<div class="auth-actions">
+<button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
+<button class="btn btn-outline" id="btnSignup">إنشاء حساب</button>
 </div>
-
+<p class="hint" id="authHint" style="margin-top:10px"></p>
+</div>
+</div>
 <!-- App -->
 <div id="app" style="display:none">
-  <div class="container">
-
-    <!-- إضافة / تعديل سيارة -->
-    <div class="card">
-      <div class="card-header">
-        <div class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          <h2 style="margin:0">إضافة سيارة</h2>
-        </div>
-        <div class="row">
-          <button class="btn btn-ghost" id="btnExport" title="تصدير إلى Excel">
-            <i class="fa-regular fa-file-excel"></i> تصدير
+<div class="container">
+<div class="inner-tabs">
+<button class="inner-tab active" data-target="tab-add">إضافة سيارة</button>
+<button class="inner-tab" data-target="tab-move">نقل السيارات</button>
+<button class="inner-tab" data-target="tab-edit">تعديل السيارات</button>
+<button class="inner-tab" data-target="tab-track">تتبع حركة رقم هيكل</button>
+<button class="inner-tab" data-target="tab-log">سجل الحركات</button>
+</div>
+<div class="inner-tab-panel active" id="tab-add">
+<div class="card">
+<div class="card-header">
+<div class="section-title">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><rect height="7" width="7" x="3" y="3"></rect><rect height="7" width="7" x="14" y="3"></rect><rect height="7" width="7" x="14" y="14"></rect><rect height="7" width="7" x="3" y="14"></rect></svg>
+<h2 style="margin:0">إضافة سيارة</h2>
+</div>
+<div class="row">
+<button class="btn btn-ghost" id="btnExport" title="تصدير إلى Excel">
+<i class="fa-regular fa-file-excel"></i> تصدير
           </button>
-          <!-- الجديد: زر تصدير قالب فاضي -->
-          <button class="btn btn-ghost" id="btnExportBlank" title="تصدير قالب فاضي">
-            <i class="fa-regular fa-file"></i> تصدير قالب فاضي
+<!-- الجديد: زر تصدير قالب فاضي -->
+<button class="btn btn-ghost" id="btnExportBlank" title="تصدير قالب فاضي">
+<i class="fa-regular fa-file"></i> تصدير قالب فاضي
           </button>
-          <div class="import-menu">
-            <button class="btn btn-ghost" id="btnImportMenu" title="استيراد من Excel">
-              <i class="fa-solid fa-file-import"></i> استيراد ▾
+<div class="import-menu">
+<button class="btn btn-ghost" id="btnImportMenu" title="استيراد من Excel">
+<i class="fa-solid fa-file-import"></i> استيراد ▾
             </button>
-            <div class="import-dropdown" id="importDropdown">
-              <button data-mode="replace"><i class="fa-solid fa-arrow-rotate-left"></i> استبدال كامل (مسح القديم + إضافة الجديد)</button>
-              <button data-mode="append"><i class="fa-solid fa-plus"></i> إضافة فوق الحالي (بدون مسح)</button>
-            </div>
-          </div>
-          <input type="file" id="fileImport" accept=".xlsx,.xls,.csv" style="display:none"/>
-        </div>
-      </div>
-
-      <div class="grid grid-4">
-        <div>
-          <label for="carSelect">سيارة</label>
-          <div class="row" style="gap:8px;align-items:stretch">
-            <select id="carSelect" title="اختر السيارة"></select>
-            <button class="btn btn-outline" id="btnAddModel" title="إضافة موديل جديد">
-              <i class="fa-solid fa-plus"></i> موديل
+<div class="import-dropdown" id="importDropdown">
+<button data-mode="replace"><i class="fa-solid fa-arrow-rotate-left"></i> استبدال كامل (مسح القديم + إضافة الجديد)</button>
+<button data-mode="append"><i class="fa-solid fa-plus"></i> إضافة فوق الحالي (بدون مسح)</button>
+</div>
+</div>
+<input accept=".xlsx,.xls,.csv" id="fileImport" style="display:none" type="file"/>
+</div>
+</div>
+<div class="grid grid-4">
+<div>
+<label for="carSelect">سيارة</label>
+<div class="row" style="gap:8px;align-items:stretch">
+<select id="carSelect" title="اختر السيارة"></select>
+<button class="btn btn-outline" id="btnAddModel" title="إضافة موديل جديد">
+<i class="fa-solid fa-plus"></i> موديل
             </button>
-          </div>
-        </div>
-        <div>
-          <label for="variantSelect">البيان</label>
-          <div class="row" style="gap:8px;align-items:stretch">
-            <select id="variantSelect" title="اختر البيان"></select>
-            <button class="btn btn-outline" id="btnAddVariant" title="إضافة بيان وربطه بسيارة">
-              <i class="fa-solid fa-plus"></i> بيان
+</div>
+</div>
+<div>
+<label for="variantSelect">البيان</label>
+<div class="row" style="gap:8px;align-items:stretch">
+<select id="variantSelect" title="اختر البيان"></select>
+<button class="btn btn-outline" id="btnAddVariant" title="إضافة بيان وربطه بسيارة">
+<i class="fa-solid fa-plus"></i> بيان
             </button>
-          </div>
-          <div class="hint">يمكنك إضافة بيان جديد وربطه بأي سيارة</div>
-        </div>
-
-        <div><label for="dealer">الوكيل</label>
-          <div class="input-wrap">
-            <span class="i"><i class="fa-regular fa-building"></i></span>
-            <input id="dealer" placeholder="اسم الوكيل"/>
-          </div>
-        </div>
-
-        <div><label for="extColor">اللون الخارجي</label>
-          <div class="input-wrap">
-            <span class="i"><i class="fa-regular fa-circle"></i></span>
-            <input id="extColor" placeholder="أبيض / أسود ..."/>
-          </div>
-        </div>
-
-        <div><label for="intColor">اللون الداخلي</label>
-          <div class="input-wrap">
-            <span class="i"><i class="fa-regular fa-square"></i></span>
-            <input id="intColor" placeholder="جملي / أسود ..."/>
-          </div>
-        </div>
-
-        <div><label for="modelYear">موديل</label>
-          <div class="input-wrap">
-            <span class="i"><i class="fa-regular fa-calendar"></i></span>
-            <input id="modelYear" type="number" min="2000" max="2100" placeholder="2026"/>
-          </div>
-        </div>
-
-        <div><label for="plate">اللوحة</label>
-          <div class="input-wrap">
-            <span class="i"><i class="fa-regular fa-id-card"></i></span>
-            <input id="plate" placeholder="اختياري"/>
-          </div>
-        </div>
-
-        <!-- المكان: قائمة منسدلة ثابتة -->
-        <div>
-          <label for="location">المكان</label>
-          <select id="location" title="اختر المكان">
-            <option value="المستودع : المخزون المتاح">المستودع : المخزون المتاح</option>
-            <option value="المستودع : سيارات بها ملاحظات">المستودع : سيارات بها ملاحظات</option>
-            <option value="المستودع : مباع تحت التسليم">المستودع : مباع تحت التسليم</option>
-            <option value="المستودع : مباع تم التسليم">المستودع : مباع تم التسليم</option>
-
-            <option value="الوكالة : المخزون المتاح">الوكالة : المخزون المتاح</option>
-            <option value="الوكالة : سيارات بها ملاحظات">الوكالة : سيارات بها ملاحظات</option>
-            <option value="الوكالة : مباع تحت التسليم">الوكالة : مباع تحت التسليم</option>
-            <option value="الوكالة : مباع تم التسليم">الوكالة : مباع تم التسليم</option>
-
-            <option value="فرع 1 الصالة : المخزون المتاح">فرع 1 الصالة : المخزون المتاح</option>
-            <option value="فرع 1 الصالة : سيارات بها ملاحظات">فرع 1 الصالة : سيارات بها ملاحظات</option>
-            <option value="فرع 1 الصالة : مباع تحت التسليم">فرع 1 الصالة : مباع تحت التسليم</option>
-            <option value="فرع 1 الصالة : مباع تم التسليم">فرع 1 الصالة : مباع تم التسليم</option>
-
-            <option value="فرع 2 الملتقى : المخزون المتاح">فرع 2 الملتقى : المخزون المتاح</option>
-            <option value="فرع 2 الملتقى : سيارات بها ملاحظات">فرع 2 الملتقى : سيارات بها ملاحظات</option>
-            <option value="فرع 2 الملتقى : مباع تحت التسليم">فرع 2 الملتقى : مباع تحت التسليم</option>
-            <option value="فرع 2 الملتقى : مباع تم التسليم">فرع 2 الملتقى : مباع تم التسليم</option>
-
-            <option value="فرع 3 القادسية : المخزون المتاح">فرع 3 القادسية : المخزون المتاح</option>
-            <option value="فرع 3 القادسية : سيارات بها ملاحظات">فرع 3 القادسية : سيارات بها ملاحظات</option>
-            <option value="فرع 3 القادسية : مباع تحت التسليم">فرع 3 القادسية : مباع تحت التسليم</option>
-            <option value="فرع 3 القادسية : مباع تم التسليم">فرع 3 القادسية : مباع تم التسليم</option>
-          </select>
-        </div>
-
-        <div><label for="batchName">اسم الدفعة</label>
-          <div class="input-wrap">
-            <span class="i"><i class="fa-solid fa-layer-group"></i></span>
-            <input id="batchName" placeholder="دفعة رمضان / نوفمبر 2025…"/>
-          </div>
-        </div>
-
-        <div><label for="vin">رقم الهيكل</label>
-          <div class="input-wrap">
-            <span class="i"><i class="fa-solid fa-barcode"></i></span>
-            <input id="vin" placeholder="LVR.../KMH.../رقم"/>
-          </div>
-        </div>
-
-        <div class="grid" style="grid-template-columns:1fr">
-          <label for="notes">الملاحظات</label>
-          <textarea id="notes" placeholder="ملاحظات إضافية — نفس ارتفاع رقم الهيكل"></textarea>
-        </div>
-      </div>
-
-      <div class="row" style="margin-top:12px">
-        <button class="btn btn-primary" id="btnSave" title="حفظ (Ctrl+S)">
-          <i class="fa-regular fa-floppy-disk"></i> حفظ
+</div>
+<div class="hint">يمكنك إضافة بيان جديد وربطه بأي سيارة</div>
+</div>
+<div><label for="dealer">الوكيل</label>
+<div class="input-wrap">
+<span class="i"><i class="fa-regular fa-building"></i></span>
+<input id="dealer" placeholder="اسم الوكيل"/>
+</div>
+</div>
+<div><label for="extColor">اللون الخارجي</label>
+<div class="input-wrap">
+<span class="i"><i class="fa-regular fa-circle"></i></span>
+<input id="extColor" placeholder="أبيض / أسود ..."/>
+</div>
+</div>
+<div><label for="intColor">اللون الداخلي</label>
+<div class="input-wrap">
+<span class="i"><i class="fa-regular fa-square"></i></span>
+<input id="intColor" placeholder="جملي / أسود ..."/>
+</div>
+</div>
+<div><label for="modelYear">موديل</label>
+<div class="input-wrap">
+<span class="i"><i class="fa-regular fa-calendar"></i></span>
+<input id="modelYear" max="2100" min="2000" placeholder="2026" type="number"/>
+</div>
+</div>
+<div><label for="plate">اللوحة</label>
+<div class="input-wrap">
+<span class="i"><i class="fa-regular fa-id-card"></i></span>
+<input id="plate" placeholder="اختياري"/>
+</div>
+</div>
+<!-- المكان: قائمة منسدلة ثابتة -->
+<div>
+<label for="location">المكان</label>
+<select id="location" title="اختر المكان">
+<option value="المستودع : المخزون المتاح">المستودع : المخزون المتاح</option>
+<option value="المستودع : سيارات بها ملاحظات">المستودع : سيارات بها ملاحظات</option>
+<option value="المستودع : مباع تحت التسليم">المستودع : مباع تحت التسليم</option>
+<option value="المستودع : مباع تم التسليم">المستودع : مباع تم التسليم</option>
+<option value="الوكالة : المخزون المتاح">الوكالة : المخزون المتاح</option>
+<option value="الوكالة : سيارات بها ملاحظات">الوكالة : سيارات بها ملاحظات</option>
+<option value="الوكالة : مباع تحت التسليم">الوكالة : مباع تحت التسليم</option>
+<option value="الوكالة : مباع تم التسليم">الوكالة : مباع تم التسليم</option>
+<option value="فرع 1 الصالة : المخزون المتاح">فرع 1 الصالة : المخزون المتاح</option>
+<option value="فرع 1 الصالة : سيارات بها ملاحظات">فرع 1 الصالة : سيارات بها ملاحظات</option>
+<option value="فرع 1 الصالة : مباع تحت التسليم">فرع 1 الصالة : مباع تحت التسليم</option>
+<option value="فرع 1 الصالة : مباع تم التسليم">فرع 1 الصالة : مباع تم التسليم</option>
+<option value="فرع 2 الملتقى : المخزون المتاح">فرع 2 الملتقى : المخزون المتاح</option>
+<option value="فرع 2 الملتقى : سيارات بها ملاحظات">فرع 2 الملتقى : سيارات بها ملاحظات</option>
+<option value="فرع 2 الملتقى : مباع تحت التسليم">فرع 2 الملتقى : مباع تحت التسليم</option>
+<option value="فرع 2 الملتقى : مباع تم التسليم">فرع 2 الملتقى : مباع تم التسليم</option>
+<option value="فرع 3 القادسية : المخزون المتاح">فرع 3 القادسية : المخزون المتاح</option>
+<option value="فرع 3 القادسية : سيارات بها ملاحظات">فرع 3 القادسية : سيارات بها ملاحظات</option>
+<option value="فرع 3 القادسية : مباع تحت التسليم">فرع 3 القادسية : مباع تحت التسليم</option>
+<option value="فرع 3 القادسية : مباع تم التسليم">فرع 3 القادسية : مباع تم التسليم</option>
+</select>
+</div>
+<div><label for="batchName">اسم الدفعة</label>
+<div class="input-wrap">
+<span class="i"><i class="fa-solid fa-layer-group"></i></span>
+<input id="batchName" placeholder="دفعة رمضان / نوفمبر 2025…"/>
+</div>
+</div>
+<div><label for="vin">رقم الهيكل</label>
+<div class="input-wrap">
+<span class="i"><i class="fa-solid fa-barcode"></i></span>
+<input id="vin" placeholder="LVR.../KMH.../رقم"/>
+</div>
+</div>
+<div class="grid" style="grid-template-columns:1fr">
+<label for="notes">الملاحظات</label>
+<textarea id="notes" placeholder="ملاحظات إضافية — نفس ارتفاع رقم الهيكل"></textarea>
+</div>
+</div>
+<div class="row" style="margin-top:12px">
+<button class="btn btn-primary" id="btnSave" title="حفظ (Ctrl+S)">
+<i class="fa-regular fa-floppy-disk"></i> حفظ
         </button>
-        <button class="btn btn-ghost" id="btnReset" title="تفريغ الحقول (Esc)">
-          <i class="fa-solid fa-rotate"></i> تفريغ
+<button class="btn btn-ghost" id="btnReset" title="تفريغ الحقول (Esc)">
+<i class="fa-solid fa-rotate"></i> تفريغ
         </button>
-        <div class="hint"></div>
-      </div>
-    </div>
-
-    <!-- حركة نقل السيارات (برقم الهيكل) -->
-    <div class="card">
-      <div class="card-header">
-        <div class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 10l5-5 5 5"/><path d="M7 14l5 5 5-5"/></svg>
-          <h2 style="margin:0">حركة نقل السيارات (برقم الهيكل)</h2>
-        </div>
-        <div class="row">
-          <button class="btn btn-outline" id="btnAddMoveRow" title="إضافة حركة نقل جديدة">
-            <i class="fa-solid fa-plus"></i> إضافة حركة
-          </button>
-        </div>
-      </div>
-
-      <!-- صفوف النقل الديناميكية -->
-      <div id="moveRowsContainer" class="grid" style="gap:10px"></div>
-
-      <!-- datalist للاقتراحات -->
-      <datalist id="vinHints"></datalist>
-
-      <!-- Checklist يظهر فقط مع 'مباع تحت التسليم' (للاستخدام الحالي/المستقبلي) -->
-      <div id="underDeliveryBox" class="checklist" style="display:none; margin-top:10px">
-        <h4>المتطلبات عند النقل إلى <b>مباع تحت التسليم</b></h4>
-        <div class="grid grid-2">
-          <div>
-            <div class="check-row">
-              <input type="checkbox" id="chkAdminApproved"/>
-              <label for="chkAdminApproved">موافقة إدارية</label>
-            </div>
-            <label for="adminNotes" style="margin-top:6px">ملاحظات الموافقة الإدارية</label>
-            <textarea id="adminNotes" placeholder="اكتب أي ملاحظات إدارية…"></textarea>
-          </div>
-          <div>
-            <div class="check-row">
-              <input type="checkbox" id="chkFinanceApproved"/>
-              <label for="chkFinanceApproved">موافقة مالية</label>
-            </div>
-            <label for="financeNotes" style="margin-top:6px">ملاحظات الموافقة المالية</label>
-            <textarea id="financeNotes" placeholder="اكتب أي ملاحظات مالية…"></textarea>
-          </div>
-        </div>
-      </div>
-
-      <!-- ملاحظات سيارات بها ملاحظات -->
-      <div id="notesIssuesBox" class="checklist" style="display:none; margin-top:10px">
-        <h4>ملاحظات عند النقل إلى <b>سيارات بها ملاحظات</b></h4>
-        <label for="issuesNotes">ملاحظات السيارات ذات الملاحظات</label>
-        <textarea id="issuesNotes" placeholder="مثال: خدوش بسيطة / انتظار قطع / …"></textarea>
-      </div>
-
-      <div class="row" style="margin-top:12px">
-        <button class="btn btn-ghost" id="btnFindByVin" title="عرض بيانات السيارة (أول سطر غير فارغ)">
-          <i class="fa-solid fa-magnifying-glass"></i> عرض البيانات
-        </button>
-        <button class="btn btn-primary" id="btnMove" title="تنفيذ النقل">
-          <i class="fa-solid fa-right-left"></i> نقل
-        </button>
-      </div>
-      <p class="hint" id="moveStatus" style="margin-top:8px"></p>
-
-      <!-- إشعار حركة النقل الكبير -->
-      <div id="moveAlert" class="move-alert">
-        <div class="icon">
-          <i class="fa-solid fa-circle-check"></i>
-        </div>
-        <div>
-          <div class="title" id="moveAlertTitle">نتيجة حركة النقل</div>
-          <ul id="moveAlertList"></ul>
-        </div>
-      </div>
-
-      <!-- بطاقة عرض بيانات السيارة -->
-      <div id="carDetailsBox" class="card" style="display:none;margin-top:12px">
-        <div class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10"/></svg>
-          <h2 style="margin:0">عرض بيانات السيارة</h2>
-        </div>
-        <div id="carDetails" class="grid grid-2" style="margin-top:8px"></div>
-        <p class="hint" id="carDetailsHint" style="margin-top:8px"></p>
-      </div>
-    </div>
-
-    <!-- سجل الحركات -->
-    <div class="card">
-      <div class="card-header">
-        <div class="section-title" style="margin-bottom:0">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 5h18M3 12h18M3 19h18"/></svg>
-          <h2 style="margin:0">سجل الحركات</h2>
-        </div>
-        <div class="row">
-          <div class="row">
-            <label style="margin:0 6px 0 0">تاريخ من</label>
-            <input type="date" id="movesFromDate">
-          </div>
-          <div class="row">
-            <label style="margin:0 6px 0 0">إلى</label>
-            <input type="date" id="movesToDate">
-          </div>
-          <button class="btn btn-ghost" id="btnClearDate">مسح التاريخ</button>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table id="movesTable">
-          <thead>
-            <tr>
-              <th class="w-120">#</th>
-              <th class="w-120">التاريخ</th>
-              <th>رقم الهيكل</th>
-              <th>سيارة</th>
-              <th>من</th>
-              <th>إلى</th>
-              <th class="w-120">ID</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <div class="row" style="margin-top:8px">
-        <button class="btn btn-ghost" id="btnClearMoves" title="تفريغ السجل">
-          <i class="fa-regular ف-trash-can"></i> تفريغ
-        </button>
-      </div>
-    </div>
-
-    <!-- تتبع VIN -->
-    <div class="card">
-      <div class="card-header">
-        <div class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 8v8M8 12h8"/></svg>
-          <h2 style="margin:0">تتبّع حركة رقم هيكل</h2>
-        </div>
-        <div class="row" style="gap:8px">
-          <input id="trackVin" placeholder="اكتب رقم الهيكل لعرض جميع حركاته"/>
-          <button class="btn btn-ghost" id="btnClearTrack">مسح</button>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table id="trackTable">
-          <thead>
-            <tr>
-              <th class="w-120">#</th>
-              <th class="w-120">التاريخ</th>
-              <th>من</th>
-              <th>إلى</th>
-              <th>سيارة</th>
-              <th class="w-160">ملاحظات النقل</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <p class="hint"></p>
-    </div>
-
-    <!-- جدول السيارات -->
-    <div class="card">
-      <div class="card-header">
-        <div class="section-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10"/></svg>
-          <h2 style="margin:0">تعديل السيارات</h2>
-        </div>
-        <span class="hint"></span>
-      </div>
-      <div class="row" style="gap:8px;margin-bottom:8px">
-        <input id="search" placeholder="بحث سريع (سيارة / البيان / الوكيل / الألوان / الموديل / اللوحة / المكان / اسم الدفعة / رقم الهيكل)" title="اضغط / للبحث" style="flex:1; padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff">
-        <button class="btn btn-ghost" id="btnClearSearch" title="مسح البحث">
-          <i class="fa-solid fa-minus"></i> مسح
-        </button>
-      </div>
-      <div class="table-wrap">
-        <table id="carsTable">
-          <thead>
-            <tr>
-              <th>سيارة</th>
-              <th>البيان</th>
-              <th>الوكيل</th>
-              <th>اللون الخارجي</th>
-              <th>اللون الداخلي</th>
-              <th>موديل</th>
-              <th>اللوحة</th>
-              <th>المكان</th>
-              <th>اسم الدفعة</th>
-              <th>رقم الهيكل</th>
-              <th>الملاحظات</th>
-              <th class="w-160">تحكم</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <p class="hint">الحفظ يتم مباشرة على Firestore.</p>
-    </div>
-  </div>
+<div class="hint"></div>
+</div>
+</div>
+</div>
+<div class="inner-tab-panel" id="tab-move">
+<div class="card">
+<div class="card-header">
+<div class="section-title">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M7 10l5-5 5 5"></path><path d="M7 14l5 5 5-5"></path></svg>
+<h2 style="margin:0">حركة نقل السيارات (برقم الهيكل)</h2>
+</div>
+<span class="hint"> <b></b> </span>
+<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><label>إلى</label><select id="moveToGlobal" title="المكان الجديد"></select></div></div>
+<!-- 8 صفوف نقل -->
+<div class="row" style="margin:8px 0 12px;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-ghost" id="btnAddMoveRow" type="button"><i class="fa-solid fa-plus"></i> إضافة حركة أخرى</button></div><div class="grid" id="moveRowsContainer" style="gap:10px">
+<!-- row 1 -->
+<div class="move-row">
+<div class="move-row-title">السيارة 1</div>
+<div class="grid grid-3">
+<div>
+<label>رقم الهيكل</label>
+<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
+</div>
+<div>
+<label>من (محدّد تلقائيًا)</label>
+<select class="move-from move-from" title="المكان الحالي"></select>
 </div>
 
+<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
+</div>
+<!-- row 2 -->
+<div class="move-row">
+<div class="move-row-title">السيارة 2</div>
+<div class="grid grid-3">
+<div>
+<label>رقم الهيكل</label>
+<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
+</div>
+<div>
+<label>من (محدّد تلقائيًا)</label>
+<select class="move-from move-from" title="المكان الحالي"></select>
+</div>
+
+<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
+</div>
+<!-- row 3 -->
+<div class="move-row">
+<div class="move-row-title">السيارة 3</div>
+<div class="grid grid-3">
+<div>
+<label>رقم الهيكل</label>
+<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
+</div>
+<div>
+<label>من (محدّد تلقائيًا)</label>
+<select class="move-from move-from" title="المكان الحالي"></select>
+</div>
+
+<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
+</div>
+<!-- row 4 -->
+<div class="move-row">
+<div class="move-row-title">السيارة 4</div>
+<div class="grid grid-3">
+<div>
+<label>رقم الهيكل</label>
+<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
+</div>
+<div>
+<label>من (محدّد تلقائيًا)</label>
+<select class="move-from move-from" title="المكان الحالي"></select>
+</div>
+
+<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
+</div>
+<!-- row 5 -->
+<div class="move-row">
+<div class="move-row-title">السيارة 5</div>
+<div class="grid grid-3">
+<div>
+<label>رقم الهيكل</label>
+<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
+</div>
+<div>
+<label>من (محدّد تلقائيًا)</label>
+<select class="move-from move-from" title="المكان الحالي"></select>
+</div>
+
+<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
+</div>
+<!-- row 6 -->
+<div class="move-row">
+<div class="move-row-title">السيارة 6</div>
+<div class="grid grid-3">
+<div>
+<label>رقم الهيكل</label>
+<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
+</div>
+<div>
+<label>من (محدّد تلقائيًا)</label>
+<select class="move-from move-from" title="المكان الحالي"></select>
+</div>
+
+<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
+</div>
+<!-- row 7 -->
+<div class="move-row">
+<div class="move-row-title">السيارة 7</div>
+<div class="grid grid-3">
+<div>
+<label>رقم الهيكل</label>
+<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
+</div>
+<div>
+<label>من (محدّد تلقائيًا)</label>
+<select class="move-from move-from" title="المكان الحالي"></select>
+</div>
+
+<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
+</div>
+<!-- row 8 -->
+<div class="move-row">
+<div class="move-row-title">السيارة 8</div>
+<div class="grid grid-3">
+<div>
+<label>رقم الهيكل</label>
+<input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
+</div>
+<div>
+<label>من (محدّد تلقائيًا)</label>
+<select class="move-from move-from" title="المكان الحالي"></select>
+</div>
+
+<div><label>ملاحظات هذه السيارة</label><textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea></div></div>
+</div>
+</div>
+<!-- datalist للاقتراحات -->
+<datalist id="vinHints"></datalist>
+<!-- Checklist يظهر فقط مع 'مباع تحت التسليم' -->
+<div class="checklist" id="underDeliveryBox" style="display:none; margin-top:10px">
+<h4>المتطلبات عند النقل إلى <b>مباع تحت التسليم</b></h4>
+<div class="grid grid-2">
+<div>
+<div class="check-row">
+<input id="chkAdminApproved" type="checkbox"/>
+<label for="chkAdminApproved">موافقة إدارية</label>
+</div>
+<label for="adminNotes" style="margin-top:6px">ملاحظات الموافقة الإدارية</label>
+<textarea id="adminNotes" placeholder="اكتب أي ملاحظات إدارية…"></textarea>
+</div>
+<div>
+<div class="check-row">
+<input id="chkFinanceApproved" type="checkbox"/>
+<label for="chkFinanceApproved">موافقة مالية</label>
+</div>
+<label for="financeNotes" style="margin-top:6px">ملاحظات الموافقة المالية</label>
+<textarea id="financeNotes" placeholder="اكتب أي ملاحظات مالية…"></textarea>
+</div>
+</div>
+</div>
+<!-- ملاحظات سيارات بها ملاحظات -->
+
+<div class="row" style="margin-top:12px">
+<button class="btn btn-ghost" id="btnFindByVin" title="عرض بيانات السيارة (أول سطر غير فارغ)">
+<i class="fa-solid fa-magnifying-glass"></i> عرض البيانات
+        </button>
+<button class="btn btn-primary" id="btnMove" title="تنفيذ النقل">
+<i class="fa-solid fa-right-left"></i> نقل
+        </button>
+</div>
+<p class="hint" id="moveStatus" style="margin-top:8px"></p>
+<!-- إشعار حركة النقل الكبير -->
+<div class="move-alert" id="moveAlert">
+<div class="icon">
+<i class="fa-solid fa-circle-check"></i>
+</div>
+<div>
+<div class="title" id="moveAlertTitle">نتيجة حركة النقل</div>
+<ul id="moveAlertList"></ul>
+</div>
+</div>
+<!-- بطاقة عرض بيانات السيارة -->
+<div class="card" id="carDetailsBox" style="display:none;margin-top:12px">
+<div class="section-title">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><path d="M7 8h10"></path></svg>
+<h2 style="margin:0">عرض بيانات السيارة</h2>
+</div>
+<div class="grid grid-2" id="carDetails" style="margin-top:8px"></div>
+<p class="hint" id="carDetailsHint" style="margin-top:8px"></p>
+</div>
+</div>
+</div>
+<div class="inner-tab-panel" id="tab-edit">
+<div class="card">
+<div class="card-header">
+<div class="section-title">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><path d="M7 8h10"></path></svg>
+<h2 style="margin:0">تعديل السيارات</h2>
+</div>
+<span class="hint"></span>
+</div>
+<div class="row" style="gap:8px;margin-bottom:8px">
+<input id="search" placeholder="بحث سريع (سيارة / البيان / الوكيل / الألوان / الموديل / اللوحة / المكان / اسم الدفعة / رقم الهيكل)" style="flex:1; padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff" title="اضغط / للبحث"/>
+<button class="btn btn-ghost" id="btnClearSearch" title="مسح البحث">
+<i class="fa-solid fa-minus"></i> مسح
+        </button>
+</div>
+<div class="table-wrap">
+<table id="carsTable">
+<thead>
+<tr>
+<th>سيارة</th>
+<th>البيان</th>
+<th>الوكيل</th>
+<th>اللون الخارجي</th>
+<th>اللون الداخلي</th>
+<th>موديل</th>
+<th>اللوحة</th>
+<th>المكان</th>
+<th>اسم الدفعة</th>
+<th>رقم الهيكل</th>
+<th>الملاحظات</th>
+<th class="w-160">تحكم</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+<p class="hint">الحفظ يتم مباشرة على Firestore.</p>
+</div>
+</div>
+<div class="inner-tab-panel" id="tab-track">
+<div class="card">
+<div class="card-header">
+<div class="section-title">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 8v8M8 12h8"></path></svg>
+<h2 style="margin:0">تتبّع حركة رقم هيكل</h2>
+</div>
+<div class="row" style="gap:8px">
+<input id="trackVin" placeholder="اكتب رقم الهيكل لعرض جميع حركاته">
+<button class="btn btn-ghost" id="btnClearTrack">مسح</button>
+</input></div>
+</div>
+<div class="table-wrap">
+<table id="trackTable">
+<thead>
+<tr>
+<th class="w-120">#</th>
+<th class="w-120">التاريخ</th>
+<th>من</th>
+<th>إلى</th>
+<th>سيارة</th>
+<th class="w-160">ملاحظات النقل</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+<p class="hint"></p>
+</div>
+</div>
+<div class="inner-tab-panel" id="tab-log">
+<div class="card">
+<div class="card-header">
+<div class="section-title" style="margin-bottom:0">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M3 5h18M3 12h18M3 19h18"></path></svg>
+<h2 style="margin:0">سجل الحركات</h2>
+</div>
+<div class="row">
+<div class="row">
+<label style="margin:0 6px 0 0">تاريخ من</label>
+<input id="movesFromDate" type="date"/>
+</div>
+<div class="row">
+<label style="margin:0 6px 0 0">إلى</label>
+<input id="movesToDate" type="date"/>
+</div>
+<button class="btn btn-ghost" id="btnClearDate">مسح التاريخ</button>
+</div>
+</div>
+<div class="table-wrap">
+<table id="movesTable">
+<thead>
+<tr>
+<th class="w-120">#</th>
+<th class="w-120">التاريخ</th>
+<th>رقم الهيكل</th>
+<th>سيارة</th>
+<th>من</th>
+<th>إلى</th>
+<th class="w-120">ID</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+<div class="row" style="margin-top:8px">
+<button class="btn btn-ghost" id="btnClearMoves" title="تفريغ السجل">
+<i class="fa-regular ف-trash-can"></i> تفريغ
+        </button>
+</div>
+</div>
+</div>
+</div>
 <!-- Modals -->
 <!-- إضافة موديل -->
-<div id="modelModal" class="modal-backdrop">
-  <div class="modal" role="dialog" aria-modal="true">
-    <header>
-      <h3>إضافة موديل جديد</h3>
-      <button class="btn btn-ghost" data-close="modelModal"><i class="fa-solid fa-xmark"></i></button>
-    </header>
-    <label for="modelName">اسم الموديل</label>
-    <input id="modelName" placeholder="هيونداي توسان 2026 / سنتافي…"/>
-    <div class="actions">
-      <button class="btn btn-primary" id="confirmAddModel"><i class="fa-solid fa-check"></i> إضافة</button>
-      <button class="btn" data-close="modelModal">إلغاء</button>
-    </div>
-  </div>
+<div class="modal-backdrop" id="modelModal">
+<div aria-modal="true" class="modal" role="dialog">
+<header>
+<h3>إضافة موديل جديد</h3>
+<button class="btn btn-ghost" data-close="modelModal"><i class="fa-solid fa-xmark"></i></button>
+</header>
+<label for="modelName">اسم الموديل</label>
+<input id="modelName" placeholder="هيونداي توسان 2026 / سنتافي…">
+<div class="actions">
+<button class="btn btn-primary" id="confirmAddModel"><i class="fa-solid fa-check"></i> إضافة</button>
+<button class="btn" data-close="modelModal">إلغاء</button>
 </div>
-
+</input></div>
+</div>
 <!-- إضافة بيان -->
-<div id="variantModal" class="modal-backdrop">
-  <div class="modal" role="dialog" aria-modal="true">
-    <header>
-      <h3>إضافة بيان وربطه بموديل</h3>
-      <button class="btn btn-ghost" data-close="variantModal"><i class="fa-solid fa-xmark"></i></button>
-    </header>
-    <label for="variantModelFor">الموديل</label>
-    <select id="variantModelFor"></select>
-    <label for="variantName" style="margin-top:8px">اسم البيان</label>
-    <input id="variantName" placeholder="كومفورت / سمارت / رويال…"/>
-    <div class="actions">
-      <button class="btn btn-primary" id="confirmAddVariant"><i class="fa-solid fa-check"></i> إضافة</button>
-      <button class="btn" data-close="variantModal">إلغاء</button>
-    </div>
-  </div>
+<div class="modal-backdrop" id="variantModal">
+<div aria-modal="true" class="modal" role="dialog">
+<header>
+<h3>إضافة بيان وربطه بموديل</h3>
+<button class="btn btn-ghost" data-close="variantModal"><i class="fa-solid fa-xmark"></i></button>
+</header>
+<label for="variantModelFor">الموديل</label>
+<select id="variantModelFor"></select>
+<label for="variantName" style="margin-top:8px">اسم البيان</label>
+<input id="variantName" placeholder="كومفورت / سمارت / رويال…">
+<div class="actions">
+<button class="btn btn-primary" id="confirmAddVariant"><i class="fa-solid fa-check"></i> إضافة</button>
+<button class="btn" data-close="variantModal">إلغاء</button>
 </div>
-
+</input></div>
+</div>
 <!-- Toast -->
-<div id="toast" class="toast"></div>
-
+<div class="toast" id="toast"></div>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
@@ -655,18 +779,16 @@
   const variantNameEl = $('#variantName');
   const confirmAddVariant = $('#confirmAddVariant');
 
-  // حركة النقل (متعددة الصفوف) — ديناميكية
+  // حركة النقل (متعددة الصفوف)
   const moveRowsContainer = document.querySelector('#moveRowsContainer');
   const btnAddMoveRow = document.querySelector('#btnAddMoveRow');
+  const moveToGlobal = document.querySelector('#moveToGlobal');
   const btnFindByVin=$('#btnFindByVin'), btnMove=$('#btnMove');
   const moveStatus=$('#moveStatus'), carDetailsBox=$('#carDetailsBox'), carDetails=$('#carDetails'), carDetailsHint=$('#carDetailsHint');
 
   const underDeliveryBox=$('#underDeliveryBox');
   const chkAdminApproved=$('#chkAdminApproved'), adminNotes=$('#adminNotes');
   const chkFinanceApproved=$('#chkFinanceApproved'), financeNotes=$('#financeNotes');
-
-  const notesIssuesBox = $('#notesIssuesBox');
-  const issuesNotes = $('#issuesNotes');
 
   // datalist للاقتراحات
   const vinHints = $('#vinHints');
@@ -982,21 +1104,17 @@
     "فرع 2 الملتقى : المخزون المتاح","فرع 2 الملتقى : سيارات بها ملاحظات","فرع 2 الملتقى : مباع تحت التسليم","فرع 2 الملتقى : مباع تم التسليم",
     "فرع 3 القادسية : المخزون المتاح","فرع 3 القادسية : سيارات بها ملاحظات","فرع 3 القادسية : مباع تحت التسليم","فرع 3 القادسية : مباع تم التسليم"
   ];
-
   function fillMoveLists(){
     const opts = FIXED_LOCATIONS.map(l=> `<option value="${l}">${l}</option>`).join('');
-    const fromSelects = moveRowsContainer.querySelectorAll('.move-from');
-    const toSelects = moveRowsContainer.querySelectorAll('.move-to');
+    const fromSelects = moveRowsContainer ? moveRowsContainer.querySelectorAll('.move-from') : [];
     fromSelects.forEach(sel=> sel.innerHTML=opts);
-    toSelects.forEach(sel=> sel.innerHTML=opts);
+    if(moveToGlobal) moveToGlobal.innerHTML = opts;
   }
 
   function fillMoveListsForRow(row){
     const opts = FIXED_LOCATIONS.map(l=> `<option value="${l}">${l}</option>`).join('');
     const fromSel = row.querySelector('.move-from');
-    const toSel = row.querySelector('.move-to');
     if(fromSel) fromSel.innerHTML = opts;
-    if(toSel) toSel.innerHTML = opts;
   }
 
   function renderCarDetails(rec){
@@ -1038,31 +1156,40 @@
 
   /* اقتراح VIN حسب البادئة/الأرقام المكتوبة */
   function updateVinSuggestionsForPrefix(rawPrefix){
-    if(!vinHints) return;
-    const prefix = normalizeVin(rawPrefix||'');
-    if(prefix.length < 1){
-      vinHints.innerHTML = '';
-      return;
-    }
-    const set = new Set();
-    stock.forEach(r=>{
-      const v = normalizeVin(r.vin||'');
-      if(v && v.startsWith(prefix)) set.add(v);
-    });
-    const list = Array.from(set).sort().slice(0,30);
-    vinHints.innerHTML = list.map(v=>`<option value="${v}"></option>`).join('');
+  if(!vinHints) return;
+  const prefix = normalizeVin(rawPrefix||'');
+  if(prefix.length < 1){
+    vinHints.innerHTML = '';
+    return;
   }
+  const set = new Set();
+  stock.forEach(r=>{
+    const v = normalizeVin(r.vin||'');
+    // 👇 عدّل السطر ده:
+    // if(v && v.includes(prefix)) set.add(v); // يحتوي على الأرقام المكتوبة
 
+    // ✅ خليه يبدأ بنفس اللي انت كاتبه (Prefix)
+    if(v && v.startsWith(prefix)) set.add(v);
+  });
+  const list = Array.from(set).sort().slice(0,30);
+  vinHints.innerHTML = list.map(v=>`<option value="${v}"></option>`).join('');
+}
+
+
+
+  /* اقتراح المكان "من" لكل سطر عند كتابة VIN */
   function autoFindByVinForRow(row, strictMessage=false){
     const inp = row.querySelector('.move-vin');
     const fromSel = row.querySelector('.move-from');
-    if(!inp || !fromSel) return;
     const vinRaw = (inp.value||'').trim();
     if(!vinRaw){
-      fromSel.disabled=false;
-      fromSel.value='';
-      const anyVin = Array.from(moveRowsContainer.querySelectorAll('.move-vin')).some(i=> normalizeVin(i.value));
-      if(!anyVin){
+      if(fromSel){
+        fromSel.disabled=false;
+        fromSel.value='';
+      }
+      const anyVin = moveRowsContainer.querySelectorAll('.move-vin');
+      const hasAnyVin = Array.from(anyVin).some(i=> normalizeVin(i.value));
+      if(!hasAnyVin){
         carDetailsBox.style.display='none';
         moveStatus.textContent='';
       }
@@ -1077,11 +1204,11 @@
     if(match){
       renderCarDetails(match);
       const currentLoc = match.location || '';
-      if(currentLoc){
+      if(currentLoc && fromSel){
         fromSel.value = currentLoc;
         fromSel.disabled = true;
         moveStatus.textContent = `تم العثور: ${match.car} — المكان الحالي: ${currentLoc}`;
-      }else{
+      }else if(fromSel){
         fromSel.disabled = false;
         moveStatus.textContent = `تم العثور: ${match.car} — لا يوجد مكان مسجل. اختر المكان يدويًا.`;
       }
@@ -1097,47 +1224,20 @@
     }
   }
 
-  function updateRequirementBoxes(){
-    const toSelects = moveRowsContainer.querySelectorAll('.move-to');
-    const anyUnderDelivery = Array.from(toSelects).some(sel => /مباع تحت التسليم/.test(sel.value||''));
-    const anyIssues = Array.from(toSelects).some(sel => /سيارات بها ملاحظات/.test(sel.value||''));
-    underDeliveryBox.style.display = anyUnderDelivery ? 'block' : 'none';
-    notesIssuesBox.style.display   = anyIssues ? 'block' : 'none';
-  }
-
-  function refreshMoveRowTitles(){
-    const rows = Array.from(moveRowsContainer.querySelectorAll('.move-row'));
-    rows.forEach((row,idx)=>{
-      const titleEl = row.querySelector('.move-row-title');
-      if(titleEl) titleEl.textContent = 'السيارة ' + (idx+1);
-    });
-  }
-
   function attachMoveRowEvents(row){
-    const vinInput = row.querySelector('.move-vin');
-    const toSel = row.querySelector('.move-to');
-
-    if(vinInput){
-      vinInput.addEventListener('input', debounce(()=>{
-        updateVinSuggestionsForPrefix(vinInput.value);
-        autoFindByVinForRow(row,false);
-      },150));
-    }
-    if(toSel){
-      toSel.addEventListener('change', updateRequirementBoxes);
-    }
+    const inp = row.querySelector('.move-vin');
+    if(!inp) return;
+    inp.addEventListener('input', debounce(()=>{
+      updateVinSuggestionsForPrefix(inp.value);
+      autoFindByVinForRow(row,false);
+    },150));
   }
 
-  function createMoveRow(){
-    const wrapper = document.createElement('div');
-    wrapper.className = 'move-row';
-    wrapper.innerHTML = `
-      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:4px">
-        <div class="move-row-title">السيارة</div>
-        <button type="button" class="btn btn-ghost btn-sm move-row-remove" title="حذف هذه الحركة">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
+  function createMoveRow(index){
+    const row = document.createElement('div');
+    row.className = 'move-row';
+    row.innerHTML = `
+      <div class="move-row-title">السيارة ${index}</div>
       <div class="grid grid-3">
         <div>
           <label>رقم الهيكل</label>
@@ -1148,71 +1248,84 @@
           <select class="move-from" title="المكان الحالي"></select>
         </div>
         <div>
-          <label>إلى</label>
-          <select class="move-to" title="المكان الجديد"></select>
+          <label>ملاحظات هذه السيارة</label>
+          <textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea>
         </div>
-      </div>
-    `;
-    attachMoveRowEvents(wrapper);
-    fillMoveListsForRow(wrapper);
-    return wrapper;
+      </div>`;
+    fillMoveListsForRow(row);
+    attachMoveRowEvents(row);
+    return row;
   }
 
-  function addInitialMoveRow(){
+  function renumberMoveRows(){
+    const rows = moveRowsContainer.querySelectorAll('.move-row');
+    rows.forEach((row,idx)=>{
+      const title = row.querySelector('.move-row-title');
+      if(title) title.textContent = 'السيارة ' + (idx+1);
+    });
+  }
+
+  function ensureAtLeastOneMoveRow(){
     if(!moveRowsContainer) return;
-    if(moveRowsContainer.querySelector('.move-row')) return;
-    const row = createMoveRow();
-    moveRowsContainer.appendChild(row);
-    refreshMoveRowTitles();
-    updateRequirementBoxes();
+    const existing = moveRowsContainer.querySelectorAll('.move-row').length;
+    if(existing === 0){
+      const row = createMoveRow(1);
+      moveRowsContainer.appendChild(row);
+    }
+    renumberMoveRows();
   }
 
-  // إضافة صف جديد من الزر +
-  btnAddMoveRow.addEventListener('click', ()=>{
-    const row = createMoveRow();
-    moveRowsContainer.appendChild(row);
-    refreshMoveRowTitles();
-    updateRequirementBoxes();
-  });
+  if(btnAddMoveRow){
+    btnAddMoveRow.addEventListener('click', ()=>{
+      const count = moveRowsContainer.querySelectorAll('.move-row').length;
+      const row = createMoveRow(count+1);
+      moveRowsContainer.appendChild(row);
+      renumberMoveRows();
+    });
+  }
 
-  // حذف صف حركة
-  moveRowsContainer.addEventListener('click',(e)=>{
-    const btn = e.target.closest('.move-row-remove');
-    if(!btn) return;
-    const row = btn.closest('.move-row');
-    if(row){
-      row.remove();
-      refreshMoveRowTitles();
-      updateRequirementBoxes();
-      if(!moveRowsContainer.querySelector('.move-row')){
-        addInitialMoveRow();
-      }
-    }
-  });
-
-  // زر عرض البيانات لأول VIN مكتوب
+  // عرض البيانات لأول VIN غير فارغ
   btnFindByVin.addEventListener('click',()=>{
-    const vinInputs = Array.from(moveRowsContainer.querySelectorAll('.move-vin'));
-    const firstInput = vinInputs.find(inp=> normalizeVin((inp.value||'').trim()));
-    if(!firstInput){
+    const rows = Array.from(moveRowsContainer.querySelectorAll('.move-row'));
+    const firstRow = rows.find(r=> normalizeVin((r.querySelector('.move-vin')?.value||'').trim()));
+    if(!firstRow){
       const msg = 'اكتب رقم الهيكل في أي سطر أولًا.';
       moveStatus.textContent = msg;
       showMoveAlert('info','لا يوجد رقم هيكل',[msg]);
       return;
     }
-    const row = firstInput.closest('.move-row');
-    if(row) autoFindByVinForRow(row,true);
+    autoFindByVinForRow(firstRow,true);
   });
+
+  function updateRequirementBoxes(){
+    const val = (moveToGlobal?.value || '').trim();
+    const anyUnderDelivery = /مباع تحت التسليم/.test(val);
+    const anyIssues        = /سيارات بها ملاحظات/.test(val);
+    underDeliveryBox.style.display = anyUnderDelivery ? 'block' : 'none';
+  }
+
+  if(moveToGlobal){
+    moveToGlobal.addEventListener('change', updateRequirementBoxes);
+  }
 
   // تنفيذ النقل المتعدد
   btnMove.addEventListener('click', async ()=>{
     hideMoveAlert();
 
+    const dest = (moveToGlobal?.value || '').trim();
+    if(!dest){
+      const msg = 'اختر مكان "إلى" أولًا قبل تنفيذ النقل.';
+      moveStatus.textContent = msg;
+      showMoveAlert('info','مكان الوصول مطلوب',[msg]);
+      showToast(msg,'info');
+      return;
+    }
+
     const rows = Array.from(moveRowsContainer.querySelectorAll('.move-row')).map(row=>({
       row,
-      vinRaw: (row.querySelector('.move-vin')?.value||'').trim(),
-      to: (row.querySelector('.move-to')?.value||'').trim(),
-      fromSel: row.querySelector('.move-from')
+      vinRaw:(row.querySelector('.move-vin')?.value||'').trim(),
+      fromSel:row.querySelector('.move-from'),
+      notesInput:row.querySelector('.move-notes')
     }));
     const rowsWithVin = rows.filter(r=> normalizeVin(r.vinRaw));
 
@@ -1224,74 +1337,59 @@
       return;
     }
 
-    const anyIssuesRow = rowsWithVin.some(r=> /سيارات بها ملاحظات/.test(r.to));
-    if(anyIssuesRow && !issuesNotes.value.trim()){
-      const msg = 'اكتب ملاحظات عند النقل إلى سيارات بها ملاحظات.';
-      moveStatus.textContent = msg;
-      showMoveAlert('info','ملاحظات مطلوبة', [msg]);
-      showToast(msg,'info');
-      return;
-    }
+    const goingUnderDeliveryRow = /مباع تحت التسليم/.test(dest);
+    const goingIssuesRow        = /سيارات بها ملاحظات/.test(dest);
+    const goingDeliveredRow     = /مباع تم التسليم/.test(dest);
 
     let movedCount = 0;
     const errors = [];
     const successLines = [];
 
-    for(const rowInfo of rowsWithVin){
-      const norm = normalizeVin(rowInfo.vinRaw);
+    for(const rowData of rowsWithVin){
+      const norm = normalizeVin(rowData.vinRaw);
       const recIdx = stock.findIndex(r=> normalizeVin(r.vin) === norm);
       if(recIdx<0){
-        errors.push(`لم يتم العثور على سيارة بهذا VIN: ${rowInfo.vinRaw}`);
+        errors.push(`لم يتم العثور على سيارة بهذا VIN: ${rowData.vinRaw}`);
         continue;
       }
       const rec = stock[recIdx];
-      const toVal = rowInfo.to;
-      if(!toVal){
-        errors.push(`اختر مكان "إلى" للسيارة ${rec.car||''} (${rec.vin||rowInfo.vinRaw}).`);
-        continue;
-      }
-
-      const fromSel = rowInfo.fromSel;
+      const toVal = dest;
+      const fromSel = rowData.fromSel;
       const from = (fromSel?.value || rec.location || '').trim();
       if(!from){
-        errors.push(`السيارة ${rec.car||''} (${rec.vin||rowInfo.vinRaw}) لا يوجد لها مكان حالي؛ حدّد المكان يدويًا في "من".`);
+        errors.push(`السيارة ${rec.car||''} (${rec.vin||rowData.vinRaw}) لا يوجد لها مكان حالي؛ حدّد المكان يدويًا في "من".`);
         continue;
       }
       if(from === toVal){
-        errors.push(`السيارة ${rec.car||''} (${rec.vin||rowInfo.vinRaw}) موجودة بالفعل في نفس المكان.`);
+        errors.push(`السيارة ${rec.car||''} (${rec.vin||rowData.vinRaw}) موجودة بالفعل في نفس المكان.`);
         continue;
       }
 
-      const goingUnderDeliveryRow = /مباع تحت التسليم/.test(toVal);
-      const goingIssuesRow        = /سيارات بها ملاحظات/.test(toVal);
-      const goingDeliveredRow     = /مباع تم التسليم/.test(toVal);
-
-      // شرط النقل إلى "مباع تم التسليم" — لازم يكون في حركة سابقة بموافقة مالية + إدارية مكتملة لكل هيكل
       if(goingDeliveredRow){
         const history = moves.filter(m=> normalizeVin(m.vin||'') === norm);
         const hasFullApproval = history.some(m=> m.adminApproved===true && m.financeApproved===true);
         if(!hasFullApproval){
-          errors.push(`لا يمكن نقل ${rec.car||''} (${rec.vin||rowInfo.vinRaw}) إلى "مباع تم التسليم" قبل وجود حركة سابقة بموافقة مالية وإدارية مكتملة لهذا الهيكل.`);
+          errors.push(`لا يمكن نقل ${rec.car||''} (${rec.vin||rowData.vinRaw}) إلى "مباع تم التسليم" قبل وجود حركة سابقة بموافقة مالية وإدارية مكتملة.`);
           continue;
         }
       }
+
+      const noteText = (rowData.notesInput?.value||'').trim();
 
       const moveMeta = {
         adminApproved: goingUnderDeliveryRow ? !!chkAdminApproved.checked : null,
         adminNotes: goingUnderDeliveryRow ? (adminNotes.value||'').trim() : '',
         financeApproved: goingUnderDeliveryRow ? !!chkFinanceApproved.checked : null,
         financeNotes: goingUnderDeliveryRow ? (financeNotes.value||'').trim() : '',
-        issuesNotes: goingIssuesRow ? (issuesNotes.value||'').trim() : ''
+        issuesNotes: noteText
       };
 
       const oldLoc = rec.location || from;
       rec.location = toVal;
-
-      // لو رايحة "سيارات بها ملاحظات" الملاحظة تتسجل في ملاحظات السيارة في المخزون
-      if(goingIssuesRow && moveMeta.issuesNotes){
-        rec.notes = rec.notes ? (rec.notes + ' — ' + moveMeta.issuesNotes) : moveMeta.issuesNotes;
+      if(goingIssuesRow && noteText){
+        const existingNotes = rec.notes || '';
+        rec.notes = existingNotes ? (existingNotes + " | " + noteText) : noteText;
       }
-
       const stamp = now();
       moves.push({
         when: stamp,
@@ -1304,7 +1402,7 @@
         ...moveMeta
       });
       movedCount++;
-      successLines.push(`تم نقل ${rec.car||''} (${rec.vin||rowInfo.vinRaw}) من "${oldLoc}" إلى "${toVal}".`);
+      successLines.push(`تم نقل ${rec.car||''} (${rec.vin||rowData.vinRaw}) من "${oldLoc}" إلى "${toVal}".`);
     }
 
     if(!movedCount){
@@ -1333,25 +1431,23 @@
 
     carDetailsBox.style.display='none';
 
-    // تفريغ الصفوف
-    const allRows = moveRowsContainer.querySelectorAll('.move-row');
+    // تفريغ الحقول
+    const allRows = Array.from(moveRowsContainer.querySelectorAll('.move-row'));
     allRows.forEach(row=>{
-      const vinInp = row.querySelector('.move-vin');
+      const vin = row.querySelector('.move-vin');
       const fromSel = row.querySelector('.move-from');
-      const toSel = row.querySelector('.move-to');
-      if(vinInp) vinInp.value='';
+      const notes = row.querySelector('.move-notes');
+      if(vin) vin.value='';
       if(fromSel){ fromSel.disabled=false; fromSel.value=''; }
-      if(toSel) toSel.value='';
+      if(notes) notes.value='';
     });
 
     chkAdminApproved.checked=false; adminNotes.value='';
     chkFinanceApproved.checked=false; financeNotes.value='';
-    issuesNotes.value='';
-    underDeliveryBox.style.display='none';
-    notesIssuesBox.style.display='none';
     if(vinHints) vinHints.innerHTML='';
   });
 
+  /* ===== سجل الحركات (عرض + فلاتر التاريخ) ===== */
   /* ===== سجل الحركات (عرض + فلاتر التاريخ) ===== */
   function filterMovesByDate(list){
     const f = movesFromDate.value || null;
@@ -1435,12 +1531,30 @@
 
   /* أول تحميل */
   setStatus('warn','جارِ الاتصال…');
-  addInitialMoveRow();
 
   /* إغلاق قائمة الاستيراد عند النقر خارجها */
   document.addEventListener('click',(e)=>{
     if(!e.target.closest('.import-menu')) importDropdown.style.display='none';
   });
+
+  // تبويبات داخلية للصفحة
+  const innerTabs = Array.from(document.querySelectorAll('.inner-tab'));
+  const innerPanels = Array.from(document.querySelectorAll('.inner-tab-panel'));
+  innerTabs.forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      innerTabs.forEach(b=> b.classList.remove('active'));
+      innerPanels.forEach(p=> p.classList.remove('active'));
+      btn.classList.add('active');
+      const targetId = btn.getAttribute('data-target');
+      const panel = document.getElementById(targetId);
+      if(panel) panel.classList.add('active');
+    });
+  });
+
+  // تهيئة نموذج حركة النقل
+  fillMoveLists();
+  ensureAtLeastOneMoveRow();
+  updateRequirementBoxes();
 </script>
-</body>
+</div></body>
 </html>
