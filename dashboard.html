@@ -10,11 +10,6 @@
 <link rel="prefetch" href="photoshoot-user.html">
 <link rel="prefetch" href="cars.html">
 <link rel="prefetch" href="Activity.html">
-<style id="noFlash">
-#authGate{display:none!important}
-html{background:#fff8ef}
-body{opacity:0;transition:opacity .12s ease}
-</style>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>لوحة المؤشرات — MZJ Cars</title>
@@ -181,24 +176,7 @@ body{opacity:0;transition:opacity .12s ease}
     </div>
     <div class="row">
       <div class="status-badge"><span id="connDot" class="dot warn"></span><span id="connText">جارِ الاتصال…</span></div>
-      <button id="btnSignOut" class="btn btn-ghost" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
     </div>
-  </div>
-</div>
-
-<!-- Auth Gate -->
-<div id="authGate" style="min-height:60vh;display:grid;place-items:center;padding:24px">
-  <div class="card" style="max-width:440px;width:96%">
-    <h2 style="margin:0 0 10px;color:var(--brown)">تسجيل الدخول</h2>
-    <label>البريد الإلكتروني</label>
-    <input id="email" class="input" type="email" placeholder="you@example.com"/>
-    <label style="margin-top:8px">كلمة المرور</label>
-    <input id="password" class="input" type="password" placeholder="••••••••"/>
-    <div class="row" style="margin-top:10px">
-      <button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
-      <button class="btn btn-outline" id="btnSignup">إنشاء حساب</button>
-    </div>
-    <p class="hint" id="authHint" style="margin-top:10px"></p>
   </div>
 </div>
 
@@ -372,7 +350,6 @@ body{opacity:0;transition:opacity .12s ease}
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   /* ===== Firebase ===== */
@@ -1266,193 +1243,78 @@ function computeTransferRequests(){
 
 
   async function approveTransfer(moveIdx, kind){
-    const idx = Number(moveIdx);
-    if (isNaN(idx) || !moves[idx]) {
-      showToast('تعذّر العثور على هذا الطلب');
+  const idx = Number(moveIdx);
+  if (isNaN(idx) || !moves[idx]) {
+    showToast('تعذّر العثور على هذا الطلب');
+    return;
+  }
+  const m = moves[idx];
+  const isAdmin   = (kind === 'admin');
+  const isFinance = (kind === 'finance');
+
+  if (!isAdmin && !isFinance) {
+    showToast('نوع الموافقة غير معروف');
+    return;
+  }
+
+  if (isAdmin) {
+    const adminOk = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
+    if (adminOk) {
+      showToast('تمت موافقة الإدارة على هذا الطلب مسبقًا');
       return;
     }
-    const m = moves[idx];
-    const isAdmin   = (kind === 'admin');
-    const isFinance = (kind === 'finance');
-
-    if (!isAdmin && !isFinance) {
-      showToast('نوع الموافقة غير معروف');
+    m.adminApproved   = true;
+    m.adminApproval   = true;
+    m.adminApprovedAt = now();
+  } else if (isFinance) {
+    const financeOk = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
+    if (financeOk) {
+      showToast('تمت الموافقة المالية على هذا الطلب مسبقًا');
       return;
     }
+    m.financeApproved   = true;
+    m.financeApproval   = true;
+    m.financeApprovedAt = now();
+  }
 
+  // تحديث حالة الطلب العامة بناءً على الموافقتين
+  const adminOkNow   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
+  const financeOkNow = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
+
+  if (adminOkNow && financeOkNow) {
+    m.status = 'approved';
+    m.requiresAdminApproval   = false;
+    m.needsAdminApproval      = false;
+    m.requiresFinanceApproval = false;
+    m.needsFinanceApproval    = false;
+  } else {
+    m.status = 'awaiting_approvals';
+  }
+
+  // ربط الموافقات مع نفس السيارة في المخزون
+  const stockIndex = stock.findIndex(r => String(r.vin) === String(m.vin));
+  if (stockIndex !== -1) {
     if (isAdmin) {
-      const adminOk = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
-      if (adminOk) {
-        showToast('تمت موافقة الإدارة على هذا الطلب مسبقًا');
-        return;
-      }
-      m.adminApproved   = true;
-      m.adminApproval   = true;
-      m.adminApprovedAt = now();
-    } else if (isFinance) {
-      const financeOk = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
-      if (financeOk) {
-        showToast('تمت الموافقة المالية على هذا الطلب مسبقًا');
-        return;
-      }
-      m.financeApproved   = true;
-      m.financeApproval   = true;
-      m.financeApprovedAt = now();
+      stock[stockIndex].adminApproved = true;
+      stock[stockIndex].adminApproval = true;
     }
-
-    // تحديث حالة الطلب العامة بناءً على الموافقتين
-    const adminOkNow   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
-    const financeOkNow = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
-
-    if (adminOkNow && financeOkNow) {
-      m.status = 'approved';
-      m.requiresAdminApproval   = false;
-      m.needsAdminApproval      = false;
-      m.requiresFinanceApproval = false;
-      m.needsFinanceApproval    = false;
-    } else {
-      m.status = 'awaiting_approvals';
-    }
-
-    moves[idx] = m;
-    try{
-      await setDoc(STATE_REF, { moves }, { merge:true });
-      computeTransferRequests();
-      filteredTransfers = transferRequests.slice();
-      renderTransfersTable();
-      showToast(isAdmin ? 'تمت موافقة الإدارة على طلب النقل' : 'تمت الموافقة المالية على طلب النقل');
-    }catch(e){
-      console.error(e);
-      setStatus('warn','تعذّر حفظ الموافقة على طلب النقل');
+    if (isFinance) {
+      stock[stockIndex].financeApproved = true;
+      stock[stockIndex].financeApproval = true;
     }
   }
 
+  moves[idx] = m;
+  try{
+    await setDoc(STATE_REF, { moves, stock }, { merge:true });
+    computeTransferRequests();
+    filteredTransfers = transferRequests.slice();
+    renderTransfersTable();
+    showToast(isAdmin ? 'تمت موافقة الإدارة على طلب النقل' : 'تمت الموافقة المالية على طلب النقل');
+  }catch(e){
+    console.error(e);
+    setStatus('warn','تعذّر حفظ الموافقة على طلب النقل');
+  }
+}
 
-
-  tableTransfersWrap.addEventListener('click',(e)=>{
-    const btn = e.target.closest('button[data-transfer-idx]');
-    if(!btn) return;
-    const idx = btn.getAttribute('data-transfer-idx');
-    if(idx==null || idx==='') return;
-    const kind = btn.getAttribute('data-transfer-kind') || 'admin';
-    approveTransfer(idx, kind);
-  });
-
-  // بحث موحّد في المودال
-  modalSearch.addEventListener('input', ()=>{
-    const q = (modalSearch.value||'').trim().toLowerCase();
-    if(currentMode==='rows'){
-      if(!q){ filteredRows = currentRows.slice(); return renderModal(); }
-      filteredRows = currentRows.filter(r=>{
-        const hay=[r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName,r.vin,r.notes,
-                   r.adminNotes,r.financeNotes, String(r.adminApproved), String(r.financeApproved)].join(' ').toLowerCase();
-        return hay.includes(q);
-      });
-    }else if(currentMode==='shortagesBranches'){
-      if(!q){ shortFiltered = (shortDataByKey.get(shortActiveKey)||[]).slice(); return renderModal(); }
-      shortFiltered = (shortDataByKey.get(shortActiveKey)||[]).filter(s=>{
-        const hay=[s.car,s.variant,s.extColor,s.intColor,s.modelYear, String(s.countBranch), String(s.countGlobal)].join(' ').toLowerCase();
-        return hay.includes(q);
-      });
-    }else if(currentMode==='shoot'){
-      if(!q){
-        filteredShoot = currentShoot.filter(r=> matchesShootFilter(r, currentShootFilter));
-        return renderModal();
-      }
-      filteredShoot = currentShoot
-        .filter(r=>{
-          const hay=[
-            r.id,r.createdAt,r.createdBy,r.status,(r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),
-            ...(r.rows||[]).flatMap(x=>[x.vin,x.car,x.variant,x.extColor,x.modelYear,x.currentLocation,x.shootPlace,x.note])
-          ].join(' ').toLowerCase();
-          return hay.includes(q);
-        })
-        .filter(r=> matchesShootFilter(r, currentShootFilter));
-    }else if(currentMode==='transfers'){
-      if(!q){
-        filteredTransfers = transferRequests.slice();
-        return renderModal();
-      }
-      filteredTransfers = transferRequests.filter(t=>{
-        const hay=[
-          t.id, t.vin, t.chassis, t.from, t.fromLocation, t.to, t.toLocation,
-          t.requestedAt, t.createdAt, t.date, t.note, t.message, t.status
-        ].join(' ').toLowerCase();
-        return hay.includes(q);
-      });
-    }
-    renderModal();
-  });
-
-  // تصدير Excel حسب الوضع
-  document.getElementById('btnExportGroup').addEventListener('click', ()=>{
-    if(currentMode==='rows'){
-      const headerCommon = ["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
-      const headerPending= ["الموافقة الإدارية","ملاحظات الإدارة","الموافقة المالية","ملاحظات المالية"];
-      const header = currentFilterKey==='pending' ? [...headerCommon, ...headerPending] : headerCommon;
-      const data=[header];
-      filteredRows.forEach(r=>{
-        const row = [r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName||'',r.vin,r.notes];
-        if(currentFilterKey==='pending'){
-          const adminA = (r.adminApproved===true || r.adminApproved==='true') ? 'موافق' : (r.adminApproved===false || r.adminApproved==='false') ? 'مرفوض' : '-';
-          const finA   = (r.financeApproved===true || r.financeApproved==='true') ? 'موافق' : (r.financeApproved===false || r.financeApproved==='false') ? 'مرفوض' : '-';
-          row.push(adminA, r.adminNotes||'', finA, r.financeNotes||'');
-        }
-        data.push(row);
-      });
-      const ws=XLSX.utils.aoa_to_sheet(data);
-      ws['!cols']=[{wch:5},{wch:24},{wch:30},{wch:18},{wch:16},{wch:16},{wch:10},{wch:10},{wch:20},{wch:16},{wch:22},{wch:26}];
-      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Rows");
-      XLSX.writeFile(wb, `mzj-dashboard-${modalTitle.textContent.replace(/\s+/g,'-')}.xlsx`);
-    }else if(currentMode==='shortagesBranches'){
-      const header=["السيارة","البيان","اللون الخارجي","اللون الداخلي","الموديل","عدد الفرع","الإجمالي العام"];
-      const data=[header];
-      shortFiltered.forEach(s=> data.push([s.car,s.variant,s.extColor,s.intColor,s.modelYear,s.countBranch,s.countGlobal]));
-      const ws=XLSX.utils.aoa_to_sheet(data);
-      ws['!cols']=[{wch:24},{wch:20},{wch:16},{wch:16},{wch:10},{wch:12},{wch:14}];
-      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws, tabTitle(shortActiveKey));
-      XLSX.writeFile(wb, `mzj-shortages-branches-${tabTitle(shortActiveKey).replace(/\s+/g,'-')}.xlsx`);
-    }else if(currentMode==='shoot'){
-      const header=["رقم الطلب","التاريخ","مقدّم","عدد الهياكل","الحالة","استلام إداري","تجهيز","ملاحظات الإدارة"];
-      const data=[header];
-      filteredShoot.forEach(r=>{
-        data.push([r.id,r.createdAt||'',r.createdBy||'',(r.rows||[]).length,r.status||'',
-          r?.admin?.received||'', r?.admin?.prepared||'', r?.admin?.notes||'']);
-      });
-      const ws=XLSX.utils.aoa_to_sheet(data);
-      ws['!cols']=[{wch:8},{wch:18},{wch:14},{wch:10},{wch:12},{wch:18},{wch:14},{wch:22}];
-      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Shoot Requests");
-      XLSX.writeFile(wb, `mzj-photoshoot-requests-${(currentShootFilter||'ALL')}.xlsx`);
-    }else if(currentMode==='transfers'){
-      const header=["رقم الطلب","التاريخ","رقم الهيكل","من مكان","إلى مكان","ملاحظات","الموافقة الإدارية","الموافقة المالية","الحالة","تمت الموافقة في"];
-      const data=[header];
-      filteredTransfers.forEach(t=>{
-        const date = t.requestedAt||t.createdAt||t.date||'';
-        const vin = t.vin||t.chassis||'';
-        const fromLoc= t.from||t.fromLocation||t.source||'';
-        const toLoc= t.to||t.toLocation||t.target||'';
-        const note= t.note||t.message||'';
-        const adminOk   = (t.adminApproved === true || t.adminApproved === 'true' || t.adminApproval === true);
-        const financeOk = (t.financeApproved === true || t.financeApproved === 'true' || t.financeApproval === true);
-        const statusTxt = (adminOk && financeOk)? 'تمت الموافقة المالية والإدارية'
-                          : (!adminOk && !financeOk)? 'بانتظار الموافقة المالية والإدارية'
-                          : (!adminOk && financeOk)? 'بانتظار موافقة الإدارة'
-                          : 'بانتظار الموافقة المالية';
-        const approvedAt = t.adminApprovedAt||'';
-        data.push([t.id||'',date,vin,fromLoc,toLoc,note,adminOk?'✔':'',financeOk?'✔':'',statusTxt,approvedAt]);
-      });
-      const ws=XLSX.utils.aoa_to_sheet(data);
-      ws['!cols']=[{wch:8},{wch:18},{wch:22},{wch:20},{wch:20},{wch:30},{wch:16},{wch:16},{wch:22},{wch:18}];
-      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Transfer Requests");
-      XLSX.writeFile(wb,"mzj-transfer-requests.xlsx");
-    }
-  });
-
-  /* ===== Events ===== */
-  document.getElementById('shortagesCard').addEventListener('click', ()=> openShortagesModalBranches());
-
-  /* ===== Start ===== */
-  setStatus('warn','جارِ الاتصال…');
-</script>
-</body>
-</html>
+tableTransfersWrap.addEventListener
