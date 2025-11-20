@@ -8,7 +8,7 @@
 <!-- No-flash auth gate -->
 <style id="noFlash">
   html{background:#fff8ef}
-  body{opacity:0;transition:opacity .14s ease}
+  body{opacity:0;transition:.14s ease}
 </style>
 
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -224,7 +224,7 @@
     .grid-4,.grid-3,.grid-2{grid-template-columns:1fr}
   }
 
-  /* Inner tabs – نفس شكل البوردر في الصورة */
+  /* Inner tabs */
   .inner-tabs-header{
     display:flex;
     gap:10px;
@@ -414,12 +414,58 @@
   }
   .hint{color:var(--muted);font-size:12px}
 
-  /* حركة نقل السيارات */
+  /* حركة نقل السيارات – ستايل مثل الصورة ٢ */
+  .move-header-row{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:10px;
+  }
+  .move-to-block{
+    flex:1;
+    max-width:460px;
+  }
+  .move-header-row #btnAddMoveRow{
+    border-radius:999px;
+    white-space:nowrap;
+    padding-inline:16px;
+  }
+
+  .move-shell{
+    border-radius:18px;
+    border:1px solid #f3e7db;
+    background:#fff8ef;
+    padding:14px 16px 12px;
+    margin-top:8px;
+  }
+  .move-shell-top{
+    display:flex;
+    justify-content:flex-start;
+    margin-bottom:8px;
+  }
+  .move-shell-top .btn{
+    border-radius:999px;
+    font-size:12px;
+    padding-inline:14px;
+  }
+
   .move-row{
-    border:1px dashed var(--line-strong);
-    border-radius:12px;
-    padding:8px 10px;
-    background:#fffbf7;
+    border-bottom:1px solid #f3e7db;
+    border-radius:0;
+    padding:10px 0;
+    background:transparent;
+  }
+  .move-row:last-child{
+    border-bottom:none;
+  }
+  .move-row-actions{
+    display:flex;
+    justify-content:flex-start;
+    align-items:center;
+    margin-bottom:6px;
+    font-size:12px;
+    color:var(--muted);
   }
   .move-row-title{
     font-size:12px;
@@ -427,23 +473,19 @@
     color:var(--brown);
     margin-bottom:0;
   }
-  .move-row-actions{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:6px;
-    font-size:12px;
-    color:var(--muted);
+
+  .move-rows-grid{gap:8px;}
+
+  .move-actions-row{
+    margin-top:12px;
+    justify-content:flex-end;
   }
-  .move-row-remove{
-    border:none;
-    background:transparent;
-    color:var(--danger);
-    cursor:pointer;
-    font-size:11px;
-    display:inline-flex;
-    align-items:center;
-    gap:4px;
+  .move-actions-row .btn-primary{
+    background:var(--brown);
+    border-color:var(--brown);
+  }
+  .move-actions-row .btn-ghost{
+    border-radius:999px;
   }
 
   .checklist{
@@ -451,6 +493,7 @@
     border-radius:12px;
     background:#fffaf2;
     padding:10px;
+    margin-top:10px;
   }
   .checklist h4{
     margin:0 0 8px;
@@ -713,66 +756,73 @@
           </span>
         </div>
 
-        <!-- اختيار المكان (إلى) + إضافة صفوف -->
-        <div class="grid" style="gap:10px;margin-bottom:8px">
-          <div>
-            <label>إلى (مكان واحد لكل السيارات في هذه الحركة)</label>
+        <!-- اختيار المكان (إلى) + إضافة حركة أخرى -->
+        <div class="move-header-row">
+          <div class="move-to-block">
+            <label>إلى</label>
             <select id="moveToGlobal" class="select">
               <option value="">اختر المكان الجديد</option>
             </select>
           </div>
-          <div class="row" style="align-items:flex-end">
-            <button type="button" class="btn btn-ghost" id="btnAddMoveRow">
-              <i class="fa-solid fa-plus"></i> إضافة سيارة
+          <button type="button" class="btn btn-ghost" id="btnAddMoveRow">
+            <i class="fa-solid fa-plus"></i> إضافة حركة أخرى
+          </button>
+        </div>
+
+        <!-- الكارت الداخلي للحركة -->
+        <div class="move-shell">
+          <div class="move-shell-top">
+            <button type="button" class="btn btn-ghost" id="btnClearMoves">
+              مسح الحركة
             </button>
           </div>
-        </div>
 
-        <!-- صفوف النقل (ديناميكية) -->
-        <div id="moveRowsContainer" class="grid" style="gap:10px"></div>
+          <!-- صفوف النقل (ديناميكية) -->
+          <div id="moveRowsContainer" class="grid move-rows-grid"></div>
 
-        <!-- datalist للاقتراحات -->
-        <datalist id="vinHints"></datalist>
+          <!-- datalist للاقتراحات -->
+          <datalist id="vinHints"></datalist>
 
-        <!-- ملاحظات سيارات بها ملاحظات -->
-        <div id="notesIssuesBox" class="checklist" style="display:none;margin-top:10px">
-          <h4>ملاحظات عند النقل إلى <b>سيارات بها ملاحظات</b></h4>
-          <label for="issuesNotes">ملاحظات هذه السيارة</label>
-          <textarea id="issuesNotes" placeholder="مثال: خدوش بسيطة / انتظار قطع / …"></textarea>
-        </div>
-
-        <div class="row" style="margin-top:12px">
-          <button class="btn btn-ghost" id="btnFindByVin" title="عرض بيانات السيارة (أول سطر غير فارغ)">
-            <i class="fa-solid fa-magnifying-glass"></i> عرض البيانات
-          </button>
-          <button class="btn btn-primary" id="btnMove" title="تنفيذ النقل">
-            <i class="fa-solid fa-right-left"></i> نقل
-          </button>
-        </div>
-        <p class="hint" id="moveStatus" style="margin-top:8px"></p>
-
-        <!-- إشعار حركة النقل الكبير -->
-        <div id="moveAlert" class="move-alert">
-          <div class="icon">
-            <i class="fa-solid fa-circle-check"></i>
+          <!-- ملاحظات سيارات بها ملاحظات -->
+          <div id="notesIssuesBox" class="checklist" style="display:none">
+            <h4>ملاحظات عند النقل إلى <b>سيارات بها ملاحظات</b></h4>
+            <label for="issuesNotes">ملاحظات هذه السيارة</label>
+            <textarea id="issuesNotes" placeholder="مثال: خدوش بسيطة / انتظار قطع / …"></textarea>
           </div>
-          <div>
-            <div class="title" id="moveAlertTitle" style="font-weight:700;font-size:13px">نتيجة حركة النقل</div>
-            <ul id="moveAlertList"></ul>
-          </div>
-        </div>
 
-        <!-- بطاقة عرض بيانات السيارة -->
-        <div id="carDetailsBox" class="card" style="display:none">
-          <div class="section-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <rect x="3" y="4" width="18" height="16" rx="2"/>
-              <path d="M7 8h10"/>
-            </svg>
-            <h2 style="margin:0;font-size:15px;font-weight:800">عرض بيانات السيارة</h2>
+          <div class="row move-actions-row">
+            <button class="btn btn-ghost" id="btnFindByVin" title="عرض بيانات السيارة (أول سطر غير فارغ)">
+              <i class="fa-solid fa-magnifying-glass"></i> عرض البيانات
+            </button>
+            <button class="btn btn-primary" id="btnMove" title="تنفيذ النقل">
+              <i class="fa-solid fa-right-left"></i> نقل
+            </button>
           </div>
-          <div id="carDetails" style="margin-top:8px"></div>
-          <div id="carDetailsHint"></div>
+          <p class="hint" id="moveStatus" style="margin-top:6px"></p>
+
+          <!-- إشعار حركة النقل الكبير -->
+          <div id="moveAlert" class="move-alert">
+            <div class="icon">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+              <div class="title" id="moveAlertTitle" style="font-weight:700;font-size:13px">نتيجة حركة النقل</div>
+              <ul id="moveAlertList"></ul>
+            </div>
+          </div>
+
+          <!-- بطاقة عرض بيانات السيارة -->
+          <div id="carDetailsBox" class="card" style="display:none">
+            <div class="section-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <rect x="3" y="4" width="18" height="16" rx="2"/>
+                <path d="M7 8h10"/>
+              </svg>
+              <h2 style="margin:0;font-size:15px;font-weight:800">عرض بيانات السيارة</h2>
+            </div>
+            <div id="carDetails" style="margin-top:8px"></div>
+            <div id="carDetailsHint"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -866,6 +916,7 @@
   const moveAlert         = $('#moveAlert');
   const moveAlertTitle    = $('#moveAlertTitle');
   const moveAlertList     = $('#moveAlertList');
+  const btnClearMoves     = $('#btnClearMoves');
 
   /* Inner tabs */
   const innerTabs = document.querySelectorAll('.inner-tab');
@@ -1177,22 +1228,16 @@
     row.innerHTML = `
       <div class="move-row-actions">
         <div class="move-row-title">السيارة ${nextIndex}</div>
-        <button type="button" class="move-row-remove" title="حذف هذا السطر">
-          <i class="fa-solid fa-xmark"></i> حذف
-        </button>
       </div>
-      <div class="grid grid-3">
-        <div>
-          <label>رقم الهيكل</label>
-          <input class="move-vin input" list="vinHints" placeholder="اكتب رقم الهيكل"/>
-        </div>
+      <div class="grid grid-2">
         <div>
           <label>من (محدّد تلقائيًا)</label>
           <select class="move-from select" title="المكان الحالي"></select>
         </div>
         <div>
-          <label>الحالة</label>
-          <div class="muted-text">اكتب رقم الهيكل ليتم تحديد المكان الحالي تلقائيًا.</div>
+          <label>رقم الهيكل</label>
+          <input class="move-vin input" list="vinHints" placeholder="اكتب رقم الهيكل"/>
+          <div class="muted-text" style="margin-top:4px">اكتب رقم الهيكل ليتم تحديد المكان الحالي تلقائيًا.</div>
         </div>
       </div>
     `;
@@ -1201,22 +1246,12 @@
 
     const vinInput = row.querySelector('.move-vin');
     const fromSel  = row.querySelector('.move-from');
-    const removeBtn = row.querySelector('.move-row-remove');
 
     if(vinInput){
       vinInput.addEventListener('input', debounce(()=>{
         updateVinSuggestionsForPrefix(vinInput.value);
         autoFindByVinForInput(vinInput,false);
       },150));
-    }
-    if(removeBtn){
-      removeBtn.addEventListener('click', ()=>{
-        row.remove();
-        renumberMoveRows();
-        if(!getMoveRows().length){
-          createMoveRow();
-        }
-      });
     }
     if(fromSel){
       fromSel.disabled = false;
@@ -1346,6 +1381,21 @@
   moveToGlobal.addEventListener('change', updateRequirementBoxes);
 
   btnAddMoveRow.addEventListener('click', ()=>{ createMoveRow(); });
+
+  if(btnClearMoves){
+    btnClearMoves.addEventListener('click', ()=>{
+      moveRowsContainer.innerHTML='';
+      createMoveRow();
+      moveStatus.textContent='';
+      carDetailsBox.style.display='none';
+      hideMoveAlert();
+      if(vinHints) vinHints.innerHTML='';
+      issuesNotes.value='';
+      notesIssuesBox.style.display='none';
+      moveToGlobal.value='';
+      showToastMsg('تم مسح الحركة');
+    });
+  }
 
   btnMove.addEventListener('click', async ()=>{
     hideMoveAlert();
