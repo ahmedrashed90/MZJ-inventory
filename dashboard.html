@@ -79,7 +79,7 @@
     border:1px solid var(--line);
     border-radius:16px;
     box-shadow:0 28px 70px rgba(0,0,0,.35);
-    width:min(1400px,98vw);   /* تم التكبير */
+    width:min(1400px,98vw);
     max-height:90vh;
     display:flex;
     flex-direction:column
@@ -106,8 +106,8 @@
   .table-wrap{
     border:1px solid var(--line);
     border-radius:14px;
-    overflow-y:auto;      /* سكرول رأسي فقط */
-    overflow-x:visible;   /* بدون سكرول أفقي */
+    overflow-y:auto;
+    overflow-x:visible;
   }
   table{width:100%;border-collapse:separate;border-spacing:0}
   thead th{position:sticky;top:0;background:#fafafa;z-index:2;border-bottom:2px solid var(--line);text-align:right;color:#111827;font-size:13.5px;padding:10px}
@@ -206,7 +206,7 @@
       <div class="short-pills" id="shortagesPills"></div>
     </div>
 
-    <!-- Group Cards + تصوير -->
+    <!-- Group Cards + تصوير + طلبات نقل -->
     <div class="cards" id="groupsGrid"></div>
 
   </div>
@@ -299,6 +299,25 @@
         </table>
       </div>
 
+      <!-- جدول طلبات نقل السيارات -->
+      <div id="tableTransfersWrap" class="table-wrap" style="display:none">
+        <table id="modalTableTransfers">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>التاريخ</th>
+              <th>رقم الهيكل</th>
+              <th>من مكان</th>
+              <th>إلى مكان</th>
+              <th>ملاحظات</th>
+              <th>الحالة</th>
+              <th>الإجراء</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
       <!-- مربع تفاصيل طلب التصوير -->
       <div id="shootDetailsBox" class="card" style="margin-top:10px;display:none">
         <h4 style="margin:0 0 8px;color:var(--brown)">
@@ -368,8 +387,12 @@
   let shootRequests=[];
   let currentFilterKey = null;
 
-  // سياق الموافقات
-  let approvalContext = null; // { vin, kind }
+  // سياق الموافقات (مباع تحت التسليم)
+  let approvalContext = null;
+
+  // طلبات نقل السيارات (إلى مباع تم التسليم)
+  let transferRequests = [];
+  let filteredTransfers = [];
 
   // الجهات
   const groupsDef = [
@@ -436,6 +459,7 @@
       }else{
         stock=[]; moves=[]; models=[]; variantsMap={}; shootRequests=[];
       }
+      computeTransferRequests();
       renderAll();
     }catch(e){
       setStatus('warn','تعذّر تحميل البيانات');
@@ -451,6 +475,7 @@
         models= Array.isArray(d.models)? d.models: models;
         variantsMap = d.variantsMap || variantsMap;
         shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: shootRequests;
+        computeTransferRequests();
         renderAll();
         setStatus('ok','مزامنة حيّة');
       },()=> setStatus('warn','انقطاع المزامنة مؤقتًا'));
@@ -572,6 +597,51 @@
     gridEl.appendChild(card);
   }
 
+  /* ===== طلبات نقل السيارات: من moves ===== */
+  function isTransferPending(m){
+    const status = (m.status || '').toString();
+    const msg = (m.message || m.note || '').toString();
+    const needs = m.requiresAdminApproval || m.needAdminApproval || m.needsAdminApproval;
+    const approved = (m.adminApproved === true || m.adminApproval === true || status === 'approved');
+    if(approved) return false;
+    if(needs) return true;
+    if(/طلب نقل/.test(msg)) return true;
+    if(status === 'pending' || status === 'awaiting_admin') return true;
+    return false;
+  }
+
+  function computeTransferRequests(){
+    transferRequests = [];
+    if(!Array.isArray(moves)) return;
+    moves.forEach((m,idx)=>{
+      if(isTransferPending(m)){
+        transferRequests.push({ ...m, _idx: idx });
+      }
+    });
+  }
+
+  function renderTransferCard(gridEl){
+    const total = transferRequests.length;
+    const card = document.createElement('div');
+    card.className = 'card group-card';
+    card.id = 'transferCard';
+    card.innerHTML = `
+      <div class="group-head">
+        <div class="group-left">
+          <h3 class="group-title"><i class="fa-solid fa-right-left"></i> طلبات نقل السيارات</h3>
+          <div class="sub-metrics">
+            <span class="metric">
+              <i class="fa-solid fa-list-check"></i> بانتظار الموافقة: <b>${total.toLocaleString('ar-SA')}</b>
+            </span>
+          </div>
+        </div>
+        <div class="group-total" title="طلبات النقل بانتظار الموافقة">${total.toLocaleString('ar-SA')}</div>
+      </div>
+    `;
+    card.addEventListener('click', ()=> openTransfersModal());
+    gridEl.appendChild(card);
+  }
+
   /* ===== Render ===== */
   function renderShortagesCard(){
     const { total, summary } = computeShortagesSummaryBranches();
@@ -622,6 +692,9 @@
     /* بطاقة طلبات التصوير */
     renderShootCard(grid);
 
+    /* بطاقة طلبات نقل السيارات */
+    renderTransferCard(grid);
+
     // حدث الشرائح للجهات
     grid.addEventListener('click',(e)=>{
       const chip = e.target.closest('.chip');
@@ -640,7 +713,7 @@
     renderGroups();
   }
 
-  /* ===== Modal: rows + shortages (branches) + shoot ===== */
+  /* ===== Modal: rows + shortages (branches) + shoot + transfers ===== */
   const backdrop = $('#backdrop');
   const modalTitle = $('#modalTitle');
   const modalSearch = $('#modalSearch');
@@ -650,11 +723,13 @@
   const tableRowsWrap = $('#tableRowsWrap');
   const tableShortWrap= $('#tableShortWrap');
   const tableShootWrap= $('#tableShootWrap');
+  const tableTransfersWrap = $('#tableTransfersWrap');
 
   const modalTableRowsHead = $('#rowsHeadTr');
   const modalTableRowsBody  = document.querySelector('#modalTableRows tbody');
   const modalTableShortBody = document.querySelector('#modalTableShort tbody');
   const modalTableShootBody = document.querySelector('#modalTableShoot tbody');
+  const modalTableTransfersBody = document.querySelector('#modalTableTransfers tbody');
   const modalCount = $('#modalCount');
 
   const shortTabs = $('#shortTabs');
@@ -670,30 +745,46 @@
   const btnSaveApproval = $('#btnSaveApproval');
   const btnCancelApproval = $('#btnCancelApproval');
 
-  let currentMode = 'rows'; // 'rows' | 'shortagesBranches' | 'shoot'
+  let currentMode = 'rows'; // 'rows' | 'shortagesBranches' | 'shoot' | 'transfers'
   let currentRows = []; let filteredRows = [];
   let shortDataByKey = new Map(); let shortActiveKey = 'ALL'; let shortFiltered = [];
   let currentShoot = []; let filteredShoot = []; let currentShootFilter = 'ALL';
 
   function openModal(mode, title){
     currentMode = mode;
-    modalTitle.textContent = title || (mode==='rows'?'السيارات': mode==='shoot'?'طلبات التصوير':'النواقص — الفروع');
+    modalTitle.textContent = title || (
+      mode==='rows' ? 'السيارات' :
+      mode==='shoot' ? 'طلبات التصوير' :
+      mode==='transfers' ? 'طلبات نقل السيارات' :
+      'النواقص — الفروع'
+    );
+
     if(mode==='rows'){
       shortTabs.style.display='none';
       tableRowsWrap.style.display='block';
       tableShortWrap.style.display='none';
       tableShootWrap.style.display='none';
+      tableTransfersWrap.style.display='none';
     }else if(mode==='shortagesBranches'){
       shortTabs.style.display='flex';
       tableRowsWrap.style.display='none';
       tableShortWrap.style.display='block';
       tableShootWrap.style.display='none';
-    }else{
+      tableTransfersWrap.style.display='none';
+    }else if(mode==='shoot'){
       shortTabs.style.display='none';
       tableRowsWrap.style.display='none';
       tableShortWrap.style.display='none';
       tableShootWrap.style.display='block';
+      tableTransfersWrap.style.display='none';
+    }else if(mode==='transfers'){
+      shortTabs.style.display='none';
+      tableRowsWrap.style.display='none';
+      tableShortWrap.style.display='none';
+      tableShootWrap.style.display='none';
+      tableTransfersWrap.style.display='block';
     }
+
     modalSearch.value='';
     if(mode!=='shoot' && shootDetailsBox){
       shootDetailsBox.style.display='none';
@@ -912,7 +1003,8 @@
   function renderModal(){
     if(currentMode==='rows'){ renderRowsTable(); }
     else if(currentMode==='shortagesBranches'){ renderShortTable(); }
-    else { renderShootTable(); }
+    else if(currentMode==='shoot'){ renderShootTable(); }
+    else if(currentMode==='transfers'){ renderTransfersTable(); }
   }
 
   // فتح سيارات الجهة
@@ -1062,6 +1154,88 @@
     openShootDetails(id);
   });
 
+  /* ===== Transfers modal ===== */
+  function openTransfersModal(){
+    filteredTransfers = transferRequests.slice().sort((a,b)=>{
+      const ida = Number(a.id||0), idb = Number(b.id||0);
+      if(!isNaN(ida) && !isNaN(idb)) return idb-ida;
+      const da = a.requestedAt || a.createdAt || a.date || '';
+      const db = b.requestedAt || b.createdAt || b.date || '';
+      return db.localeCompare(da);
+    });
+    openModal('transfers','طلبات نقل السيارات');
+  }
+
+  function renderTransfersTable(){
+    modalTableTransfersBody.innerHTML = '';
+    filteredTransfers.forEach((t,idx)=>{
+      const idxInMoves = typeof t._idx === 'number' ? t._idx : -1;
+      const date = t.requestedAt || t.createdAt || t.date || '';
+      const vin = t.vin || t.chassis || '';
+      const fromLoc = t.from || t.fromLocation || t.source || '';
+      const toLoc = t.to || t.toLocation || t.target || '';
+      const note = t.note || t.message || '';
+      const approved = (t.adminApproved===true || t.adminApproval===true || (t.status||'')==='approved');
+      const statusTxt = approved
+        ? `✅ تمت الموافقة${t.adminApprovedAt ? ' — '+t.adminApprovedAt : ''}`
+        : 'بانتظار موافقة الإدارة';
+      const disabledAttr = approved || idxInMoves===-1 ? 'disabled' : '';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${t.id || (idx+1)}</td>
+        <td>${date}</td>
+        <td>${vin}</td>
+        <td>${fromLoc}</td>
+        <td>${toLoc}</td>
+        <td>${note}</td>
+        <td>${statusTxt}</td>
+        <td>
+          <button class="btn btn-outline btn-xs" data-transfer-idx="${idxInMoves}" ${disabledAttr}>
+            <i class="fa-solid fa-check"></i> موافقة الإدارة
+          </button>
+        </td>
+      `;
+      modalTableTransfersBody.appendChild(tr);
+    });
+    modalCount.textContent = `عدد طلبات النقل الظاهرة: ${filteredTransfers.length.toLocaleString('ar-SA')} من ${transferRequests.length.toLocaleString('ar-SA')}`;
+  }
+
+  async function approveTransfer(moveIdx){
+    const idx = Number(moveIdx);
+    if(isNaN(idx) || !moves[idx]){
+      showToast('تعذّر العثور على هذا الطلب');
+      return;
+    }
+    const m = moves[idx];
+    if(m.adminApproved === true || m.adminApproval === true || (m.status||'') === 'approved'){
+      showToast('تمت الموافقة على هذا الطلب مسبقًا');
+      return;
+    }
+    m.adminApproved = true;
+    m.adminApprovedAt = now();
+    m.status = 'approved';
+    m.requiresAdminApproval = false;
+    moves[idx] = m;
+    try{
+      await setDoc(STATE_REF, { moves }, { merge:true });
+      computeTransferRequests();
+      filteredTransfers = transferRequests.slice();
+      renderTransfersTable();
+      showToast('تمت الموافقة على طلب النقل');
+    }catch(e){
+      console.error(e);
+      setStatus('warn','تعذّر حفظ الموافقة على طلب النقل');
+    }
+  }
+
+  tableTransfersWrap.addEventListener('click',(e)=>{
+    const btn = e.target.closest('button[data-transfer-idx]');
+    if(!btn) return;
+    const idx = btn.getAttribute('data-transfer-idx');
+    if(idx==null || idx==='') return;
+    approveTransfer(idx);
+  });
+
   // بحث موحّد في المودال
   modalSearch.addEventListener('input', ()=>{
     const q = (modalSearch.value||'').trim().toLowerCase();
@@ -1078,7 +1252,7 @@
         const hay=[s.car,s.variant,s.extColor,s.intColor,s.modelYear, String(s.countBranch), String(s.countGlobal)].join(' ').toLowerCase();
         return hay.includes(q);
       });
-    }else{
+    }else if(currentMode==='shoot'){
       if(!q){
         filteredShoot = currentShoot.filter(r=> matchesShootFilter(r, currentShootFilter));
         return renderModal();
@@ -1092,6 +1266,18 @@
           return hay.includes(q);
         })
         .filter(r=> matchesShootFilter(r, currentShootFilter));
+    }else if(currentMode==='transfers'){
+      if(!q){
+        filteredTransfers = transferRequests.slice();
+        return renderModal();
+      }
+      filteredTransfers = transferRequests.filter(t=>{
+        const hay=[
+          t.id, t.vin, t.chassis, t.from, t.fromLocation, t.to, t.toLocation,
+          t.requestedAt, t.createdAt, t.date, t.note, t.message, t.status
+        ].join(' ').toLowerCase();
+        return hay.includes(q);
+      });
     }
     renderModal();
   });
@@ -1124,7 +1310,7 @@
       ws['!cols']=[{wch:24},{wch:20},{wch:16},{wch:16},{wch:10},{wch:12},{wch:14}];
       const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws, tabTitle(shortActiveKey));
       XLSX.writeFile(wb, `mzj-shortages-branches-${tabTitle(shortActiveKey).replace(/\s+/g,'-')}.xlsx`);
-    }else{ // shoot
+    }else if(currentMode==='shoot'){
       const header=["رقم الطلب","التاريخ","مقدّم","عدد الهياكل","الحالة","استلام إداري","تجهيز","ملاحظات الإدارة"];
       const data=[header];
       filteredShoot.forEach(r=>{
@@ -1135,6 +1321,24 @@
       ws['!cols']=[{wch:8},{wch:18},{wch:14},{wch:10},{wch:12},{wch:18},{wch:14},{wch:22}];
       const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Shoot Requests");
       XLSX.writeFile(wb, `mzj-photoshoot-requests-${(currentShootFilter||'ALL')}.xlsx`);
+    }else if(currentMode==='transfers'){
+      const header=["رقم الطلب","التاريخ","رقم الهيكل","من مكان","إلى مكان","ملاحظات","الحالة","تمت الموافقة في"];
+      const data=[header];
+      filteredTransfers.forEach(t=>{
+        const date = t.requestedAt||t.createdAt||t.date||'';
+        const vin = t.vin||t.chassis||'';
+        const fromLoc= t.from||t.fromLocation||t.source||'';
+        const toLoc= t.to||t.toLocation||t.target||'';
+        const note= t.note||t.message||'';
+        const approved = (t.adminApproved===true || t.adminApproval===true || (t.status||'')==='approved');
+        const statusTxt = approved? 'تمت الموافقة':'بانتظار الموافقة';
+        const approvedAt = t.adminApprovedAt||'';
+        data.push([t.id||'',date,vin,fromLoc,toLoc,note,statusTxt,approvedAt]);
+      });
+      const ws=XLSX.utils.aoa_to_sheet(data);
+      ws['!cols']=[{wch:8},{wch:18},{wch:22},{wch:20},{wch:20},{wch:30},{wch:16},{wch:18}];
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Transfer Requests");
+      XLSX.writeFile(wb,"mzj-transfer-requests.xlsx");
     }
   });
 
@@ -1146,7 +1350,3 @@
 </script>
 </body>
 </html>
-
-
-
-
