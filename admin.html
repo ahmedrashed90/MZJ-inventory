@@ -253,7 +253,7 @@ body{opacity:0;transition:opacity .12s ease;}
 <div class="container">
 <div class="inner-tabs">
 <button class="inner-tab active" data-target="tab-add">إضافة سيارة</button>
-<button class="inner-tab" data-target="tab-move">نقل السيارات</button><button class="inner-tab" data-target="tab-approve">طلب موافقة سيارة</button>
+<button class="inner-tab" data-target="tab-move">نقل السيارات</button>
 <button class="inner-tab" data-target="tab-edit">تعديل السيارات</button>
 <button class="inner-tab" data-target="tab-track">تتبع حركة رقم هيكل</button>
 <button class="inner-tab" data-target="tab-log">سجل الحركات</button>
@@ -454,7 +454,7 @@ body{opacity:0;transition:opacity .12s ease;}
 <p class="hint" id="carDetailsHint" style="margin-top:8px"></p>
 </div>
 </div>
-</div><div class="inner-tab-panel" id="tab-approve"><div class="card"><div class="card-header"><div class="section-title"><i class="fa-solid fa-file-signature"></i><h2 style="margin:0">طلب موافقة سيارة</h2></div><span class="hint">اكتب رقم الهيكل لطلب موافقة مالية وإدارية — يمكنك إضافة أكثر من طلب في نفس الوقت.</span></div><div class="row" style="gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap"><button class="btn btn-ghost" id="btnAddApproveRow" type="button"><i class="fa-solid fa-plus" style="margin-left:6px"></i>إضافة طلب آخر</button><div id="approveStatus" style="font-size:13px;color:var(--muted);margin-inline-start:auto"></div></div><div id="approveRowsContainer" style="margin-top:12px;display:flex;flex-direction:column;gap:12px;"></div><div class="row" style="margin-top:16px;justify-content:space-between;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" id="btnSendApprovals" type="button"><i class="fa-solid fa-paper-plane" style="margin-left:6px"></i>إرسال الطلبات للإدارة</button></div></div></div>
+</div>
 <div class="inner-tab-panel" id="tab-edit">
 <div class="card">
 <div class="card-header">
@@ -633,7 +633,7 @@ body{opacity:0;transition:opacity .12s ease;}
   function nextId(){return stock.length?Math.max(...stock.map(r=>Number(r.id)||0))+1:1}
   function debounce(fn,wait=250){let t;return (...args)=>{clearTimeout(t);t=setTimeout(()=>fn(...args),wait)};}
 
-  let stock=[], moves=[], models=[], variantsMap={}, approvalRequests=[];
+  let stock=[], moves=[], models=[], variantsMap={};
 
   /* ===== DOM refs ===== */
   const connDot=$('#connDot'), connText=$('#connText');
@@ -687,12 +687,6 @@ body{opacity:0;transition:opacity .12s ease;}
   const moveAlertTitle = $('#moveAlertTitle');
   const moveAlertList  = $('#moveAlertList');
 
-  // طلب موافقة سيارة
-  const approveRowsContainer = document.querySelector('#approveRowsContainer');
-  const btnAddApproveRow = document.querySelector('#btnAddApproveRow');
-  const btnSendApprovals = document.querySelector('#btnSendApprovals');
-  const approveStatus = $('#approveStatus');
-
   /* ===== Connection status ===== */
   function setStatus(mode, txt){
     connDot.className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'warn');
@@ -742,9 +736,8 @@ body{opacity:0;transition:opacity .12s ease;}
         moves = Array.isArray(d.moves)? d.moves: [];
         models = Array.isArray(d.models)? d.models: [];
         variantsMap = d.variantsMap || {};
-        approvalRequests = Array.isArray(d.approvalRequests)? d.approvalRequests: [];
       }else{
-        stock=[]; moves=[]; models=[]; variantsMap={}; approvalRequests=[];
+        stock=[]; moves=[]; models=[]; variantsMap={};
       }
       loadModelsIntoSelects();
       if(carSelect.value) populateVariants(carSelect.value);
@@ -763,7 +756,6 @@ body{opacity:0;transition:opacity .12s ease;}
         moves = Array.isArray(d.moves)? d.moves: moves;
         models= Array.isArray(d.models)? d.models: models;
         variantsMap = d.variantsMap || variantsMap;
-        approvalRequests = Array.isArray(d.approvalRequests)? d.approvalRequests: approvalRequests;
         loadModelsIntoSelects();
         if(carSelect.value) populateVariants(carSelect.value);
         renderTable(); renderMoves(); renderTrack();
@@ -775,7 +767,7 @@ body{opacity:0;transition:opacity .12s ease;}
   }
   async function persistAll(){
     try{
-      await setDoc(STATE_REF, { stock, moves, models, variantsMap, approvalRequests, updatedAt: now() }, { merge:true });
+      await setDoc(STATE_REF, { stock, moves, models, variantsMap, updatedAt: now() }, { merge:true });
       setStatus('ok','تم الحفظ');
     }catch(e){
       setStatus('err','تعذّر الحفظ'); showToast('تعذّر الحفظ إلى السحابة','err');
@@ -1367,10 +1359,11 @@ body{opacity:0;transition:opacity .12s ease;}
     const errors = [];
     const successLines = [];
 
-    for(const rowData of rowsWithVin){
+    
+for (const rowData of rowsWithVin){
       const norm = normalizeVin(rowData.vinRaw);
-      const recIdx = stock.findIndex(r=> normalizeVin(r.vin) === norm);
-      if(recIdx<0){
+      const recIdx = stock.findIndex(r => normalizeVin(r.vin) === norm);
+      if(recIdx < 0){
         errors.push(`لم يتم العثور على سيارة بهذا VIN: ${rowData.vinRaw}`);
         continue;
       }
@@ -1387,31 +1380,45 @@ body{opacity:0;transition:opacity .12s ease;}
         continue;
       }
 
-      if(goingDeliveredRow){
-        const history = moves.filter(m=> normalizeVin(m.vin||'') === norm);
-        const hasFullApproval = history.some(m=> m.adminApproved===true && m.financeApproved===true);
-        if(!hasFullApproval){
-          errors.push(`لا يمكن نقل ${rec.car||''} (${rec.vin||rowData.vinRaw}) إلى "مباع تم التسليم" قبل وجود حركة سابقة بموافقة مالية وإدارية مكتملة.`);
-          continue;
-        }
-      }
-
-      const noteText = (rowData.notesInput?.value||'').trim();
+      const noteText = (rowData.notesInput?.value || '').trim();
 
       if(goingIssuesRow && !noteText){
         errors.push(`يجب كتابة ملاحظة للسيارة ${rec.car||''} (${rec.vin||rowData.vinRaw}) عند النقل إلى مكان "سيارات بها ملاحظات".`);
         continue;
       }
 
+      // ميتاداتا أساسية للحركة / الطلب
       const moveMeta = {
-        adminApproved: goingUnderDeliveryRow ? !!chkAdminApproved.checked : null,
-        adminNotes: goingUnderDeliveryRow ? (adminNotes.value||'').trim() : '',
-        financeApproved: goingUnderDeliveryRow ? !!chkFinanceApproved.checked : null,
-        financeNotes: goingUnderDeliveryRow ? (financeNotes.value||'').trim() : '',
+        adminApproved: null,
+        adminNotes: '',
+        financeApproved: null,
+        financeNotes: '',
         issuesNotes: noteText
       };
 
       const oldLoc = rec.location || from;
+
+      if(goingDeliveredRow){
+        // في حالة "مباع تم التسليم": تسجيل طلب نقل فقط بدون تغيير مكان السيارة
+        const stamp = now();
+        moves.push({
+          when: stamp,
+          date: onlyDate(stamp),
+          vin: rec.vin || '',
+          car: rec.car || '',
+          from: oldLoc,
+          to: toVal,
+          id: rec.id,
+          ...moveMeta,
+          adminApproved: false,
+          financeApproved: false
+        });
+        movedCount++;
+        successLines.push(`تم تسجيل طلب نقل ${rec.car||''} (${rec.vin||rowData.vinRaw}) من "${oldLoc}" إلى "${toVal}" بانتظار موافقة الإدارة.`);
+        continue;
+      }
+
+      // الحركات العادية (نقل فعلي)
       rec.location = toVal;
       if(goingIssuesRow && noteText){
         const existingNotes = rec.notes || '';
@@ -1421,8 +1428,8 @@ body{opacity:0;transition:opacity .12s ease;}
       moves.push({
         when: stamp,
         date: onlyDate(stamp),
-        vin: rec.vin||'',
-        car: rec.car||'',
+        vin: rec.vin || '',
+        car: rec.car || '',
         from: oldLoc,
         to: toVal,
         id: rec.id,
@@ -1432,7 +1439,7 @@ body{opacity:0;transition:opacity .12s ease;}
       successLines.push(`تم نقل ${rec.car||''} (${rec.vin||rowData.vinRaw}) من "${oldLoc}" إلى "${toVal}".`);
     }
 
-    if(!movedCount){
+if(!movedCount){
       const title = 'لم يتم تنفيذ أي حركة نقل';
       const lines = errors.length ? errors : ['لم يتم تنفيذ أي حركة نقل.'];
       moveStatus.textContent = title;
@@ -1474,181 +1481,7 @@ body{opacity:0;transition:opacity .12s ease;}
     if(vinHints) vinHints.innerHTML='';
   });
 
-  
-  /* ===== طلب موافقة سيارة (متعددة الصفوف) ===== */
-  function createApproveRow(index){
-    const row = document.createElement('div');
-    row.className = 'approve-row card';
-    row.style.marginBottom = '10px';
-    row.innerHTML = `
-      <div class="row" style="justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px">
-        <div style="font-weight:700;color:var(--brown)">الطلب ${index}</div>
-        <button type="button" class="btn btn-ghost btn-small btn-remove-approve">
-          <i class="fa-solid fa-trash"></i> مسح الطلب
-        </button>
-      </div>
-      <div class="grid grid-3">
-        <div>
-          <label>رقم الهيكل</label>
-          <input class="approve-vin" list="vinHints" placeholder="اكتب رقم الهيكل">
-          <div class="approve-car-info" style="font-size:12px;color:var(--muted);margin-top:4px"></div>
-        </div>
-        <div>
-          <label>أنواع الموافقة المطلوبة</label>
-          <div style="display:flex;flex-direction:column;gap:6px;font-size:14px">
-            <label style="display:flex;align-items:center;gap:6px">
-              <input type="checkbox" class="approve-finance" checked> موافقة مالية
-            </label>
-            <label style="display:flex;align-items:center;gap:6px">
-              <input type="checkbox" class="approve-admin" checked> موافقة إدارية
-            </label>
-          </div>
-        </div>
-        <div>
-          <label>ملاحظات الطلب</label>
-          <textarea class="approve-notes" placeholder="اكتب أي تفاصيل تخص هذا الطلب (اختياري)"></textarea>
-        </div>
-      </div>
-    `;
-    attachApproveRowEvents(row);
-    return row;
-  }
-
-  function renumberApproveRows(){
-    if(!approveRowsContainer) return;
-    const rows = approveRowsContainer.querySelectorAll('.approve-row');
-    rows.forEach((row,idx)=>{
-      const title = row.querySelector('.row > div');
-      if(title) title.textContent = 'الطلب ' + (idx+1);
-    });
-  }
-
-  function attachApproveRowEvents(row){
-    const vinInput = row.querySelector('.approve-vin');
-    if(vinInput){
-      vinInput.addEventListener('input', debounce(()=>{
-        const raw = vinInput.value||'';
-        updateVinSuggestionsForPrefix(raw);
-        const norm = normalizeVin(raw);
-        const infoBox = row.querySelector('.approve-car-info');
-        if(!norm){
-          if(infoBox) infoBox.textContent = '';
-          return;
-        }
-        let match = stock.find(r=> normalizeVin(r.vin||'') === norm);
-        if(!match && norm.length>=8){
-          const cand = stock.filter(r=> normalizeVin(r.vin||'').startsWith(norm));
-          if(cand.length===1) match = cand[0];
-        }
-        if(match && infoBox){
-          const loc = match.location || 'غير محدد';
-          infoBox.textContent = `${match.car||''} — ${match.vin||norm} — المكان الحالي: ${loc}`;
-        }else if(infoBox){
-          infoBox.textContent = 'لم يتم العثور على سيارة بهذا الرقم حتى الآن.';
-        }
-      },200));
-    }
-    const btnRemove = row.querySelector('.btn-remove-approve');
-    if(btnRemove){
-      btnRemove.addEventListener('click', ()=>{
-        row.remove();
-        renumberApproveRows();
-      });
-    }
-  }
-
-  function ensureAtLeastOneApproveRow(){
-    if(!approveRowsContainer) return;
-    const count = approveRowsContainer.querySelectorAll('.approve-row').length;
-    if(count===0){
-      const row = createApproveRow(1);
-      approveRowsContainer.appendChild(row);
-    }
-    renumberApproveRows();
-  }
-
-  if(btnAddApproveRow){
-    btnAddApproveRow.addEventListener('click', ()=>{
-      const count = approveRowsContainer.querySelectorAll('.approve-row').length;
-      const row = createApproveRow(count+1);
-      approveRowsContainer.appendChild(row);
-      renumberApproveRows();
-    });
-  }
-
-  if(btnSendApprovals){
-    btnSendApprovals.addEventListener('click', async ()=>{
-      if(!approveRowsContainer) return;
-      const rows = Array.from(approveRowsContainer.querySelectorAll('.approve-row')).map(row=>({
-        row,
-        vinRaw:(row.querySelector('.approve-vin')?.value||'').trim(),
-        wantFinance: !!row.querySelector('.approve-finance')?.checked,
-        wantAdmin: !!row.querySelector('.approve-admin')?.checked,
-        notes:(row.querySelector('.approve-notes')?.value||'').trim()
-      }));
-      const valid = rows.filter(r=> normalizeVin(r.vinRaw) && (r.wantFinance || r.wantAdmin));
-      if(!valid.length){
-        const msg='لم يتم إدخال أي طلب صالح (رقم هيكل + نوع موافقة).';
-        approveStatus.textContent = msg;
-        showToast(msg,'info');
-        return;
-      }
-
-      let okCount=0;
-      const errors=[];
-      const nowStamp = now();
-
-      for(const item of valid){
-        const norm = normalizeVin(item.vinRaw);
-        const recIdx = stock.findIndex(r=> normalizeVin(r.vin||'') === norm);
-        if(recIdx<0){
-          errors.push(`لم يتم العثور على سيارة بهذا VIN: ${item.vinRaw}`);
-          continue;
-        }
-        const rec = stock[recIdx];
-
-        // تحديث حالة الموافقات في المخزون
-        let state = '';
-        if(item.wantFinance && item.wantAdmin) state='waiting_both';
-        else if(item.wantFinance) state='waiting_finance';
-        else if(item.wantAdmin) state='waiting_admin';
-        rec.approvalState = state;
-
-        const req = {
-          vin: rec.vin||item.vinRaw,
-          car: rec.car||'',
-          createdAt: nowStamp,
-          createdDate: onlyDate(nowStamp),
-          location: rec.location||'',
-          wantFinance:item.wantFinance,
-          wantAdmin:item.wantAdmin,
-          notes:item.notes||'',
-          state:state
-        };
-        approvalRequests.push(req);
-        okCount++;
-      }
-
-      if(!okCount){
-        const msg='لم يتم إرسال أي طلب موافقة بسبب أخطاء في الأرقام.';
-        approveStatus.textContent = msg;
-        showToast(msg,'err');
-        return;
-      }
-
-      try{
-        await persistAll();
-        const summary=`تم إرسال ${okCount} طلب موافقة.`;
-        approveStatus.textContent = summary;
-        showToast(summary, errors.length?'info':'ok');
-      }catch(e){
-        const msg='تعذّر حفظ طلبات الموافقة.';
-        approveStatus.textContent = msg;
-        showToast(msg,'err');
-      }
-    });
-  }
-/* ===== سجل الحركات (عرض + فلاتر التاريخ) ===== */
+  /* ===== سجل الحركات (عرض + فلاتر التاريخ) ===== */
   /* ===== سجل الحركات (عرض + فلاتر التاريخ) ===== */
   function filterMovesByDate(list){
     const f = movesFromDate.value || null;
@@ -1755,7 +1588,6 @@ body{opacity:0;transition:opacity .12s ease;}
   // تهيئة نموذج حركة النقل
   fillMoveLists();
   ensureAtLeastOneMoveRow();
-  ensureAtLeastOneApproveRow();
   updateRequirementBoxes();
 
   // إظهار/إخفاء ملاحظات كل سيارة حسب مكان (إلى)
