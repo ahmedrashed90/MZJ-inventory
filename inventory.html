@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" data-theme="light">
 <head>
@@ -743,75 +744,73 @@
 
       <!-- Tab 2: حركة نقل السيارات -->
       <div id="tab-moves" class="tab-panel">
-        <div class="card-header">
-          <div class="section-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path d="M7 10l5-5 5 5"/>
-              <path d="M7 14l5 5 5-5"/>
-            </svg>
-            <h2 style="margin:0;font-size:16px;font-weight:800">حركة نقل السيارات (برقم الهيكل)</h2>
-          </div>
-          <span class="hint">
-            يمكن نقل عدد مفتوح من السيارات — يتم تحديد <b>من</b> تلقائيًا بمجرد كتابة رقم الهيكل، و<b>إلى</b> مكان واحد لكل الحركة.
-          </span>
-        </div>
-
-        <!-- اختيار المكان (إلى) + إضافة حركة أخرى -->
-        <div class="move-header-row">
-          <div class="move-to-block">
-            <label>إلى</label>
-            <select id="moveToGlobal" class="select">
-              <option value="">اختر المكان الجديد</option>
-            </select>
-          </div>
-          <button type="button" class="btn btn-ghost" id="btnAddMoveRow">
-            <i class="fa-solid fa-plus"></i> إضافة حركة أخرى
-          </button>
-        </div>
-
-        <!-- الكارت الداخلي للحركة -->
-        <div class="move-shell">
-          <div class="move-shell-top">
-            <button type="button" class="btn btn-ghost" id="btnClearMoves">
-              مسح الحركة
-            </button>
-          </div>
-
-          <!-- صفوف النقل (ديناميكية) -->
-          <div id="moveRowsContainer" class="grid move-rows-grid"></div>
-
-          <!-- datalist للاقتراحات -->
-          <datalist id="vinHints"></datalist>
-
-          <!-- ملاحظات سيارات بها ملاحظات -->
-          <div id="notesIssuesBox" class="checklist" style="display:none">
-            <h4>ملاحظات عند النقل إلى <b>سيارات بها ملاحظات</b></h4>
-            <label for="issuesNotes">ملاحظات هذه السيارة</label>
-            <textarea id="issuesNotes" placeholder="مثال: خدوش بسيطة / انتظار قطع / …"></textarea>
-          </div>
-
-          <div class="row move-actions-row">
-            <button class="btn btn-ghost" id="btnFindByVin" title="عرض بيانات السيارة (أول سطر غير فارغ)">
-              <i class="fa-solid fa-magnifying-glass"></i> عرض البيانات
-            </button>
-            <button class="btn btn-primary" id="btnMove" title="تنفيذ النقل">
-              <i class="fa-solid fa-right-left"></i> نقل
-            </button>
-          </div>
-          <p class="hint" id="moveStatus" style="margin-top:6px"></p>
-
-          <!-- إشعار حركة النقل الكبير -->
-          <div id="moveAlert" class="move-alert">
-            <div class="icon">
-              <i class="fa-solid fa-circle-check"></i>
-            </div>
-            <div>
-              <div class="title" id="moveAlertTitle" style="font-weight:700;font-size:13px">نتيجة حركة النقل</div>
-              <ul id="moveAlertList"></ul>
-            </div>
-          </div>
-
-          <!-- بطاقة عرض بيانات السيارة -->
+<div class="inner-tab-panel" id="tab-move">
+<div class="card">
+<div class="card-header">
+<div class="section-title">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M7 10l5-5 5 5"></path><path d="M7 14l5 5 5-5"></path></svg>
+<h2 style="margin:0">حركة نقل السيارات (برقم الهيكل)</h2>
+</div>
+<span class="hint"> <b></b> </span>
+<div class="row" style="gap:8px;align-items:center;flex-wrap:wrap"><label>إلى</label><select id="moveToGlobal" title="المكان الجديد"></select></div></div>
+<!-- 8 صفوف نقل -->
+<div class="row" style="margin:8px 0 12px;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-ghost" id="btnAddMoveRow" type="button"><i class="fa-solid fa-plus"></i> إضافة حركة أخرى</button></div><div class="grid" id="moveRowsContainer" style="gap:10px"></div>
+<!-- datalist للاقتراحات -->
+<datalist id="vinHints"></datalist>
+<!-- Checklist يظهر فقط مع 'مباع تحت التسليم' -->
+<div class="checklist" id="underDeliveryBox" style="display:none; margin-top:10px">
+<h4>المتطلبات عند النقل إلى <b>مباع تحت التسليم</b></h4>
+<div class="grid grid-2">
+<div>
+<div class="check-row">
+<input id="chkAdminApproved" type="checkbox"/>
+<label for="chkAdminApproved">موافقة إدارية</label>
+</div>
+<label for="adminNotes" style="margin-top:6px">ملاحظات الموافقة الإدارية</label>
+<textarea id="adminNotes" placeholder="اكتب أي ملاحظات إدارية…"></textarea>
+</div>
+<div>
+<div class="check-row">
+<input id="chkFinanceApproved" type="checkbox"/>
+<label for="chkFinanceApproved">موافقة مالية</label>
+</div>
+<label for="financeNotes" style="margin-top:6px">ملاحظات الموافقة المالية</label>
+<textarea id="financeNotes" placeholder="اكتب أي ملاحظات مالية…"></textarea>
+</div>
+</div>
+</div>
+<!-- ملاحظات سيارات بها ملاحظات -->
+<div class="row" style="margin-top:12px">
+<button class="btn btn-ghost" id="btnFindByVin" title="عرض بيانات السيارة (أول سطر غير فارغ)">
+<i class="fa-solid fa-magnifying-glass"></i> عرض البيانات
+        </button>
+<button class="btn btn-primary" id="btnMove" title="تنفيذ النقل">
+<i class="fa-solid fa-right-left"></i> نقل
+        </button>
+</div>
+<p class="hint" id="moveStatus" style="margin-top:8px"></p>
+<!-- إشعار حركة النقل الكبير -->
+<div class="move-alert" id="moveAlert">
+<div class="icon">
+<i class="fa-solid fa-circle-check"></i>
+</div>
+<div>
+<div class="title" id="moveAlertTitle">نتيجة حركة النقل</div>
+<ul id="moveAlertList"></ul>
+</div>
+</div>
+<!-- بطاقة عرض بيانات السيارة -->
+<div class="card" id="carDetailsBox" style="display:none;margin-top:12px">
+<div class="section-title">
+<svg fill="none" stroke="currentColor" viewbox="0 0 24 24"><rect height="16" rx="2" width="18" x="3" y="4"></rect><path d="M7 8h10"></path></svg>
+<h2 style="margin:0">عرض بيانات السيارة</h2>
+</div>
+<div class="grid grid-2" id="carDetails" style="margin-top:8px"></div>
+<p class="hint" id="carDetailsHint" style="margin-top:8px"></p>
+</div>
+</div>
+</div>
+</div><!-- بطاقة عرض بيانات السيارة -->
           <div id="carDetailsBox" class="card" style="display:none">
             <div class="section-title">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
