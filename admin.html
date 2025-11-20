@@ -1399,7 +1399,7 @@ for (const rowData of rowsWithVin){
 
       const oldLoc = rec.location || from;
 
-      if(goingDeliveredRow){
+            if(goingDeliveredRow){
         // في حالة "مباع تم التسليم": تسجيل طلب نقل فقط بدون تغيير مكان السيارة
         const stamp = now();
         moves.push({
@@ -1414,18 +1414,19 @@ for (const rowData of rowsWithVin){
           // حالة الموافقات
           adminApproved: false,
           financeApproved: false,
-          // فلاغات توضح إن الطلب محتاج موافقة
+          // فلاغات توضح أن الطلب يحتاج موافقة
           requiresAdminApproval: true,
           requiresFinanceApproval: true,
-          // حالة الطلب
+          // حالة الطلب العامة
           status: 'pending',
-          // رسالة يقدر الـ dashboard يعتمد عليها عشان يعرف إنه طلب نقل
+          // رسالة توصيفية تظهر في الداش بورد
           message: 'طلب نقل السيارة بانتظار موافقة الإدارة والمالية'
         });
         movedCount++;
         successLines.push(`تم تسجيل طلب نقل ${rec.car||''} (${rec.vin||rowData.vinRaw}) من "${oldLoc}" إلى "${toVal}" بانتظار موافقة الإدارة والمالية.`);
         continue;
       }
+
 
       // الحركات العادية (نقل فعلي)
       rec.location = toVal;
