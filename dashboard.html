@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -621,42 +618,49 @@ body{opacity:0;transition:opacity .12s ease}
 
   /* ===== طلبات نقل السيارات: من moves ===== */
   
-function isTransferPending(m){
-  const toLoc = (m.to || m.toLocation || m.target || '').toString();
+  function isTransferPending(m){
+    const toLoc = (m.to || m.toLocation || m.target || '').toString();
+    const deliveredTargets = [
+      'المستودع : مباع تم التسليم',
+      'الوكالة : مباع تم التسليم',
+      'فرع 1 الصالة : مباع تم التسليم',
+      'فرع 2 الملتقى : مباع تم التسليم',
+      'فرع 3 القادسية : مباع تم التسليم'
+    ];
+    // لازم يكون التحويل إلى واحدة من حالات "مباع تم التسليم"
+    if (!deliveredTargets.includes(toLoc)) return false;
 
-  // أي حركة رايحة لحالة "مباع تم التسليم" بأي صياغة (فرع 1 الصالة : مباع تم التسليم، مباع تم التسليم - عميل فرد، إلخ)
-  if (!toLoc.includes('مباع تم التسليم')) return false;
+    const status = (m.status || '').toString();
+    if (status === 'cancelled' || status === 'rejected') return false;
 
-  const status = (m.status || '').toString();
-  if (status === 'cancelled' || status === 'rejected') return false;
+    // حالة الموافقات
+    const adminOk   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
+    const financeOk = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
 
-  // حالة الموافقات
-  const adminOk   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
-  const financeOk = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
+    // لو الاتنين موافقين خلاص مش محتاج يظهر في الطلبات
+    if (adminOk && financeOk) return false;
 
-  // لو الاتنين موافقين خلاص مش محتاج يظهر في الطلبات
-  if (adminOk && financeOk) return false;
+    // هل في فلاغ إن الطلب محتاج موافقة
+    const needsFlag =
+      m.requiresAdminApproval || m.needsAdminApproval ||
+      m.requiresFinanceApproval || m.needsFinanceApproval;
 
-  // هل في فلاغ إن الطلب محتاج موافقة
-  const needsFlag =
-    m.requiresAdminApproval || m.needsAdminApproval ||
-    m.requiresFinanceApproval || m.needsFinanceApproval;
+    // أو الاستاتس واضح إنه في انتظار موافقات
+    const statusFlag =
+      status === 'pending' ||
+      status === 'awaiting_admin' ||
+      status === 'awaiting_finance' ||
+      status === 'awaiting_approvals';
 
-  // أو الاستاتس واضح إنه في انتظار موافقات
-  const statusFlag =
-    status === 'pending' ||
-    status === 'awaiting_admin' ||
-    status === 'awaiting_finance' ||
-    status === 'awaiting_approvals';
+    // أو الرسالة فيها "طلب نقل" أو "بانتظار موافقة الإدارة"
+    const msg = (m.message || m.note || '').toString();
+    const msgFlag = /طلب نقل|بانتظار موافقة الإدارة/.test(msg);
 
-  // أو الرسالة فيها "طلب نقل" أو "بانتظار موافقة الإدارة"
-  const msg = (m.message || m.note || '').toString();
-  const msgFlag = /طلب نقل|بانتظار موافقة الإدارة/.test(msg);
+    return !!(needsFlag || statusFlag || msgFlag);
+  }
 
-  return !!(needsFlag || statusFlag || msgFlag);
-}
 
-function computeTransferRequests(){
+  function computeTransferRequests(){
     transferRequests = [];
     if(!Array.isArray(moves)) return;
     moves.forEach((m,idx)=>{
@@ -1457,5 +1461,3 @@ function computeTransferRequests(){
 </script>
 </body>
 </html>
-
-
