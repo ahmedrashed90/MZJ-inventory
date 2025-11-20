@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -310,6 +311,8 @@
               <th>من مكان</th>
               <th>إلى مكان</th>
               <th>ملاحظات</th>
+              <th>الموافقة الإدارية</th>
+              <th>الموافقة المالية</th>
               <th>الحالة</th>
               <th>الإجراء</th>
             </tr>
@@ -390,7 +393,7 @@
   // سياق الموافقات (مباع تحت التسليم)
   let approvalContext = null;
 
-  // طلبات نقل السيارات (إلى مباع تم التسليم)
+  // طلبات نقل السيارات (إلى مباع تم التسليم + تحتاج موافقة مالية وإدارية)
   let transferRequests = [];
   let filteredTransfers = [];
 
@@ -599,14 +602,35 @@
 
   /* ===== طلبات نقل السيارات: من moves ===== */
   function isTransferPending(m){
+    const toLoc = (m.to || m.toLocation || m.target || '').toString();
+    const deliveredTargets = [
+      'المستودع : مباع تم التسليم',
+      'الوكالة : مباع تم التسليم',
+      'فرع 1 الصالة : مباع تم التسليم',
+      'فرع 2 الملتقى : مباع تم التسليم',
+      'فرع 3 القادسية : مباع تم التسليم'
+    ];
+    if(!deliveredTargets.includes(toLoc)) return false;
+
     const status = (m.status || '').toString();
+    if(status === 'cancelled' || status === 'rejected') return false;
+
+    const adminOk   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
+    const financeOk = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
+
+    // لو الاتنين موافقين خلاص مش محتاج يظهر في الكارت
+    if(adminOk && financeOk) return false;
+
+    // لو في فلاغ صريح إن الطلب محتاج موافقة
+    if(m.requiresAdminApproval || m.needsAdminApproval || m.requiresFinanceApproval || m.needsFinanceApproval) return true;
+
+    // أو لو الاستاتس على انه طلب موافقة
+    if(status === 'pending' || status === 'awaiting_admin' || status === 'awaiting_approvals') return true;
+
+    // fallback: لو الرسالة فيها "طلب نقل"
     const msg = (m.message || m.note || '').toString();
-    const needs = m.requiresAdminApproval || m.needAdminApproval || m.needsAdminApproval;
-    const approved = (m.adminApproved === true || m.adminApproval === true || status === 'approved');
-    if(approved) return false;
-    if(needs) return true;
     if(/طلب نقل/.test(msg)) return true;
-    if(status === 'pending' || status === 'awaiting_admin') return true;
+
     return false;
   }
 
@@ -631,11 +655,11 @@
           <h3 class="group-title"><i class="fa-solid fa-right-left"></i> طلبات نقل السيارات</h3>
           <div class="sub-metrics">
             <span class="metric">
-              <i class="fa-solid fa-list-check"></i> بانتظار الموافقة: <b>${total.toLocaleString('ar-SA')}</b>
+              <i class="fa-solid fa-list-check"></i> بانتظار الموافقة المالية والإدارية: <b>${total.toLocaleString('ar-SA')}</b>
             </span>
           </div>
         </div>
-        <div class="group-total" title="طلبات النقل بانتظار الموافقة">${total.toLocaleString('ar-SA')}</div>
+        <div class="group-total" title="طلبات النقل بانتظار الموافقات">${total.toLocaleString('ar-SA')}</div>
       </div>
     `;
     card.addEventListener('click', ()=> openTransfersModal());
@@ -1175,11 +1199,17 @@
       const fromLoc = t.from || t.fromLocation || t.source || '';
       const toLoc = t.to || t.toLocation || t.target || '';
       const note = t.note || t.message || '';
-      const approved = (t.adminApproved===true || t.adminApproval===true || (t.status||'')==='approved');
-      const statusTxt = approved
-        ? `✅ تمت الموافقة${t.adminApprovedAt ? ' — '+t.adminApprovedAt : ''}`
-        : 'بانتظار موافقة الإدارة';
-      const disabledAttr = approved || idxInMoves===-1 ? 'disabled' : '';
+      const adminOk   = (t.adminApproved === true || t.adminApproved === 'true' || t.adminApproval === true);
+      const financeOk = (t.financeApproved === true || t.financeApproved === 'true' || t.financeApproval === true);
+      const statusTxt = (adminOk && financeOk)
+        ? `✅ تمت الموافقة المالية والإدارية${t.adminApprovedAt ? ' — '+t.adminApprovedAt : ''}`
+        : (!adminOk && !financeOk)
+          ? 'بانتظار الموافقة المالية والإدارية'
+          : (!adminOk && financeOk)
+            ? 'بانتظار موافقة الإدارة'
+            : 'بانتظار الموافقة المالية';
+
+      const disabledAttr = idxInMoves===-1 ? 'disabled' : '';
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${t.id || (idx+1)}</td>
@@ -1188,6 +1218,8 @@
         <td>${fromLoc}</td>
         <td>${toLoc}</td>
         <td>${note}</td>
+        <td style="text-align:center">${adminOk ? '✅' : '—'}</td>
+        <td style="text-align:center">${financeOk ? '✅' : '—'}</td>
         <td>${statusTxt}</td>
         <td>
           <button class="btn btn-outline btn-xs" data-transfer-idx="${idxInMoves}" ${disabledAttr}>
@@ -1207,13 +1239,17 @@
       return;
     }
     const m = moves[idx];
-    if(m.adminApproved === true || m.adminApproval === true || (m.status||'') === 'approved'){
-      showToast('تمت الموافقة على هذا الطلب مسبقًا');
+    const adminOk   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
+    if(adminOk){
+      showToast('تمت موافقة الإدارة على هذا الطلب مسبقًا');
       return;
     }
     m.adminApproved = true;
+    m.adminApproval = true;
     m.adminApprovedAt = now();
-    m.status = 'approved';
+    if(!m.status || m.status === 'pending' || m.status === 'awaiting_admin'){
+      m.status = 'awaiting_approvals';
+    }
     m.requiresAdminApproval = false;
     moves[idx] = m;
     try{
@@ -1221,7 +1257,7 @@
       computeTransferRequests();
       filteredTransfers = transferRequests.slice();
       renderTransfersTable();
-      showToast('تمت الموافقة على طلب النقل');
+      showToast('تمت موافقة الإدارة على طلب النقل');
     }catch(e){
       console.error(e);
       setStatus('warn','تعذّر حفظ الموافقة على طلب النقل');
@@ -1322,7 +1358,7 @@
       const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Shoot Requests");
       XLSX.writeFile(wb, `mzj-photoshoot-requests-${(currentShootFilter||'ALL')}.xlsx`);
     }else if(currentMode==='transfers'){
-      const header=["رقم الطلب","التاريخ","رقم الهيكل","من مكان","إلى مكان","ملاحظات","الحالة","تمت الموافقة في"];
+      const header=["رقم الطلب","التاريخ","رقم الهيكل","من مكان","إلى مكان","ملاحظات","الموافقة الإدارية","الموافقة المالية","الحالة","تمت الموافقة في"];
       const data=[header];
       filteredTransfers.forEach(t=>{
         const date = t.requestedAt||t.createdAt||t.date||'';
@@ -1330,13 +1366,17 @@
         const fromLoc= t.from||t.fromLocation||t.source||'';
         const toLoc= t.to||t.toLocation||t.target||'';
         const note= t.note||t.message||'';
-        const approved = (t.adminApproved===true || t.adminApproval===true || (t.status||'')==='approved');
-        const statusTxt = approved? 'تمت الموافقة':'بانتظار الموافقة';
+        const adminOk   = (t.adminApproved === true || t.adminApproved === 'true' || t.adminApproval === true);
+        const financeOk = (t.financeApproved === true || t.financeApproved === 'true' || t.financeApproval === true);
+        const statusTxt = (adminOk && financeOk)? 'تمت الموافقة المالية والإدارية'
+                          : (!adminOk && !financeOk)? 'بانتظار الموافقة المالية والإدارية'
+                          : (!adminOk && financeOk)? 'بانتظار موافقة الإدارة'
+                          : 'بانتظار الموافقة المالية';
         const approvedAt = t.adminApprovedAt||'';
-        data.push([t.id||'',date,vin,fromLoc,toLoc,note,statusTxt,approvedAt]);
+        data.push([t.id||'',date,vin,fromLoc,toLoc,note,adminOk?'✔':'',financeOk?'✔':'',statusTxt,approvedAt]);
       });
       const ws=XLSX.utils.aoa_to_sheet(data);
-      ws['!cols']=[{wch:8},{wch:18},{wch:22},{wch:20},{wch:20},{wch:30},{wch:16},{wch:18}];
+      ws['!cols']=[{wch:8},{wch:18},{wch:22},{wch:20},{wch:20},{wch:30},{wch:16},{wch:16},{wch:22},{wch:18}];
       const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Transfer Requests");
       XLSX.writeFile(wb,"mzj-transfer-requests.xlsx");
     }
