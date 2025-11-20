@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 
 <html dir="rtl" lang="ar">
@@ -1410,11 +1411,19 @@ for (const rowData of rowsWithVin){
           to: toVal,
           id: rec.id,
           ...moveMeta,
+          // حالة الموافقات
           adminApproved: false,
-          financeApproved: false
+          financeApproved: false,
+          // فلاغات توضح إن الطلب محتاج موافقة
+          requiresAdminApproval: true,
+          requiresFinanceApproval: true,
+          // حالة الطلب
+          status: 'pending',
+          // رسالة يقدر الـ dashboard يعتمد عليها عشان يعرف إنه طلب نقل
+          message: 'طلب نقل السيارة بانتظار موافقة الإدارة والمالية'
         });
         movedCount++;
-        successLines.push(`تم تسجيل طلب نقل ${rec.car||''} (${rec.vin||rowData.vinRaw}) من "${oldLoc}" إلى "${toVal}" بانتظار موافقة الإدارة.`);
+        successLines.push(`تم تسجيل طلب نقل ${rec.car||''} (${rec.vin||rowData.vinRaw}) من "${oldLoc}" إلى "${toVal}" بانتظار موافقة الإدارة والمالية.`);
         continue;
       }
 
