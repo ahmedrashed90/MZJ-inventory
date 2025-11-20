@@ -1,7 +1,20 @@
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<link rel="prefetch" href="admin.html">
+<link rel="prefetch" href="inventory.html">
+<link rel="prefetch" href="dashboard.html">
+<link rel="prefetch" href="photoshoot.html">
+<link rel="prefetch" href="photoshoot-user.html">
+<link rel="prefetch" href="cars.html">
+<link rel="prefetch" href="Activity.html">
+<style id="noFlash">
+#authGate{display:none!important}
+html{background:#fff8ef}
+body{opacity:0;transition:opacity .12s ease}
+</style>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>لوحة المؤشرات — MZJ Cars</title>
@@ -194,7 +207,7 @@
   <div class="container">
 
     <!-- Shortages Summary Card (Branches only) -->
-    <div class="card short-card" id="shortagesCard" title="عرض النواقص لأفرع المعارض (حسب السيارة + البيان + الألوان + الموديل | العدد داخل الفرع = 8)">
+    <div class="card short-card" id="shortagesCard" title="عرض النواقص لأفرع المعارض (حسب السيارة + البيان + الألوان + الموديل | العدد داخل الفرع = 0)">
       <div class="group-head">
         <div class="group-left">
           <h3 class="group-title"><i class="fa-solid fa-list-check"></i> النواقص — الفروع فقط</h3>
@@ -422,6 +435,9 @@
 
   /* ===== Auth Gate ===== */
   onAuthStateChanged(auth, async (user)=>{
+    const noFlash = document.getElementById('noFlash');
+    if(noFlash){ noFlash.remove(); }
+    document.body.style.opacity='1';
     if(user){
       $('#authGate').style.display='none';
       $('#app').style.display='block';
@@ -504,14 +520,16 @@
   }
   function globalTotalsByCombo(){ return countByCombo(stock); }
   function computeBranchShortages(group){
-    const rows = rowsForMembers(group.members);
-    const byCombo = countByCombo(rows);
-    const glob    = globalTotalsByCombo();
+    const rowsBranch = rowsForMembers(group.members);
+    const byComboBranch = countByCombo(rowsBranch);
+    const glob = globalTotalsByCombo();
     const res=[];
-    byCombo.forEach((cnt,k)=>{
-      if(cnt===1){
+    glob.forEach((countGlobal,k)=>{
+      const countBranch = byComboBranch.get(k) || 0;
+      // نقص = مفيش ولا عربية من التركيبة دي في الفرع، لكن موجودة في الإجمالي
+      if(countBranch===0){
         const [car,variant,extColor,intColor,modelYear] = k.split('⇢');
-        res.push({ car, variant, extColor, intColor, modelYear, countBranch: cnt, countGlobal: glob.get(k)||cnt });
+        res.push({ car, variant, extColor, intColor, modelYear, countBranch, countGlobal });
       }
     });
     res.sort((a,b)=>
@@ -601,6 +619,7 @@
   }
 
   /* ===== طلبات نقل السيارات: من moves ===== */
+  
   function isTransferPending(m){
     const toLoc = (m.to || m.toLocation || m.target || '').toString();
     const deliveredTargets = [
@@ -610,29 +629,38 @@
       'فرع 2 الملتقى : مباع تم التسليم',
       'فرع 3 القادسية : مباع تم التسليم'
     ];
-    if(!deliveredTargets.includes(toLoc)) return false;
+    // لازم يكون التحويل إلى واحدة من حالات "مباع تم التسليم"
+    if (!deliveredTargets.includes(toLoc)) return false;
 
     const status = (m.status || '').toString();
-    if(status === 'cancelled' || status === 'rejected') return false;
+    if (status === 'cancelled' || status === 'rejected') return false;
 
+    // حالة الموافقات
     const adminOk   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
     const financeOk = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
 
-    // لو الاتنين موافقين خلاص مش محتاج يظهر في الكارت
-    if(adminOk && financeOk) return false;
+    // لو الاتنين موافقين خلاص مش محتاج يظهر في الطلبات
+    if (adminOk && financeOk) return false;
 
-    // لو في فلاغ صريح إن الطلب محتاج موافقة
-    if(m.requiresAdminApproval || m.needsAdminApproval || m.requiresFinanceApproval || m.needsFinanceApproval) return true;
+    // هل في فلاغ إن الطلب محتاج موافقة
+    const needsFlag =
+      m.requiresAdminApproval || m.needsAdminApproval ||
+      m.requiresFinanceApproval || m.needsFinanceApproval;
 
-    // أو لو الاستاتس على انه طلب موافقة
-    if(status === 'pending' || status === 'awaiting_admin' || status === 'awaiting_approvals') return true;
+    // أو الاستاتس واضح إنه في انتظار موافقات
+    const statusFlag =
+      status === 'pending' ||
+      status === 'awaiting_admin' ||
+      status === 'awaiting_finance' ||
+      status === 'awaiting_approvals';
 
-    // fallback: لو الرسالة فيها "طلب نقل"
+    // أو الرسالة فيها "طلب نقل" أو "بانتظار موافقة الإدارة"
     const msg = (m.message || m.note || '').toString();
-    if(/طلب نقل/.test(msg)) return true;
+    const msgFlag = /طلب نقل|بانتظار موافقة الإدارة/.test(msg);
 
-    return false;
+    return !!(needsFlag || statusFlag || msgFlag);
   }
+
 
   function computeTransferRequests(){
     transferRequests = [];
@@ -1190,26 +1218,33 @@
     openModal('transfers','طلبات نقل السيارات');
   }
 
+  
   function renderTransfersTable(){
     modalTableTransfersBody.innerHTML = '';
     filteredTransfers.forEach((t,idx)=>{
       const idxInMoves = typeof t._idx === 'number' ? t._idx : -1;
-      const date = t.requestedAt || t.createdAt || t.date || '';
-      const vin = t.vin || t.chassis || '';
-      const fromLoc = t.from || t.fromLocation || t.source || '';
-      const toLoc = t.to || t.toLocation || t.target || '';
-      const note = t.note || t.message || '';
-      const adminOk   = (t.adminApproved === true || t.adminApproved === 'true' || t.adminApproval === true);
-      const financeOk = (t.financeApproved === true || t.financeApproved === 'true' || t.financeApproval === true);
-      const statusTxt = (adminOk && financeOk)
-        ? `✅ تمت الموافقة المالية والإدارية${t.adminApprovedAt ? ' — '+t.adminApprovedAt : ''}`
-        : (!adminOk && !financeOk)
-          ? 'بانتظار الموافقة المالية والإدارية'
-          : (!adminOk && financeOk)
-            ? 'بانتظار موافقة الإدارة'
-            : 'بانتظار الموافقة المالية';
+      const date   = t.requestedAt || t.createdAt || t.date || '';
+      const vin    = t.vin || t.chassis || '';
+      const fromLoc= t.from || t.fromLocation || t.source || '';
+      const toLoc  = t.to || t.toLocation || t.target || '';
+      const note   = t.note || t.message || '';
 
-      const disabledAttr = idxInMoves===-1 ? 'disabled' : '';
+      const adminOk   = (t.adminApproved===true || t.adminApproved==='true' || t.adminApproval===true);
+      const financeOk = (t.financeApproved===true || t.financeApproved==='true' || t.financeApproval===true);
+
+      const adminStatusTxt = adminOk
+        ? (t.adminApprovedAt ? 'إداري: موافق (' + t.adminApprovedAt + ')' : 'إداري: موافق')
+        : 'إداري: بانتظار';
+
+      const financeStatusTxt = financeOk
+        ? (t.financeApprovedAt ? 'مالية: موافق (' + t.financeApprovedAt + ')' : 'مالية: موافق')
+        : 'مالية: بانتظار';
+
+      const statusTxt = adminStatusTxt + ' — ' + financeStatusTxt;
+
+      const adminDisabledAttr   = (adminOk || idxInMoves===-1) ? 'disabled' : '';
+      const financeDisabledAttr = (financeOk || idxInMoves===-1) ? 'disabled' : '';
+
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${t.id || (idx+1)}</td>
@@ -1222,8 +1257,11 @@
         <td style="text-align:center">${financeOk ? '✅' : '—'}</td>
         <td>${statusTxt}</td>
         <td>
-          <button class="btn btn-outline btn-xs" data-transfer-idx="${idxInMoves}" ${disabledAttr}>
-            <i class="fa-solid fa-check"></i> موافقة الإدارة
+          <button class="btn btn-outline btn-xs" data-transfer-idx="${idxInMoves}" data-transfer-kind="admin" ${adminDisabledAttr}>
+            <i class="fa-solid fa-user-check"></i> موافقة الإدارة
+          </button>
+          <button class="btn btn-outline btn-xs" data-transfer-idx="${idxInMoves}" data-transfer-kind="finance" ${financeDisabledAttr}>
+            <i class="fa-solid fa-coins"></i> موافقة مالية
           </button>
         </td>
       `;
@@ -1232,44 +1270,79 @@
     modalCount.textContent = `عدد طلبات النقل الظاهرة: ${filteredTransfers.length.toLocaleString('ar-SA')} من ${transferRequests.length.toLocaleString('ar-SA')}`;
   }
 
-  async function approveTransfer(moveIdx){
+
+
+  async function approveTransfer(moveIdx, kind){
     const idx = Number(moveIdx);
-    if(isNaN(idx) || !moves[idx]){
+    if (isNaN(idx) || !moves[idx]) {
       showToast('تعذّر العثور على هذا الطلب');
       return;
     }
     const m = moves[idx];
-    const adminOk   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
-    if(adminOk){
-      showToast('تمت موافقة الإدارة على هذا الطلب مسبقًا');
+    const isAdmin   = (kind === 'admin');
+    const isFinance = (kind === 'finance');
+
+    if (!isAdmin && !isFinance) {
+      showToast('نوع الموافقة غير معروف');
       return;
     }
-    m.adminApproved = true;
-    m.adminApproval = true;
-    m.adminApprovedAt = now();
-    if(!m.status || m.status === 'pending' || m.status === 'awaiting_admin'){
+
+    if (isAdmin) {
+      const adminOk = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
+      if (adminOk) {
+        showToast('تمت موافقة الإدارة على هذا الطلب مسبقًا');
+        return;
+      }
+      m.adminApproved   = true;
+      m.adminApproval   = true;
+      m.adminApprovedAt = now();
+    } else if (isFinance) {
+      const financeOk = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
+      if (financeOk) {
+        showToast('تمت الموافقة المالية على هذا الطلب مسبقًا');
+        return;
+      }
+      m.financeApproved   = true;
+      m.financeApproval   = true;
+      m.financeApprovedAt = now();
+    }
+
+    // تحديث حالة الطلب العامة بناءً على الموافقتين
+    const adminOkNow   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
+    const financeOkNow = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
+
+    if (adminOkNow && financeOkNow) {
+      m.status = 'approved';
+      m.requiresAdminApproval   = false;
+      m.needsAdminApproval      = false;
+      m.requiresFinanceApproval = false;
+      m.needsFinanceApproval    = false;
+    } else {
       m.status = 'awaiting_approvals';
     }
-    m.requiresAdminApproval = false;
+
     moves[idx] = m;
     try{
       await setDoc(STATE_REF, { moves }, { merge:true });
       computeTransferRequests();
       filteredTransfers = transferRequests.slice();
       renderTransfersTable();
-      showToast('تمت موافقة الإدارة على طلب النقل');
+      showToast(isAdmin ? 'تمت موافقة الإدارة على طلب النقل' : 'تمت الموافقة المالية على طلب النقل');
     }catch(e){
       console.error(e);
       setStatus('warn','تعذّر حفظ الموافقة على طلب النقل');
     }
   }
 
+
+
   tableTransfersWrap.addEventListener('click',(e)=>{
     const btn = e.target.closest('button[data-transfer-idx]');
     if(!btn) return;
     const idx = btn.getAttribute('data-transfer-idx');
     if(idx==null || idx==='') return;
-    approveTransfer(idx);
+    const kind = btn.getAttribute('data-transfer-kind') || 'admin';
+    approveTransfer(idx, kind);
   });
 
   // بحث موحّد في المودال
