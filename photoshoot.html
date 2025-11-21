@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -77,10 +78,11 @@ body{opacity:0;transition:opacity .12s ease}
   textarea{min-height:44px}
   input[readonly]{background:#f9fafb;color:#6b7280}
   .small-input{padding:6px 9px;border-radius:10px;font-size:13px}
+  .req-type{min-width:110px;font-weight:700;text-align:center}
 
   /* Tables */
-  .table-wrap{overflow:hidden;border:1px solid var(--line);border-radius:14px}
-  table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+  .table-wrap{width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+  table{width:100%;border-collapse:separate;border-spacing:0;table-layout:auto}
   thead th{position:sticky;top:0;background:var(--table-head);z-index:2;border-bottom:1px solid var(--line-strong);
     text-align:right;color:#111827;font-size:12px;padding:8px 8px;white-space:normal;line-height:1.35}
   tbody td{border-top:1px solid var(--line);padding:6px 8px;vertical-align:middle;font-size:13px;white-space:normal;word-break:break-word;line-height:1.45}
@@ -202,7 +204,7 @@ body{opacity:0;transition:opacity .12s ease}
         <div class="row" style="margin-bottom:4px">
           <div style="flex:1;min-width:400px">
             <label for="reqBy">مقدّم الطلب</label>
-            <input id="reqBy" class="small-input" value="أحمد ناجي" readonly title="محدد تلقائيًا"/>
+            <input id="reqBy" class="small-input" readonly title="محدد تلقائيًا من المستخدم"/>
           </div>
         </div>
 
@@ -210,7 +212,7 @@ body{opacity:0;transition:opacity .12s ease}
           <table id="entryTable">
             <colgroup>
               <col style="width:4ch">
-              <col style="width:9ch">
+              <col style="width:14ch">
               <col style="width:11ch">
               <col style="width:15ch">
               <col style="width:16ch">
@@ -315,7 +317,7 @@ body{opacity:0;transition:opacity .12s ease}
         <div class="row" style="margin-bottom:8px">
           <div style="flex:1;min-width:220px">
             <label for="moveReqBy">مقدّم طلب النقل</label>
-            <input id="moveReqBy" class="small-input" value="أحمد ناجي" readonly title="محدد تلقائيًا"/>
+            <input id="moveReqBy" class="small-input" readonly title="محدد تلقائيًا من المستخدم"/>
           </div>
         </div>
 
@@ -664,10 +666,10 @@ body{opacity:0;transition:opacity .12s ease}
       renderMoveRequestsTable();
 
       const rb = $('#reqBy'); 
-      if(rb){ rb.value= user.displayName || 'أحمد ناجي'; rb.setAttribute('readonly','readonly'); }
+      if(rb){ rb.value = user.displayName || user.email || ''; rb.setAttribute('readonly','readonly'); }
 
       const mb = $('#moveReqBy');
-      if(mb){ mb.value = user.displayName || user.email || 'أحمد ناجي'; mb.setAttribute('readonly','readonly'); }
+      if(mb){ mb.value = user.displayName || user.email || ''; mb.setAttribute('readonly','readonly'); }
 
       document.body.style.opacity='1';
     }else{
@@ -783,7 +785,7 @@ body{opacity:0;transition:opacity .12s ease}
     const rb = $('#reqBy'); 
     if(rb){ 
       const u = auth.currentUser;
-      rb.value = (u?.displayName)||'أحمد ناجي'; 
+      rb.value = (u?.displayName) || (u?.email) || '';
       rb.setAttribute('readonly','readonly'); 
     }
   }
@@ -851,7 +853,7 @@ body{opacity:0;transition:opacity .12s ease}
   }
 
   async function saveNewRequest(statusLabel){
-    const by = ($('#reqBy').value||'').trim() || 'أحمد ناجي';
+    const by = ($('#reqBy').value||'').trim();
     const rows = collectFormRows();
     if(statusLabel!=='مسودة' && rows.length===0) return showToast('أدخل هيكل واحد على الأقل','info');
 
