@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -564,15 +565,19 @@ body{opacity:0;transition:opacity .12s ease}
     return { available, notes, pending, delivered, actualTotal, keysTotal };
   }
 
-  /* ===== تصوير: إحصائيات + بطاقة ===== */
+  /* ===== تصوير + نقل: إحصائيات + بطاقة ===== */
   function shootStats(){
-    const total = shootRequests.length;
+    const shootTotal = shootRequests.length;
+    const transferTotal = Array.isArray(transferRequests) ? transferRequests.length : 0;
+    const total = shootTotal + transferTotal;
+
     const drafts = shootRequests.filter(r=> (r.status||'')==='مسودة').length;
     const inprog = shootRequests.filter(r=> (r.status||'')==='تحت الإجراء').length;
     const done   = shootRequests.filter(r=> (r.status||'')==='تم التصوير').length;
     const received = shootRequests.filter(r=> r?.admin?.received).length;
     const prepared = shootRequests.filter(r=> r?.admin?.prepared).length;
-    return { total, drafts, inprog, done, received, prepared };
+
+    return { total, shootTotal, transferTotal, drafts, inprog, done, received, prepared };
   }
 
   function renderShootCard(gridEl){
@@ -583,23 +588,38 @@ body{opacity:0;transition:opacity .12s ease}
     card.innerHTML = `
       <div class="group-head">
         <div class="group-left">
-          <h3 class="group-title"><i class="fa-solid fa-camera-retro"></i> طلبات التصوير</h3>
+          <h3 class="group-title">
+            <i class="fa-solid fa-camera-retro"></i>
+            طلبات التصوير والنقل
+          </h3>
           <div class="sub-metrics">
             <span class="metric shoot-metric" data-metric="ALL">
-              <i class="fa-solid fa-list-ol"></i> الإجمالي: <b>${st.total.toLocaleString('ar-SA')}</b>
+              <i class="fa-solid fa-list-ol"></i>
+              إجمالي الطلبات :
+              <b>${st.total.toLocaleString('ar-SA')}</b>
+              — تصوير: <b>${st.shootTotal.toLocaleString('ar-SA')}</b>
+              | نقل: <b>${st.transferTotal.toLocaleString('ar-SA')}</b>
             </span>
             <span class="metric shoot-metric" data-metric="received">
-              <i class="fa-solid fa-inbox"></i> استلام إداري: <b>${st.received.toLocaleString('ar-SA')}</b>
+              <i class="fa-solid fa-inbox"></i>
+              تم الاستلام الإداري:
+              <b>${st.received.toLocaleString('ar-SA')}</b>
             </span>
             <span class="metric shoot-metric" data-metric="prepared">
-              <i class="fa-solid fa-wand-magic-sparkles"></i> تم التجهيز: <b>${st.prepared.toLocaleString('ar-SA')}</b>
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              تم التجهيز:
+              <b>${st.prepared.toLocaleString('ar-SA')}</b>
             </span>
             <span class="metric shoot-metric" data-metric="done">
-              <i class="fa-solid fa-camera"></i> تم التصوير: <b>${st.done.toLocaleString('ar-SA')}</b>
+              <i class="fa-solid fa-camera"></i>
+              تم التصوير:
+              <b>${st.done.toLocaleString('ar-SA')}</b>
             </span>
           </div>
         </div>
-        <div class="group-total" title="إجمالي الطلبات">${st.total.toLocaleString('ar-SA')}</div>
+        <div class="group-total" title="إجمالي الطلبات">
+          ${st.total.toLocaleString('ar-SA')}
+        </div>
       </div>
     `;
 
