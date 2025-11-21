@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -6,7 +7,7 @@
 <title>MZJ إدارة الطلبات</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
-<style id="noflash">html{background:#fff8ef}body{opacity:0;transition:opacity .12s ease}</style>
+<style id="noFlash">#authGate,#app{display:none!important}html{background:#fff8ef}body{opacity:0;transition:opacity .12s ease}</style>
 <meta name="color-scheme" content="light"/>
 <style>
   :root{
@@ -370,7 +371,7 @@
         <div class="row no-print">
           <button class="btn secondary" id="btnModalReceived"><i class="fa-regular fa-handshake"></i> تأكيد الاستلام</button>
           <button class="btn beige" id="btnReceiveAndMove"><i class="fa-solid fa-truck-fast"></i> تأكيد التجهيز ونقل السيارة</button>
-          <button class="btn" id="btnPrintReq"><i class="fa-solid fa-print"></i> طباعة الطلب</button>
+          <button class="btn" id="btnDoneShoot"><i class="fa-solid fa-check"></i> تم التصوير</button>
           <button class="btn secondary" id="reqModalClose"><i class="fa-solid fa-xmark"></i> إغلاق</button>
         </div>
       </header>
@@ -818,6 +819,22 @@
     showToast('تم تأكيد الاستلام ✅');
   }
 
+  async function markDoneShoot(id){
+    const idx = shootRequests.findIndex(x=> Number(x.id)===Number(id));
+    if(idx===-1){ showToast('الطلب غير موجود'); return; }
+    const req = {...shootRequests[idx], status:'تم'};
+    shootRequests[idx] = req;
+    await logActivity(
+      'تحديث حالة طلب تصوير إلى تم',
+      `تحديث حالة طلب التصوير #${id} إلى تم`,
+      { requestId:id, entityType:'photoshoot_request', entityId:id }
+    );
+    await persistAll();
+    metrics();
+    render();
+    showToast('تم تحديث حالة الطلب إلى تم التصوير');
+  }
+
   const reqModal = $('#reqModal');
   const reqModalClose = $('#reqModalClose');
   const reqModalTitle = $('#reqModalTitle');
@@ -827,7 +844,7 @@
   const reqCarsTable = $('#reqCarsTable');
   const btnModalReceived = $('#btnModalReceived');
   const btnReceiveAndMove = $('#btnReceiveAndMove');
-  const btnPrintReq = $('#btnPrintReq');
+  const btnDoneShoot = $('#btnDoneShoot');
 
   let modalCurrentId = null;
   let currentMoveId = null;
@@ -879,7 +896,7 @@
 
     btnModalReceived.onclick = async ()=>{ if(modalCurrentId!=null) await markReceived(modalCurrentId); };
     btnReceiveAndMove.onclick = async ()=>{ if(modalCurrentId!=null) await receiveAndMoveAndMoveCars(modalCurrentId); };
-    btnPrintReq.onclick = ()=>{ window.print(); };
+    btnDoneShoot.onclick = async ()=>{ if(modalCurrentId!=null) await markDoneShoot(modalCurrentId); };
 
     reqModal.style.display='flex';
     reqModal.setAttribute('aria-hidden','false');
@@ -1129,20 +1146,21 @@
   moveModal.addEventListener('click',(e)=>{ if(e.target===moveModal){ moveModalClose.click(); } });
 
   onAuthStateChanged(auth, async (user)=>{
+    const nf = document.getElementById('noFlash') || document.getElementById('noflash');
+    if(nf) nf.remove();
+
     if(user){
       $('#authGate').style.display='none';
       $('#app').style.display='block';
       $('#btnSignOut').style.display='inline-block';
       setStatus('ok', `متصل: ${displayNameFor(user)}`);
       await initData(); subscribeLive(); metrics(); render();
-      document.body.style.opacity='1';
-    }else{
+        }else{
       $('#app').style.display='none';
       $('#authGate').style.display='block';
       $('#btnSignOut').style.display='none';
       setStatus('', 'لم يتم تسجيل الدخول');
-      document.body.style.opacity='1';
-    }
+        }
   });
   $('#btnLogin').addEventListener('click', async ()=>{
     $('#authHint').textContent='';
@@ -1203,7 +1221,6 @@
     setKindFilter('');
   });
 
-  document.body.style.opacity='1';
 </script>
 </body>
 </html>
