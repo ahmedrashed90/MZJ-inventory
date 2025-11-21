@@ -11,6 +11,11 @@
 <link rel="prefetch" href="photoshoot-user.html">
 <link rel="prefetch" href="cars.html">
 <link rel="prefetch" href="Activity.html">
+<style id="noFlash">
+#authGate{display:none!important}
+html{background:#fff8ef}
+body{opacity:0;transition:opacity .12s ease}
+</style>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>لوحة المؤشرات — MZJ Cars</title>
@@ -177,12 +182,29 @@
     </div>
     <div class="row">
       <div class="status-badge"><span id="connDot" class="dot warn"></span><span id="connText">جارِ الاتصال…</span></div>
+      <button id="btnSignOut" class="btn btn-ghost" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
     </div>
   </div>
 </div>
 
+<!-- Auth Gate -->
+<div id="authGate" style="min-height:60vh;display:grid;place-items:center;padding:24px">
+  <div class="card" style="max-width:440px;width:96%">
+    <h2 style="margin:0 0 10px;color:var(--brown)">تسجيل الدخول</h2>
+    <label>البريد الإلكتروني</label>
+    <input id="email" class="input" type="email" placeholder="you@example.com"/>
+    <label style="margin-top:8px">كلمة المرور</label>
+    <input id="password" class="input" type="password" placeholder="••••••••"/>
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
+      <button class="btn btn-outline" id="btnSignup">إنشاء حساب</button>
+    </div>
+    <p class="hint" id="authHint" style="margin-top:10px"></p>
+  </div>
+</div>
+
 <!-- App -->
-<div id="app">
+<div id="app" style="display:none">
   <div class="container">
 
     <!-- Shortages Summary Card (Branches only) -->
@@ -351,6 +373,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   /* ===== Firebase ===== */
@@ -363,23 +386,9 @@
     appId: "1:834700407721:web:75c17665d4f032fd65cab8"
   };
   const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
   const db   = getFirestore(app);
   const STATE_REF = doc(db, "mzj_admin_state", "v1");
-  // تشغيل الداش بورد مباشرة بدون تسجيل دخول (بدون شاشة تسجيل الدخول)
-  document.addEventListener('DOMContentLoaded', async ()=>{
-    try{
-      const appEl = document.getElementById('app');
-      if(appEl) appEl.style.display='block';
-      document.body.style.opacity='1';
-      await initData();
-      subscribeLive();
-      setStatus('ok','متصل — بدون تسجيل دخول');
-    }catch(e){
-      console.error(e);
-      setStatus('warn','تعذّر تحميل البيانات');
-    }
-  });
-
 
   /* ===== Helpers ===== */
   const $ = s => document.querySelector(s);
@@ -424,6 +433,37 @@
   // فروع لبطاقة النواقص
   const branchKeys = ['BR1','BR2','BR3'];
   const branchGroups = () => groupsDef.filter(g=> branchKeys.includes(g.key));
+
+  /* ===== Auth Gate ===== */
+  onAuthStateChanged(auth, async (user)=>{
+    const noFlash = document.getElementById('noFlash');
+    if(noFlash){ noFlash.remove(); }
+    document.body.style.opacity='1';
+    if(user){
+      $('#authGate').style.display='none';
+      $('#app').style.display='block';
+      $('#btnSignOut').style.display='inline-flex';
+      setStatus('ok', `متصل: ${user.email}`);
+      await initData();
+      subscribeLive();
+    }else{
+      $('#app').style.display='none';
+      $('#authGate').style.display='grid';
+      $('#btnSignOut').style.display='none';
+      setStatus('warn','لم يتم تسجيل الدخول');
+    }
+  });
+  $('#btnLogin').addEventListener('click', async ()=>{
+    $('#authHint').textContent='';
+    try{ await signInWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
+    catch(e){ $('#authHint').textContent='فشل تسجيل الدخول: '+(e?.message||e); }
+  });
+  $('#btnSignup').addEventListener('click', async ()=>{
+    $('#authHint').textContent='';
+    try{ await createUserWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
+    catch(e){ $('#authHint').textContent='تعذّر إنشاء الحساب: '+(e?.message||e); }
+  });
+  $('#btnSignOut').addEventListener('click', ()=> signOut(auth));
 
   /* ===== Data ===== */
   async function initData(){
@@ -1226,6 +1266,7 @@ function computeTransferRequests(){
 
 
 
+  
   async function approveTransfer(moveIdx, kind){
     const idx = Number(moveIdx);
     if (isNaN(idx) || !moves[idx]) {
@@ -1241,6 +1282,7 @@ function computeTransferRequests(){
       return;
     }
 
+    // تحديث بيانات الطلب نفسه
     if (isAdmin) {
       const adminOk = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
       if (adminOk) {
@@ -1266,29 +1308,43 @@ function computeTransferRequests(){
     const financeOkNow = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
 
     if (adminOkNow && financeOkNow) {
+      // تمّت الموافقة المالية والإدارية معًا
       m.status = 'approved';
       m.requiresAdminApproval   = false;
       m.needsAdminApproval      = false;
       m.requiresFinanceApproval = false;
       m.needsFinanceApproval    = false;
+
+      // ✅ نقل السيارة تلقائيًا للمكان المكتوب في الطلب
+      const toLoc = (m.to || m.toLocation || m.target || '').toString();
+      const stockIndex = stock.findIndex(r => String(r.vin) === String(m.vin));
+      if (stockIndex !== -1 && toLoc) {
+        stock[stockIndex].location   = toLoc;
+        if ('place' in stock[stockIndex]) {
+          stock[stockIndex].place  = toLoc;
+        }
+        // في حالة مباع تم التسليم نعلّمها كـ delivered
+        if (toLoc.includes('مباع تم التسليم')) {
+          stock[stockIndex].delivered   = true;
+          stock[stockIndex].deliveredAt = now();
+        }
+        // مزامنة فلاغ الموافقات في المخزون أيضًا (لو حابب تستخدمها في شاشات ثانية)
+        if (isAdmin) {
+          stock[stockIndex].adminApproved = true;
+          stock[stockIndex].adminApproval = true;
+        }
+        if (isFinance) {
+          stock[stockIndex].financeApproved = true;
+          stock[stockIndex].financeApproval = true;
+        }
+      }
     } else {
+      // لسه في موافقة ناقصة
       m.status = 'awaiting_approvals';
     }
 
-    // ربط الموافقات مع نفس السيارة في المخزون
-    const stockIndex = stock.findIndex(r => String(r.vin) === String(m.vin));
-    if (stockIndex !== -1) {
-      if (isAdmin) {
-        stock[stockIndex].adminApproved = true;
-        stock[stockIndex].adminApproval = true;
-      }
-      if (isFinance) {
-        stock[stockIndex].financeApproved = true;
-        stock[stockIndex].financeApproval = true;
-      }
-    }
-
     moves[idx] = m;
+
     try{
       await setDoc(STATE_REF, { moves, stock }, { merge:true });
       computeTransferRequests();
