@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -9,7 +10,8 @@
 
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<style id="noflash">
+<style id="noFlash">
+#authGate,#app{display:none!important}
 html{background:#fff8ef}
 body{opacity:0;transition:opacity .12s ease}
 </style>
@@ -182,7 +184,6 @@ body{opacity:0;transition:opacity .12s ease}
     <!-- التابات الداخلية -->
     <div class="inner-tabs">
       <button class="inner-tab active" data-tab="tab-shoot">طلب تصوير</button>
-      <button class="inner-tab" data-tab="tab-move">طلب نقل</button>
     </div>
 
     <!-- تاب طلب تصوير -->
@@ -193,7 +194,7 @@ body{opacity:0;transition:opacity .12s ease}
         <div class="card-header">
           <div class="section-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7h16M4 17h10"/><circle cx="17" cy="17" r="3"/></svg>
-            <h2>إنشاء طلب تصوير</h2>
+            <h2>إنشاء طلب</h2>
           </div>
           <span class="hint">اكتب رقم الهيكل</span>
         </div>
@@ -209,6 +210,7 @@ body{opacity:0;transition:opacity .12s ease}
           <table id="entryTable">
             <colgroup>
               <col style="width:4ch">
+              <col style="width:13ch">
               <col style="width:11ch">
               <col style="width:15ch">
               <col style="width:16ch">
@@ -223,6 +225,7 @@ body{opacity:0;transition:opacity .12s ease}
             <thead>
               <tr>
                 <th class="center">#</th>
+                <th>نوع الطلب</th>
                 <th>رقم الهيكل</th>
                 <th>السيارة</th>
                 <th>البيان</th>
@@ -230,7 +233,7 @@ body{opacity:0;transition:opacity .12s ease}
                 <th>الداخلي</th>
                 <th class="center">الموديل</th>
                 <th>مكان السيارة</th>
-                <th>مكان التصوير</th>
+                <th id="placeHeader">مكان التصوير</th>
                 <th>ملاحظة</th>
                 <th class="center">حذف</th>
               </tr>
@@ -247,7 +250,7 @@ body{opacity:0;transition:opacity .12s ease}
       </div>
 
       <!-- متابعة طلبات التصوير -->
-      <div class="card">
+      <div class="card" style="display:none">
         <div class="card-header">
           <div class="section-title">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
@@ -645,6 +648,8 @@ body{opacity:0;transition:opacity .12s ease}
 
   /* ===== Auth ===== */
   onAuthStateChanged(auth, async (user)=>{
+    const nf = document.getElementById('noFlash') || document.getElementById('noflash');
+    if(nf) nf.remove();
     if(user){
       $('#authGate').style.display='none';
       $('#app').style.display='block';
@@ -653,6 +658,7 @@ body{opacity:0;transition:opacity .12s ease}
       await initData();
       subscribeLive();
       buildFormRows();
+      updatePlaceHeader();
       buildMoveRows();
       renderRequestsTable();
       renderMoveRequestsTable();
@@ -748,6 +754,12 @@ body{opacity:0;transition:opacity .12s ease}
       const tr=document.createElement('tr');
       tr.innerHTML = `
         <td class="center">${i+1}</td>
+        <td>
+          <select class="req-type small-input">
+            <option value="shoot" selected>طلب تصوير</option>
+            <option value="move">طلب نقل</option>
+          </select>
+        </td>
         <td><input class="vin mono small-input" placeholder="VIN"></td>
         <td><input class="car small-input" readonly placeholder="—"></td>
         <td><input class="variant small-input" readonly placeholder="—"></td>
@@ -775,8 +787,23 @@ body{opacity:0;transition:opacity .12s ease}
       rb.setAttribute('readonly','readonly'); 
     }
   }
-  $('#btnClear').addEventListener('click', buildFormRows);
+  function updatePlaceHeader(){
+    const header = document.getElementById('placeHeader');
+    if(!header) return;
+    const anyMove = Array.from(document.querySelectorAll('#reqRows .req-type')).some(sel => sel.value === 'move');
+    header.textContent = anyMove ? 'مكان النقل' : 'مكان التصوير';
+  }
+  $('#btnClear').addEventListener('click', ()=>{
+    buildFormRows();
+    updatePlaceHeader();
+  });
 
+  // تحديث العنوان عند تغيير نوع الطلب
+  reqRowsBody.addEventListener('change',(e)=>{
+    if(e.target.classList && e.target.classList.contains('req-type')){
+      updatePlaceHeader();
+    }
+  });
   // حذف صف تصوير
   reqRowsBody.addEventListener('click',(e)=>{
     const b=e.target.closest('.btn-row-del'); if(!b) return;
@@ -846,6 +873,7 @@ body{opacity:0;transition:opacity .12s ease}
       details: `عدد الهياكل: ${rows.length}`
     });
     buildFormRows();
+    updatePlaceHeader();
     renderRequestsTable();
     showToast(statusLabel==='مسودة'?'تم حفظ المسودة':'تم إرسال طلب التصوير','ok');
   }
