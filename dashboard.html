@@ -403,6 +403,7 @@ body{opacity:0;transition:opacity .12s ease}
   /* ===== State ===== */
   let stock=[], moves=[], models=[], variantsMap={};
   let shootRequests=[];
+  let moveRequests=[];
   let currentFilterKey = null;
 
   // سياق الموافقات (مباع تحت التسليم)
@@ -477,8 +478,9 @@ body{opacity:0;transition:opacity .12s ease}
         models = Array.isArray(d.models)? d.models: [];
         variantsMap = d.variantsMap || {};
         shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: [];
+        moveRequests  = Array.isArray(d.moveRequests)? d.moveRequests: [];
       }else{
-        stock=[]; moves=[]; models=[]; variantsMap={}; shootRequests=[];
+        stock=[]; moves=[]; models=[]; variantsMap={}; shootRequests=[]; moveRequests=[];
       }
       computeTransferRequests();
       renderAll();
@@ -496,6 +498,7 @@ body{opacity:0;transition:opacity .12s ease}
         models= Array.isArray(d.models)? d.models: models;
         variantsMap = d.variantsMap || variantsMap;
         shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: shootRequests;
+        moveRequests  = Array.isArray(d.moveRequests)? d.moveRequests: moveRequests;
         computeTransferRequests();
         renderAll();
         setStatus('ok','مزامنة حيّة');
@@ -568,7 +571,7 @@ body{opacity:0;transition:opacity .12s ease}
   /* ===== تصوير + نقل: إحصائيات + بطاقة ===== */
   function shootStats(){
     const shootTotal = shootRequests.length;
-    const transferTotal = Array.isArray(transferRequests) ? transferRequests.length : 0;
+    const transferTotal = Array.isArray(moveRequests) ? moveRequests.length : 0;
     const total = shootTotal + transferTotal;
 
     const drafts = shootRequests.filter(r=> (r.status||'')==='مسودة').length;
@@ -595,9 +598,9 @@ body{opacity:0;transition:opacity .12s ease}
           <div class="sub-metrics">
             <span class="metric shoot-metric" data-metric="ALL">
               <i class="fa-solid fa-list-ol"></i>
-              إجمالي الطلبات :
+              إجمالي الطلبات:
               <b>${st.total.toLocaleString('ar-SA')}</b>
-              — تصوير: <b>${st.shootTotal.toLocaleString('ar-SA')}</b>
+              --- تصوير: <b>${st.shootTotal.toLocaleString('ar-SA')}</b>
               | نقل: <b>${st.transferTotal.toLocaleString('ar-SA')}</b>
             </span>
             <span class="metric shoot-metric" data-metric="received">
