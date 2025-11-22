@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -241,7 +242,7 @@
     createUserWithEmailAndPassword, signOut 
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
-    getFirestore, collection, query, orderBy, limit, onSnapshot
+    getFirestore, collection, query, orderBy, limit, onSnapshot, doc, getDoc
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   /* ===== Firebase ===== */
@@ -256,6 +257,53 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getFirestore(app);
+
+  /* ===== Roles & Permissions ===== */
+  const ROLE_ADMIN   = 'الادارة';
+  const ROLE_IDARI   = 'اداري';
+  const ROLE_BRANCH  = 'مدراء فروع';
+
+  // الصفحات المسموح بها لكل تصنيف (للتابات)
+  const ROLE_PAGES = {
+    [ROLE_ADMIN] : 'ALL',
+    [ROLE_IDARI] : ['photoshoot.html','photoshoot-user.html','cars.html'],
+    [ROLE_BRANCH]: ['dashboard.html']
+  };
+
+  // صفحة سجل النشاط متاحة للإدارة فقط
+  const PAGE_ALLOWED_ROLES = [ROLE_ADMIN];
+
+  async function fetchUserRole(user){
+    try{
+      const snap = await getDoc(doc(db, 'user', user.uid));
+      if(snap.exists()){
+        const data = snap.data() || {};
+        return data.role || null;
+      }
+    }catch(e){
+      console.error('Error fetching user role', e);
+    }
+    return null;
+  }
+
+  function applyTabsVisibility(role){
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab=>{
+      const href = tab.getAttribute('href') || '';
+      const page = (href.split('/').pop() || '').split('?')[0];
+      if(!page) return;
+      const perm = ROLE_PAGES[role];
+      if(!perm){
+        tab.style.display='none';
+        return;
+      }
+      if(perm === 'ALL') return;
+      if(!perm.includes(page)){
+        tab.style.display='none';
+      }
+    });
+  }
+
 
   /* ===== Helpers ===== */
   const $ = s => document.querySelector(s);
@@ -285,10 +333,19 @@
   /* ===== Auth Gate ===== */
   onAuthStateChanged(auth, async (user)=>{
     if(user){
+      const role = await fetchUserRole(user);
+
+      // لو ملوش دور أو مش من المسموح لهم يشوفوا سجل النشاط
+      if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
+        window.location.href = 'unauthorized.html';
+        return;
+      }
+
       $('#authGate').style.display='none';
       $('#app').style.display='block';
       $('#btnSignOut').style.display='inline-flex';
-      setStatus('ok', `متصل: ${user.email}`);
+      setStatus('ok', `متصل: ${user.email} — الدور: ${role}`);
+      applyTabsVisibility(role);
       subscribeLogs();
     }else{
       $('#app').style.display='none';
@@ -297,8 +354,7 @@
       setStatus('warn','لم يتم تسجيل الدخول');
     }
   });
-
-  $('#btnLogin').addEventListener('click', async ()=>{
+$('#btnLogin').addEventListener('click', async ()=>{
     $('#authHint').textContent='';
     try{
       await signInWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value);
