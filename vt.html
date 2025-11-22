@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -300,10 +301,9 @@
 
   <!-- no-flash style -->
   <style id="noFlash">
-    html{background:#fff8ef;}
-    body{opacity:0;transition:opacity .12s ease;}
-    #authGate{display:none !important;}
-  </style>
+  html{background:#fff8ef;}
+  body{opacity:0;}
+</style>
 </head>
 <body>
   <!-- Topbar + Tabs -->
@@ -339,7 +339,7 @@
   </div>
 
   <!-- Auth Gate -->
-  <div class="auth-wrap" id="authGate">
+  <div class="auth-wrap" id="authGate" style="display:none">
     <div class="auth-card">
       <h2>تسجيل الدخول</h2>
       <label for="email">البريد الإلكتروني</label>
@@ -588,7 +588,13 @@
       });
     }
 
-    /* ===== Helpers ===== */
+    function liftNoFlash(){
+  const nf = document.getElementById('noFlash');
+  if(nf) nf.remove();
+  document.body.style.opacity = '1';
+}
+
+/* ===== Helpers ===== */
     const $ = s => document.querySelector(s);
     const toast = $('#toast');
     function showToast(msg,type='ok'){
@@ -663,34 +669,35 @@
 
     /* ===== Auth Gate ===== */
     onAuthStateChanged(auth, async (user)=>{
-      const noFlash = document.getElementById('noFlash');
-      if(noFlash) noFlash.remove();
-      document.body.style.opacity='1';
-
-      if(user){
-        const role = await fetchUserRole(user);
-
-        // لو ملوش دور أو مش من المسموح لهم يشوفوا الصفحة
-        if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
-          window.location.href = 'unauthorized.html';
-          return;
-        }
-
-        authGate.style.display='none';
-        appRoot.style.display='block';
-        btnSignOut.style.display='inline-flex';
-        setStatus('ok', `متصل: ${user.email} — الدور: ${role}`);
-        applyTabsVisibility(role);
-        await initData();
-        subscribeLive();
-      }else{
-        appRoot.style.display='none';
-        authGate.style.display='grid';
-        btnSignOut.style.display='none';
-        setStatus('warn','لم يتم تسجيل الدخول');
+  if(user){
+    try{
+      const role = await fetchUserRole(user);
+      if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
+        window.location.href = 'unauthorized.html';
+        return;
       }
-    });
-    btnLogin.addEventListener('click', async ()=>{
+      authGate.style.display='none';
+      appRoot.style.display='block';
+      btnSignOut.style.display='inline-flex';
+      setStatus('ok', `متصل: ${user.email} — الدور: ${role}`);
+      applyTabsVisibility(role);
+      liftNoFlash();
+      await initData();
+      subscribeLive();
+    }catch(err){
+      console.error(err);
+      setStatus('err','خطأ في تحميل البيانات');
+      liftNoFlash();
+    }
+  }else{
+    appRoot.style.display='none';
+    authGate.style.display='grid';
+    btnSignOut.style.display='none';
+    setStatus('warn','لم يتم تسجيل الدخول');
+    liftNoFlash();
+  }
+});
+btnLogin.addEventListener('click', async ()=>{
       authHint.textContent='';
       try{
         await signInWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value);
