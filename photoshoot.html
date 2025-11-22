@@ -1,688 +1,375 @@
+
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" data-theme="light">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>المخزون — MZJ Cars</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>حركة نقل السيارات — MZJ Cars</title>
 
-<!-- No-flash auth gate -->
-<style id="noFlash">
-  html{background:#fff8ef}
-  body{opacity:0;transition:.14s ease}
-</style>
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    :root{
+      --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef; --text:#1f2937; --muted:#6b7280;
+      --line:#e5e7eb; --line-strong:#d1d5db; --table-head:#fafafa;
+      --card:#fff; --radius:14px; --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9;
+      --shadow:0 10px 24px rgba(0,0,0,.06);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:var(--cream);
+      color:var(--text);
+      font-family:"Tajawal",system-ui,Arial
+    }
 
-<style>
-  :root{
-    --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef;
-    --text:#1f2937; --muted:#6b7280;
-    --line:#e5e7eb; --line-strong:#d1d5db;
-    --card:#ffffff; --bg:#fff8ef; --radius:14px;
-    --shadow:0 10px 24px rgba(0,0,0,.06);
-    --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0;
-    background:var(--bg);
-    color:var(--text);
-    font-family:"Tajawal",system-ui,Arial;
-  }
+    /* Topbar */
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:1000;
+      background:#fff;
+      border-bottom:1px solid var(--line)
+    }
+    .topbar-inner{
+      max-width:1240px;
+      margin:auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 16px
+    }
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand .logo{
+      width:36px;height:36px;
+      border-radius:10px;
+      background:linear-gradient(135deg,var(--brown),#2a1613);
+      display:grid;place-items:center;
+      color:#fff;font-weight:800
+    }
+    .brand h1{margin:0;font-size:18px;color:var(--brown)}
+    .hint{color:var(--muted);font-size:12px}
 
-  /* Topbar + main tabs */
-  .topbar{
-    position:sticky;top:0;z-index:60;
-    background:#fff;
-    border-bottom:1px solid var(--line);
-  }
-  .topbar-inner{
-    max-width:1280px;
-    margin:auto;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:10px 18px;
-  }
-  .brand{
-    display:flex;
-    align-items:center;
-    gap:10px;
-  }
-  .logo-box{
-    width:36px;height:36px;
-    border-radius:10px;
-    background:linear-gradient(135deg,#3e2420,#1b0e0c);
-    display:flex;align-items:center;justify-content:center;
-    color:#fff;
-    box-shadow:0 8px 18px rgba(0,0,0,.18);
-  }
-  .brand h1{
-    margin:0;
-    font-size:18px;
-    color:var(--brown);
-    font-weight:800;
-  }
-  .brand small{
-    color:var(--muted);
-    font-size:12px;
-  }
-  .tabs{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-  }
-  .tab{
-    padding:7px 12px;
-    border-radius:999px;
-    border:1px solid var(--line);
-    background:#fff;
-    text-decoration:none;
-    color:var(--text);
-    font-weight:700;
-    font-size:13px;
-  }
-  .tab.active{
-    background:var(--brown);
-    border-color:var(--brown);
-    color:#fff;
-  }
-  .status-badge{
-    display:inline-flex;
-    gap:8px;
-    align-items:center;
-    border:1px solid var(--line);
-    background:#fff;
-    border-radius:999px;
-    padding:5px 9px;
-    font-size:11px;
-  }
-  .dot{
-    width:9px;height:9px;border-radius:999px;
-    background:#f59e0b;
-  }
-  .dot.ok{background:var(--ok)}
-  .dot.err{background:var(--danger)}
-  .dot.warn{background:#f59e0b}
+    .status-badge{
+      display:inline-flex;gap:8px;align-items:center;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:12px;
+      padding:6px 10px;
+      font-size:12px
+    }
+    .dot{width:10px;height:10px;border-radius:999px;background:#f59e0b}
+    .dot.ok{background:var(--ok)}
+    .dot.err{background:var(--danger)}
+    .dot.warn{background:#f59e0b}
 
-  /* Buttons */
-  .btn{
-    border:1px solid var(--line);
-    background:#fff;
-    border-radius:12px;
-    padding:7px 12px;
-    cursor:pointer;
-    font-weight:700;
-    display:inline-flex;
-    gap:8px;
-    align-items:center;
-    transition:.15s;
-    font-size:13px;
-  }
-  .btn:active{transform:translateY(1px)}
-  .btn-primary{
-    background:var(--beige);
-    border-color:var(--beige);
-    color:#fff;
-  }
-  .btn-ghost{
-    background:#fff;
-  }
-  .btn-outline{
-    background:#fff;
-    border-color:var(--brown);
-    color:var(--brown);
-  }
+    /* Tabs bar */
+    .tabs{
+      max-width:1240px;
+      margin:0 auto;
+      padding:0 16px 8px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      border-top:1px solid var(--line);
+      background:#fff;
+    }
+    .tab{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:6px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      font-size:13px;
+      font-weight:600;
+      text-decoration:none;
+      color:var(--muted);
+      background:#fff;
+      transition:.15s;
+      white-space:nowrap;
+    }
+    .tab:hover{
+      border-color:var(--beige);
+      color:var(--brown);
+      transform:translateY(-1px);
+    }
+    .tab.active{
+      background:var(--brown);
+      border-color:var(--brown);
+      color:#fff;
+    }
 
-  .container{
-    max-width:1280px;
-    margin:18px auto;
-    padding:0 16px;
-    display:grid;
-    grid-template-columns:1fr;
-    gap:16px;
-  }
-  .card{
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    box-shadow:var(--shadow);
-    padding:14px;
-  }
+    /* Buttons */
+    .btn{
+      position:relative;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:12px;
+      padding:10px 14px;
+      cursor:pointer;
+      font-weight:700;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      transition:.15s;
+      font-size:13px
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
+    .btn-primary{background:var(--brown);border-color:var(--brown);color:#fff}
+    .btn-ghost{background:#fff}
+    .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
 
-  /* Summary */
-  .summary{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:12px;
-  }
-  @media (max-width:640px){
-    .summary{grid-template-columns:1fr}
-  }
-  .stat{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:10px;
-    border:1px solid var(--line);
-    border-radius:12px;
-    background:#fff;
-  }
-  .stat i{color:var(--beige)}
-  .stat-title{
-    font-size:12px;
-    color:var(--muted);
-  }
-  .stat-num{
-    font-size:22px;
-    font-weight:800;
-    color:var(--brown);
-  }
+    /* Layout */
+    .container{max-width:1240px;margin:18px auto;padding:0 16px 48px}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+      margin-bottom:16px
+    }
+    .card-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:12px;
+      gap:12px;
+      flex-wrap:wrap
+    }
+    .section-title{display:flex;align-items:center;gap:8px;margin:0}
+    .section-title svg{width:20px;height:20px;color:var(--brown)}
 
-  .card h3{
-    margin:0 0 10px;
-    color:var(--brown);
-    font-size:16px;
-    font-weight:800;
-    display:flex;
-    align-items:center;
-    gap:8px;
-  }
-  .hint-text{font-size:12px;color:var(--muted);margin:0 0 8px}
+    /* Inputs */
+    label{font-weight:800;margin-bottom:6px;display:block;color:var(--brown);font-size:13px}
+    input,select,textarea{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      outline:none;
+      transition:.15s;
+      font-family:"Tajawal",system-ui,Arial;
+      font-size:13px
+    }
+    input:focus,select:focus,textarea:focus{
+      border-color:var(--beige);
+      box-shadow:0 0 0 3px rgba(188,143,116,.15)
+    }
+    textarea{min-height:44px;resize:vertical}
 
-  /* Generic layout helpers */
-  .card-header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    margin-bottom:8px;
-  }
-  .section-title{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    color:var(--brown);
-  }
-  .section-title svg{width:18px;height:18px}
-  .hint{font-size:12px;color:var(--muted)}
-  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .grid{display:grid;gap:8px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .grid{display:grid;gap:12px}
+    .grid-2{grid-template-columns:repeat(2,1fr)}
+    .grid-3{grid-template-columns:repeat(3,1fr)}
+    @media (max-width:860px){ .grid-3{grid-template-columns:repeat(2,1fr)} }
+    @media (max-width:620px){ .grid-3,.grid-2{grid-template-columns:1fr} }
 
-  .grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
-  .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-  @media(max-width:1080px){
-    .grid-4{grid-template-columns:repeat(3,minmax(0,1fr))}
-  }
-  @media(max-width:860px){
-    .grid-4,.grid-3{grid-template-columns:repeat(2,minmax(0,1fr))}
-  }
-  @media(max-width:620px){
-    .grid-4,.grid-3,.grid-2{grid-template-columns:1fr}
-  }
+    /* Tables */
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    thead th{
+      position:sticky;top:0;
+      background:var(--table-head);
+      z-index:2;
+      border-bottom:1px solid var(--line-strong);
+      text-align:right;
+      color:#111827;
+      font-size:13.5px;
+      padding:12px 10px
+    }
+    tbody td{
+      border-top:1px solid var(--line);
+      padding:10px;
+      vertical-align:top;
+      font-size:13px
+    }
+    tbody tr:nth-child(odd){background:#fff}
+    tbody tr:nth-child(even){background:#fcfcfc}
+    tbody tr:hover{background:#f8fafc}
+    td,th{border-left:1px solid var(--line)}
+    td:last-child,th:last-child{border-left:0}
+    .nowrap{white-space:nowrap}
+    .w-120{min-width:120px}
+    .w-160{min-width:160px}
+    .copyable{cursor:pointer;text-decoration:underline;text-decoration-style:dotted}
 
-  /* Inner tabs */
-  .inner-tabs-header{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-bottom:12px;
-  }
-  .inner-tab{
-    padding:8px 18px;
-    border-radius:999px;
-    border:1px solid var(--line);
-    background:#fff;
-    cursor:pointer;
-    font-weight:700;
-    font-size:14px;
-    color:var(--brown);
-    box-shadow:0 2px 4px rgba(0,0,0,.04);
-    transition:background-color .15s,border-color .15s,box-shadow .15s,color .15s,transform .08s;
-  }
-  .inner-tab:hover{
-    border-color:var(--beige);
-    box-shadow:0 3px 6px rgba(0,0,0,.06);
-  }
-  .inner-tab.active{
-    background:var(--brown);
-    border-color:var(--brown);
-    color:#fff;
-    box-shadow:0 6px 14px rgba(62,36,32,.28);
-    transform:translateY(1px);
-  }
-  .tab-panel{display:none;}
-  .tab-panel.active{display:block;}
+    /* Auth */
+    .auth-wrap{min-height:60vh;display:grid;place-items:center;padding:24px}
+    .auth-card{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      padding:18px;
+      max-width:420px;
+      width:96%
+    }
+    .auth-card h2{margin:0 0 10px;color:var(--brown)}
+    .auth-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 
-  /* Inputs */
-  label{
-    display:block;
-    font-size:12px;
-    font-weight:600;
-    color:var(--brown);
-    margin-bottom:4px;
-  }
-  .input,.select,textarea{
-    width:100%;
-    padding:9px 11px;
-    border:1px solid var(--line);
-    border-radius:12px;
-    background:#fff;
-    font-family:inherit;
-    font-size:13px;
-    transition:border-color .15s, box-shadow .15s, background-color .15s;
-  }
-  .input:focus,.select:focus,textarea:focus{
-    outline:none;
-    border-color:var(--beige);
-    box-shadow:0 0 0 1px rgba(188,143,116,.35);
-    background:#fff;
-  }
-  textarea{min-height:80px;resize:vertical}
+    /* Checklist box */
+    .checklist{
+      border:1px dashed var(--beige);
+      border-radius:12px;
+      padding:12px;
+      background:#fff8ef
+    }
+    .checklist h4{margin:0 0 8px 0;color:var(--brown);font-size:14px}
+    .check-row{display:grid;grid-template-columns:18px 1fr;gap:8px;align-items:start}
+    .check-row label{margin:0;display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px}
 
-  .search{position:relative}
-  .search i{
-    position:absolute;
-    right:10px;
-    top:50%;
-    transform:translateY(-50%);
-    color:var(--muted);
-    font-size:13px;
-  }
-  .search input{padding-right:30px}
+    /* حركة النقل: صفوف متعددة */
+    .move-row{
+      border:1px dashed #e5e7eb;
+      border-radius:10px;
+      padding:8px 10px;
+      background:#fffbf7
+    }
+    .move-row-title{font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:600}
 
-  .filter-grid{
-    display:grid;
-    grid-template-columns:2fr 1fr 1fr 1fr;
-    gap:10px;
-    margin-top:8px;
-  }
-  @media(max-width:1100px){.filter-grid{grid-template-columns:1fr 1fr 1fr}}
-  @media(max-width:800px){.filter-grid{grid-template-columns:1fr 1fr}}
-  @media(max-width:560px){.filter-grid{grid-template-columns:1fr}}
+    .move-alert{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      display:none;
+      align-items:flex-start;
+      gap:10px;
+      font-size:13px;
+    }
+    .move-alert .icon{
+      margin-top:3px;
+      font-size:16px;
+    }
+    .move-alert .title{
+      font-weight:800;
+      margin-bottom:4px;
+      font-size:13.5px;
+    }
+    .move-alert ul{
+      margin:0;
+      padding-right:18px;
+      list-style:disc;
+    }
+    .move-alert.success{
+      background:#ecfdf3;
+      border:1px solid #bbf7d0;
+      color:#14532d;
+    }
+    .move-alert.error{
+      background:#fef2f2;
+      border:1px solid #fecaca;
+      color:#991b1b;
+    }
+    .move-alert.info{
+      background:#eff6ff;
+      border:1px solid #bfdbfe;
+      color:#1d4ed8;
+    }
 
-  .under-field{margin-top:8px;display:flex;justify-content:flex-start}
+    .notes-col{display:none;}
 
-  /* Table */
-  .table-wrap{
-    overflow:auto;
-    border:1px solid var(--line);
-    border-radius:12px;
-    margin-top:8px;
-  }
-  .table{
-    width:100%;
-    border-collapse:separate;
-    border-spacing:0;
-  }
-  .table th,.table td{
-    border:1px solid var(--line);
-    border-left-color:var(--line-strong);
-    padding:8px 10px;
-    text-align:right;
-    vertical-align:top;
-    font-size:13px;
-    background:#fff;
-  }
-  .table thead th{
-    position:sticky;top:0;
-    background:#f9fafb;
-    border-bottom:2px solid var(--line-strong);
-    z-index:1;
-  }
-  .table tbody tr:nth-child(odd){background:#fff}
-  .table tbody tr:nth-child(even){background:#fffdf8}
-  .table tbody tr:hover td{background:#f3f4f6}
-  .tag{
-    display:inline-block;
-    background:#f6f6f6;
-    border:1px solid var(--line);
-    padding:2px 8px;
-    border-radius:999px;
-    font-size:12px;
-    color:#444;
-  }
-  .vin{
-    cursor:pointer;
-    color:var(--beige);
-    white-space:nowrap;
-  }
-  .vin:hover{text-decoration:underline}
-  .short{background:#fff4f4}
-  .badge{
-    display:inline-block;
-    background:#fff2e9;
-    border:1px solid #f1d0bd;
-    color:var(--brown);
-    padding:2px 8px;
-    border-radius:999px;
-    font-size:12px;
-  }
-  .muted-text{color:var(--muted);font-size:12px}
-  .nowrap{white-space:nowrap}
+    /* Toast */
+    .toast{
+      position:fixed;
+      bottom:16px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111827;
+      color:#fff;
+      padding:10px 14px;
+      border-radius:999px;
+      font-size:13px;
+      box-shadow:0 10px 25px rgba(0,0,0,.25);
+      display:none;
+      z-index:2000;
+      max-width:80%;
+      text-align:center;
+      white-space:nowrap;
+    }
+    .toast.ok{background:#14532d}
+    .toast.err{background:#991b1b}
+    .toast.info{background:#1d4ed8}
+  </style>
 
-  /* Toast bottom-right */
-  .toast{
-    position:fixed;
-    bottom:20px;
-    right:20px;
-    background:#1f2937;
-    color:#fff;
-    padding:9px 13px;
-    border-radius:999px;
-    display:none;
-    font-size:12px;
-    z-index:300;
-  }
-  .toast.show{
-    display:block;
-    animation:fade .18s ease-out;
-  }
-  @keyframes fade{
-    from{opacity:0;transform:translate(0,6px)}
-    to{opacity:1;transform:translate(0,0)}
-  }
-
-  /* Auth */
-  .auth-wrap{
-    min-height:60vh;
-    display:grid;
-    place-items:center;
-    padding:24px;
-  }
-  .auth-card{
-    background:#fff;
-    border:1px solid var(--line);
-    border-radius:18px;
-    box-shadow:var(--shadow);
-    padding:18px;
-    max-width:420px;width:96%;
-  }
-  .auth-card h2{
-    margin:0 0 10px;
-    color:var(--brown);
-    font-weight:800;
-  }
-  .auth-actions{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    margin-top:10px;
-  }
-  .hint{color:var(--muted);font-size:12px}
-
-  /* حركة نقل السيارات – ستايل عام */
-  .move-row{
-    border:1px dashed #e5e7eb;
-    border-radius:10px;
-    padding:8px 10px;
-    background:#fffbf7;
-  }
-  .move-row-title{
-    font-size:12px;
-    color:var(--muted);
-    margin-bottom:4px;
-    font-weight:600;
-  }
-  .move-alert{
-    margin-top:10px;
-    padding:10px 12px;
-    border-radius:12px;
-    display:none;
-    align-items:flex-start;
-    gap:10px;
-    font-size:13px;
-  }
-  .move-alert .icon{
-    margin-top:3px;
-    font-size:16px;
-  }
-  .move-alert .title{
-    font-weight:800;
-    margin-bottom:4px;
-    font-size:13.5px;
-  }
-  .move-alert ul{
-    margin:0;
-    padding-right:18px;
-    list-style:disc;
-  }
-  .move-alert.success{
-    background:#ecfdf3;
-    border:1px solid #bbf7d0;
-    color:#14532d;
-  }
-  .move-alert.error{
-    background:#fef2f2;
-    border:1px solid #fecaca;
-    color:#991b1b;
-  }
-  .move-alert.info{
-    background:#eff6ff;
-    border:1px solid #bfdbfe;
-    color:#1d4ed8;
-  }
-  .notes-col{display:none;}
-
-  /* بطاقة عرض بيانات السيارة */
-  #carDetailsBox{
-    border-color:var(--line);
-    background:#fff;
-    margin-top:12px;
-  }
-  #carDetails{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:6px;
-    font-size:13px;
-  }
-  #carDetails b{color:var(--brown)}
-  #carDetailsHint{
-    font-size:12px;
-    color:var(--muted);
-    margin-top:6px;
-  }
-
-  /* مودال ملاحظات احترافي */
-  .notes-modal-backdrop{
-    position:fixed;inset:0;
-    background:rgba(15,23,42,.45);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    z-index:350;
-  }
-  .notes-modal{
-    background:#fff;
-    border-radius:18px;
-    box-shadow:0 20px 45px rgba(0,0,0,.18);
-    max-width:520px;
-    width:94%;
-    padding:16px 16px 14px;
-    border:1px solid var(--line);
-    position:relative;
-  }
-  .notes-modal h3{
-    margin:0 0 8px;
-    color:var(--brown);
-    font-size:16px;
-    font-weight:800;
-  }
-  .notes-modal p{
-    margin:0 0 10px;
-    font-size:12px;
-    color:var(--muted);
-  }
-  .notes-modal textarea{min-height:110px}
-  .notes-modal-footer{
-    display:flex;
-    justify-content:flex-end;
-    gap:8px;
-    margin-top:10px;
-  }
-  .notes-close{
-    position:absolute;
-    left:10px;top:8px;
-    border:none;
-    background:transparent;
-    cursor:pointer;
-    color:var(--muted);
-  }
-
-  .cell-notes{cursor:pointer}
-  .cell-notes:hover{background:#fff3e8}
-</style>
+  <!-- no-flash style -->
+  <style id="noFlash">
+    html{background:#fff8ef;}
+    body{opacity:0;transition:opacity .12s ease;}
+    #authGate{display:none !important;}
+  </style>
 </head>
 <body>
-
-<!-- Topbar + Tabs -->
-<div class="topbar">
-  <div class="topbar-inner">
-    <div class="brand">
-      <div class="logo-box">
-        <i class="fa-solid fa-star"></i>
+  <!-- Topbar + Tabs -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo" title="MZJ">MZJ</div>
+        <div>
+          <h1>حركة نقل السيارات</h1>
+          <small class="hint">مجموعة محمد بن ذعار العجمي للسيارات</small>
+        </div>
       </div>
-      <div>
-        <h1>إدارة المخزون</h1>
-        <small>مجموعة محمد بن ذعار العجمي للسيارات</small>
+      <div class="row">
+        <div class="status-badge">
+          <span class="dot warn" id="connDot"></span>
+          <span id="connText">جارِ الاتصال…</span>
+        </div>
+        <button class="btn btn-ghost" id="btnSignOut" style="display:none">
+          <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
+        </button>
       </div>
     </div>
+
+    <!-- شريط التابات -->
     <div class="tabs">
-      <a class="tab" href="admin.html">الإدارة</a>
-      <a class="tab active" href="inventory.html">المخزون</a>
+      <a class="tab" href="admin.html">الإدارة</a> 
+      <a class="tab" href="inventory.html">المخزون</a>
       <a class="tab" href="dashboard.html">الداش بورد</a>
-      <a class="tab" href="photoshoot.html">الطلبات</a>
       <a class="tab" href="photoshoot-user.html">إدارة الطلبات</a>
       <a class="tab" href="cars.html">كل السيارات</a>
       <a class="tab" href="Activity.html">سجل النشاط</a>
     </div>
-    <div class="tabs" style="gap:10px">
-      <div class="status-badge" id="connBadge">
-        <span class="dot warn" id="connDot"></span>
-        <span id="connText">جارِ الاتصال…</span>
+  </div>
+
+  <!-- Auth Gate -->
+  <div class="auth-wrap" id="authGate">
+    <div class="auth-card">
+      <h2>تسجيل الدخول</h2>
+      <label for="email">البريد الإلكتروني</label>
+      <input id="email" placeholder="you@example.com" type="email"/>
+      <label for="password" style="margin-top:8px">كلمة المرور</label>
+      <input id="password" placeholder="••••••••" type="password"/>
+      <div class="auth-actions">
+        <button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
+        <button class="btn btn-ghost" id="btnSignup">إنشاء حساب</button>
       </div>
-      <button class="btn btn-ghost" id="btnSignOut" style="display:none">
-        <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
-      </button>
+      <p class="hint" id="authHint" style="margin-top:10px"></p>
     </div>
   </div>
-</div>
 
-<!-- Auth Gate -->
-<div id="authGate" class="auth-wrap">
-  <div class="auth-card">
-    <h2>تسجيل الدخول</h2>
-    <label for="email">البريد الإلكتروني</label>
-    <input id="email" type="email" class="input" placeholder="you@example.com"/>
-    <label for="password" style="margin-top:8px">كلمة المرور</label>
-    <input id="password" type="password" class="input" placeholder="••••••••"/>
-    <div class="auth-actions">
-      <button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
-      <button class="btn btn-outline" id="btnSignup">إنشاء حساب</button>
-    </div>
-    <p class="hint" id="authHint" style="margin-top:10px"></p>
-  </div>
-</div>
+  <!-- App -->
+  <div id="app" style="display:none">
+    <div class="container">
 
-<!-- App -->
-<div id="app" style="display:none">
-  <div class="container">
-
-    <!-- Summary -->
-    <div class="card">
-      <div class="summary">
-        <div class="stat">
-          <i class="fa-solid fa-car"></i>
-          <div>
-            <div class="stat-title">إجمالي السيارات (بعد الفلاتر)</div>
-            <div class="stat-num" id="totalCount">0</div>
-          </div>
-        </div>
-        <div class="stat">
-          <i class="fa-solid fa-location-dot"></i>
-          <div>
-            <div class="stat-title">عدد الأماكن (بعد الفلاتر)</div>
-            <div class="stat-num" id="placesCount">0</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Main card with two inner tabs -->
-    <div class="card">
-      <div class="inner-tabs-header">
-        <button class="inner-tab active" data-tab="cars">جدول السيارات</button>
-        <button class="inner-tab" data-tab="moves">حركة نقل السيارات (برقم الهيكل)</button>
-      </div>
-
-      <!-- Tab 1: جدول السيارات -->
-      <div id="tab-cars" class="tab-panel active">
-        <div>
-          <h3><i class="fa-solid fa-filter" style="color:var(--beige)"></i> الفلاتر</h3>
-          <div class="filter-grid">
-            <div class="search">
-              <input id="search" class="input" placeholder="بحث في: سيارة/بيان/وكيل/ألوان/موديل/لوحة/مكان/رقم الهيكل">
-              <i class="fa-solid fa-magnifying-glass"></i>
-            </div>
-            <select id="modelFilter" class="select"><option value="">كل السيارات</option></select>
-            <input id="yearFilter" class="input" type="number" min="2000" max="2100" placeholder="الموديل (سنة)">
-            <input id="dealerFilter" class="input" placeholder="الوكيل">
-            <div>
-              <select id="locationFilter" class="select"><option value="">كل الأماكن</option></select>
-              <div class="under-field">
-                <button id="exportAll" class="btn btn-primary">
-                  <i class="fa-regular fa-file-excel"></i> تصدير Excel (حسب الفلاتر)
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div style="margin-top:16px">
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <h3><i class="fa-solid fa-table" style="color:var(--beige)"></i> جدول السيارات</h3>
-            <div class="tools">
-              <span class="badge" id="visibleCount">0 صف</span>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table class="table" id="carsTable">
-              <thead>
-                <tr>
-                  <th>م</th>
-                  <th>السيارة</th>
-                  <th>البيان</th>
-                  <th>الوكيل</th>
-                  <th>اللون الخارجي</th>
-                  <th>اللون الداخلي</th>
-                  <th>الموديل</th>
-                  <th>اللوحة</th>
-                  <th>المكان</th>
-                  <th>رقم الهيكل</th>
-                  <th>الملاحظات (اضغط للتعديل)</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Tab 2: حركة نقل السيارات (نفس كود صفحة الحركة) -->
-      <div id="tab-moves" class="tab-panel">
+      <!-- بطاقة حركة النقل -->
+      <div class="card">
         <div class="card-header">
           <div class="section-title">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path d="M7 10l5-5 5 5"></path><path d="M7 14l5 5 5-5"></path>
             </svg>
-            <h2 style="margin:0;font-size:16px;font-weight:800">حركة نقل السيارات (برقم الهيكل)</h2>
+            <h2 style="margin:0">حركة نقل السيارات (برقم الهيكل)</h2>
           </div>
           <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
             <label style="margin:0">إلى</label>
-            <select id="moveToGlobal" class="select" title="المكان الجديد"></select>
+            <select id="moveToGlobal" title="المكان الجديد"></select>
           </div>
         </div>
 
@@ -704,20 +391,20 @@
           <h4>المتطلبات عند النقل إلى <b>مباع تحت التسليم</b></h4>
           <div class="grid grid-2">
             <div>
-              <div class="row" style="align-items:flex-start">
-                <input id="chkAdminApproved" type="checkbox" style="width:auto;margin-top:3px"/>
-                <label for="chkAdminApproved" style="margin:0">موافقة إدارية</label>
+              <div class="check-row">
+                <input id="chkAdminApproved" type="checkbox"/>
+                <label for="chkAdminApproved">موافقة إدارية</label>
               </div>
               <label for="adminNotes" style="margin-top:6px">ملاحظات الموافقة الإدارية</label>
-              <textarea id="adminNotes" class="input" placeholder="اكتب أي ملاحظات إدارية…"></textarea>
+              <textarea id="adminNotes" placeholder="اكتب أي ملاحظات إدارية…"></textarea>
             </div>
             <div>
-              <div class="row" style="align-items:flex-start">
-                <input id="chkFinanceApproved" type="checkbox" style="width:auto;margin-top:3px"/>
-                <label for="chkFinanceApproved" style="margin:0">موافقة مالية</label>
+              <div class="check-row">
+                <input id="chkFinanceApproved" type="checkbox"/>
+                <label for="chkFinanceApproved">موافقة مالية</label>
               </div>
               <label for="financeNotes" style="margin-top:6px">ملاحظات الموافقة المالية</label>
-              <textarea id="financeNotes" class="input" placeholder="اكتب أي ملاحظات مالية…"></textarea>
+              <textarea id="financeNotes" placeholder="اكتب أي ملاحظات مالية…"></textarea>
             </div>
           </div>
         </div>
@@ -750,590 +437,529 @@
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M7 8h10"></path>
             </svg>
-            <h2 style="margin:0;font-size:15px;font-weight:800">عرض بيانات السيارة</h2>
+            <h2 style="margin:0">عرض بيانات السيارة</h2>
           </div>
           <div class="grid grid-2" id="carDetails" style="margin-top:8px"></div>
           <p class="hint" id="carDetailsHint" style="margin-top:8px"></p>
         </div>
       </div>
+
+      <!-- تتبع رقم الهيكل -->
+      <div class="card">
+        <div class="card-header">
+          <div class="section-title">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M12 8v8M8 12h8"></path>
+            </svg>
+            <h2 style="margin:0">تتبّع حركة رقم هيكل</h2>
+          </div>
+          <div class="row" style="gap:8px">
+            <input id="trackVin" list="vinHints" placeholder="اكتب رقم الهيكل لعرض جميع حركاته"/>
+            <button class="btn btn-ghost" id="btnClearTrack">مسح</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="trackTable">
+            <thead>
+              <tr>
+                <th class="w-120">#</th>
+                <th class="w-120">التاريخ</th>
+                <th>من</th>
+                <th>إلى</th>
+                <th>سيارة</th>
+                <th class="w-160">ملاحظات النقل</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- سجل الحركات -->
+      <div class="card">
+        <div class="card-header">
+          <div class="section-title" style="margin-bottom:0">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M3 5h18M3 12h18M3 19h18"></path>
+            </svg>
+            <h2 style="margin:0">سجل الحركات</h2>
+          </div>
+          <div class="row">
+            <div class="row">
+              <label style="margin:0 6px 0 0">تاريخ من</label>
+              <input id="movesFromDate" type="date"/>
+            </div>
+            <div class="row">
+              <label style="margin:0 6px 0 0">إلى</label>
+              <input id="movesToDate" type="date"/>
+            </div>
+            <button class="btn btn-ghost" id="btnClearDate">مسح التاريخ</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table id="movesTable">
+            <thead>
+              <tr>
+                <th class="w-120">#</th>
+                <th class="w-120">التاريخ</th>
+                <th>رقم الهيكل</th>
+                <th>سيارة</th>
+                <th>من</th>
+                <th>إلى</th>
+                <th class="w-120">ID</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
-
   </div>
-</div>
 
-<!-- Toast -->
-<div id="toast" class="toast">تم</div>
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
 
-<!-- مودال الملاحظات -->
-<div id="notesModal" class="notes-modal-backdrop">
-  <div class="notes-modal">
-    <button class="notes-close" id="notesModalClose" title="إغلاق">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-    <h3>تعديل الملاحظات</h3>
-    <p>اكتب ملاحظات السيارة، ثم اضغط حفظ. تُحفظ مباشرة في قاعدة البيانات.</p>
-    <textarea id="notesModalInput" class="input" placeholder="مثال: خدش بسيط في الرفرف الأمامي…"></textarea>
-    <div class="notes-modal-footer">
-      <button class="btn btn-ghost" id="notesModalCancel">إلغاء</button>
-      <button class="btn btn-primary" id="notesModalSave">
-        <i class="fa-regular fa-floppy-disk"></i> حفظ
-      </button>
-    </div>
-  </div>
-</div>
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    /* ===== Firebase ===== */
+    const firebaseConfig = {
+      apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
+      authDomain: "mzj-agenda.firebaseapp.com",
+      projectId: "mzj-agenda",
+      storageBucket: "mzj-agenda.firebasestorage.app",
+      messagingSenderId: "834700407721",
+      appId: "1:834700407721:web:75c17665d4f032fd65cab8"
+    };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+    const STATE_REF = doc(db, "mzj_admin_state", "v1");
 
-<!-- Firebase (Modules) -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+    /* ===== Roles & Permissions ===== */
+    const ROLE_ADMIN   = 'الادارة';
+    const ROLE_IDARI   = 'اداري';
+    const ROLE_BRANCH  = 'مدراء فروع';
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
-    authDomain: "mzj-agenda.firebaseapp.com",
-    projectId: "mzj-agenda",
-    storageBucket: "mzj-agenda.firebasestorage.app",
-    messagingSenderId: "834700407721",
-    appId: "1:834700407721:web:75c17665d4f032fd65cab8"
-  };
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db   = getFirestore(app);
-  const STATE_REF = doc(db, "mzj_admin_state", "v1");
+    // الصفحات المسموح بها لكل تصنيف
+    const ROLE_PAGES = {
+      [ROLE_ADMIN] : 'ALL', // الإدارة تشوف كل الصفحات
+      [ROLE_IDARI] : ['photoshoot.html','photoshoot-user.html','cars.html'],
+      [ROLE_BRANCH]: ['dashboard.html']
+    };
 
-  const $ = s => document.querySelector(s);
+    // صفحة حركة نقل السيارات متاحة للإدارة + الإداري
+    const PAGE_ALLOWED_ROLES = [ROLE_ADMIN, ROLE_IDARI];
 
-  const connDot  = $('#connDot');
-  const connText = $('#connText');
-  const authGate = $('#authGate');
-  const appRoot  = $('#app');
-  const btnLogin = $('#btnLogin');
-  const btnSignup= $('#btnSignup');
-  const btnSignOut = $('#btnSignOut');
-  const emailEl  = $('#email');
-  const passEl   = $('#password');
-  const authHint = $('#authHint');
-  const toast    = $('#toast');
-
-  const searchEl       = $('#search');
-  const modelFilter    = $('#modelFilter');
-  const yearFilter     = $('#yearFilter');
-  const dealerFilter   = $('#dealerFilter');
-  const locationFilter = $('#locationFilter');
-
-  const tb = $('#carsTable tbody');
-
-  const notesModal       = $('#notesModal');
-  const notesModalInput  = $('#notesModalInput');
-  const notesModalCancel = $('#notesModalCancel');
-  const notesModalSave   = $('#notesModalSave');
-  const notesModalClose  = $('#notesModalClose');
-
-  /* حركة نقل DOM (نفس صفحة الحركة) */
-  const moveRowsContainer = $('#moveRowsContainer');
-  const btnAddMoveRow     = $('#btnAddMoveRow');
-  const moveToGlobal      = $('#moveToGlobal');
-  const btnFindByVin      = $('#btnFindByVin');
-  const btnMove           = $('#btnMove');
-  const moveStatus        = $('#moveStatus');
-  const carDetailsBox     = $('#carDetailsBox');
-  const carDetails        = $('#carDetails');
-  const carDetailsHint    = $('#carDetailsHint');
-
-  const underDeliveryBox   = $('#underDeliveryBox');
-  const chkAdminApproved   = $('#chkAdminApproved');
-  const adminNotes         = $('#adminNotes');
-  const chkFinanceApproved = $('#chkFinanceApproved');
-  const financeNotes       = $('#financeNotes');
-
-  const vinHints        = $('#vinHints');
-  const moveAlert       = $('#moveAlert');
-  const moveAlertTitle  = $('#moveAlertTitle');
-  const moveAlertList   = $('#moveAlertList');
-
-  /* Inner tabs */
-  const innerTabs = document.querySelectorAll('.inner-tab');
-  const tabCars   = document.getElementById('tab-cars');
-  const tabMoves  = document.getElementById('tab-moves');
-
-  /* State */
-  let stock=[], moves=[], models=[], variantsMap={};
-  let editingVin = null;
-
-  const uniq = arr => [...new Set(arr)];
-  const pad  = n => n<10?'0'+n:n;
-  const now  = ()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;};
-  const onlyDate = str => (str||'').toString().slice(0,10);
-
-  function normalizeVin(v){
-    if(!v) return '';
-    const ar = {'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
-    return v.toString().replace(/[٠-٩]/g,d=>ar[d]).toUpperCase().replace(/[\s\-\._]/g,'').trim();
-  }
-  function debounce(fn,wait=250){
-    let t; return (...args)=>{clearTimeout(t);t=setTimeout(()=>fn(...args),wait)};
-  }
-
-  function liftNoFlash(){
-    const nf = document.getElementById('noFlash');
-    if(nf) nf.remove();
-    document.body.style.opacity = '1';
-  }
-
-  function setStatus(mode, txt){
-    connDot.className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'warn');
-    connText.textContent = txt;
-  }
-  function showToastMsg(text){
-    toast.textContent = text;
-    toast.classList.add('show');
-    setTimeout(()=> toast.classList.remove('show'), 1800);
-  }
-
-  /* Auth gate */
-  onAuthStateChanged(auth, async (user)=>{
-    if(user){
-      authGate.style.display='none';
-      appRoot.style.display='block';
-      btnSignOut.style.display='inline-flex';
-      setStatus('ok', `متصل كمستخدم: ${user.email}`);
-      liftNoFlash();
-      await initData();
-      subscribeLive();
-    }else{
-      appRoot.style.display='none';
-      authGate.style.display='grid';
-      btnSignOut.style.display='none';
-      setStatus('warn','لم يتم تسجيل الدخول');
-      liftNoFlash();
-    }
-  });
-
-  btnLogin.addEventListener('click', async ()=>{
-    authHint.textContent='';
-    try{
-      await signInWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value);
-    }catch(e){
-      authHint.textContent='فشل تسجيل الدخول: '+(e?.message||e);
-    }
-  });
-  btnSignup.addEventListener('click', async ()=>{
-    authHint.textContent='';
-    try{
-      await createUserWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value);
-    }catch(e){
-      authHint.textContent='تعذّر إنشاء الحساب: '+(e?.message||e);
-    }
-  });
-  btnSignOut.addEventListener('click', ()=> signOut(auth));
-
-  /* Data init / subscribe */
-  async function initData(){
-    try{
-      const s=await getDoc(STATE_REF);
-      if(s.exists()){
-        const d=s.data()||{};
-        stock = Array.isArray(d.stock)? d.stock: [];
-        moves = Array.isArray(d.moves)? d.moves: [];
-        models = Array.isArray(d.models)? d.models: [];
-        variantsMap = d.variantsMap || {};
-      }else{
-        stock=[]; moves=[]; models=[]; variantsMap={};
+    async function fetchUserRole(user){
+      try{
+        const userDocRef = doc(db, 'user', user.uid); // collection name: "user"
+        const snap = await getDoc(userDocRef);
+        if(snap.exists()){
+          const data = snap.data() || {};
+          return data.role || null;
+        }
+      }catch(e){
+        console.error('Error fetching user role', e);
       }
-      initFilters();
-      fillMoveLists();
-      renderAll();
-      setStatus('ok','تم تحميل البيانات');
-    }catch(e){
-      console.error(e);
-      setStatus('warn','تعذّر الاتصال — عرض آخر نسخة محفوظة غير متاحة');
+      return null;
     }
-  }
-  function subscribeLive(){
-    try{
-      onSnapshot(STATE_REF,(snap)=>{
-        if(!snap.exists()) return;
-        const d=snap.data()||{};
-        stock = Array.isArray(d.stock)? d.stock: stock;
-        moves = Array.isArray(d.moves)? d.moves: moves;
-        models= Array.isArray(d.models)? d.models: models;
-        variantsMap = d.variantsMap || variantsMap;
-        initFilters();
-        fillMoveLists();
-        renderAll();
-        setStatus('ok','متصل — مزامنة حيّة');
-      },(err)=>{
-        console.warn('snapshot error', err);
-        setStatus('warn','تعذّر الاتصال — مزامنة متوقفة مؤقتًا');
+
+    function applyTabsVisibility(role){
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach(tab=>{
+        const href = tab.getAttribute('href') || '';
+        const page = (href.split('/').pop() || '').split('?')[0];
+        if(!page) return;
+        const perm = ROLE_PAGES[role];
+        if(!perm){
+          tab.style.display = 'none';
+          return;
+        }
+        if(perm === 'ALL') return; // يشوف كل حاجة
+        if(!perm.includes(page)){
+          tab.style.display = 'none';
+        }
       });
-    }catch(e){}
-  }
-
-  async function persistAll(){
-    try{
-      await setDoc(STATE_REF, { stock, moves, updatedAt: now() }, { merge:true });
-      setStatus('ok','تم الحفظ');
-    }catch(e){
-      setStatus('err','تعذّر الحفظ');
-      showToastMsg('تعذّر الحفظ إلى السحابة');
     }
-  }
 
-  /* Filters */
-  const filters = { q:'', model:'', year:'', dealer:'', location:'' };
+    /* ===== Helpers ===== */
+    const $ = s => document.querySelector(s);
+    const toast = $('#toast');
+    function showToast(msg,type='ok'){
+      if(!toast) return;
+      toast.textContent=msg;
+      toast.className='toast '+type;
+      toast.style.display='block';
+      setTimeout(()=>toast.style.display='none',1800);
+    }
+    function pad(n){return n<10?'0'+n:n}
+    function now(){
+      const d=new Date();
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+    function onlyDate(str){return (str||'').toString().slice(0,10)}
+    function normalizeVin(v){
+      if(!v) return '';
+      const ar={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
+      return v.toString().replace(/[٠-٩]/g,d=>ar[d]).toUpperCase().replace(/[\s\-\._]/g,'').trim();
+    }
+    function debounce(fn,wait=250){
+      let t; return (...args)=>{clearTimeout(t);t=setTimeout(()=>fn(...args),wait);};
+    }
 
-  function initFilters(){
-    const modelsList = uniq(stock.map(r=> r.car).filter(Boolean)).sort((a,b)=> a.localeCompare(b,'ar'));
-    modelFilter.innerHTML = '<option value="">كل السيارات</option>' + modelsList.map(m=> `<option value="${m}">${m}</option>`).join('');
-    const locs = uniq(stock.map(r=> r.location || 'غير محدد')).sort((a,b)=> a.localeCompare(b,'ar'));
-    locationFilter.innerHTML = '<option value="">كل الأماكن</option>' +
-      locs.map(l=> `<option value="${l==='غير محدد'?'':l}">${l}</option>`).join('');
-  }
+    let stock=[], moves=[];
 
-  function applyFilters(rows){
-    return rows.filter(r=>{
-      if (filters.q){
-        const hay = [r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.vin,r.notes].join(' ').toLowerCase();
-        if (!hay.includes(filters.q.toLowerCase())) return false;
+    /* ===== DOM refs ===== */
+    const connDot=$('#connDot'), connText=$('#connText');
+    const authGate=$('#authGate'), appRoot=$('#app'), btnSignOut=$('#btnSignOut');
+    const emailEl=$('#email'), passEl=$('#password'), btnLogin=$('#btnLogin'), btnSignup=$('#btnSignup'), authHint=$('#authHint');
+
+    const moveRowsContainer = $('#moveRowsContainer');
+    const btnAddMoveRow = $('#btnAddMoveRow');
+    const moveToGlobal  = $('#moveToGlobal');
+    const btnFindByVin  = $('#btnFindByVin');
+    const btnMove       = $('#btnMove');
+    const moveStatus    = $('#moveStatus');
+    const carDetailsBox = $('#carDetailsBox');
+    const carDetails    = $('#carDetails');
+    const carDetailsHint= $('#carDetailsHint');
+
+    const underDeliveryBox = $('#underDeliveryBox');
+    const chkAdminApproved = $('#chkAdminApproved');
+    const adminNotes       = $('#adminNotes');
+    const chkFinanceApproved = $('#chkFinanceApproved');
+    const financeNotes       = $('#financeNotes');
+
+    const vinHints = $('#vinHints');
+
+    const moveAlert      = $('#moveAlert');
+    const moveAlertTitle = $('#moveAlertTitle');
+    const moveAlertList  = $('#moveAlertList');
+
+    const movesTableBody = document.querySelector('#movesTable tbody');
+    const movesFromDate  = $('#movesFromDate');
+    const movesToDate    = $('#movesToDate');
+    const btnClearDate   = $('#btnClearDate');
+
+    const trackVin        = $('#trackVin');
+    const trackTableBody  = document.querySelector('#trackTable tbody');
+    const btnClearTrack   = $('#btnClearTrack');
+
+    /* ===== Connection status ===== */
+    function setStatus(mode, txt){
+      if(connDot){
+        connDot.className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'warn');
       }
-      if (filters.model && r.car !== filters.model) return false;
-      if (filters.year && String(r.modelYear) !== String(filters.year)) return false;
-      if (filters.dealer && (!r.dealer || !r.dealer.toLowerCase().includes(filters.dealer.toLowerCase()))) return false;
-      if (filters.location && (r.location||'') !== filters.location) return false;
-      return true;
-    });
-  }
-
-  function renderSummary(filteredRows){
-    document.getElementById('totalCount').textContent   = filteredRows.length.toLocaleString('ar-SA');
-    const locsFiltered = new Set(filteredRows.map(r=> r.location || 'غير محدد')).size;
-    document.getElementById('placesCount').textContent  = locsFiltered.toLocaleString('ar-SA');
-  }
-
-  function renderTable(filteredRows){
-    tb.innerHTML = '';
-    const colorKey = r => `${r.car||''}⇢${r.variant||''}⇢${r.extColor||''}/${r.intColor||''}⇢${r.location||'غير محدد'}`;
-    const colorCount = {};
-    stock.forEach(r=>{
-      const k=colorKey(r);
-      colorCount[k]=(colorCount[k]||0)+1;
-    });
-
-    filteredRows.slice().sort((a,b)=> (a.id||0)-(b.id||0)).forEach(r=>{
-      const k=colorKey(r);
-      const isColorShort = (colorCount[k]||0) < 2;
-      const tr = document.createElement('tr');
-      if(isColorShort) tr.classList.add('short');
-      const safeNotes = (r.notes && String(r.notes).trim().length>0)
-        ? String(r.notes)
-        : '<span class="muted-text">لا توجد ملاحظات</span>';
-      tr.innerHTML = `
-        <td>${r.id||''}</td>
-        <td>${r.car||''}</td>
-        <td>${r.variant||''}</td>
-        <td><span class="tag">${r.dealer||'-'}</span></td>
-        <td>${r.extColor||''}</td>
-        <td>${r.intColor||''}</td>
-        <td>${r.modelYear||''}</td>
-        <td>${r.plate||''}</td>
-        <td>${r.location||''}</td>
-        <td class="vin" data-vin="${r.vin||''}">${r.vin||''}</td>
-        <td class="cell-notes" data-vin="${r.vin||''}">${safeNotes}</td>
-      `;
-      tb.appendChild(tr);
-    });
-    document.getElementById('visibleCount').textContent = `${filteredRows.length} صف`;
-  }
-
-  function renderAll(){
-    const filtered = applyFilters(stock);
-    renderSummary(filtered);
-    renderTable(filtered);
-  }
-
-  /* Filter events */
-  searchEl.addEventListener('input', e=>{ filters.q=e.target.value.trim(); renderAll(); });
-  modelFilter.addEventListener('change', e=>{ filters.model=e.target.value; renderAll(); });
-  yearFilter.addEventListener('input', e=>{ filters.year=e.target.value.trim(); renderAll(); });
-  dealerFilter.addEventListener('input', e=>{ filters.dealer=e.target.value.trim(); renderAll(); });
-  locationFilter.addEventListener('change', e=>{ filters.location=e.target.value; renderAll(); });
-
-  /* VIN copy */
-  document.addEventListener('click', (e)=>{
-    const vinEl = e.target.closest('.vin');
-    if (vinEl){
-      const vin = vinEl.getAttribute('data-vin');
-      if(vin){
-        navigator.clipboard.writeText(vin)
-          .then(()=> showToastMsg('تم نسخ رقم الهيكل'));
+      if(connText){
+        connText.textContent = txt;
       }
     }
-  });
 
-  /* Export Excel */
-  function exportExcel(rows){
-    const header = ["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","رقم الهيكل","الملاحظات"];
-    const data = [header];
-    rows.forEach(r=>{
-      data.push([r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.vin,r.notes||'']);
-    });
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    ws['!cols'] = [{wch:5},{wch:24},{wch:30},{wch:18},{wch:16},{wch:16},{wch:10},{wch:10},{wch:18},{wch:22},{wch:26}];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Inventory");
-    XLSX.writeFile(wb, "mzj-inventory.xlsx");
-  }
-  document.getElementById('exportAll').addEventListener('click', ()=>{
-    const rows = applyFilters(stock).slice().sort((a,b)=> (a.id||0)-(b.id||0));
-    exportExcel(rows);
-  });
+    /* ===== Auth Gate ===== */
+    onAuthStateChanged(auth, async (user)=>{
+      const noFlash = document.getElementById('noFlash');
+      if(noFlash) noFlash.remove();
+      document.body.style.opacity='1';
 
-  /* مودال ملاحظات */
-  function openNotesModal(vin){
-    const idx = stock.findIndex(r=> (r.vin||'').toString() === vin.toString());
-    if(idx === -1) return;
-    editingVin = vin;
-    const current = stock[idx].notes ? String(stock[idx].notes) : '';
-    notesModalInput.value = current;
-    notesModal.style.display='flex';
-  }
-  function closeNotesModal(){
-    notesModal.style.display='none';
-    editingVin = null;
-  }
+      if(user){
+        const role = await fetchUserRole(user);
 
-  document.addEventListener('click', (e)=>{
-    const cell = e.target.closest('.cell-notes');
-    if(!cell) return;
-    const vin = cell.getAttribute('data-vin') || '';
-    if(!vin) return;
-    openNotesModal(vin);
-  });
+        // لو ملوش دور أو مش من المسموح لهم يشوفوا الصفحة
+        if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
+          window.location.href = 'unauthorized.html';
+          return;
+        }
 
-  notesModalCancel.addEventListener('click', closeNotesModal);
-  notesModalClose.addEventListener('click', closeNotesModal);
-  notesModal.addEventListener('click', e=>{
-    if(e.target === notesModal) closeNotesModal();
-  });
-
-  notesModalSave.addEventListener('click', async ()=>{
-    if(!editingVin){ closeNotesModal(); return; }
-    const idx = stock.findIndex(r=> (r.vin||'').toString() === editingVin.toString());
-    if(idx === -1){ closeNotesModal(); return; }
-    const value = notesModalInput.value || '';
-    stock[idx] = { ...stock[idx], notes: value.trim() };
-    try{
-      await updateDoc(STATE_REF, { stock });
-      showToastMsg('تم حفظ الملاحظات');
-      renderAll();
-    }catch(err){
-      console.error(err);
-      showToastMsg('تعذّر حفظ الملاحظات');
-    }
-    closeNotesModal();
-  });
-
-  /* ===== حركة نقل السيارات — نفس لوجيك صفحة الحركة ===== */
-  const FIXED_LOCATIONS = [
-    "المستودع : المخزون المتاح","المستودع : سيارات بها ملاحظات","المستودع : مباع تحت التسليم","المستودع : مباع تم التسليم",
-    "الوكالة : المخزون المتاح","الوكالة : سيارات بها ملاحظات","الوكالة : مباع تحت التسليم","الوكالة : مباع تم التسليم",
-    "فرع 1 الصالة : المخزون المتاح","فرع 1 الصالة : سيارات بها ملاحظات","فرع 1 الصالة : مباع تحت التسليم","فرع 1 الصالة : مباع تم التسليم",
-    "فرع 2 الملتقى : المخزون المتاح","فرع 2 الملتقى : سيارات بها ملاحظات","فرع 2 الملتقى : مباع تحت التسليم","فرع 2 الملتقى : مباع تم التسليم",
-    "فرع 3 القادسية : المخزون المتاح","فرع 3 القادسية : سيارات بها ملاحظات","فرع 3 القادسية : مباع تحت التسليم","فرع 3 القادسية : مباع تم التسليم"
-  ];
-
-  function fillMoveLists(){
-    const opts = FIXED_LOCATIONS.map(l=> `<option value="${l}">${l}</option>`).join('');
-    const fromSelects = moveRowsContainer ? moveRowsContainer.querySelectorAll('.move-from') : [];
-    fromSelects.forEach(sel=> sel.innerHTML=opts);
-    if(moveToGlobal) moveToGlobal.innerHTML = opts;
-  }
-
-  function fillMoveListsForRow(row){
-    const opts = FIXED_LOCATIONS.map(l=> `<option value="${l}">${l}</option>`).join('');
-    const fromSel = row.querySelector('.move-from');
-    if(fromSel) fromSel.innerHTML = opts;
-  }
-
-  function renderCarDetailsForMove(rec){
-    if(!carDetails || !carDetailsBox) return;
-    carDetails.innerHTML=`
-      <div style="grid-column:1/-1"><b>سيارة:</b> ${rec.car??""}</div>
-      <div><b>البيان:</b> ${rec.variant??""}</div>
-      <div><b>الوكيل:</b> ${rec.dealer??""}</div>
-      <div><b>اللون الخارجي:</b> ${rec.extColor??""}</div>
-      <div><b>اللون الداخلي:</b> ${rec.intColor??""}</div>
-      <div><b>موديل:</b> ${rec.modelYear??""}</div>
-      <div><b>اللوحة:</b> ${rec.plate??""}</div>
-      <div><b>المكان:</b> ${rec.location??""}</div>
-      <div><b>اسم الدفعة:</b> ${rec.batchName??""}</div>
-      <div style="grid-column:1/-1"><b>رقم الهيكل:</b> ${rec.vin??""}</div>
-      <div style="grid-column:1/-1"><b>الملاحظات:</b> ${rec.notes??""}</div>`;
-    if(carDetailsHint){
-      carDetailsHint.textContent=rec.vin?`رقم الهيكل: ${rec.vin}`:'لا يوجد رقم هيكل محفوظ لهذه السيارة.';
-    }
-    carDetailsBox.style.display='block';
-  }
-
-  function hideMoveAlert(){
-    if(moveAlert){
-      moveAlert.style.display='none';
-      moveAlertList.innerHTML='';
-    }
-  }
-
-  function showMoveAlert(type, title, lines){
-    if(!moveAlert) return;
-    moveAlert.className = 'move-alert ' + (type || 'info');
-    moveAlertTitle.textContent = title || 'نتيجة حركة النقل';
-    moveAlertList.innerHTML = '';
-    (lines || []).forEach(txt=>{
-      const li = document.createElement('li');
-      li.textContent = txt;
-      moveAlertList.appendChild(li);
-    });
-    moveAlert.style.display = 'flex';
-  }
-
-  function updateVinSuggestionsForPrefix(rawPrefix){
-    if(!vinHints) return;
-    const prefix = normalizeVin(rawPrefix||'');
-    if(prefix.length < 1){
-      vinHints.innerHTML = '';
-      return;
-    }
-    const set = new Set();
-    stock.forEach(r=>{
-      const v = normalizeVin(r.vin||'');
-      if(v && v.startsWith(prefix)) set.add(v);
-    });
-    const list = Array.from(set).sort().slice(0,30);
-    vinHints.innerHTML = list.map(v=>`<option value="${v}"></option>`).join('');
-  }
-
-  function autoFindByVinForRow(row, strictMessage=false){
-    const inp = row.querySelector('.move-vin');
-    const fromSel = row.querySelector('.move-from');
-    const vinRaw = (inp?.value||'').trim();
-    if(!vinRaw){
-      if(fromSel){
-        fromSel.disabled=false;
-        fromSel.value='';
+        authGate.style.display='none';
+        appRoot.style.display='block';
+        btnSignOut.style.display='inline-flex';
+        setStatus('ok', `متصل: ${user.email} — الدور: ${role}`);
+        applyTabsVisibility(role);
+        await initData();
+        subscribeLive();
+      }else{
+        appRoot.style.display='none';
+        authGate.style.display='grid';
+        btnSignOut.style.display='none';
+        setStatus('warn','لم يتم تسجيل الدخول');
       }
-      if(moveRowsContainer && moveStatus){
-        const anyVin = moveRowsContainer.querySelectorAll('.move-vin');
-        const hasAnyVin = Array.from(anyVin).some(i=> normalizeVin(i.value));
-        if(!hasAnyVin){
+    });
+    btnLogin.addEventListener('click', async ()=>{
+      authHint.textContent='';
+      try{
+        await signInWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value);
+      }catch(e){
+        authHint.textContent='فشل تسجيل الدخول: '+(e?.message||e);
+      }
+    });
+    btnSignup.addEventListener('click', async ()=>{
+      authHint.textContent='';
+      try{
+        await createUserWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value);
+      }catch(e){
+        authHint.textContent='تعذّر إنشاء الحساب: '+(e?.message||e);
+      }
+    });
+    btnSignOut.addEventListener('click', ()=> signOut(auth));
+
+    /* ===== Data init / subscribe ===== */
+    async function initData(){
+      try{
+        const s=await getDoc(STATE_REF);
+        if(s.exists()){
+          const d=s.data()||{};
+          stock = Array.isArray(d.stock)? d.stock: [];
+          moves = Array.isArray(d.moves)? d.moves: [];
+        }else{
+          stock=[]; moves=[];
+        }
+        fillMoveLists();
+        ensureAtLeastOneMoveRow();
+        updateRequirementBoxes();
+        renderMoves();
+        renderTrack();
+        setStatus('ok','تم تحميل البيانات');
+      }catch(e){
+        setStatus('warn','تعذّر تحميل البيانات');
+      }
+    }
+
+    function subscribeLive(){
+      try{
+        onSnapshot(STATE_REF,(snap)=>{
+          if(!snap.exists()) return;
+          const d=snap.data()||{};
+          stock = Array.isArray(d.stock)? d.stock: stock;
+          moves = Array.isArray(d.moves)? d.moves: moves;
+          fillMoveLists();
+          updateRequirementBoxes();
+          renderMoves();
+          renderTrack();
+          setStatus('ok','مزامنة حيّة');
+        },()=> setStatus('warn','انقطاع المزامنة مؤقتًا'));
+      }catch(e){}
+    }
+
+    async function persistAll(){
+      try{
+        await setDoc(STATE_REF, { stock, moves, updatedAt: now() }, { merge:true });
+        setStatus('ok','تم الحفظ');
+      }catch(e){
+        setStatus('err','تعذّر الحفظ');
+        showToast('تعذّر الحفظ إلى السحابة','err');
+      }
+    }
+
+    /* ===== حركة النقل — قوائم الأماكن ===== */
+    const FIXED_LOCATIONS = [
+      "المستودع : المخزون المتاح","المستودع : سيارات بها ملاحظات","المستودع : مباع تحت التسليم","المستودع : مباع تم التسليم",
+      "الوكالة : المخزون المتاح","الوكالة : سيارات بها ملاحظات","الوكالة : مباع تحت التسليم","الوكالة : مباع تم التسليم",
+      "فرع 1 الصالة : المخزون المتاح","فرع 1 الصالة : سيارات بها ملاحظات","فرع 1 الصالة : مباع تحت التسليم","فرع 1 الصالة : مباع تم التسليم",
+      "فرع 2 الملتقى : المخزون المتاح","فرع 2 الملتقى : سيارات بها ملاحظات","فرع 2 الملتقى : مباع تحت التسليم","فرع 2 الملتقى : مباع تم التسليم",
+      "فرع 3 القادسية : المخزون المتاح","فرع 3 القادسية : سيارات بها ملاحظات","فرع 3 القادسية : مباع تحت التسليم","فرع 3 القادسية : مباع تم التسليم"
+    ];
+
+    function fillMoveLists(){
+      const opts = FIXED_LOCATIONS.map(l=> `<option value="${l}">${l}</option>`).join('');
+      const fromSelects = moveRowsContainer ? moveRowsContainer.querySelectorAll('.move-from') : [];
+      fromSelects.forEach(sel=> sel.innerHTML=opts);
+      if(moveToGlobal) moveToGlobal.innerHTML = opts;
+    }
+
+    function fillMoveListsForRow(row){
+      const opts = FIXED_LOCATIONS.map(l=> `<option value="${l}">${l}</option>`).join('');
+      const fromSel = row.querySelector('.move-from');
+      if(fromSel) fromSel.innerHTML = opts;
+    }
+
+    function renderCarDetails(rec){
+      if(!carDetails || !carDetailsBox) return;
+      carDetails.innerHTML=`
+        <div style="grid-column:1/-1"><b>سيارة:</b> ${rec.car??""}</div>
+        <div><b>البيان:</b> ${rec.variant??""}</div>
+        <div><b>الوكيل:</b> ${rec.dealer??""}</div>
+        <div><b>اللون الخارجي:</b> ${rec.extColor??""}</div>
+        <div><b>اللون الداخلي:</b> ${rec.intColor??""}</div>
+        <div><b>موديل:</b> ${rec.modelYear??""}</div>
+        <div><b>اللوحة:</b> ${rec.plate??""}</div>
+        <div><b>المكان:</b> ${rec.location??""}</div>
+        <div><b>اسم الدفعة:</b> ${rec.batchName??""}</div>
+        <div style="grid-column:1/-1"><b>رقم الهيكل:</b> ${rec.vin??""}</div>
+        <div style="grid-column:1/-1"><b>الملاحظات:</b> ${rec.notes??""}</div>`;
+      if(carDetailsHint){
+        carDetailsHint.textContent=rec.vin?`رقم الهيكل: ${rec.vin}`:'لا يوجد رقم هيكل محفوظ لهذه السيارة.';
+      }
+      carDetailsBox.style.display='block';
+    }
+
+    function hideMoveAlert(){
+      if(moveAlert){
+        moveAlert.style.display='none';
+        moveAlertList.innerHTML='';
+      }
+    }
+
+    function showMoveAlert(type, title, lines){
+      if(!moveAlert) return;
+      moveAlert.className = 'move-alert ' + (type || 'info');
+      moveAlertTitle.textContent = title || 'نتيجة حركة النقل';
+      moveAlertList.innerHTML = '';
+      (lines || []).forEach(txt=>{
+        const li = document.createElement('li');
+        li.textContent = txt;
+        moveAlertList.appendChild(li);
+      });
+      moveAlert.style.display = 'flex';
+    }
+
+    /* اقتراح VIN حسب البادئة */
+    function updateVinSuggestionsForPrefix(rawPrefix){
+      if(!vinHints) return;
+      const prefix = normalizeVin(rawPrefix||'');
+      if(prefix.length < 1){
+        vinHints.innerHTML = '';
+        return;
+      }
+      const set = new Set();
+      stock.forEach(r=>{
+        const v = normalizeVin(r.vin||'');
+        if(v && v.startsWith(prefix)) set.add(v);
+      });
+      const list = Array.from(set).sort().slice(0,30);
+      vinHints.innerHTML = list.map(v=>`<option value="${v}"></option>`).join('');
+    }
+
+    /* اقتراح المكان "من" لكل سطر عند كتابة VIN */
+    function autoFindByVinForRow(row, strictMessage=false){
+      const inp = row.querySelector('.move-vin');
+      const fromSel = row.querySelector('.move-from');
+      const vinRaw = (inp?.value||'').trim();
+      if(!vinRaw){
+        if(fromSel){
+          fromSel.disabled=false;
+          fromSel.value='';
+        }
+        if(moveRowsContainer && moveStatus){
+          const anyVin = moveRowsContainer.querySelectorAll('.move-vin');
+          const hasAnyVin = Array.from(anyVin).some(i=> normalizeVin(i.value));
+          if(!hasAnyVin){
+            if(carDetailsBox) carDetailsBox.style.display='none';
+            moveStatus.textContent='';
+          }
+        }
+        return;
+      }
+      const norm = normalizeVin(vinRaw);
+      let match = stock.find(r => normalizeVin(r.vin) === norm);
+      if(!match && norm.length >= 8){
+        const candidates = stock.filter(r => normalizeVin(r.vin).startsWith(norm));
+        if(candidates.length === 1) match = candidates[0];
+      }
+      if(match){
+        renderCarDetails(match);
+        const currentLoc = match.location || '';
+        if(currentLoc && fromSel){
+          fromSel.value = currentLoc;
+          fromSel.disabled = true;
+          if(moveStatus) moveStatus.textContent = `تم العثور: ${match.car} — المكان الحالي: ${currentLoc}`;
+        }else if(fromSel){
+          fromSel.disabled = false;
+          if(moveStatus) moveStatus.textContent = `تم العثور: ${match.car} — لا يوجد مكان مسجل. اختر المكان يدويًا.`;
+        }
+      }else{
+        if(strictMessage){
+          const msg = 'لم يتم العثور على سيارة بهذا الرقم.';
+          if(moveStatus) moveStatus.textContent = msg;
           if(carDetailsBox) carDetailsBox.style.display='none';
-          moveStatus.textContent='';
+          showMoveAlert('error','لم يتم العثور على السيارة',[msg]);
+        }else{
+          if(moveStatus) moveStatus.textContent = '— لم يتم التعرف على السيارة بعد (أكمل رقم الهيكل).';
         }
       }
-      return;
     }
-    const norm = normalizeVin(vinRaw);
-    let match = stock.find(r => normalizeVin(r.vin) === norm);
-    if(!match && norm.length >= 8){
-      const candidates = stock.filter(r => normalizeVin(r.vin).startsWith(norm));
-      if(candidates.length === 1) match = candidates[0];
-    }
-    if(match){
-      renderCarDetailsForMove(match);
-      const currentLoc = match.location || '';
-      if(currentLoc && fromSel){
-        fromSel.value = currentLoc;
-        fromSel.disabled = true;
-        if(moveStatus) moveStatus.textContent = `تم العثور: ${match.car} — المكان الحالي: ${currentLoc}`;
-      }else if(fromSel){
-        fromSel.disabled = false;
-        if(moveStatus) moveStatus.textContent = `تم العثور: ${match.car} — لا يوجد مكان مسجل. اختر المكان يدويًا.`;
-      }
-    }else{
-      if(strictMessage){
-        const msg = 'لم يتم العثور على سيارة بهذا الرقم.';
-        if(moveStatus) moveStatus.textContent = msg;
-        if(carDetailsBox) carDetailsBox.style.display='none';
-        showMoveAlert('error','لم يتم العثور على السيارة',[msg]);
-      }else{
-        if(moveStatus) moveStatus.textContent = '— لم يتم التعرف على السيارة بعد (أكمل رقم الهيكل).';
-      }
-    }
-  }
 
-  function attachMoveRowEvents(row){
-    const inp = row.querySelector('.move-vin');
-    if(!inp) return;
-    inp.addEventListener('input', debounce(()=>{
-      updateVinSuggestionsForPrefix(inp.value);
-      autoFindByVinForRow(row,false);
-    },150));
-  }
+    function attachMoveRowEvents(row){
+      const inp = row.querySelector('.move-vin');
+      if(!inp) return;
+      inp.addEventListener('input', debounce(()=>{
+        updateVinSuggestionsForPrefix(inp.value);
+        autoFindByVinForRow(row,false);
+      },150));
+    }
 
-  function createMoveRow(index){
-    const row = document.createElement('div');
-    row.className = 'move-row';
-    row.innerHTML = `
-      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
-        <div class="move-row-title">السيارة ${index}</div>
-        <button type="button" class="btn btn-ghost" data-remove-move-row="1" title="مسح هذه الحركة">مسح الحركة</button>
-      </div>
-      <div class="grid grid-2">
-        <div>
-          <label>رقم الهيكل</label>
-          <input class="move-vin input" list="vinHints" placeholder="اكتب رقم الهيكل"/>
+    function createMoveRow(index){
+      const row = document.createElement('div');
+      row.className = 'move-row';
+      row.innerHTML = `
+        <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div class="move-row-title">السيارة ${index}</div>
+          <button type="button" class="btn btn-ghost" data-remove-move-row="1" title="مسح هذه الحركة">مسح الحركة</button>
         </div>
-        <div>
-          <label>من (محدّد تلقائيًا)</label>
-          <select class="move-from select" title="المكان الحالي"></select>
-        </div>
-      </div>`;
-    fillMoveListsForRow(row);
-    attachMoveRowEvents(row);
-    return row;
-  }
-
-  function renumberMoveRows(){
-    if(!moveRowsContainer) return;
-    const rows = moveRowsContainer.querySelectorAll('.move-row');
-    rows.forEach((row,idx)=>{
-      const title = row.querySelector('.move-row-title');
-      if(title) title.textContent = 'السيارة ' + (idx+1);
-    });
-  }
-
-  function ensureAtLeastOneMoveRow(){
-    if(!moveRowsContainer) return;
-    const existing = moveRowsContainer.querySelectorAll('.move-row').length;
-    if(existing === 0){
-      const row = createMoveRow(1);
-      moveRowsContainer.appendChild(row);
+        <div class="grid grid-3">
+          <div>
+            <label>رقم الهيكل</label>
+            <input class="move-vin" list="vinHints" placeholder="اكتب رقم الهيكل"/>
+          </div>
+          <div>
+            <label>من (محدّد تلقائيًا)</label>
+            <select class="move-from" title="المكان الحالي"></select>
+          </div>
+          <div class="notes-col">
+            <label>ملاحظات هذه السيارة</label>
+            <textarea class="move-notes" placeholder="ملاحظات خاصة بهذا الهيكل (اختياري)"></textarea>
+          </div>
+        </div>`;
+      fillMoveListsForRow(row);
+      attachMoveRowEvents(row);
+      return row;
     }
-    renumberMoveRows();
-  }
 
-  if(btnAddMoveRow){
-    btnAddMoveRow.addEventListener('click', ()=>{
-      const count = moveRowsContainer.querySelectorAll('.move-row').length;
-      const row = createMoveRow(count+1);
-      moveRowsContainer.appendChild(row);
-      renumberMoveRows();
-    });
-  }
+    function renumberMoveRows(){
+      if(!moveRowsContainer) return;
+      const rows = moveRowsContainer.querySelectorAll('.move-row');
+      rows.forEach((row,idx)=>{
+        const title = row.querySelector('.move-row-title');
+        if(title) title.textContent = 'السيارة ' + (idx+1);
+      });
+    }
 
-  // مسح صف حركة نقل واحد
-  document.addEventListener('click',(e)=>{
-    const btn = e.target.closest('[data-remove-move-row]');
-    if(!btn) return;
-    const row = btn.closest('.move-row');
-    if(row){
-      row.remove();
+    function ensureAtLeastOneMoveRow(){
+      if(!moveRowsContainer) return;
+      const existing = moveRowsContainer.querySelectorAll('.move-row').length;
+      if(existing === 0){
+        const row = createMoveRow(1);
+        moveRowsContainer.appendChild(row);
+      }
       renumberMoveRows();
     }
-  });
 
-  // عرض البيانات لأول VIN غير فارغ
-  if(btnFindByVin){
+    if(btnAddMoveRow){
+      btnAddMoveRow.addEventListener('click', ()=>{
+        const count = moveRowsContainer.querySelectorAll('.move-row').length;
+        const row = createMoveRow(count+1);
+        moveRowsContainer.appendChild(row);
+        renumberMoveRows();
+      });
+    }
+
+    // مسح صف حركة نقل واحد
+    document.addEventListener('click',(e)=>{
+      const btn = e.target.closest('[data-remove-move-row]');
+      if(!btn) return;
+      const row = btn.closest('.move-row');
+      if(row){
+        row.remove();
+        renumberMoveRows();
+      }
+    });
+
+    // عرض البيانات لأول VIN غير فارغ
     btnFindByVin.addEventListener('click',()=>{
       const rows = Array.from(moveRowsContainer.querySelectorAll('.move-row'));
       const firstRow = rows.find(r=> normalizeVin((r.querySelector('.move-vin')?.value||'').trim()));
@@ -1345,19 +971,17 @@
       }
       autoFindByVinForRow(firstRow,true);
     });
-  }
 
-  function updateRequirementBoxes(){
-    const val = (moveToGlobal?.value || '').trim();
-    const anyIssues = /سيارات بها ملاحظات/.test(val);
-    if(underDeliveryBox){
-      underDeliveryBox.style.display = 'none'; // مطابق لصفحة الحركة حاليًا
+    function updateRequirementBoxes(){
+      const val = (moveToGlobal?.value || '').trim();
+      const anyIssues = /سيارات بها ملاحظات/.test(val);
+      if(underDeliveryBox){
+        underDeliveryBox.style.display = 'none'; // زي صفحة الادمن حالياً
+      }
+      return anyIssues;
     }
-    return anyIssues;
-  }
 
-  // تنفيذ النقل المتعدد (نفس صفحة الحركة)
-  if(btnMove){
+    // تنفيذ النقل المتعدد
     btnMove.addEventListener('click', async ()=>{
       hideMoveAlert();
 
@@ -1366,7 +990,7 @@
         const msg = 'اختر مكان "إلى" أولًا قبل تنفيذ النقل.';
         if(moveStatus) moveStatus.textContent = msg;
         showMoveAlert('info','مكان الوصول مطلوب',[msg]);
-        showToastMsg(msg);
+        showToast(msg,'info');
         return;
       }
 
@@ -1382,7 +1006,7 @@
         const msg = 'لم يتم إدخال أي رقم هيكل للنقل.';
         if(moveStatus) moveStatus.textContent = msg;
         showMoveAlert('info','لا توجد حركات نقل', [msg]);
-        showToastMsg(msg);
+        showToast(msg,'info');
         return;
       }
 
@@ -1431,7 +1055,7 @@
         const oldLoc = rec.location || from;
 
         if(goingDeliveredRow){
-          // تسجيل طلب نقل فقط بدون تغيير مكان السيارة (نفس لوجيك صفحة الحركة)
+          // تسجيل طلب نقل فقط بدون تغيير مكان السيارة
           const stamp = now();
           moves.push({
             when: stamp,
@@ -1480,12 +1104,11 @@
         const lines = errors.length ? errors : ['لم يتم تنفيذ أي حركة نقل.'];
         if(moveStatus) moveStatus.textContent = title;
         showMoveAlert('error', title, lines);
-        showToastMsg(title);
+        showToast(title,'info');
         return;
       }
 
       await persistAll();
-      // في صفحة المخزون ما عندناش جدول حركات/تتبع، بس الدوال آمنة حتى لو مفيش DOM
       renderMoves();
       renderTrack();
 
@@ -1498,7 +1121,7 @@
         errors.forEach(e=> allLines.push(e));
       }
       showMoveAlert(errors.length ? 'info' : 'success', 'نتيجة حركة النقل', allLines);
-      showToastMsg(summary);
+      showToast(summary,'ok');
 
       if(carDetailsBox) carDetailsBox.style.display='none';
 
@@ -1519,156 +1142,123 @@
       if(financeNotes) financeNotes.value='';
       if(vinHints) vinHints.innerHTML='';
     });
-  }
 
-  /* دوال سجل الحركات/التتبع (تشتغل بس لو فيه DOM بنفس IDs) */
-  const movesTableBody = document.querySelector('#movesTable tbody');
-  const movesFromDate  = $('#movesFromDate');
-  const movesToDate    = $('#movesToDate');
-  const btnClearDate   = $('#btnClearDate');
-
-  const trackVin        = $('#trackVin');
-  const trackTableBody  = document.querySelector('#trackTable tbody');
-  const btnClearTrack   = $('#btnClearTrack');
-
-  function filterMovesByDate(list){
-    const f = movesFromDate?.value || null;
-    const t = movesToDate?.value || null;
-    if(!f && !t) return list;
-    return list.filter(m=>{
-      const d = m.date || onlyDate(m.when||'');
-      if(f && d < f) return false;
-      if(t && d > t) return false;
-      return true;
-    });
-  }
-
-  function renderMoves(){
-    if(!movesTableBody) return;
-    movesTableBody.innerHTML='';
-    let rows = moves.slice();
-    rows = filterMovesByDate(rows);
-    rows.forEach((m,i)=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=`
-        <td>${i+1}</td>
-        <td class="nowrap">${m.date || onlyDate(m.when||'')}</td>
-        <td class="nowrap"><span class="copyable" data-copy="${m.vin||''}" title="انسخ رقم الهيكل">${m.vin||''}</span></td>
-        <td>${m.car||''}</td>
-        <td>${m.from||''}</td>
-        <td>${m.to||''}</td>
-        <td class="nowrap">${m.id||''}</td>`;
-      movesTableBody.appendChild(tr);
-    });
-  }
-
-  if(movesFromDate) movesFromDate.addEventListener('change', renderMoves);
-  if(movesToDate)   movesToDate.addEventListener('change', renderMoves);
-  if(btnClearDate){
-    btnClearDate.addEventListener('click', ()=>{
-      movesFromDate.value=''; movesToDate.value=''; renderMoves();
-    });
-  }
-
-  function renderTrack(){
-    if(!trackTableBody) return;
-    trackTableBody.innerHTML='';
-    const v = normalizeVin((trackVin?.value||'').trim());
-    if(!v){ return; }
-    const list = moves
-      .filter(m=> normalizeVin(m.vin||'').startsWith(v) )
-      .sort((a,b)=> (a.when||'').localeCompare(b.when||''));
-    list.forEach((m,i)=>{
-      const notesParts = [];
-      if(m.adminApproved===true) notesParts.push('✔ موافقة إدارية');
-      if(m.adminApproved===false) notesParts.push('✖ موافقة إدارية');
-      if(m.adminNotes) notesParts.push('إداري: '+m.adminNotes);
-      if(m.financeApproved===true) notesParts.push('✔ موافقة مالية');
-      if(m.financeApproved===false) notesParts.push('✖ موافقة مالية');
-      if(m.financeNotes) notesParts.push('مالي: '+m.financeNotes);
-      if(m.issuesNotes) notesParts.push('ملاحظات: '+m.issuesNotes);
-
-      const tr=document.createElement('tr');
-      tr.innerHTML=`
-        <td>${i+1}</td>
-        <td class="nowrap">${m.date || onlyDate(m.when||'')}</td>
-        <td>${m.from||''}</td>
-        <td>${m.to||''}</td>
-        <td>${m.car||''}</td>
-        <td>${notesParts.join(' — ')||''}</td>`;
-      trackTableBody.appendChild(tr);
-    });
-  }
-
-  if(trackVin){
-    trackVin.addEventListener('input', debounce(()=>{
-      updateVinSuggestionsForPrefix(trackVin.value);
-      renderTrack();
-    }, 200));
-  }
-  if(btnClearTrack){
-    btnClearTrack.addEventListener('click', ()=>{
-      trackVin.value=''; renderTrack();
-    });
-  }
-
-  // نسخ سريع لرقم الهيكل من any .copyable (لو متواجد)
-  document.addEventListener('click',(e)=>{
-    const pill=e.target.closest('.copyable');
-    if(pill){
-      const txt=(pill.getAttribute('data-copy')||'').trim();
-      if(txt){
-        navigator.clipboard.writeText(txt).then(()=>showToastMsg('تم النسخ ✅'));
-      }
+    /* ===== سجل الحركات (عرض + فلاتر التاريخ) ===== */
+    function filterMovesByDate(list){
+      const f = movesFromDate?.value || null;
+      const t = movesToDate?.value || null;
+      if(!f && !t) return list;
+      return list.filter(m=>{
+        const d = m.date || onlyDate(m.when||'');
+        if(f && d < f) return false;
+        if(t && d > t) return false;
+        return true;
+      });
     }
-  });
 
-  // إظهار/إخفاء ملاحظات كل سيارة حسب مكان (إلى)
-  function toggleNotesVisibility(){
-    const dest = (moveToGlobal?.value || '').trim();
-    const show = /سيارات بها ملاحظات/.test(dest);
-    const notesCols = document.querySelectorAll('.notes-col');
-    notesCols.forEach(col=>{
-      col.style.display = show ? 'block' : 'none';
-    });
-  }
-  if(moveToGlobal){
-    moveToGlobal.addEventListener('change', ()=>{
-      updateRequirementBoxes();
-      toggleNotesVisibility();
-    });
-  }
+    function renderMoves(){
+      if(!movesTableBody) return;
+      movesTableBody.innerHTML='';
+      let rows = moves.slice();
+      rows = filterMovesByDate(rows);
+      rows.forEach((m,i)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td>${i+1}</td>
+          <td class="nowrap">${m.date || onlyDate(m.when||'')}</td>
+          <td class="nowrap"><span class="copyable" data-copy="${m.vin||''}" title="انسخ رقم الهيكل">${m.vin||''}</span></td>
+          <td>${m.car||''}</td>
+          <td>${m.from||''}</td>
+          <td>${m.to||''}</td>
+          <td class="nowrap">${m.id||''}</td>`;
+        movesTableBody.appendChild(tr);
+      });
+    }
 
-  /* Inner tab switcher */
-  innerTabs.forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      innerTabs.forEach(b=> b.classList.remove('active'));
-      tabCars.classList.remove('active');
-      tabMoves.classList.remove('active');
-      btn.classList.add('active');
-      if(btn.dataset.tab === 'moves'){
-        tabMoves.classList.add('active');
-      }else{
-        tabCars.classList.add('active');
+    if(movesFromDate) movesFromDate.addEventListener('change', renderMoves);
+    if(movesToDate)   movesToDate.addEventListener('change', renderMoves);
+    if(btnClearDate){
+      btnClearDate.addEventListener('click', ()=>{
+        movesFromDate.value=''; movesToDate.value=''; renderMoves();
+      });
+    }
+
+    /* ===== تتبّع VIN ===== */
+    function renderTrack(){
+      if(!trackTableBody) return;
+      trackTableBody.innerHTML='';
+      const v = normalizeVin((trackVin?.value||'').trim());
+      if(!v){ return; }
+      const list = moves
+        .filter(m=> normalizeVin(m.vin||'').startsWith(v) )
+        .sort((a,b)=> (a.when||'').localeCompare(b.when||''));
+      list.forEach((m,i)=>{
+        const notesParts = [];
+        if(m.adminApproved===true) notesParts.push('✔ موافقة إدارية');
+        if(m.adminApproved===false) notesParts.push('✖ موافقة إدارية');
+        if(m.adminNotes) notesParts.push('إداري: '+m.adminNotes);
+        if(m.financeApproved===true) notesParts.push('✔ موافقة مالية');
+        if(m.financeApproved===false) notesParts.push('✖ موافقة مالية');
+        if(m.financeNotes) notesParts.push('مالي: '+m.financeNotes);
+        if(m.issuesNotes) notesParts.push('ملاحظات: '+m.issuesNotes);
+
+        const tr=document.createElement('tr');
+        tr.innerHTML=`
+          <td>${i+1}</td>
+          <td class="nowrap">${m.date || onlyDate(m.when||'')}</td>
+          <td>${m.from||''}</td>
+          <td>${m.to||''}</td>
+          <td>${m.car||''}</td>
+          <td>${notesParts.join(' — ')||''}</td>`;
+        trackTableBody.appendChild(tr);
+      });
+    }
+
+    if(trackVin){
+      trackVin.addEventListener('input', debounce(()=>{
+        updateVinSuggestionsForPrefix(trackVin.value);
+        renderTrack();
+      }, 200));
+    }
+    if(btnClearTrack){
+      btnClearTrack.addEventListener('click', ()=>{
+        trackVin.value=''; renderTrack();
+      });
+    }
+
+    // نسخ سريع لرقم الهيكل من الجداول
+    document.addEventListener('click',(e)=>{
+      const pill=e.target.closest('.copyable');
+      if(pill){
+        const txt=(pill.getAttribute('data-copy')||'').trim();
+        if(txt){
+          navigator.clipboard.writeText(txt).then(()=>showToast('تم النسخ ✅','ok'));
+        }
       }
     });
-  });
 
-  /* Keyboard helper */
-  document.addEventListener('keydown',(e)=>{
-    if(e.key==='/'){
-      e.preventDefault();
-      const el = document.getElementById('search');
-      if(el) el.focus();
+    // إظهار/إخفاء ملاحظات كل سيارة حسب مكان (إلى)
+    function toggleNotesVisibility(){
+      const dest = (moveToGlobal?.value || '').trim();
+      const show = /سيارات بها ملاحظات/.test(dest);
+      const notesCols = document.querySelectorAll('.notes-col');
+      notesCols.forEach(col=>{
+        col.style.display = show ? 'block' : 'none';
+      });
     }
-  });
+    if(moveToGlobal){
+      moveToGlobal.addEventListener('change', ()=>{
+        updateRequirementBoxes();
+        toggleNotesVisibility();
+      });
+    }
 
-  // أول تشغيل
-  setStatus('warn','جارِ الاتصال…');
-  fillMoveLists();
-  ensureAtLeastOneMoveRow();
-  updateRequirementBoxes();
-  toggleNotesVisibility();
-</script>
+    // أول تشغيل
+    setStatus('warn','جارِ الاتصال…');
+    fillMoveLists();
+    ensureAtLeastOneMoveRow();
+    updateRequirementBoxes();
+    toggleNotesVisibility();
+  </script>
 </body>
 </html>
