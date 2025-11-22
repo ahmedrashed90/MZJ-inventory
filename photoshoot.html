@@ -379,13 +379,13 @@
           </button>
         </div>
 
-        <!-- 8 صفوف نقل (بتظهر ديناميك) -->
+        <!-- صفوف نقل -->
         <div class="grid" id="moveRowsContainer" style="gap:10px"></div>
 
         <!-- datalist للاقتراحات -->
         <datalist id="vinHints"></datalist>
 
-        <!-- بوكس متطلبات مباع تحت التسليم (مخفي حاليًا) -->
+        <!-- بوكس متطلبات مباع تحت التسليم (مخفي حالياً) -->
         <div class="checklist" id="underDeliveryBox" style="display:none; margin-top:10px">
           <h4>المتطلبات عند النقل إلى <b>مباع تحت التسليم</b></h4>
           <div class="grid grid-2">
@@ -443,7 +443,7 @@
         </div>
       </div>
 
-      <!-- تتبّع رقم هيكل -->
+      <!-- تتبع رقم الهيكل -->
       <div class="card">
         <div class="card-header">
           <div class="section-title">
@@ -572,9 +572,9 @@
     const authGate=$('#authGate'), appRoot=$('#app'), btnSignOut=$('#btnSignOut');
     const emailEl=$('#email'), passEl=$('#password'), btnLogin=$('#btnLogin'), btnSignup=$('#btnSignup'), authHint=$('#authHint');
 
-    const moveRowsContainer = document.querySelector('#moveRowsContainer');
-    const btnAddMoveRow = document.querySelector('#btnAddMoveRow');
-    const moveToGlobal  = document.querySelector('#moveToGlobal');
+    const moveRowsContainer = $('#moveRowsContainer');
+    const btnAddMoveRow = $('#btnAddMoveRow');
+    const moveToGlobal  = $('#moveToGlobal');
     const btnFindByVin  = $('#btnFindByVin');
     const btnMove       = $('#btnMove');
     const moveStatus    = $('#moveStatus');
@@ -600,7 +600,7 @@
     const btnClearDate   = $('#btnClearDate');
 
     const trackVin        = $('#trackVin');
-    const trackTableBody  = $('#trackTable tbody');
+    const trackTableBody  = document.querySelector('#trackTable tbody');
     const btnClearTrack   = $('#btnClearTrack');
 
     /* ===== Connection status ===== */
@@ -616,9 +616,10 @@
     /* ===== Auth Gate ===== */
     onAuthStateChanged(auth, async (user)=>{
       const noFlash = document.getElementById('noFlash');
+      if(noFlash) noFlash.remove();
+      document.body.style.opacity='1';
+
       if(user){
-        if(noFlash) noFlash.remove();
-       document.body.style.opacity='1';
         authGate.style.display='none';
         appRoot.style.display='block';
         btnSignOut.style.display='inline-flex';
@@ -626,8 +627,6 @@
         await initData();
         subscribeLive();
       }else{
-        if(noFlash) noFlash.remove();
-        document.body.style.opacity='1';
         appRoot.style.display='none';
         authGate.style.display='grid';
         btnSignOut.style.display='none';
@@ -921,7 +920,7 @@
       const val = (moveToGlobal?.value || '').trim();
       const anyIssues = /سيارات بها ملاحظات/.test(val);
       if(underDeliveryBox){
-        underDeliveryBox.style.display = 'none'; // حالياً ملغي نفس صفحة الادمن
+        underDeliveryBox.style.display = 'none'; // زي صفحة الادمن حالياً
       }
       return anyIssues;
     }
