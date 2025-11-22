@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -819,20 +818,50 @@
     showToast('تم تأكيد الاستلام ✅');
   }
 
+  // ✅ تم التعديل هنا حسب طلبك
   async function markDoneShoot(id){
     const idx = shootRequests.findIndex(x=> Number(x.id)===Number(id));
     if(idx===-1){ showToast('الطلب غير موجود'); return; }
-    const req = {...shootRequests[idx], status:'تم'};
+
+    const user  = auth.currentUser;
+    const who   = displayNameFor(user);
+    const stamp = `${now()} — ${who}`;
+
+    let req = shootRequests[idx] || {};
+    const admin = {...(req.admin||{})};
+
+    // لو مفيش استلام/تجهيز، نسجلهم تلقائيًا مع الموافقة
+    if(!admin.received){
+      admin.received = stamp;
+    }
+    if(!admin.prepared){
+      admin.prepared = stamp;
+    }
+    if(!admin.approved){
+      admin.approved = stamp;
+    }
+
+    req = {
+      ...req,
+      status: 'تم',
+      admin
+    };
     shootRequests[idx] = req;
+
     await logActivity(
-      'تحديث حالة طلب تصوير إلى تم',
-      `تحديث حالة طلب التصوير #${id} إلى تم`,
+      'تم التصوير + موافقة إدارية وتنفيذ حركة المخزون',
+      `إنهاء طلب التصوير #${id} مع تسجيل موافقة إدارية وتنفيذ حركة المخزون`,
       { requestId:id, entityType:'photoshoot_request', entityId:id }
     );
+
     await persistAll();
     metrics();
     render();
-    showToast('تم تحديث حالة الطلب إلى تم التصوير');
+
+    // تنفيذ حركة المخزون لكل هياكل الطلب (لو لسه محتاجة نقل)
+    await moveAllVINsToRequested(req);
+
+    showToast('تم التصوير، وتم تسجيل الموافقة الإدارية وتنفيذ حركة المخزون ✅');
   }
 
   const reqModal = $('#reqModal');
@@ -1155,12 +1184,12 @@
       $('#btnSignOut').style.display='inline-block';
       setStatus('ok', `متصل: ${displayNameFor(user)}`);
       await initData(); subscribeLive(); metrics(); render();
-        }else{
+    }else{
       $('#app').style.display='none';
       $('#authGate').style.display='block';
       $('#btnSignOut').style.display='none';
       setStatus('', 'لم يتم تسجيل الدخول');
-        }
+    }
   });
   $('#btnLogin').addEventListener('click', async ()=>{
     $('#authHint').textContent='';
@@ -1224,5 +1253,3 @@
 </script>
 </body>
 </html>
-
-
