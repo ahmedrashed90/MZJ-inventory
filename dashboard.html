@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -605,6 +606,7 @@ body{opacity:0;transition:opacity .12s ease}
     return { total, shootTotal, moveTotal, inProg, prepared, reviewing, done };
   }
 
+
 function renderShootCard(gridEl){
     const st = shootStats();
     const card = document.createElement('div');
@@ -653,19 +655,30 @@ function renderShootCard(gridEl){
       </div>
     `;
 
-    // الضغط في أي مكان في الكارت (خارج المتريكس) يفتح صفحة إدارة الطلبات بشكل عام
+    // الضغط في أي مكان في الكارت (خارج المتريكس) يفتح تفاصيل كل طلبات التصوير
     card.addEventListener('click', (ev)=> {
       if (ev.target.closest('.shoot-metric')) return;
-      window.location.href = 'photoshoot-user.html';
+      openShootModal('ALL');
     });
 
-    // كل متريك تفتح صفحة إدارة الطلبات مع هاش خاص بالحالة
+    // كل متريك تفتح مودال الطلبات داخل البوردر مع فلتر مناسب
     card.querySelectorAll('.shoot-metric').forEach(el => {
       el.addEventListener('click', (e)=>{
         e.stopPropagation();
-        const status = el.getAttribute('data-status') || '';
-        const hash = status ? ('#' + encodeURIComponent(status)) : '';
-        window.location.href = 'photoshoot-user.html' + hash;
+        const status = el.getAttribute('data-status') || 'ALL';
+        if (status === 'ALL') {
+          openShootModal('ALL');
+        } else if (status === 'تحت الإجراء') {
+          openShootModal('تحت الإجراء');
+        } else if (status === 'تم التجهيز') {
+          openShootModal('prepared');
+        } else if (status === 'قيد المراجعة') {
+          openShootModal('قيد المراجعة');
+        } else if (status === 'تم') {
+          openShootModal('تم');
+        } else {
+          openShootModal(status);
+        }
       });
     });
 
@@ -673,7 +686,8 @@ function renderShootCard(gridEl){
   }
 
 
-  /* ===== طلبات نقل السيارات: من moves ===== */
+
+/* ===== طلبات نقل السيارات: من moves ===== */
   function isTransferPending(m){
     const toLoc = (m.to || m.toLocation || m.target || '').toString();
 
