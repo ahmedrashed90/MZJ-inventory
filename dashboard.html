@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -9,9 +10,8 @@
 <link rel="prefetch" href="cars.html">
 <link rel="prefetch" href="Activity.html">
 <style id="noFlash">
-#authGate{display:none!important}
 html{background:#fff8ef}
-body{opacity:0;transition:opacity .12s ease}
+body{opacity:0}
 </style>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -187,7 +187,7 @@ body{opacity:0;transition:opacity .12s ease}
 </div>
 
 <!-- Auth Gate -->
-<div id="authGate" style="min-height:60vh;display:grid;place-items:center;padding:24px">
+<div id="authGate" style="min-height:60vh;display:none;place-items:center;padding:24px">
   <div class="card" style="max-width:440px;width:96%">
     <h2 style="margin:0 0 10px;color:var(--brown)">تسجيل الدخول</h2>
     <label>البريد الإلكتروني</label>
@@ -437,6 +437,13 @@ body{opacity:0;transition:opacity .12s ease}
   }
 
   /* ===== Helpers ===== */
+function liftNoFlash(){
+  const nf = document.getElementById('noFlash');
+  if(nf) nf.remove();
+  document.body.style.opacity = '1';
+}
+
+
   const $ = s => document.querySelector(s);
   const toast = $('#toast');
   const pad = n => n<10?'0'+n:n;
@@ -486,35 +493,46 @@ body{opacity:0;transition:opacity .12s ease}
 
   /* ===== Auth Gate ===== */
   onAuthStateChanged(auth, async (user)=>{
-    const noFlash = document.getElementById('noFlash');
-    if(noFlash){ noFlash.remove(); }
-
     if(user){
-      const role = await fetchUserRole(user);
+      try{
+        const role = await fetchUserRole(user);
 
-      // لو ملوش دور أو مش من المسموح لهم يشوفوا الداش بورد
-      if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
-        window.location.href = 'unauthorized.html';
-        return;
+        if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
+          window.location.href = 'unauthorized.html';
+          return;
+        }
+
+        // عرض محتوى الصفحة وإخفاء شاشة الدخول
+        $('#authGate').style.display='none';
+        $('#app').style.display='block';
+        $('#btnSignOut').style.display='inline-flex';
+        setStatus('ok', `متصل: ${user.email} — الدور: ${role}`);
+
+        // تطبيق صلاحيات التابات
+        applyTabsVisibility(role);
+
+        // إزالة طبقة منع الوميض بعد استقرار الواجهة
+        liftNoFlash();
+
+        await initData();
+        subscribeLive();
+      }catch(err){
+        console.error(err);
+        setStatus('err','خطأ في تحميل البيانات');
+        liftNoFlash();
       }
-
-      document.body.style.opacity='1';
-      $('#authGate').style.display='none';
-      $('#app').style.display='block';
-      $('#btnSignOut').style.display='inline-flex';
-      setStatus('ok', `متصل: ${user.email} — الدور: ${role}`);
-      applyTabsVisibility(role);
-      await initData();
-      subscribeLive();
     }else{
-      document.body.style.opacity='1';
+      // مستخدم غير مسجّل الدخول → إظهار شاشة تسجيل الدخول فقط
       $('#app').style.display='none';
       $('#authGate').style.display='grid';
       $('#btnSignOut').style.display='none';
       setStatus('warn','لم يتم تسجيل الدخول');
+
+      // إزالة طبقة منع الوميض بعد استقرار الواجهة
+      liftNoFlash();
     }
   });
-  $('#btnLogin').addEventListener('click', async ()=>{
+$('#btnLogin').addEventListener('click', async ()=>{
     $('#authHint').textContent='';
     try{ await signInWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
     catch(e){ $('#authHint').textContent='فشل تسجيل الدخول: '+(e?.message||e); }
