@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>حركة نقل السيارات — MZJ Cars</title>
 
+  <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
 
@@ -17,43 +18,149 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0;background:var(--cream);color:var(--text);font-family:"Tajawal",system-ui,Arial}
+    body{
+      margin:0;
+      background:var(--cream);
+      color:var(--text);
+      font-family:"Tajawal",system-ui,Arial
+    }
 
     /* Topbar */
-    .topbar{position:sticky;top:0;z-index:1000;background:#fff;border-bottom:1px solid var(--line)}
-    .topbar-inner{max-width:1240px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:10px 16px}
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:1000;
+      background:#fff;
+      border-bottom:1px solid var(--line)
+    }
+    .topbar-inner{
+      max-width:1240px;
+      margin:auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:10px 16px
+    }
     .brand{display:flex;align-items:center;gap:10px}
-    .brand .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brown),#2a1613);
-      display:grid;place-items:center;color:#fff;font-weight:800}
+    .brand .logo{
+      width:36px;height:36px;
+      border-radius:10px;
+      background:linear-gradient(135deg,var(--brown),#2a1613);
+      display:grid;place-items:center;
+      color:#fff;font-weight:800
+    }
     .brand h1{margin:0;font-size:18px;color:var(--brown)}
     .hint{color:var(--muted);font-size:12px}
 
-    .status-badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;font-size:12px}
+    .status-badge{
+      display:inline-flex;gap:8px;align-items:center;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:12px;
+      padding:6px 10px;
+      font-size:12px
+    }
     .dot{width:10px;height:10px;border-radius:999px;background:#f59e0b}
-    .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)} .dot.warn{background:#f59e0b}
+    .dot.ok{background:var(--ok)}
+    .dot.err{background:var(--danger)}
+    .dot.warn{background:#f59e0b}
+
+    /* Tabs bar */
+    .tabs{
+      max-width:1240px;
+      margin:0 auto;
+      padding:0 16px 8px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      border-top:1px solid var(--line);
+      background:#fff;
+    }
+    .tab{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:6px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      font-size:13px;
+      font-weight:600;
+      text-decoration:none;
+      color:var(--muted);
+      background:#fff;
+      transition:.15s;
+      white-space:nowrap;
+    }
+    .tab:hover{
+      border-color:var(--beige);
+      color:var(--brown);
+      transform:translateY(-1px);
+    }
+    .tab.active{
+      background:var(--brown);
+      border-color:var(--brown);
+      color:#fff;
+    }
 
     /* Buttons */
-    .btn{position:relative;border:1px solid var(--line);background:#fff;border-radius:12px;padding:10px 14px;cursor:pointer;
-      font-weight:700;display:inline-flex;gap:8px;align-items:center;transition:.15s;font-size:13px}
-    .btn:hover{transform:translateY(-1px)} .btn:active{transform:translateY(0)}
+    .btn{
+      position:relative;
+      border:1px solid var(--line);
+      background:#fff;
+      border-radius:12px;
+      padding:10px 14px;
+      cursor:pointer;
+      font-weight:700;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      transition:.15s;
+      font-size:13px
+    }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0)}
     .btn-primary{background:var(--brown);border-color:var(--brown);color:#fff}
     .btn-ghost{background:#fff}
     .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
 
     /* Layout */
     .container{max-width:1240px;margin:18px auto;padding:0 16px 48px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
-    .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:16px;
+      margin-bottom:16px
+    }
+    .card-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:12px;
+      gap:12px;
+      flex-wrap:wrap
+    }
     .section-title{display:flex;align-items:center;gap:8px;margin:0}
     .section-title svg{width:20px;height:20px;color:var(--brown)}
 
     /* Inputs */
     label{font-weight:800;margin-bottom:6px;display:block;color:var(--brown);font-size:13px}
     input,select,textarea{
-      width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff;outline:none;
-      transition:.15s;font-family:"Tajawal",system-ui,Arial;font-size:13px
+      width:100%;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      outline:none;
+      transition:.15s;
+      font-family:"Tajawal",system-ui,Arial;
+      font-size:13px
     }
-    input:focus,select:focus,textarea:focus{border-color:var(--beige);box-shadow:0 0 0 3px rgba(188,143,116,.15)}
+    input:focus,select:focus,textarea:focus{
+      border-color:var(--beige);
+      box-shadow:0 0 0 3px rgba(188,143,116,.15)
+    }
     textarea{min-height:44px;resize:vertical}
 
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -67,10 +174,21 @@
     .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff}
     table{width:100%;border-collapse:separate;border-spacing:0}
     thead th{
-      position:sticky;top:0;background:var(--table-head);z-index:2;border-bottom:1px solid var(--line-strong);
-      text-align:right;color:#111827;font-size:13.5px;padding:12px 10px
+      position:sticky;top:0;
+      background:var(--table-head);
+      z-index:2;
+      border-bottom:1px solid var(--line-strong);
+      text-align:right;
+      color:#111827;
+      font-size:13.5px;
+      padding:12px 10px
     }
-    tbody td{border-top:1px solid var(--line);padding:10px;vertical-align:top;font-size:13px}
+    tbody td{
+      border-top:1px solid var(--line);
+      padding:10px;
+      vertical-align:top;
+      font-size:13px
+    }
     tbody tr:nth-child(odd){background:#fff}
     tbody tr:nth-child(even){background:#fcfcfc}
     tbody tr:hover{background:#f8fafc}
@@ -83,18 +201,36 @@
 
     /* Auth */
     .auth-wrap{min-height:60vh;display:grid;place-items:center;padding:24px}
-    .auth-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px;max-width:420px;width:96%}
+    .auth-card{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      padding:18px;
+      max-width:420px;
+      width:96%
+    }
     .auth-card h2{margin:0 0 10px;color:var(--brown)}
     .auth-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 
-    /* Checklist box (لو حبيت ترجع الموافقات بعدين) */
-    .checklist{border:1px dashed var(--beige);border-radius:12px;padding:12px;background:#fff8ef}
+    /* Checklist box */
+    .checklist{
+      border:1px dashed var(--beige);
+      border-radius:12px;
+      padding:12px;
+      background:#fff8ef
+    }
     .checklist h4{margin:0 0 8px 0;color:var(--brown);font-size:14px}
     .check-row{display:grid;grid-template-columns:18px 1fr;gap:8px;align-items:start}
     .check-row label{margin:0;display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px}
 
     /* حركة النقل: صفوف متعددة */
-    .move-row{border:1px dashed #e5e7eb;border-radius:10px;padding:8px 10px;background:#fffbf7}
+    .move-row{
+      border:1px dashed #e5e7eb;
+      border-radius:10px;
+      padding:8px 10px;
+      background:#fffbf7
+    }
     .move-row-title{font-size:12px;color:var(--muted);margin-bottom:4px;font-weight:600}
 
     .move-alert{
@@ -137,6 +273,28 @@
     }
 
     .notes-col{display:none;}
+
+    /* Toast */
+    .toast{
+      position:fixed;
+      bottom:16px;
+      left:50%;
+      transform:translateX(-50%);
+      background:#111827;
+      color:#fff;
+      padding:10px 14px;
+      border-radius:999px;
+      font-size:13px;
+      box-shadow:0 10px 25px rgba(0,0,0,.25);
+      display:none;
+      z-index:2000;
+      max-width:80%;
+      text-align:center;
+      white-space:nowrap;
+    }
+    .toast.ok{background:#14532d}
+    .toast.err{background:#991b1b}
+    .toast.info{background:#1d4ed8}
   </style>
 
   <!-- no-flash style -->
@@ -147,7 +305,7 @@
   </style>
 </head>
 <body>
-  <!-- Topbar -->
+  <!-- Topbar + Tabs -->
   <div class="topbar">
     <div class="topbar-inner">
       <div class="brand">
@@ -166,6 +324,16 @@
           <i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج
         </button>
       </div>
+    </div>
+
+    <!-- شريط التابات -->
+    <div class="tabs">
+      <a class="tab" href="admin.html">الإدارة</a> 
+      <a class="tab" href="inventory.html">المخزون</a>
+      <a class="tab" href="dashboard.html">الداش بورد</a>
+      <a class="tab" href="photoshoot-user.html">إدارة الطلبات</a>
+      <a class="tab" href="cars.html">كل السيارات</a>
+      <a class="tab" href="Activity.html">سجل النشاط</a>
     </div>
   </div>
 
@@ -217,7 +385,7 @@
         <!-- datalist للاقتراحات -->
         <datalist id="vinHints"></datalist>
 
-        <!-- بوكس متطلبات مباع تحت التسليم (مخفي حاليًا لكن الكود جاهز لو حبيت ترجعو) -->
+        <!-- بوكس متطلبات مباع تحت التسليم (مخفي حاليًا) -->
         <div class="checklist" id="underDeliveryBox" style="display:none; margin-top:10px">
           <h4>المتطلبات عند النقل إلى <b>مباع تحت التسليم</b></h4>
           <div class="grid grid-2">
@@ -251,7 +419,7 @@
         </div>
         <p class="hint" id="moveStatus" style="margin-top:8px"></p>
 
-        <!-- إشعار حركة النقل الكبير -->
+        <!-- إشعار حركة النقل -->
         <div class="move-alert" id="moveAlert">
           <div class="icon">
             <i class="fa-solid fa-circle-check"></i>
@@ -351,6 +519,7 @@
   <!-- Toast -->
   <div class="toast" id="toast"></div>
 
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
@@ -431,7 +600,7 @@
     const btnClearDate   = $('#btnClearDate');
 
     const trackVin        = $('#trackVin');
-    const trackTableBody  = document.querySelector('#trackTable tbody');
+    const trackTableBody  = $('#trackTable tbody');
     const btnClearTrack   = $('#btnClearTrack');
 
     /* ===== Connection status ===== */
@@ -449,7 +618,7 @@
       const noFlash = document.getElementById('noFlash');
       if(user){
         if(noFlash) noFlash.remove();
-        document.body.style.opacity='1';
+       document.body.style.opacity='1';
         authGate.style.display='none';
         appRoot.style.display='block';
         btnSignOut.style.display='inline-flex';
@@ -752,9 +921,8 @@
       const val = (moveToGlobal?.value || '').trim();
       const anyIssues = /سيارات بها ملاحظات/.test(val);
       if(underDeliveryBox){
-        underDeliveryBox.style.display = 'none'; // حالياً ملغي زي صفحة الادمن
+        underDeliveryBox.style.display = 'none'; // حالياً ملغي نفس صفحة الادمن
       }
-      // ملاحظات السيارات بها ملاحظات تظهر من toggleNotesVisibility
       return anyIssues;
     }
 
