@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -583,79 +584,66 @@ body{opacity:0;transition:opacity .12s ease}
   /* ===== تصوير + نقل: إحصائيات + بطاقة ===== */
  
   function shootStats(){
-    // طلبات التصوير من صفحة الطلبات
+    // نفس أرقام كروت إدارة الطلبات (تصوير + نقل)
     const shootTotal = Array.isArray(shootRequests) ? shootRequests.length : 0;
-    // طلبات النقل من صفحة إدارة الطلبات (moveRequests)
-    const transferTotal = Array.isArray(moveRequests) ? moveRequests.length : 0;
-    const total = shootTotal + transferTotal;
+    const moveTotal  = Array.isArray(moveRequests)  ? moveRequests.length  : 0;
+    const total = shootTotal + moveTotal;
 
-    const drafts   = shootRequests.filter(r=> (r.status||'')==='مسودة').length;
-    const inprog   = shootRequests.filter(r=> (r.status||'')==='تحت الإجراء').length;
-    const done     = shootRequests.filter(r=> isShootDone(r)).length;
-    const received = shootRequests.filter(r=> r?.admin?.received).length;
-    const prepared = shootRequests.filter(r=> r?.admin?.prepared).length;
+    const progStatuses = new Set(['تحت الإجراء','تم التجهيز','قيد المراجعة']);
+    const doneStatuses = new Set(['تم','منفّذ']);
 
-    return { total, shootTotal, transferTotal, drafts, inprog, done, received, prepared };
+    const allList = [
+      ...(Array.isArray(shootRequests) ? shootRequests : []),
+      ...(Array.isArray(moveRequests)  ? moveRequests  : [])
+    ];
+
+    const prog = allList.filter(r=> progStatuses.has(r.status || '')).length;
+    const done = allList.filter(r=> doneStatuses.has(r.status || '')).length;
+
+    return { total, shootTotal, moveTotal, prog, done };
   }
 
-
-
- 
-  function renderShootCard(gridEl){
+function renderShootCard(gridEl){
     const st = shootStats();
     const card = document.createElement('div');
-    card.className='card group-card';
-    card.id = 'shootCard';
+    card.className = 'card group-card';
+    card.id = 'ordersAdminCard';
     card.innerHTML = `
       <div class="group-head">
         <div class="group-left">
           <h3 class="group-title">
-            <i class="fa-solid fa-camera-retro"></i>
-            طلبات النقل والتصوير
+            <i class="fa-solid fa-clipboard-list"></i>
+            إدارة الطلبات (تصوير + نقل)
           </h3>
           <div class="sub-metrics">
-            <span class="metric shoot-metric" data-metric="ALL">
+            <span class="metric">
               <i class="fa-solid fa-list-ol"></i>
               إجمالي الطلبات:
               <b>${st.total.toLocaleString('ar-SA')}</b>
-              --- تصوير: <b>${st.shootTotal.toLocaleString('ar-SA')}</b>
-              | نقل: <b>${st.transferTotal.toLocaleString('ar-SA')}</b>
+              — تصوير: <b>${st.shootTotal.toLocaleString('ar-SA')}</b>
+              | نقل: <b>${st.moveTotal.toLocaleString('ar-SA')}</b>
             </span>
-            <span class="metric shoot-metric" data-metric="received">
-              <i class="fa-solid fa-inbox"></i>
-              تم الاستلام الإداري (تصوير):
-              <b>${st.received.toLocaleString('ar-SA')}</b>
+            <span class="metric">
+              <i class="fa-solid fa-gears"></i>
+              تحت الإجراء / تم التجهيز / قيد المراجعة:
+              <b>${st.prog.toLocaleString('ar-SA')}</b>
             </span>
-            <span class="metric shoot-metric" data-metric="prepared">
-              <i class="fa-solid fa-wand-magic-sparkles"></i>
-              تم التجهيز (تصوير):
-              <b>${st.prepared.toLocaleString('ar-SA')}</b>
-            </span>
-            <span class="metric shoot-metric" data-metric="done">
-              <i class="fa-solid fa-camera"></i>
-              تم التصوير:
+            <span class="metric">
+              <i class="fa-regular fa-circle-check"></i>
+              تم / منفّذ:
               <b>${st.done.toLocaleString('ar-SA')}</b>
             </span>
           </div>
         </div>
-        <div class="group-total" title="إجمالي طلبات النقل والتصوير">
+        <div class="group-total" title="إجمالي الطلبات">
           ${st.total.toLocaleString('ar-SA')}
         </div>
       </div>
     `;
 
-    card.addEventListener('click', (ev)=>{
-      // لو مش دايس على متريك، افتح كل طلبات التصوير
-      if(ev.target.closest('.shoot-metric')) return;
-      openShootModal('ALL');
-    });
-
-    card.querySelectorAll('.shoot-metric').forEach(el=>{
-      el.addEventListener('click',(e)=>{
-        e.stopPropagation();
-        const m = el.getAttribute('data-metric') || 'ALL';
-        openShootModal(m);
-      });
+    // عند الضغط على الكارت نروح مباشرة لصفحة إدارة الطلبات
+    card.addEventListener('click', ()=> {
+      window.location.href = 'photoshoot-user.html';
     });
 
     gridEl.appendChild(card);
@@ -776,12 +764,10 @@ body{opacity:0;transition:opacity .12s ease}
       card.addEventListener('click', (ev)=>{ if(ev.target.closest('.chip')) return; openModalForGroupRows(g, null); });
       grid.appendChild(card);
     });
-
-    /* بطاقة طلبات التصوير */
-    renderShootCard(grid);
-
     /* بطاقة طلبات نقل السيارات */
     renderTransferCard(grid);
+    /* بطاقة إدارة الطلبات (تصوير + نقل) */
+    renderShootCard(grid);
 
     // حدث الشرائح للجهات
     grid.addEventListener('click',(e)=>{
