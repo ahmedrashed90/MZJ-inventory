@@ -622,6 +622,30 @@ body{opacity:0;transition:opacity .12s ease;}
   const auth = getAuth(app);
   const db   = getFirestore(app);
   const STATE_REF = doc(db, "mzj_admin_state", "v1");
+  /* ===== Roles & Permissions (Firestore) ===== */
+  const ROLE_ADMIN   = 'الادارة';
+  const ROLE_IDARI   = 'اداري';
+  const ROLE_BRANCH  = 'مدراء فروع';
+
+  // هذه الصفحة admin.html مسموحة فقط لتصنيف "الادارة"
+  const PAGE_ALLOWED_ROLES = [ROLE_ADMIN];
+
+  async function fetchUserRole(user){
+    try{
+      // ملاحظة: الكولكشن اسمه "user" (مفرد) حسب إعدادك في Firestore
+      const userDocRef = doc(db, 'user', user.uid);
+      const snap = await getDoc(userDocRef);
+      if(snap.exists()){
+        const data = snap.data() || {};
+        return data.role || null;
+      }
+      return null;
+    }catch(err){
+      console.error('Error fetching user role:', err);
+      return null;
+    }
+  }
+
 
   /* ===== Helpers / State ===== */
   const $ = s => document.querySelector(s);
@@ -695,15 +719,29 @@ body{opacity:0;transition:opacity .12s ease;}
   }
 
   /* ===== Auth Gate ===== */
+  
   onAuthStateChanged(auth, async (user)=>{
     const noFlash = document.getElementById('noFlash');
     if(user){
+      // إزالة طبقة منع الوميض
       if(noFlash) noFlash.remove();
       document.body.style.opacity='1';
+
+      // جلب الدور من Firestore
+      const role = await fetchUserRole(user);
+
+      // لو مفيش دور أو الدور مش من ضمن الأدوار المسموح لها
+      if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
+        // توجيه لصفحة لا توجد صلاحية
+        window.location.href = 'unauthorized.html';
+        return;
+      }
+
+      // لو الدور صحيح ومسموح له يدخل صفحة الإدارة
       authGate.style.display='none';
       appRoot.style.display='block';
       btnSignOut.style.display='inline-flex';
-      setStatus('ok', `متصل: ${user.email}`);
+      setStatus('ok', `متصل: ${user.email} — الدور: ${role}`);
       await initData();
       subscribeLive();
     }else{
@@ -715,6 +753,7 @@ body{opacity:0;transition:opacity .12s ease;}
       setStatus('warn','لم يتم تسجيل الدخول');
     }
   });
+
   btnLogin.addEventListener('click', async ()=>{
     authHint.textContent='';
     try{ await signInWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value); }
