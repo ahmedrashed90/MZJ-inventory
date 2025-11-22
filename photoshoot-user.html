@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -877,6 +878,52 @@
   const auth = getAuth(app);
   const db   = getFirestore(app);
   const STATE_REF = doc(db, "mzj_admin_state", "v1");
+
+/* ===== Roles & Permissions ===== */
+const ROLE_ADMIN   = 'الادارة';
+const ROLE_IDARI   = 'اداري';
+const ROLE_BRANCH  = 'مدراء فروع';
+
+// الإداري + الإدارة فقط يشوفوا الصفحة
+const PAGE_ALLOWED_ROLES = [ROLE_ADMIN, ROLE_IDARI];
+
+// الصفحات المسموح بها لكل تصنيف (للتابات)
+const ROLE_PAGES = {
+  [ROLE_ADMIN] : 'ALL',
+  [ROLE_IDARI] : ['photoshoot.html','photoshoot-user.html','cars.html'],
+  [ROLE_BRANCH]: ['dashboard.html']
+};
+
+async function fetchUserRole(user){
+  try{
+    const snap = await getDoc(doc(db, 'user', user.uid));
+    if(snap.exists()){
+      return snap.data().role || null;
+    }
+  }catch(e){
+    console.error('fetch role error', e);
+  }
+  return null;
+}
+
+function applyTabsVisibility(role){
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(tab=>{
+    const href = tab.getAttribute('href') || '';
+    const page = (href.split('/').pop() || '').split('?')[0];
+    if(!page) return;
+    const perm = ROLE_PAGES[role];
+    if(!perm){
+      tab.style.display='none';
+      return;
+    }
+    if(perm==='ALL') return;
+    if(!perm.includes(page)){
+      tab.style.display='none';
+    }
+  });
+}
+
   const ACTIVITY_COL = collection(db, "mzj_activity_log");
 
   const ADMIN_MAP = { };
@@ -1735,26 +1782,33 @@
   });
 
   onAuthStateChanged(auth, async (user)=>{
-    const nf = document.getElementById('noFlash') || document.getElementById('noflash');
-    if(nf) nf.remove();
+  const nf = document.getElementById('noFlash') || document.getElementById('noflash');
+  if(nf) nf.remove();
 
-    if(user){
-      $('#authGate').style.display='none';
-      $('#app').style.display='block';
-      $('#btnSignOut').style.display='inline-block';
-      setStatus('ok', `متصل: ${displayNameFor(user)}`);
-      $('#userLabel').textContent = user.email || displayNameFor(user);
-      await initData(); subscribeLive(); metrics(); render(); buildFormRows();
-    }else{
-      $('#app').style.display='none';
-      $('#authGate').style.display='block';
-      $('#btnSignOut').style.display='none';
-      setStatus('', 'لم يتم تسجيل الدخول');
-      $('#userLabel').textContent = 'غير مسجل';
+  if(user){
+    const role = await fetchUserRole(user);
+
+    if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
+      window.location.href = 'unauthorized.html';
+      return;
     }
-  });
 
-  window.addEventListener('load', ()=>{
+    applyTabsVisibility(role);
+
+    $('#authGate').style.display='none';
+    $('#app').style.display='block';
+    $('#btnSignOut').style.display='inline-block';
+    setStatus('ok', `متصل: ${displayNameFor(user)} — الدور: ${role}`);
+    $('#userLabel').textContent = user.email || displayNameFor(user);
+    await initData(); subscribeLive(); metrics(); render(); buildFormRows();
+  }else{
+    $('#app').style.display='none';
+    $('#authGate').style.display='block';
+    $('#btnSignOut').style.display='none';
+    setStatus('', 'لم يتم تسجيل الدخول');
+    $('#userLabel').textContent = 'غير مسجل';
+  }
+});window.addEventListener('load', ()=>{
     const nf = document.getElementById('noFlash');
     if(nf) nf.remove();
   });
