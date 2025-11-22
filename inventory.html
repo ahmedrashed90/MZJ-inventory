@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" data-theme="light">
 <head>
@@ -880,6 +881,54 @@
   const db   = getFirestore(app);
   const STATE_REF = doc(db, "mzj_admin_state", "v1");
 
+  /* ===== Roles & Permissions ===== */
+  const ROLE_ADMIN   = 'الادارة';
+  const ROLE_IDARI   = 'اداري';
+  const ROLE_BRANCH  = 'مدراء فروع';
+
+  // الصفحات المسموح بها لكل تصنيف (للتابات)
+  const ROLE_PAGES = {
+    [ROLE_ADMIN] : 'ALL',
+    [ROLE_IDARI] : ['photoshoot.html','photoshoot-user.html','cars.html'],
+    [ROLE_BRANCH]: ['dashboard.html']
+  };
+
+  // صفحة المخزون متاحة للإدارة فقط
+  const PAGE_ALLOWED_ROLES = [ROLE_ADMIN];
+
+  async function fetchUserRole(user){
+    try{
+      const snap = await getDoc(doc(db, 'user', user.uid));
+      if(snap.exists()){
+        const data = snap.data() || {};
+        return data.role || null;
+      }
+    }catch(e){
+      console.error('Error fetching user role', e);
+    }
+    return null;
+  }
+
+  function applyTabsVisibility(role){
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab=>{
+      const href = tab.getAttribute('href') || '';
+      const page = (href.split('/').pop() || '').split('?')[0];
+      if(!page) return;
+      const perm = ROLE_PAGES[role];
+      if(!perm){
+        tab.style.display='none';
+        return;
+      }
+      if(perm === 'ALL') return;
+      if(!perm.includes(page)){
+        tab.style.display='none';
+      }
+    });
+  }
+
+
+
   const $ = s => document.querySelector(s);
 
   const connDot  = $('#connDot');
@@ -968,10 +1017,19 @@
   /* Auth gate */
   onAuthStateChanged(auth, async (user)=>{
     if(user){
+      const role = await fetchUserRole(user);
+
+      // لو ملوش دور أو مش من المسموح لهم يشوفوا صفحة المخزون
+      if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
+        window.location.href = 'unauthorized.html';
+        return;
+      }
+
       authGate.style.display='none';
       appRoot.style.display='block';
       btnSignOut.style.display='inline-flex';
-      setStatus('ok', `متصل كمستخدم: ${user.email}`);
+      setStatus('ok', `متصل كمستخدم: ${user.email} — الدور: ${role}`);
+      applyTabsVisibility(role);
       liftNoFlash();
       await initData();
       subscribeLive();
@@ -982,9 +1040,7 @@
       setStatus('warn','لم يتم تسجيل الدخول');
       liftNoFlash();
     }
-  });
-
-  btnLogin.addEventListener('click', async ()=>{
+  });btnLogin.addEventListener('click', async ()=>{
     authHint.textContent='';
     try{
       await signInWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value);
