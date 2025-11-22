@@ -392,6 +392,53 @@ body{opacity:0;transition:opacity .12s ease}
   const db   = getFirestore(app);
   const STATE_REF = doc(db, "mzj_admin_state", "v1");
 
+  /* ===== Roles & Permissions ===== */
+  const ROLE_ADMIN   = 'الادارة';
+  const ROLE_IDARI   = 'اداري';
+  const ROLE_BRANCH  = 'مدراء فروع';
+
+  // الصفحات المسموح بها لكل تصنيف
+  const ROLE_PAGES = {
+    [ROLE_ADMIN] : 'ALL', // الإدارة تشوف كل الصفحات
+    [ROLE_IDARI] : ['photoshoot.html','photoshoot-user.html','cars.html'],
+    [ROLE_BRANCH]: ['dashboard.html']
+  };
+
+  // صفحة الداش بورد متاحة للإدارة + مدراء الفروع
+  const PAGE_ALLOWED_ROLES = [ROLE_ADMIN, ROLE_BRANCH];
+
+  async function fetchUserRole(user){
+    try{
+      const userDocRef = doc(db, 'user', user.uid); // collection name: "user"
+      const snap = await getDoc(userDocRef);
+      if(snap.exists()){
+        const data = snap.data() || {};
+        return data.role || null;
+      }
+    }catch(e){
+      console.error('Error fetching user role', e);
+    }
+    return null;
+  }
+
+  function applyTabsVisibility(role){
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab=>{
+      const href = tab.getAttribute('href') || '';
+      const page = (href.split('/').pop() || '').split('?')[0];
+      if(!page) return;
+      const perm = ROLE_PAGES[role];
+      if(!perm){
+        tab.style.display = 'none';
+        return;
+      }
+      if(perm === 'ALL') return; // يشوف كل حاجة
+      if(!perm.includes(page)){
+        tab.style.display = 'none';
+      }
+    });
+  }
+
   /* ===== Helpers ===== */
   const $ = s => document.querySelector(s);
   const toast = $('#toast');
@@ -444,15 +491,26 @@ body{opacity:0;transition:opacity .12s ease}
   onAuthStateChanged(auth, async (user)=>{
     const noFlash = document.getElementById('noFlash');
     if(noFlash){ noFlash.remove(); }
-    document.body.style.opacity='1';
+
     if(user){
+      const role = await fetchUserRole(user);
+
+      // لو ملوش دور أو مش من المسموح لهم يشوفوا الداش بورد
+      if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
+        window.location.href = 'unauthorized.html';
+        return;
+      }
+
+      document.body.style.opacity='1';
       $('#authGate').style.display='none';
       $('#app').style.display='block';
       $('#btnSignOut').style.display='inline-flex';
-      setStatus('ok', `متصل: ${user.email}`);
+      setStatus('ok', `متصل: ${user.email} — الدور: ${role}`);
+      applyTabsVisibility(role);
       await initData();
       subscribeLive();
     }else{
+      document.body.style.opacity='1';
       $('#app').style.display='none';
       $('#authGate').style.display='grid';
       $('#btnSignOut').style.display='none';
