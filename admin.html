@@ -201,9 +201,8 @@
   }
 </style>
 <style id="noFlash">
-html{background:#fff8ef;}
-body{opacity:0;transition:opacity .12s ease;}
-#authGate{display:none !important;}
+  html{background:#fff8ef;}
+  body{opacity:0;}
 </style>
 </head>
 <body>
@@ -658,7 +657,12 @@ body{opacity:0;transition:opacity .12s ease;}
 
   let stock=[], moves=[], models=[], variantsMap={};
 
-  /* ===== DOM refs ===== */
+  function liftNoFlash(){
+  const nf = document.getElementById('noFlash');
+  if(nf) nf.remove();
+  document.body.style.opacity = '1';
+}
+/* ===== DOM refs ===== */
   const connDot=$('#connDot'), connText=$('#connText');
   const authGate=$('#authGate'), appRoot=$('#app'), btnSignOut=$('#btnSignOut');
   const emailEl=$('#email'), passEl=$('#password'), btnLogin=$('#btnLogin'), btnSignup=$('#btnSignup'), authHint=$('#authHint');
@@ -719,40 +723,34 @@ body{opacity:0;transition:opacity .12s ease;}
   /* ===== Auth Gate ===== */
   
   onAuthStateChanged(auth, async (user)=>{
-    const noFlash = document.getElementById('noFlash');
-    if(user){
-      // إزالة طبقة منع الوميض
-      if(noFlash) noFlash.remove();
-      document.body.style.opacity='1';
-
-      // جلب الدور من Firestore
+  if(user){
+    try{
       const role = await fetchUserRole(user);
-
-      // لو مفيش دور أو الدور مش من ضمن الأدوار المسموح لها
       if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
-        // توجيه لصفحة لا توجد صلاحية
         window.location.href = 'unauthorized.html';
         return;
       }
-
-      // لو الدور صحيح ومسموح له يدخل صفحة الإدارة
-      authGate.style.display='none';
-      appRoot.style.display='block';
-      btnSignOut.style.display='inline-flex';
+      authGate.style.display = 'none';
+      appRoot.style.display  = 'block';
+      btnSignOut.style.display = 'inline-flex';
       setStatus('ok', `متصل: ${user.email} — الدور: ${role}`);
+      liftNoFlash();
       await initData();
       subscribeLive();
-    }else{
-      if(noFlash) noFlash.remove();
-      document.body.style.opacity='1';
-      appRoot.style.display='none';
-      authGate.style.display='grid';
-      btnSignOut.style.display='none';
-      setStatus('warn','لم يتم تسجيل الدخول');
+    }catch(err){
+      console.error(err);
+      setStatus('err','خطأ في تحميل البيانات');
+      liftNoFlash();
     }
-  });
-
-  btnLogin.addEventListener('click', async ()=>{
+  }else{
+    appRoot.style.display   = 'none';
+    authGate.style.display  = 'grid';
+    btnSignOut.style.display = 'none';
+    setStatus('warn','لم يتم تسجيل الدخول');
+    liftNoFlash();
+  }
+});
+btnLogin.addEventListener('click', async ()=>{
     authHint.textContent='';
     try{ await signInWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value); }
     catch(e){ authHint.textContent='فشل تسجيل الدخول: '+(e?.message||e); }
