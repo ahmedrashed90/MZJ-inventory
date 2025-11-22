@@ -133,7 +133,7 @@
   }
 
   /* Cards */
-  .cards{display:flex;flex-wrap:nowrap;gap:10px;overflow-x:auto;}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;}
   .card{
     background:var(--card);
     border-radius:var(--radius);
@@ -221,27 +221,10 @@
   }
 
   /* Table */
-  .table-wrap{
-    border-radius:10px;
-    border:1px solid var(--line);
-    overflow:auto;
-    background:#fff;
-  }
-  table{
-    border-collapse:collapse;
-    width:100%;
-    min-width:720px;
-    font-size:12px;
-  }
-  thead{
-    background:var(--table-head);
-  }
-  th,td{
-    padding:6px 10px;
-    border-bottom:1px solid #f3f0eb;
-    text-align:right;
-    vertical-align:middle;
-  }
+  .table-wrap{border-radius:14px;border:1px solid var(--line);background:#fff;overflow:hidden;box-shadow:var(--shadow);margin-top:8px;}
+  table{border-collapse:collapse;width:100%;font-size:12px;line-height:1.6;}
+  thead{background:#fdf7f2;border-bottom:1px solid #e5e7eb;}
+  th,td{padding:6px 10px;border-bottom:1px solid #f3f0eb;text-align:right;vertical-align:middle;}
   th{font-weight:700;font-size:11px;color:#4b5563}
   tbody tr:nth-child(even){background:#fdfaf8}
   tbody tr:hover{background:#f3eee7}
@@ -583,16 +566,16 @@
               <table id="entryTable">
                 <colgroup>
                   <col style="width:4ch">
-                  <col style="width:4ch">
-                  <col style="width:6ch">
-                  <col style="width:9ch">
-                  <col style="width:9ch">
-                  <col style="width:9ch">
-                  <col style="width:9ch">
+                  <col style="width:14ch">
                   <col style="width:8ch">
-                  <col style="width:9ch">
-                  <col style="width:9ch">
-                  <col style="width:9ch">
+                  <col style="width:11ch">
+                  <col style="width:11ch">
+                  <col style="width:11ch">
+                  <col style="width:11ch">
+                  <col style="width:8ch">
+                  <col style="width:11ch">
+                  <col style="width:11ch">
+                  <col style="width:auto">
                   <col style="width:9ch">
                 </colgroup>
                 <thead>
@@ -1751,5 +1734,3 @@
 </script>
 </body>
 </html>
-
-
