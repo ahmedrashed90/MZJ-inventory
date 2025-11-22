@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 
 <html dir="rtl" lang="ar">
@@ -636,6 +634,61 @@ body{opacity:0;transition:opacity .12s ease;}
 
   let stock=[], moves=[], models=[], variantsMap={};
 
+  /* ===== Roles & Permissions ===== */
+  const ROLE_ADMIN   = 'الادارة';
+  const ROLE_IDARI   = 'اداري';
+  const ROLE_BRANCH  = 'مدراء فروع';
+
+  // الصفحات المسموح بيها لكل تصنيف
+  const ROLE_PAGES = {
+    [ROLE_ADMIN]: 'ALL', // الإدارة تشوف كل الصفحات
+    [ROLE_IDARI]: ['photoshoot.html','photoshoot-user.html','cars.html'],
+    [ROLE_BRANCH]: ['dashboard.html']
+  };
+
+  // هذه الصفحة admin.html متاحة للإدارة فقط
+  const PAGE_ALLOWED_ROLES = [ROLE_ADMIN];
+
+  let currentUserRole = null;
+
+  function getCurrentPageName(){
+    const path = window.location.pathname;
+    return (path.split('/').pop() || 'admin.html').split('?')[0];
+  }
+
+  function isPageAllowedForRole(role, pageName){
+    const perm = ROLE_PAGES[role];
+    if(!perm) return false;
+    if(perm === 'ALL') return true;
+    return perm.includes(pageName);
+  }
+
+  function applyTabsVisibility(role){
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab=>{
+      const href = tab.getAttribute('href') || '';
+      const targetPage = (href.split('/').pop() || '').split('?')[0];
+      if(!targetPage) return;
+      if(!isPageAllowedForRole(role, targetPage)){
+        tab.style.display = 'none';
+      }
+    });
+  }
+
+  async function fetchUserRole(user){
+    try{
+      const userDocRef = doc(db, 'users', user.uid);
+      const snap = await getDoc(userDocRef);
+      if(snap.exists()){
+        const data = snap.data() || {};
+        return data.role || null;
+      }
+    }catch(e){
+      console.error('Error fetching user role', e);
+    }
+    return null;
+  }
+
   /* ===== DOM refs ===== */
   const connDot=$('#connDot'), connText=$('#connText');
   const authGate=$('#authGate'), appRoot=$('#app'), btnSignOut=$('#btnSignOut');
@@ -647,7 +700,7 @@ body{opacity:0;transition:opacity .12s ease;}
   const vinInput=$('#vin'), notesInput=$('#notes');
   const btnSave=$('#btnSave'), btnReset=$('#btnReset');
 
-  const btnImportMenu=$('#btnImportMenu'), importDropdown=$('#importDropdown'), fileImport=$('#fileImport'), btnExport=$('#btnExport'), btnExportBlank=$('#btnExportBlank');
+  const btnImportMenu=$('#btnImportMenu'), importDropdown=$('#importDropdown'), fileImport=$('#fileImport'), btnExport=$('#btnExport'), btnExportBlank=$('#btnExportBlank`);
 
   const searchInput=$('#search'), btnClearSearch=$('#btnClearSearch'), tableBody=document.querySelector('#carsTable tbody');
   const movesTableBody=document.querySelector('#movesTable tbody'), btnClearMoves=$('#btnClearMoves');
@@ -694,16 +747,31 @@ body{opacity:0;transition:opacity .12s ease;}
     connText.textContent = txt;
   }
 
-  /* ===== Auth Gate ===== */
+  /* ===== Auth Gate + Role Check ===== */
   onAuthStateChanged(auth, async (user)=>{
     const noFlash = document.getElementById('noFlash');
     if(user){
       if(noFlash) noFlash.remove();
       document.body.style.opacity='1';
+
+      // جلب الدور من Firestore
+      const role = await fetchUserRole(user);
+      currentUserRole = role;
+
+      // لو مفيش دور أو الدور مش من المسموح لهم يدخلوا admin.html
+      if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
+        window.location.href = 'unauthorized.html';
+        return;
+      }
+
       authGate.style.display='none';
       appRoot.style.display='block';
       btnSignOut.style.display='inline-flex';
-      setStatus('ok', `متصل: ${user.email}`);
+      setStatus('ok', `متصل: ${user.email} — الدور: ${role}`);
+
+      // إخفاء التابات اللي مش من حقه (لو طبقت نفس الكود في صفحات تانية)
+      applyTabsVisibility(role);
+
       await initData();
       subscribeLive();
     }else{
@@ -715,6 +783,7 @@ body{opacity:0;transition:opacity .12s ease;}
       setStatus('warn','لم يتم تسجيل الدخول');
     }
   });
+
   btnLogin.addEventListener('click', async ()=>{
     authHint.textContent='';
     try{ await signInWithEmailAndPassword(auth, emailEl.value.trim(), passEl.value); }
@@ -1155,26 +1224,20 @@ body{opacity:0;transition:opacity .12s ease;}
 
   /* اقتراح VIN حسب البادئة/الأرقام المكتوبة */
   function updateVinSuggestionsForPrefix(rawPrefix){
-  if(!vinHints) return;
-  const prefix = normalizeVin(rawPrefix||'');
-  if(prefix.length < 1){
-    vinHints.innerHTML = '';
-    return;
+    if(!vinHints) return;
+    const prefix = normalizeVin(rawPrefix||'');
+    if(prefix.length < 1){
+      vinHints.innerHTML = '';
+      return;
+    }
+    const set = new Set();
+    stock.forEach(r=>{
+      const v = normalizeVin(r.vin||'');
+      if(v && v.startsWith(prefix)) set.add(v);
+    });
+    const list = Array.from(set).sort().slice(0,30);
+    vinHints.innerHTML = list.map(v=>`<option value="${v}"></option>`).join('');
   }
-  const set = new Set();
-  stock.forEach(r=>{
-    const v = normalizeVin(r.vin||'');
-    // 👇 عدّل السطر ده:
-    // if(v && v.includes(prefix)) set.add(v); // يحتوي على الأرقام المكتوبة
-
-    // ✅ خليه يبدأ بنفس اللي انت كاتبه (Prefix)
-    if(v && v.startsWith(prefix)) set.add(v);
-  });
-  const list = Array.from(set).sort().slice(0,30);
-  vinHints.innerHTML = list.map(v=>`<option value="${v}"></option>`).join('');
-}
-
-
 
   /* اقتراح المكان "من" لكل سطر عند كتابة VIN */
   function autoFindByVinForRow(row, strictMessage=false){
@@ -1286,7 +1349,6 @@ body{opacity:0;transition:opacity .12s ease;}
     });
   }
 
-  
   // مسح صف حركة نقل واحد
   document.addEventListener('click',(e)=>{
     const btn = e.target.closest('[data-remove-move-row]');
@@ -1298,7 +1360,7 @@ body{opacity:0;transition:opacity .12s ease;}
     }
   });
 
-// عرض البيانات لأول VIN غير فارغ
+  // عرض البيانات لأول VIN غير فارغ
   btnFindByVin.addEventListener('click',()=>{
     const rows = Array.from(moveRowsContainer.querySelectorAll('.move-row'));
     const firstRow = rows.find(r=> normalizeVin((r.querySelector('.move-vin')?.value||'').trim()));
@@ -1360,8 +1422,7 @@ body{opacity:0;transition:opacity .12s ease;}
     const errors = [];
     const successLines = [];
 
-    
-for (const rowData of rowsWithVin){
+    for (const rowData of rowsWithVin){
       const norm = normalizeVin(rowData.vinRaw);
       const recIdx = stock.findIndex(r => normalizeVin(r.vin) === norm);
       if(recIdx < 0){
@@ -1399,7 +1460,7 @@ for (const rowData of rowsWithVin){
 
       const oldLoc = rec.location || from;
 
-            if(goingDeliveredRow){
+      if(goingDeliveredRow){
         // في حالة "مباع تم التسليم": تسجيل طلب نقل فقط بدون تغيير مكان السيارة
         const stamp = now();
         moves.push({
@@ -1411,22 +1472,17 @@ for (const rowData of rowsWithVin){
           to: toVal,
           id: rec.id,
           ...moveMeta,
-          // حالة الموافقات
           adminApproved: false,
           financeApproved: false,
-          // فلاغات توضح أن الطلب يحتاج موافقة
           requiresAdminApproval: true,
           requiresFinanceApproval: true,
-          // حالة الطلب العامة
           status: 'pending',
-          // رسالة توصيفية تظهر في الداش بورد
           message: 'طلب نقل السيارة بانتظار موافقة الإدارة والمالية'
         });
         movedCount++;
         successLines.push(`تم تسجيل طلب نقل ${rec.car||''} (${rec.vin||rowData.vinRaw}) من "${oldLoc}" إلى "${toVal}" بانتظار موافقة الإدارة والمالية.`);
         continue;
       }
-
 
       // الحركات العادية (نقل فعلي)
       rec.location = toVal;
@@ -1449,7 +1505,7 @@ for (const rowData of rowsWithVin){
       successLines.push(`تم نقل ${rec.car||''} (${rec.vin||rowData.vinRaw}) من "${oldLoc}" إلى "${toVal}".`);
     }
 
-if(!movedCount){
+    if(!movedCount){
       const title = 'لم يتم تنفيذ أي حركة نقل';
       const lines = errors.length ? errors : ['لم يتم تنفيذ أي حركة نقل.'];
       moveStatus.textContent = title;
@@ -1491,7 +1547,6 @@ if(!movedCount){
     if(vinHints) vinHints.innerHTML='';
   });
 
-  /* ===== سجل الحركات (عرض + فلاتر التاريخ) ===== */
   /* ===== سجل الحركات (عرض + فلاتر التاريخ) ===== */
   function filterMovesByDate(list){
     const f = movesFromDate.value || null;
@@ -1614,6 +1669,6 @@ if(!movedCount){
     toggleNotesVisibility();
   }
 
-  </script>
+</script>
 </div></body>
 </html>
