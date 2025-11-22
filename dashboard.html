@@ -1,7 +1,3 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -137,7 +133,9 @@ body{opacity:0;transition:opacity .12s ease}
   /* Toast */
   .toast{position:fixed;bottom:18px;right:18px;background:#111827;color:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.25);display:none;z-index:100}
   .toast.show{display:block;animation:fade .2s ease-out}
-  @keyframes fade{from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)}}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)}
+
+  }
 
   /* Approval box */
   #approvalBox{
@@ -242,8 +240,8 @@ body{opacity:0;transition:opacity .12s ease}
     <div class="body">
       <!-- صندوق إجراءات الموافقات (يظهر فقط في تحت التسليم) -->
       <div id="approvalBox">
-        <h4>إجراءات الموافقات للسيارة المختارة</h4>
-        <small id="approvalTarget">اختر "إداري" أو "مالية" من الجدول لتحديد السيارة.</small>
+        <h4></h4>
+        <small id="approvalTarget"></small>
         <div class="row" style="margin-bottom:6px">
           <div style="flex:1;min-width:180px">
             <label style="font-size:12px;display:block;margin-bottom:4px">حالة الموافقة</label>
@@ -395,7 +393,10 @@ body{opacity:0;transition:opacity .12s ease}
   const $ = s => document.querySelector(s);
   const toast = $('#toast');
   const pad = n => n<10?'0'+n:n;
-  const now = ()=>{const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`};
+  const now = ()=>{
+    const d=new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  };
   function setStatus(mode,txt){ $('#connDot').className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'warn'); $('#connText').textContent=txt; }
   function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1400); }
   const trim = v => (v||'').toString().trim();
@@ -568,21 +569,38 @@ body{opacity:0;transition:opacity .12s ease}
     return { available, notes, pending, delivered, actualTotal, keysTotal };
   }
 
+  /* ===== Helper: حالة تم التصوير ===== */
+  function isShootDone(r){
+    const st = trim(r.status || '');
+    const notes = trim(r.admin?.notes || '');
+    const statusNote = trim(r.statusNote || '');
+    const doneFlag = !!(r.admin && (r.admin.done || r.admin.completed));
+    const text = (st + ' ' + notes + ' ' + statusNote);
+    const hasDoneText = /تم التصوير|تصوير مكتمل|منشور/i.test(text);
+    return st === 'تم التصوير' || doneFlag || hasDoneText;
+  }
+
   /* ===== تصوير + نقل: إحصائيات + بطاقة ===== */
+ 
   function shootStats(){
-    const shootTotal = shootRequests.length;
+    // طلبات التصوير من صفحة الطلبات
+    const shootTotal = Array.isArray(shootRequests) ? shootRequests.length : 0;
+    // طلبات النقل من صفحة إدارة الطلبات (moveRequests)
     const transferTotal = Array.isArray(moveRequests) ? moveRequests.length : 0;
     const total = shootTotal + transferTotal;
 
-    const drafts = shootRequests.filter(r=> (r.status||'')==='مسودة').length;
-    const inprog = shootRequests.filter(r=> (r.status||'')==='تحت الإجراء').length;
-    const done   = shootRequests.filter(r=> (r.status||'')==='تم التصوير').length;
+    const drafts   = shootRequests.filter(r=> (r.status||'')==='مسودة').length;
+    const inprog   = shootRequests.filter(r=> (r.status||'')==='تحت الإجراء').length;
+    const done     = shootRequests.filter(r=> isShootDone(r)).length;
     const received = shootRequests.filter(r=> r?.admin?.received).length;
     const prepared = shootRequests.filter(r=> r?.admin?.prepared).length;
 
     return { total, shootTotal, transferTotal, drafts, inprog, done, received, prepared };
   }
 
+
+
+ 
   function renderShootCard(gridEl){
     const st = shootStats();
     const card = document.createElement('div');
@@ -593,7 +611,7 @@ body{opacity:0;transition:opacity .12s ease}
         <div class="group-left">
           <h3 class="group-title">
             <i class="fa-solid fa-camera-retro"></i>
-            طلبات التصوير والنقل
+            طلبات النقل والتصوير
           </h3>
           <div class="sub-metrics">
             <span class="metric shoot-metric" data-metric="ALL">
@@ -605,12 +623,12 @@ body{opacity:0;transition:opacity .12s ease}
             </span>
             <span class="metric shoot-metric" data-metric="received">
               <i class="fa-solid fa-inbox"></i>
-              تم الاستلام الإداري:
+              تم الاستلام الإداري (تصوير):
               <b>${st.received.toLocaleString('ar-SA')}</b>
             </span>
             <span class="metric shoot-metric" data-metric="prepared">
               <i class="fa-solid fa-wand-magic-sparkles"></i>
-              تم التجهيز:
+              تم التجهيز (تصوير):
               <b>${st.prepared.toLocaleString('ar-SA')}</b>
             </span>
             <span class="metric shoot-metric" data-metric="done">
@@ -620,13 +638,14 @@ body{opacity:0;transition:opacity .12s ease}
             </span>
           </div>
         </div>
-        <div class="group-total" title="إجمالي الطلبات">
+        <div class="group-total" title="إجمالي طلبات النقل والتصوير">
           ${st.total.toLocaleString('ar-SA')}
         </div>
       </div>
     `;
 
     card.addEventListener('click', (ev)=>{
+      // لو مش دايس على متريك، افتح كل طلبات التصوير
       if(ev.target.closest('.shoot-metric')) return;
       openShootModal('ALL');
     });
@@ -642,44 +661,44 @@ body{opacity:0;transition:opacity .12s ease}
     gridEl.appendChild(card);
   }
 
+
   /* ===== طلبات نقل السيارات: من moves ===== */
-  
-function isTransferPending(m){
-  const toLoc = (m.to || m.toLocation || m.target || '').toString();
+  function isTransferPending(m){
+    const toLoc = (m.to || m.toLocation || m.target || '').toString();
 
-  // أي حركة رايحة لحالة "مباع تم التسليم" بأي صياغة (فرع 1 الصالة : مباع تم التسليم، مباع تم التسليم - عميل فرد، إلخ)
-  if (!toLoc.includes('مباع تم التسليم')) return false;
+    // أي حركة رايحة لحالة "مباع تم التسليم"
+    if (!toLoc.includes('مباع تم التسليم')) return false;
 
-  const status = (m.status || '').toString();
-  if (status === 'cancelled' || status === 'rejected') return false;
+    const status = (m.status || '').toString();
+    if (status === 'cancelled' || status === 'rejected') return false;
 
-  // حالة الموافقات
-  const adminOk   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
-  const financeOk = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
+    // حالة الموافقات
+    const adminOk   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
+    const financeOk = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
 
-  // لو الاتنين موافقين خلاص مش محتاج يظهر في الطلبات
-  if (adminOk && financeOk) return false;
+    // لو الاتنين موافقين خلاص مش محتاج يظهر في الطلبات
+    if (adminOk && financeOk) return false;
 
-  // هل في فلاغ إن الطلب محتاج موافقة
-  const needsFlag =
-    m.requiresAdminApproval || m.needsAdminApproval ||
-    m.requiresFinanceApproval || m.needsFinanceApproval;
+    // هل في فلاغ إن الطلب محتاج موافقة
+    const needsFlag =
+      m.requiresAdminApproval || m.needsAdminApproval ||
+      m.requiresFinanceApproval || m.needsFinanceApproval;
 
-  // أو الاستاتس واضح إنه في انتظار موافقات
-  const statusFlag =
-    status === 'pending' ||
-    status === 'awaiting_admin' ||
-    status === 'awaiting_finance' ||
-    status === 'awaiting_approvals';
+    // أو الاستاتس واضح إنه في انتظار موافقات
+    const statusFlag =
+      status === 'pending' ||
+      status === 'awaiting_admin' ||
+      status === 'awaiting_finance' ||
+      status === 'awaiting_approvals';
 
-  // أو الرسالة فيها "طلب نقل" أو "بانتظار موافقة الإدارة"
-  const msg = (m.message || m.note || '').toString();
-  const msgFlag = /طلب نقل|بانتظار موافقة الإدارة/.test(msg);
+    // أو الرسالة فيها "طلب نقل" أو "بانتظار موافقة الإدارة"
+    const msg = (m.message || m.note || '').toString();
+    const msgFlag = /طلب نقل|بانتظار موافقة الإدارة/.test(msg);
 
-  return !!(needsFlag || statusFlag || msgFlag);
-}
+    return !!(needsFlag || statusFlag || msgFlag);
+  }
 
-function computeTransferRequests(){
+  function computeTransferRequests(){
     transferRequests = [];
     if(!Array.isArray(moves)) return;
     moves.forEach((m,idx)=>{
@@ -894,22 +913,13 @@ function computeTransferRequests(){
       <th>رقم الهيكل</th>
       <th>الملاحظات</th>
     `;
-    const approvals = `
-      <th>الموافقة الإدارية</th>
-      <th>ملاحظات الإدارة</th>
-      <th>الموافقة المالية</th>
-      <th>ملاحظات المالية</th>
-      <th>الإجراءات</th>
-    `;
-    modalTableRowsHead.innerHTML = currentFilterKey==='pending' ? common + approvals : common;
+    modalTableRowsHead.innerHTML = common;
   }
 
   function renderRowsTable(){
     buildRowsHeader();
     modalTableRowsBody.innerHTML='';
     filteredRows.forEach(r=>{
-      const isApprovedAdmin   = (r.adminApproved===true || r.adminApproved==='true') ? '✅' : (r.adminApproved===false || r.adminApproved==='false') ? '❌' : '-';
-      const isApprovedFinance = (r.financeApproved===true || r.financeApproved==='true') ? '✅' : (r.financeApproved===false || r.financeApproved==='false') ? '❌' : '-';
       const tr=document.createElement('tr');
       tr.innerHTML=`
         <td>${r.id||''}</td>
@@ -924,39 +934,15 @@ function computeTransferRequests(){
         <td>${r.batchName||''}</td>
         <td>${r.vin||''}</td>
         <td>${r.notes||''}</td>
-        ${
-          currentFilterKey==='pending'
-          ? `
-            <td style="text-align:center">${isApprovedAdmin}</td>
-            <td>${r.adminNotes||'-'}</td>
-            <td style="text-align:center">${isApprovedFinance}</td>
-            <td>${r.financeNotes||'-'}</td>
-            <td>
-              <button class="btn btn-outline btn-xs" data-approve="admin" data-vin="${r.vin||''}">
-                <i class="fa-solid fa-user-check"></i> إداري
-              </button>
-              <button class="btn btn-outline btn-xs" data-approve="finance" data-vin="${r.vin||''}">
-                <i class="fa-solid fa-coins"></i> مالية
-              </button>
-            </td>
-          `
-          : ''
-        }
       `;
       modalTableRowsBody.appendChild(tr);
     });
     modalCount.textContent = `عدد السيارات الظاهرة: ${filteredRows.length.toLocaleString('ar-SA')} من ${currentRows.length.toLocaleString('ar-SA')}`;
 
-    if(currentFilterKey==='pending'){
-      approvalBox.style.display='block';
-      if(!approvalContext){
-        approvalTarget.textContent = 'اختر "إداري" أو "مالية" من الجدول لتحديد السيارة.';
-        approvalStatus.value='';
-        approvalNotes.value='';
-      }
-    }else{
+    // إخفاء صندوق الموافقات بالكامل من أي فلتر "تحت التسليم"
+    if(typeof approvalBox !== 'undefined' && approvalBox){
       approvalBox.style.display='none';
-      approvalContext=null;
+      approvalContext = null;
     }
   }
 
@@ -1034,7 +1020,7 @@ function computeTransferRequests(){
     approvalContext = null;
     approvalStatus.value='';
     approvalNotes.value='';
-    approvalTarget.textContent = 'اختر "إداري" أو "مالية" من الجدول لتحديد السيارة.';
+    approvalTarget.textContent = '';
   }
 
   btnSaveApproval.addEventListener('click', saveApproval);
@@ -1143,7 +1129,7 @@ function computeTransferRequests(){
     if(filter==='ALL' || !filter) return true;
     if(filter==='received') return !!(r.admin && r.admin.received);
     if(filter==='prepared') return !!(r.admin && r.admin.prepared);
-    if(filter==='done') return (r.status||'')==='تم التصوير';
+    if(filter==='done') return isShootDone(r);
     return (r.status||'')===filter;
   }
 
@@ -1235,7 +1221,6 @@ function computeTransferRequests(){
     openModal('transfers','طلبات نقل السيارات');
   }
 
-  
   function renderTransfersTable(){
     modalTableTransfersBody.innerHTML = '';
     filteredTransfers.forEach((t,idx)=>{
@@ -1287,9 +1272,6 @@ function computeTransferRequests(){
     modalCount.textContent = `عدد طلبات النقل الظاهرة: ${filteredTransfers.length.toLocaleString('ar-SA')} من ${transferRequests.length.toLocaleString('ar-SA')}`;
   }
 
-
-
-  
   async function approveTransfer(moveIdx, kind){
     const idx = Number(moveIdx);
     if (isNaN(idx) || !moves[idx]) {
@@ -1352,14 +1334,10 @@ function computeTransferRequests(){
           stock[stockIndex].deliveredAt = now();
         }
         // مزامنة فلاغ الموافقات في المخزون أيضًا (لو حابب تستخدمها في شاشات ثانية)
-        if (isAdmin) {
-          stock[stockIndex].adminApproved = true;
-          stock[stockIndex].adminApproval = true;
-        }
-        if (isFinance) {
-          stock[stockIndex].financeApproved = true;
-          stock[stockIndex].financeApproval = true;
-        }
+        stock[stockIndex].adminApproved = adminOkNow;
+        stock[stockIndex].adminApproval = adminOkNow;
+        stock[stockIndex].financeApproved = financeOkNow;
+        stock[stockIndex].financeApproval = financeOkNow;
       }
     } else {
       // لسه في موافقة ناقصة
@@ -1379,7 +1357,6 @@ function computeTransferRequests(){
       setStatus('warn','تعذّر حفظ الموافقة على طلب النقل');
     }
   }
-
 
   tableTransfersWrap.addEventListener('click',(e)=>{
     const btn = e.target.closest('button[data-transfer-idx]');
@@ -1439,17 +1416,10 @@ function computeTransferRequests(){
   // تصدير Excel حسب الوضع
   document.getElementById('btnExportGroup').addEventListener('click', ()=>{
     if(currentMode==='rows'){
-      const headerCommon = ["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
-      const headerPending= ["الموافقة الإدارية","ملاحظات الإدارة","الموافقة المالية","ملاحظات المالية"];
-      const header = currentFilterKey==='pending' ? [...headerCommon, ...headerPending] : headerCommon;
+      const header = ["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
       const data=[header];
       filteredRows.forEach(r=>{
         const row = [r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName||'',r.vin,r.notes];
-        if(currentFilterKey==='pending'){
-          const adminA = (r.adminApproved===true || r.adminApproved==='true') ? 'موافق' : (r.adminApproved===false || r.adminApproved==='false') ? 'مرفوض' : '-';
-          const finA   = (r.financeApproved===true || r.financeApproved==='true') ? 'موافق' : (r.financeApproved===false || r.financeApproved==='false') ? 'مرفوض' : '-';
-          row.push(adminA, r.adminNotes||'', finA, r.financeNotes||'');
-        }
         data.push(row);
       });
       const ws=XLSX.utils.aoa_to_sheet(data);
