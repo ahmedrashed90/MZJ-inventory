@@ -1,585 +1,492 @@
 
-
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<link rel="prefetch" href="admin.html">
-<link rel="prefetch" href="inventory.html">
-<link rel="prefetch" href="dashboard.html">
-<link rel="prefetch" href="photoshoot.html">
-<link rel="prefetch" href="index.html">
-
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<style id="noFlash">
-#authGate,#app{display:none!important}
-html{background:#fff8ef}
-body{opacity:0;transition:opacity .12s ease}
-</style>
-<meta name="color-scheme" content="light">
-<title>لوحة الطلبات — MZJ Cars</title>
+<title>MZJ إدارة الطلبات</title>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
-
+<style id="noFlash">#authGate,#app{display:none!important}html{background:#fff8ef}body{opacity:0;transition:opacity .12s ease}</style>
+<meta name="color-scheme" content="light"/>
 <style>
   :root{
-    --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef; --text:#1f2937; --muted:#6b7280;
-    --line:#e5e7eb; --line-strong:#d1d5db; --table-head:#fafafa;
-    --card:#fff; --radius:14px; --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9;
-    --shadow:0 10px 24px rgba(0,0,0,.06);
+    --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef; --card:#ffffff; --line:#e7e5e4;
+    --text:#1f2937; --muted:#6b7280; --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9;
+    --radius:12px; --shadow:0 10px 26px rgba(0,0,0,.06); --table-head:#fafafa;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
-  body{margin:0;background:var(--cream);color:var(--text);font-family:"Tajawal",system-ui,Arial}
+  body{
+    margin:0;
+    background:var(--cream);
+    color:var(--text);
+    font-family:"Tajawal",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+    line-height:1.75;
+  }
+  a{text-decoration:none;color:var(--brown)}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
 
-  /* Topbar + tabs + auth badge */
-  .topbar{position:sticky;top:0;z-index:1000;background:#fff;border-bottom:1px solid var(--line)}
-  .topbar-inner{max-width:1240px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:10px 16px}
+  /* Header */
+  .top{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);z-index:10}
+  .top .inner{
+    max-width:1240px;
+    margin:auto;
+    padding:12px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
   .brand{display:flex;align-items:center;gap:10px}
-  .brand .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brown),#2a1613);
-    display:grid;place-items:center;color:#fff;font-weight:800}
-  .brand h1{margin:0;font-size:18px;color:var(--brown)}
-  .tabs{display:flex;gap:8px;flex-wrap:wrap}
-  .tab{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#fff;text-decoration:none;color:inherit;font-weight:800;font-size:13px}
-  .tab.active{background:var(--brown);border-color:var(--brown);color:#fff}
-  .status-badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;font-size:12px}
-  .dot{width:10px;height:10px;border-radius:999px;background:#f59e0b}
-  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)} .dot.warn{background:#f59e0b}
+  .logo{
+    width:36px;height:36px;border-radius:12px;
+    background:linear-gradient(135deg,#3e2420,#bc8f74);
+    display:grid;place-items:center;color:#fff;font-weight:900;box-shadow:var(--shadow);
+  }
+  h1{margin:0;font-size:19px;color:var(--brown)}
+  .chip{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;background:#fff}
+  .dot{width:8px;height:8px;border-radius:999px;background:#f59e0b}
+  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)}
+  .btn{
+    background:var(--brown);color:#fff;border:none;border-radius:10px;
+    padding:8px 11px;font-weight:800;cursor:pointer;display:inline-flex;gap:8px;align-items:center;
+  }
+  .btn.secondary{background:#fff;color:var(--brown);border:1px solid var(--line)}
+  .btn.ghost{background:transparent;color:var(--brown);border:1px dashed var(--line)}
+  .btn.beige{background:var(--beige);color:#fff}
+  .btn.danger{background:var(--danger)}
+  .btn-mini{
+    padding:5px 10px;
+    font-size:11px;
+    border-radius:999px;
+  }
+  .filter-kind.active-kind{
+    background:var(--brown);
+    color:#fff;
+    border-color:var(--brown);
+  }
+  .no-print{}
 
-  /* Buttons */
-  .btn{position:relative;border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;cursor:pointer;font-weight:700;display:inline-flex;gap:6px;align-items:center;transition:.15s;font-size:13px}
-  .btn:hover{transform:translateY(-1px)} .btn:active{transform:translateY(0)}
-  .btn-primary{background:var(--brown);border-color:var(--brown);color:#fff}
-  .btn-beige{background:var(--beige);border-color:var(--beige);color:#fff}
-  .btn-ghost{background:#fff}
-  .btn-danger{background:var(--danger);border-color:var(--danger);color:#fff}
-  .btn-outline{background:#fff;border:1px solid var(--brown);color:var(--brown)}
-  .btn-success{background:var(--ok);border-color:var(--ok);color:#fff}
-  .btn-info{background:var(--info);border-color:var(--info);color:#fff}
-  .btn-warn{background:#f59e0b;border-color:#f59e0b;color:#fff}
+  /* Top Tabs Bar */
+  .tabs-bar{
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    background:#fff;
+  }
+  .tabs{
+    max-width:1240px;
+    margin:0 auto;
+    padding:0 12px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .tab{
+    display:inline-flex;
+    align-items:center;
+    padding:7px 12px;
+    font-size:13px;
+    border-radius:999px;
+    border:1px solid transparent;
+    color:var(--muted);
+    margin:6px 0;
+  }
+  .tab:hover{
+    background:#f5f0eb;
+    color:var(--brown);
+  }
+  .tab.active{
+    background:var(--brown);
+    color:#fff;
+    border-color:var(--brown);
+    font-weight:700;
+  }
 
   /* Layout */
-  .container{max-width:1240px;margin:18px auto;padding:0 16px 48px;display:grid;gap:16px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
-  .card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:12px;flex-wrap:wrap}
-  .section-title{display:flex;align-items:center;gap:8px;margin:0}
-  .section-title svg{width:20px;height:20px;color:var(--brown)}
-  .section-title h2{margin:0;font-size:16px;color:var(--brown)}
-  .hint{color:var(--muted);font-size:12px}
-  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .wrap{max-width:1240px;margin:14px auto;padding:0 12px}
+  .grid{display:grid;gap:12px}
+  .cards{
+    display:flex;
+    gap:12px;
+    overflow-x:auto;
+    padding-bottom:4px;
+  }
+  .cards .card{
+    flex:0 0 230px;
+  }
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .card .inner{padding:14px}
+  .metric{display:flex;align-items:center;justify-content:space-between}
+  .metric .k{font-size:24px;font-weight:800;color:var(--brown)}
+  .metric .l{font-size:12px;color:var(--muted)}
+  .metric i{opacity:.7}
 
-  /* Inputs */
-  label{font-weight:800;margin-bottom:6px;display:block;color:var(--brown)}
-  .input-wrap{position:relative}
-  .input-wrap .i{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#9ca3af}
-  .input-wrap input{padding-right:36px}
-  input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:#fff;outline:none;transition:.15s;font-size:14px}
-  input:focus,select:focus,textarea:focus{border-color:var(--beige);box-shadow:0 0 0 3px rgba(188,143,116,.15)}
-  textarea{min-height:44px}
-  input[readonly]{background:#f9fafb;color:#6b7280}
-  .small-input{padding:6px 9px;border-radius:10px;font-size:13px}
-  .req-type{min-width:110px;font-weight:700;text-align:center}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow)}
+  .panel .head{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--line)}
+  .panel .body{padding:0}
 
-  /* Tables */
-  .table-wrap{width:100%;overflow-x:auto;border:1px solid var(--line);border-radius:14px}
-  table{width:100%;border-collapse:separate;border-spacing:0;table-layout:auto}
-  thead th{position:sticky;top:0;background:var(--table-head);z-index:2;border-bottom:1px solid var(--line-strong);
-    text-align:right;color:#111827;font-size:12px;padding:8px 8px;white-space:normal;line-height:1.35}
-  tbody td{border-top:1px solid var(--line);padding:6px 8px;vertical-align:middle;font-size:13px;white-space:normal;word-break:break-word;line-height:1.45}
-  tbody tr:nth-child(odd){background:#fff}
-  tbody tr:nth-child(even){background:#fcfcfc}
-  tbody tr:hover{background:#f8fafc}
-  td,th{border-left:1px solid var(--line)}
-  td:last-child,th:last-child{border-left:0}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;padding:10px;background:#fff8ef;border-bottom:1px dashed var(--line);align-items:center}
+  .filters-left{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .filters-right{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  input,select,button,textarea{font-family:inherit}
+  input[type="search"], select, input[type="date"], input[type="text"]{
+    height:36px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#fff;
+  }
+
+  .table-wrap{overflow:auto}
+  table{width:100%;border-collapse:separate;border-spacing:0}
+  th,td{border-bottom:1px solid var(--line);padding:8px 6px;font-size:12px;vertical-align:top}
+  th{position:sticky;top:0;background:var(--table-head);text-align:right;z-index:1}
+  tr:hover td{background:#fffdf8}
   .center{text-align:center}
-  .mono{font-family:ui-monospace,Consolas,Menlo,monospace;letter-spacing:.2px}
-  .nowrap{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .cell-actions .btn{padding:4px 8px;font-size:12px}
 
-  /* Auth */
-  .auth-wrap{min-height:60vh;display:grid;place-items:center;padding:24px}
-  .auth-card{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:18px;max-width:420px;width:96%}
-  .auth-card h2{margin:0 0 10px;color:var(--brown);font-size:18px}
-  .auth-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .muted{color:var(--muted)}
+  .pill{display:inline-flex;gap:8px;align-items:center;padding:3px 9px;border-radius:999px;border:1px solid var(--line);font-size:11px}
+  .pill-draft{background:#FEF3C7}
+  .pill-prog{background:#DBEAFE}
+  .pill-done{background:#DCFCE7}
 
   /* Modal */
-  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.38);display:none;align-items:center;justify-content:center;z-index:50}
-  .modal{background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.35);width:min(1100px,96vw);max-height:92vh;border:1px solid var(--line);display:flex;flex-direction:column}
-  .modal header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0;padding:10px 14px;border-bottom:1px solid var(--line)}
-  .modal h3{margin:0;font-size:18px;color:var(--brown)}
-  .modal .body{padding:12px 14px;overflow:auto}
-  .modal .actions{display:flex;gap:8px;justify-content:flex-start;margin-top:12px}
+  .modal-backdrop{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,.38);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+  }
+  .modal{
+    background:#fff;
+    border-radius:16px;
+    box-shadow:0 24px 60px rgba(0,0,0,.35);
+    width:min(1100px,98vw);
+    border:1px solid var(--line);
+    transform:scale(.85);
+    transform-origin:top center;
+  }
+  .modal header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 12px;
+    border-bottom:1px solid var(--line);
+  }
+  .modal .content{
+    padding:10px 12px;
+    max-height:calc(100vh - 140px);
+    overflow:auto;
+  }
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .subhint{font-size:12px;color:var(--muted)}
 
-  .subgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-  @media (max-width:900px){.subgrid{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:620px){.subgrid{grid-template-columns:1fr}}
-  .kv{display:grid;grid-template-columns:140px 1fr;gap:6px;align-items:center}
-  .hr{height:1px;background:var(--line);margin:10px 0}
+  .req-note-print{
+    font-size:12px;
+    color:#111827;
+    white-space:pre-wrap;
+  }
 
-  /* Toast */
-  .toast{position:fixed;bottom:16px;right:16px;background:#111827;color:#fff;padding:10px 14px;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.25);display:none;z-index:60;font-size:13px}
-  .toast.ok{background:var(--ok)} .toast.info{background:var(--info)} .toast.err{background:var(--danger)}
+  #reqModal table th,
+  #reqModal table td,
+  #moveModal table th,
+  #moveModal table td{
+    font-size:11px;
+    padding:6px 4px;
+  }
 
-  /* التابات الداخلية */
-  .inner-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-  .inner-tab{border-radius:999px;border:1px solid var(--line);background:#fff;padding:6px 12px;font-size:13px;font-weight:800;cursor:pointer}
-  .inner-tab.active{background:var(--brown);border-color:var(--brown);color:#fff}
-  .tab-pane{display:none;gap:16px}
-  .tab-pane.active{display:grid}
+  #authGate{display:none;min-height:80vh;place-items:center}
+  #authCard{width:min(420px,92vw);padding:18px;border:1px solid var(--line);border-radius:var(--radius);background:#fff;box-shadow:var(--shadow)}
 
-  /* Grid عام */
-  .grid{display:grid;gap:8px}
-  .grid-3{grid-template-columns:repeat(3,1fr)}
-  @media (max-width:900px){.grid-3{grid-template-columns:repeat(2,1fr)}}
-  @media (max-width:620px){.grid-3{grid-template-columns:1fr}}
+  @media(max-width:1000px){
+    .cards{grid-template-columns:1fr}
+    .panel .head{flex-direction:column;align-items:flex-start;gap:6px}
+  }
 
+  @media print {
+    @page {
+      size: A4 portrait;
+      margin-top: 0.4in;
+      margin-right: 0.03in;
+      margin-bottom: 0.33in;
+      margin-left: 0in;
+    }
+
+    body{background:#fff;}
+    body *{visibility:hidden;}
+    #reqModal, #reqModal *{visibility:visible;}
+    #reqModal{
+      position:static;
+      inset:auto;
+      background:#fff;
+      display:block !important;
+    }
+
+    #reqModal .modal{
+      width:100%;
+      max-width:none;
+      box-shadow:none;
+      border:none;
+      border-radius:0;
+      transform:none !important;
+    }
+    #reqModal .content{
+      padding:6px;
+      max-height:none;
+      overflow:visible;
+    }
+
+    #reqModal table th,
+    #reqModal table td{
+      padding:4px 3px;
+      font-size:10px;
+    }
+
+    #reqModal .table-wrap{overflow:visible;}
+    .no-print{display:none !important;}
+    .top, .wrap > :not(#reqModal){display:none !important;}
+  }
 </style>
 </head>
 <body>
-
-<!-- Topbar -->
-<div class="topbar">
-  <div class="topbar-inner">
-    <div class="brand">
-      <div class="logo" title="MZJ">MZJ</div>
-      <div>
-        <h1>الطلبات</h1>
-        <small class="hint">مجموعة محمد بن ذعار العجمي للسيارات</small>
+  <header class="top">
+    <div class="inner">
+      <div class="brand">
+        <div class="logo">MZJ</div>
+        <h1>إدارة الطلبات</h1>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="chip"><span id="connDot" class="dot"></span><span id="connText">جارِ الاتصال…</span></span>
+        <button id="btnSignOut" class="btn secondary" style="display:none">خروج</button>
       </div>
     </div>
-    <div class="tabs">
-      <a class="tab" href="admin.html">الإدارة</a>
-      <a class="tab" href="inventory.html">المخزون</a>
-      <a class="tab" href="dashboard.html">الداش بورد</a>
-      <a class="tab active" href="photoshoot.html">الطلبات</a>
-      <a class="tab" href="photoshoot-user.html">إدارة الطلبات</a>
-      <a class="tab" href="cars.html">كل السيارات</a>
-      <a class="tab" href="Activity.html">سجل النشاط</a>
+    <div class="tabs-bar">
+      <div class="tabs">
+        <a class="tab" href="admin.html">الإدارة</a>
+        <a class="tab" href="inventory.html">المخزون</a>
+        <a class="tab" href="dashboard.html">الداش بورد</a>
+        <a class="tab" href="photoshoot.html">الطلبات</a>
+        <a class="tab active" href="photoshoot-user.html">إدارة الطلبات</a>
+        <a class="tab" href="cars.html">كل السيارات</a>
+        <a class="tab" href="Activity.html">سجل النشاط</a>
+      </div>
     </div>
-    <div class="row">
-      <div class="status-badge"><span id="connDot" class="dot warn"></span><span id="connText">جارِ الاتصال…</span></div>
-      <button id="btnSignOut" class="btn btn-ghost" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
-    </div>
-  </div>
-</div>
+  </header>
 
-<!-- Auth Gate -->
-<div id="authGate" class="auth-wrap" style="display:none">
-  <div class="auth-card">
-    <h2><i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول</h2>
-    <label for="email">البريد الإلكتروني</label>
-    <input id="email" type="email" placeholder="you@example.com"/>
-    <label for="password" style="margin-top:8px">كلمة المرور</label>
-    <input id="password" type="password" placeholder="••••••••"/>
-    <div class="auth-actions">
-      <button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
-      <button class="btn btn-outline" id="btnSignup">إنشاء حساب</button>
-    </div>
-    <p class="hint" id="authHint" style="margin-top:10px"></p>
-  </div>
-</div>
-
-<!-- App -->
-<div id="app" style="display:none">
-  <div class="container">
-
-    <!-- التابات الداخلية -->
-    <div class="inner-tabs">
-      <button class="inner-tab active" data-tab="tab-shoot">انشاء طلب</button>
-    </div>
-
-    <!-- تاب طلب تصوير -->
-    <div id="tab-shoot" class="tab-pane active">
-
-      <!-- إنشاء طلب تصوير -->
+  <main class="wrap grid">
+    <!-- Top metrics -->
+    <section class="cards">
       <div class="card">
-        <div class="card-header">
-          <div class="section-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7h16M4 17h10"/><circle cx="17" cy="17" r="3"/></svg>
-            <h2>إنشاء طلب</h2>
+        <div class="inner metric">
+          <div>
+            <div class="l">إجمالي الطلبات</div>
+            <div id="m_all" class="k">0</div>
           </div>
-          <span class="hint">اكتب رقم الهيكل</span>
+          <i class="fa-solid fa-list-check"></i>
         </div>
+      </div>
+      <div class="card">
+        <div class="inner metric">
+          <div>
+            <div class="l">تحت الإجراء / تم التجهيز / قيد المراجعة</div>
+            <div id="m_prog" class="k">0</div>
+          </div>
+          <i class="fa-solid fa-gears"></i>
+        </div>
+      </div>
+      <div class="card">
+        <div class="inner metric">
+          <div>
+            <div class="l">تم / منفّذ</div>
+            <div id="m_done" class="k">0</div>
+          </div>
+          <i class="fa-regular fa-circle-check"></i>
+        </div>
+      </div>
+    </section>
 
-        <div class="row" style="margin-bottom:4px">
-          <div style="flex:1;min-width:400px">
-            <label for="reqBy">مقدّم الطلب</label>
-            <input id="reqBy" class="small-input" readonly title="محدد تلقائيًا من المستخدم"/>
+    <!-- Auth Gate -->
+    <section id="authGate" class="panel">
+      <div class="head"><strong>تسجيل الدخول</strong></div>
+      <div class="body" style="padding:12px">
+        <div style="display:grid;gap:10px;max-width:420px">
+          <input id="email" type="text" placeholder="Email">
+          <input id="password" type="password" placeholder="Password">
+          <div style="display:flex;gap:8px;align-items:center">
+            <button id="btnLogin" class="btn">دخول</button>
+            <span id="authHint" class="muted"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Table -->
+    <section id="app" class="panel" style="display:none">
+      <div class="head">
+        <strong>الطلبات (تصوير + نقل)</strong>
+        <div class="muted"><span id="countShown">0</span> من <span id="countTotal">0</span></div>
+      </div>
+      <div class="body">
+        <div class="filters">
+          <div class="filters-left">
+            <input id="date_from" type="date" title="من تاريخ">
+            <input id="date_to" type="date" title="إلى تاريخ">
+            <select id="f_status" title="الحالة">
+              <option value="">كل الحالات</option>
+              <option>مسودة</option>
+              <option>تحت الإجراء</option>
+              <option>تم التجهيز</option>
+              <option>قيد المراجعة</option>
+              <option>تم</option>
+              <option>منفّذ</option>
+            </select>
+            <input id="q" type="search" placeholder="بحث: نوع الطلب / VIN / المكان / المنشئ / ملاحظة">
+            <button id="f_reset" class="btn ghost"><i class="fa-solid fa-rotate-right"></i> إعادة التصفية</button>
+          </div>
+          <div class="filters-right">
+            <button type="button" id="kind_all"   class="btn secondary btn-mini filter-kind active-kind">كل الأنواع</button>
+            <button type="button" id="kind_shoot" class="btn secondary btn-mini filter-kind">طلبات التصوير</button>
+            <button type="button" id="kind_move"  class="btn secondary btn-mini filter-kind">طلبات النقل</button>
           </div>
         </div>
 
         <div class="table-wrap">
-          <table id="entryTable">
-            <colgroup>
-              <col style="width:4ch">
-              <col style="width:14ch">
-              <col style="width:11ch">
-              <col style="width:15ch">
-              <col style="width:16ch">
-              <col style="width:9ch">
-              <col style="width:9ch">
-              <col style="width:8ch">
-              <col style="width:18ch">
-              <col style="width:16ch">
-              <col style="width:auto">
-              <col style="width:10ch">
-            </colgroup>
+          <table>
             <thead>
               <tr>
                 <th class="center">#</th>
-                <th>نوع الطلب</th>
-                <th>رقم الهيكل</th>
-                <th>السيارة</th>
-                <th>البيان</th>
-                <th>الخارجي</th>
-                <th>الداخلي</th>
-                <th class="center">الموديل</th>
-                <th>مكان السيارة</th>
-                <th id="placeHeader">مكان التصوير</th>
-                <th>ملاحظة</th>
-                <th class="center">حذف</th>
+                <th style="min-width:80px">الطلب</th>
+                <th style="min-width:110px">نوع الطلب</th>
+                <th style="min-width:110px">المنشئ</th>
+                <th style="min-width:90px">الحالة</th>
+                <th style="min-width:130px">تاريخ الإنشاء</th>
+                <th style="min-width:160px">المكان / من → إلى</th>
+                <th style="min-width:160px">استلام / موافقات</th>
+                <th style="min-width:140px">ملاحظات الإدارة</th>
+                <th style="min-width:140px">إجراءات</th>
               </tr>
             </thead>
-            <tbody id="reqRows"></tbody>
+            <tbody id="reqTable"></tbody>
           </table>
         </div>
-
-        <div class="row" style="margin-top:12px">
-          <button class="btn btn-ghost" id="btnDraft"><i class="fa-regular fa-floppy-disk"></i> حفظ كمسودة</button>
-          <button class="btn btn-primary" id="btnSubmit"><i class="fa-solid fa-paper-plane"></i> إرسال الطلب</button>
-          <button class="btn btn-ghost" id="btnClear"><i class="fa-solid fa-rotate"></i> تفريغ</button>
-        </div>
       </div>
+    </section>
+  </main>
 
-      <!-- متابعة طلبات التصوير -->
-      <div class="card" style="display:none">
-        <div class="card-header">
-          <div class="section-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h10M4 18h7"/></svg>
-            <h2>متابعة طلبات التصوير</h2>
-          </div>
-          <div class="row">
-            <select id="statusFilter" class="small-input" style="width:170px">
-              <option value="ALL">كل الحالات</option>
-              <option value="مسودة">مسودة</option>
-              <option value="تحت الإجراء">تحت الإجراء</option>
-              <option value="تم التصوير">تم التصوير</option>
-            </select>
-            <input id="searchRequests" class="small-input" placeholder="بحث سريع" style="min-width:220px">
-            <button id="btnExport" class="btn btn-ghost"><i class="fa-regular fa-file-excel"></i> تصدير</button>
+  <!-- Modal: طلب التصوير -->
+  <div id="reqModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <header>
+        <strong id="reqModalTitle">عرض طلب التصوير</strong>
+        <div class="row no-print">
+          <button class="btn secondary" id="btnModalReceived"><i class="fa-regular fa-handshake"></i> تأكيد الاستلام</button>
+          <button class="btn beige" id="btnReceiveAndMove"><i class="fa-solid fa-truck-fast"></i> تأكيد التجهيز ونقل السيارة</button>
+          <button class="btn" id="btnDoneShoot"><i class="fa-solid fa-check"></i> تم التصوير</button>
+          <button class="btn secondary" id="reqModalClose"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+        </div>
+      </header>
+      <div class="content">
+        <div class="row" style="justify-content:space-between;margin-bottom:6px">
+          <div class="subhint" id="reqMeta"></div>
+          <div class="subhint" id="reqStatus"></div>
+        </div>
+
+        <div class="card">
+          <div class="inner">
+            <div class="row" style="width:100%;justify-content:space-between">
+              <div style="flex:1;min-width:260px">
+                <label style="display:block;margin-bottom:6px">مكان التصوير</label>
+                <input id="reqPlaceRequested" type="text" readonly placeholder="—" />
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="table-wrap">
-          <table id="requestsTable">
-            <colgroup>
-              <col style="width:8ch">
-              <col style="width:18ch">
-              <col style="width:16ch">
-              <col style="width:8ch">
-              <col style="width:12ch">
-              <col style="width:20ch">
-              <col style="width:auto">
-            </colgroup>
+        <div class="table-wrap" style="margin-top:10px">
+          <table>
             <thead>
               <tr>
-                <th>رقم</th>
-                <th>التاريخ</th>
-                <th>مقدّم</th>
-                <th class="center">الهياكل</th>
-                <th>الحالة</th>
-                <th>إداري</th>
-                <th class="center">إجراءات</th>
+                <th style="min-width:35px">#</th>
+                <th style="min-width:130px">رقم الهيكل (VIN)</th>
+                <th style="min-width:180px">السيارة + البيان</th>
+                <th style="min-width:180px">الخارجي / الداخلي / الموديل</th>
+                <th style="min-width:170px">مكان السيارة (حالي)</th>
+                <th style="min-width:160px">مكان التصوير</th>
+                <th style="min-width:200px">ملاحظات</th>
               </tr>
             </thead>
-            <tbody></tbody>
+            <tbody id="reqCarsTable"></tbody>
           </table>
         </div>
-        <p class="hint" style="margin:6px 0 0">
-          اضغط على الصف لعرض تفاصيل الطلب (الهياكل + متابعة الاستلام/التجهيز). التعديل من نافذة التفاصيل فقط.
-        </p>
-      </div>
-    </div>
-
-    <!-- تاب طلب نقل -->
-    <div id="tab-move" class="tab-pane">
-
-      <!-- إنشاء طلب نقل -->
-      <div class="card">
-        <div class="card-header">
-          <div class="section-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M7 10l5-5 5 5"/><path d="M7 14l5 5 5-5"/></svg>
-            <h2>إنشاء طلب نقل</h2>
-          </div>
-          <span class="hint">نفس أسلوب طلب التصوير — اكتب رقم الهيكل، يتسحب بيانات السيارة، وحدد المكان الجديد.</span>
-        </div>
-
-        <div class="row" style="margin-bottom:8px">
-          <div style="flex:1;min-width:220px">
-            <label for="moveReqBy">مقدّم طلب النقل</label>
-            <input id="moveReqBy" class="small-input" readonly title="محدد تلقائيًا من المستخدم"/>
-          </div>
-        </div>
-
-        <div class="table-wrap">
-          <table id="moveEntryTable">
-            <colgroup>
-              <col style="width:4ch">
-              <col style="width:11ch">
-              <col style="width:15ch">
-              <col style="width:16ch">
-              <col style="width:9ch">
-              <col style="width:9ch">
-              <col style="width:8ch">
-              <col style="width:18ch">
-              <col style="width:18ch">
-              <col style="width:auto">
-              <col style="width:10ch">
-            </colgroup>
-            <thead>
-              <tr>
-                <th class="center">#</th>
-                <th>رقم الهيكل</th>
-                <th>السيارة</th>
-                <th>البيان</th>
-                <th>الخارجي</th>
-                <th>الداخلي</th>
-                <th class="center">الموديل</th>
-                <th>المكان الحالي</th>
-                <th>المكان الجديد</th>
-                <th>ملاحظة</th>
-                <th class="center">حذف</th>
-              </tr>
-            </thead>
-            <tbody id="moveReqRows"></tbody>
-          </table>
-        </div>
-
-        <div class="row" style="margin-top:12px">
-          <button class="btn btn-ghost" id="moveBtnDraft"><i class="fa-regular fa-floppy-disk"></i> مسودة نقل</button>
-          <button class="btn btn-primary" id="moveBtnSubmit"><i class="fa-solid fa-paper-plane"></i> إرسال طلب النقل</button>
-          <button class="btn btn-ghost" id="moveBtnClear"><i class="fa-solid fa-rotate"></i> تفريغ</button>
-        </div>
-        <p class="hint" style="margin-top:6px">
-          تنفيذ النقل الفعلي يتم بواسطة الإداري من صفحة <b>إدارة الطلبات</b> بعد الموافقة على الطلب.
-        </p>
-      </div>
-
-      <!-- سجل طلبات النقل -->
-      <div class="card">
-        <div class="card-header">
-          <div class="section-title">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-            <h2>سجل طلبات النقل</h2>
-          </div>
-          <div class="row">
-            <select id="moveStatusFilter" class="small-input" style="width:170px">
-              <option value="ALL">كل الحالات</option>
-              <option value="مسودة">مسودة</option>
-              <option value="قيد المراجعة">قيد المراجعة</option>
-              <option value="تم التنفيذ">تم التنفيذ</option>
-            </select>
-            <input id="moveSearch" class="small-input" placeholder="بحث سريع" style="min-width:220px">
-          </div>
-        </div>
-
-        <div class="table-wrap">
-          <table id="moveRequestsTable">
-            <colgroup>
-              <col style="width:8ch">
-              <col style="width:18ch">
-              <col style="width:18ch">
-              <col style="width:8ch">
-              <col style="width:12ch">
-              <col style="width:auto">
-              <col style="width:14ch">
-            </colgroup>
-            <thead>
-              <tr>
-                <th>رقم</th>
-                <th>التاريخ</th>
-                <th>مقدّم الطلب</th>
-                <th class="center">عدد السيارات</th>
-                <th>حالة الطلب</th>
-                <th>ملاحظات</th>
-                <th class="center">تفاصيل</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <p class="hint" style="margin-top:6px">
-          اضغط على زر <b>عرض</b> أو على الصف لعرض تفاصيل السيارات داخل طلب النقل.
-        </p>
-      </div>
-
-    </div>
-
-  </div>
-</div>
-
-<!-- Modal: تفاصيل وتعديل طلب التصوير -->
-<div id="backdrop" class="modal-backdrop" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <header>
-      <h3 id="modalTitle"><i class="fa-regular fa-rectangle-list"></i> تفاصيل الطلب</h3>
-      <div class="row">
-        <button id="btnSaveModal" class="btn btn-success"><i class="fa-solid fa-check"></i> حفظ</button>
-        <button id="btnCloseModal" class="btn btn-danger"><i class="fa-solid fa-xmark"></i> إغلاق</button>
-      </div>
-    </header>
-    <div class="body">
-      <div class="subgrid">
-        <div class="kv">
-          <div class="hint">رقم الطلب</div>
-          <input id="m_id" class="small-input" readonly>
-        </div>
-        <div class="kv">
-          <div class="hint">التاريخ</div>
-          <input id="m_createdAt" class="small-input" readonly>
-        </div>
-        <div class="kv">
-          <div class="hint">مقدّم الطلب</div>
-          <input id="m_createdBy" class="small-input" readonly>
-        </div>
-        <div class="kv">
-          <div class="hint">استلام إداري</div>
-          <input id="m_adminReceived" class="small-input" readonly placeholder="—">
-        </div>
-        <div class="kv">
-          <div class="hint">تجهيز السيارات</div>
-          <input id="m_adminPrepared" class="small-input" readonly placeholder="—">
-        </div>
-      </div>
-
-      <div class="hr"></div>
-      <h4 class="section-title" style="font-size:14px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-        <span>هياكل الطلب</span>
-      </h4>
-      <div class="table-wrap">
-        <table id="modalRows">
-          <colgroup>
-            <col style="width:4ch">
-            <col style="width:18ch">
-            <col style="width:18ch">
-            <col style="width:18ch">
-            <col style="width:10ch">
-            <col style="width:10ch">
-            <col style="width:8ch">
-            <col style="width:18ch">
-            <col style="width:16ch">
-            <col style="width:auto">
-          </colgroup>
-          <thead>
-            <tr>
-              <th class="center">#</th>
-              <th>VIN</th>
-              <th>السيارة</th>
-              <th>البيان</th>
-              <th>الخارجي</th>
-              <th>الداخلي</th>
-              <th class="center">الموديل</th>
-              <th>مكان السيارة</th>
-              <th>مكان التصوير</th>
-              <th>ملاحظة</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Modal: تفاصيل طلب النقل -->
-<div id="moveBackdrop" class="modal-backdrop" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="moveModalTitle">
-    <header>
-      <h3 id="moveModalTitle"><i class="fa-regular fa-rectangle-list"></i> تفاصيل طلب النقل</h3>
-      <div class="row">
-        <button id="moveBtnCloseModal" class="btn btn-danger"><i class="fa-solid fa-xmark"></i> إغلاق</button>
-      </div>
-    </header>
-    <div class="body">
-      <div class="subgrid">
-        <div class="kv">
-          <div class="hint">رقم الطلب</div>
-          <input id="moveModalId" class="small-input" readonly>
+  <!-- Modal: طلب النقل -->
+  <div id="moveModal" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <header>
+        <strong id="moveModalTitle">عرض طلب النقل</strong>
+        <div class="row no-print">
+          <button class="btn beige" id="btnMoveApproveExecute">
+            <i class="fa-solid fa-check-double"></i> موافقة إدارية وتنفيذ حركة المخزون
+          </button>
+          <button class="btn secondary" id="moveModalClose">
+            <i class="fa-solid fa-xmark"></i> إغلاق
+          </button>
         </div>
-        <div class="kv">
-          <div class="hint">التاريخ</div>
-          <input id="moveModalCreatedAt" class="small-input" readonly>
+      </header>
+      <div class="content">
+        <div class="row" style="justify-content:space-between;margin-bottom:6px">
+          <div class="subhint" id="moveMeta"></div>
+          <div class="subhint" id="moveStatus"></div>
         </div>
-        <div class="kv">
-          <div class="hint">مقدّم الطلب</div>
-          <input id="moveModalCreatedBy" class="small-input" readonly>
-        </div>
-        <div class="kv">
-          <div class="hint">حالة الطلب</div>
-          <input id="moveModalStatus" class="small-input" readonly>
-        </div>
-      </div>
+        <div class="subhint" id="moveApprovals" style="margin-bottom:6px"></div>
 
-      <div class="hr"></div>
-      <h4 class="section-title" style="font-size:14px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-        <span>تفاصيل السيارات داخل طلب النقل</span>
-      </h4>
-      <div class="table-wrap">
-        <table id="moveModalRows">
-          <colgroup>
-            <col style="width:4ch">
-            <col style="width:18ch">
-            <col style="width:18ch">
-            <col style="width:16ch">
-            <col style="width:10ch">
-            <col style="width:10ch">
-            <col style="width:8ch">
-            <col style="width:18ch">
-            <col style="width:18ch">
-            <col style="width:auto">
-          </colgroup>
-          <thead>
-            <tr>
-              <th class="center">#</th>
-              <th>VIN</th>
-              <th>السيارة</th>
-              <th>البيان</th>
-              <th>الخارجي</th>
-              <th>الداخلي</th>
-              <th class="center">الموديل</th>
-              <th>من</th>
-              <th>إلى</th>
-              <th>ملاحظة</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+        <div class="card">
+          <div class="inner">
+            <div class="row" style="width:100%;justify-content:space-between">
+              <div style="flex:1;min-width:260px">
+                <label style="display:block;margin-bottom:4px">وصف المسار</label>
+                <div id="moveRouteSummary" class="muted"></div>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        <div class="table-wrap" style="margin-top:10px">
+          <table>
+            <thead>
+              <tr>
+                <th style="min-width:35px">#</th>
+                <th style="min-width:130px">رقم الهيكل (VIN)</th>
+                <th style="min-width:160px">الموقع الحالي بالمخزون</th>
+                <th style="min-width:160px">من (الطلب)</th>
+                <th style="min-width:160px">إلى (الطلب)</th>
+                <th style="min-width:180px">ملاحظات</th>
+              </tr>
+            </thead>
+            <tbody id="moveCarsTable"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<div id="toast" class="toast">تم</div>
+  <!-- Toast -->
+  <div id="toast" class="chip" style="position:fixed;bottom:18px;right:18px;display:none;background:#111827;color:#fff;border-color:#111827"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import { 
     getFirestore, doc, getDoc, setDoc, onSnapshot,
     collection, addDoc, serverTimestamp
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-  /* ===== Firebase ===== */
   const firebaseConfig = {
     apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
     authDomain: "mzj-agenda.firebaseapp.com",
     projectId: "mzj-agenda",
-    storageBucket: "mzj-agenda.appspot.com",
+    storageBucket: "mzj-agenda.firebasestorage.app",
     messagingSenderId: "834700407721",
     appId: "1:834700407721:web:75c17665d4f032fd65cab8"
   };
@@ -587,845 +494,771 @@ body{opacity:0;transition:opacity .12s ease}
   const auth = getAuth(app);
   const db   = getFirestore(app);
   const STATE_REF = doc(db, "mzj_admin_state", "v1");
+  const ACTIVITY_COL = collection(db, "mzj_activity_log");
 
-  /* ===== Helpers ===== */
-  const $ = s => document.querySelector(s);
-  const pad = n => n<10?'0'+n:n;
-  const now = ()=>{
+  const ADMIN_MAP = { };
+  function displayNameFor(user){
+    if(!user) return "مسؤول";
+    if(user.displayName && user.displayName.trim()) return user.displayName.trim();
+    const e = (user.email||"").toLowerCase();
+    if(ADMIN_MAP[e]) return ADMIN_MAP[e];
+    const local = e.split("@")[0]||"";
+    return local.replace(/[._-]+/g," ").replace(/\b\w/g, c=>c.toUpperCase());
+  }
+
+  let shootRequests = [];
+  let stock = [];
+  let moves = [];
+  let moveRequests = [];
+
+  const $ = s=>document.querySelector(s);
+  const $$ = s=>Array.from(document.querySelectorAll(s));
+  const pad = n=>n<10?'0'+n:n;
+  const toast=$('#toast');
+  const showToast=(m)=>{ toast.textContent=m; toast.style.display='block'; setTimeout(()=>toast.style.display='none',1800); };
+  function now(){
     const d=new Date();
-    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
-  };
-  const debounce = (fn,wait=250)=>{let t;return(...args)=>{clearTimeout(t);t=setTimeout(()=>fn(...args),wait);};};
-
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+  function onlyDate(str){return (str||'').toString().slice(0,10)}
   function setStatus(mode,txt){
-    const dot = $('#connDot');
-    dot.className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'warn');
+    $('#connDot').className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'');
     $('#connText').textContent=txt;
   }
-  const toast = $('#toast');
-  const showToast = (msg,type='ok')=>{ toast.textContent=msg; toast.className='toast '+type; toast.style.display='block'; setTimeout(()=>toast.style.display='none',1400); };
-
+  function toDateOnly(s){
+    if(!s) return null;
+    const d=s.slice(0,10);
+    const [y,m,dd]=d.split('-').map(n=>parseInt(n,10));
+    if(!y||!m||!dd) return null;
+    return new Date(y,m-1,dd);
+  }
+  function inRange(createdAt, from, to){
+    if(!from && !to) return true;
+    const d = toDateOnly(createdAt); if(!d) return false;
+    if(from && d < from) return false;
+    if(to   && d > to)   return false;
+    return true;
+  }
   function normalizeVin(v){
     if(!v) return '';
     const ar={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
     return v.toString().replace(/[٠-٩]/g,d=>ar[d]).toUpperCase().replace(/[\s\-\._]/g,'').trim();
   }
 
-  /* ===== Activity Log helper ===== */
-  async function logActivity({ action, entityType, entityId, details }){
-    try{
-      const u = auth.currentUser;
-      const userEmail = u?.email || '';
-      const userName  = u?.displayName || '';
-      const role      = "الطلبات";
+  function metrics(){
+    const allCount = shootRequests.length + moveRequests.length;
+    const progStatuses = new Set(['تحت الإجراء','تم التجهيز','قيد المراجعة']);
+    const doneStatuses = new Set(['تم','منفّذ']);
 
-      await addDoc(collection(db,"mzj_activity_log"),{
-        userEmail,
-        userName,
-        role,
-        action: action || '',
-        entityType: entityType || '',
-        entityId: entityId != null ? String(entityId) : '',
-        details: details || '',
+    const progCount =
+      shootRequests.filter(x=> progStatuses.has(x.status||'')).length +
+      moveRequests.filter(x=> progStatuses.has(x.status||'')).length;
+
+    const doneCount =
+      shootRequests.filter(x=> doneStatuses.has(x.status||'')).length +
+      moveRequests.filter(x=> doneStatuses.has(x.status||'')).length;
+
+    $('#m_all').textContent  = allCount;
+    $('#m_prog').textContent = progCount;
+    $('#m_done').textContent = doneCount;
+  }
+
+  async function logActivity(actionType, details, extra={}){
+    try{
+      const user = auth.currentUser;
+      const email = user?.email || '';
+      const name  = displayNameFor(user);
+      await addDoc(ACTIVITY_COL, {
+        userEmail: email,
+        userName : name,
+        role     : extra.role || '',
+        action   : actionType,
+        entityType: extra.entityType || 'request',
+        entityId : extra.requestId != null ? String(extra.requestId) : (extra.entityId || ''),
+        details  : details || '',
         createdAt: now(),
         createdAtTs: serverTimestamp(),
-        ip: '',
+        ip       : extra.ip || '',
         userAgent: navigator.userAgent || ''
       });
     }catch(e){
-      console.warn("logActivity error",e);
+      console.error('logActivity error', e);
     }
   }
 
-  /* ===== State ===== */
-  let stock=[], shootRequests=[], moves=[], moveRequests=[];
-  const SHOOT_PLACES = [,"الاستديو","الصالة الاساسية","صالة القادسية","معرض الملتقى"];
+  async function persistAll(){
+    await setDoc(
+      STATE_REF,
+      { shootRequests, stock, moves, moveRequests, updatedAt: now() },
+      { merge:true }
+    );
+  }
 
-  const MOVE_LOCATIONS = [
-    "المستودع : المخزون المتاح","المستودع : سيارات بها ملاحظات","المستودع : مباع تحت التسليم","المستودع : مباع تم التسليم",
-    "الوكالة : المخزون المتاح","الوكالة : سيارات بها ملاحظات","الوكالة : مباع تحت التسليم","الوكالة : مباع تم التسليم",
-    "فرع 1 الصالة : المخزون المتاح","فرع 1 الصالة : سيارات بها ملاحظات","فرع 1 الصالة : مباع تحت التسليم","فرع 1 الصالة : مباع تم التسليم",
-    "فرع 2 الملتقى : المخزون المتاح","فرع 2 الملتقى : سيارات بها ملاحظات","فرع 2 الملتقى : مباع تحت التسليم","فرع 2 الملتقى : مباع تم التسليم",
-    "فرع 3 القادسية : المخزون المتاح","فرع 3 القادسية : سيارات بها ملاحظات","فرع 3 القادسية : مباع تحت التسليم","فرع 3 القادسية : مباع تم التسليم"
-  ];
+  function findPlaceDeep(obj, depth=0){
+    if(!obj || typeof obj!=='object' || depth>4) return null;
+    const regexKey = /(place|shoot|تصوير|مكان.?التصوير|موقع)/i;
+    for(const [k,v] of Object.entries(obj)){
+      if(typeof v==='string' && regexKey.test(k)){
+        const t = v.trim();
+        if(t) return t;
+      }
+    }
+    for(const [,v] of Object.entries(obj)){
+      if(v && typeof v==='object'){
+        const found = findPlaceDeep(v, depth+1);
+        if(found) return found;
+      }
+    }
+    return null;
+  }
 
-  /* ===== Auth ===== */
+  function requestedPlaceOf(r){
+    if(!r) return '';
+    const direct =
+      r.placeRequested || r.requestedPlace || r.place ||
+      r.shoot_place || r.shootPlace || r['مكان التصوير'] ||
+      (r.shoot && (r.shoot.placeRequested || r.shoot.requestedPlace || r.shoot.place || r.shoot['مكان التصوير']));
+    if(direct && typeof direct==='string' && direct.trim()) return direct.trim();
+    const deep = findPlaceDeep(r);
+    return deep || '';
+  }
+
+  function moveRequestLocationSummary(mr){
+    const rows = Array.isArray(mr.rows)? mr.rows : [];
+    if(!rows.length) return '-';
+    const fromSet = new Set();
+    const toSet   = new Set();
+    rows.forEach(r=>{
+      if(r.fromLocation) fromSet.add(r.fromLocation);
+      if(r.toLocation)   toSet.add(r.toLocation);
+    });
+    const from = [...fromSet].join(' ، ') || 'غير محدد';
+    const to   = [...toSet].join(' ، ')   || 'غير محدد';
+    return `من: ${from} → إلى: ${to}`;
+  }
+
+  function currentLocationByVIN(vin){
+    if(!vin) return '';
+    const norm = normalizeVin(vin);
+    const rec = stock.find(s=> normalizeVin(s.vin)===norm);
+    return rec ? (rec.location || '') : '';
+  }
+
+  function setLocationByVIN(vinOrNorm, newLoc){
+    const norm = normalizeVin(vinOrNorm);
+    const idx = stock.findIndex(s=> normalizeVin(s.vin)===norm);
+    if(idx>=0){ stock[idx].location = newLoc; }
+  }
+
+  async function recordMove(vin, car, from, to, stockId, reason){
+    const stamp = now();
+    moves.push({
+      when: stamp,
+      date: onlyDate(stamp),
+      vin, car, from, to,
+      id: stockId || '',
+      by: displayNameFor(auth.currentUser)||'مسؤول',
+      reason: reason || ''
+    });
+  }
+
+  // طلب نقل يحتاج موافقة مالية + إدارية لو فيه تحت التسليم / تم التسليم
+  function moveRequestNeedsStrictApproval(mr){
+    const rows = Array.isArray(mr.rows)? mr.rows : [];
+    const sensitive = ['تحت التسليم','تم التسليم'];
+    return rows.some(r=>{
+      const from = (r.fromLocation||'').trim();
+      const to   = (r.toLocation||'').trim();
+      return sensitive.includes(from) || sensitive.includes(to);
+    });
+  }
+
+  let filterKind = '';
+  function setKindFilter(kind){
+    filterKind = kind || '';
+    $$('.filter-kind').forEach(btn=> btn.classList.remove('active-kind'));
+    if(filterKind==='shoot') $('#kind_shoot').classList.add('active-kind');
+    else if(filterKind==='move') $('#kind_move').classList.add('active-kind');
+    else $('#kind_all').classList.add('active-kind');
+    render();
+  }
+  $('#kind_all').addEventListener('click', ()=> setKindFilter(''));
+  $('#kind_shoot').addEventListener('click', ()=> setKindFilter('shoot'));
+  $('#kind_move').addEventListener('click', ()=> setKindFilter('move'));
+
+  function render(){
+    const q = ($('#q').value||'').trim().toLowerCase();
+    const s = $('#f_status').value||'';
+    const fromVal = $('#date_from').value||'';
+    const toVal   = $('#date_to').value||'';
+    const fromD = fromVal ? new Date(fromVal+"T00:00:00") : null;
+    const toD   = toVal   ? new Date(toVal+"T23:59:59") : null;
+
+    let list = [
+      ...shootRequests.map(r=>({kind:'shoot', data:r})),
+      ...moveRequests.map(r=>({kind:'move', data:r}))
+    ];
+
+    if(filterKind){
+      list = list.filter(w=> w.kind===filterKind);
+    }
+
+    if(s){
+      list = list.filter(w=> (w.data.status||'')===s);
+    }
+
+    list = list.filter(w=> inRange(w.data.createdAt, fromD, toD));
+
+    if(q){
+      list = list.filter(w=>{
+        const r = w.data;
+        const base = [
+          r.id, r.createdBy, r.createdAt, r.status,
+          ...(r.rows||[]).flatMap(x=>[
+            x.vin||'',x.car||'',x.variant||'',x.extColor||'',x.intColor||'',x.modelYear||'',
+            x.note||'',x.fromLocation||'',x.toLocation||''
+          ])
+        ].join(' ').toLowerCase();
+        const typeText = (w.kind==='shoot'?'طلب تصوير':'طلب نقل');
+        const extra = typeText + ' ' + (moveRequestLocationSummary(r)||'');
+        return (base+' '+extra).toLowerCase().includes(q);
+      });
+    }
+
+    list.sort((a,b)=> (Number(b.data.id)||0)-(Number(a.data.id)||0) );
+    $('#countTotal').textContent = shootRequests.length + moveRequests.length;
+    $('#countShown').textContent = list.length;
+
+    const tb = $('#reqTable'); tb.innerHTML='';
+
+    list.forEach((w,i)=>{
+      const kind = w.kind;
+      const r    = w.data;
+      const st   = r.status||'';
+      const pillClass =
+        st==='تم' || st==='منفّذ'
+          ? 'pill-done'
+          : (['تحت الإجراء','تم التجهيز','قيد المراجعة'].includes(st) ? 'pill-prog' : 'pill-draft');
+
+      const typeLabel = (kind==='shoot' ? 'طلب تصوير' : 'طلب نقل');
+      const placeCol  = (kind==='shoot'
+        ? (requestedPlaceOf(r) || '-')
+        : moveRequestLocationSummary(r));
+
+      let adminCell = '-';
+      if(kind==='shoot'){
+        adminCell = r.admin?.received || '-';
+      }else{
+        const a = r.approvals || {};
+        const parts=[];
+        if(a.adminApproved)   parts.push(`إداري: ${a.adminApproved}`);
+        if(a.financeApproved) parts.push(`مالية: ${a.financeApproved}`);
+        adminCell = parts.join(' | ') || (r.status||'-');
+      }
+
+      const noteVal = (kind==='shoot' ? (r.admin?.notes||'') : '');
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="center">${i+1}</td>
+        <td><span class="mono" style="font-weight:700">#${r.id||'?'}</span></td>
+        <td>${typeLabel}</td>
+        <td>${r.createdBy||''}</td>
+        <td><span class="pill ${pillClass}">${st || 'مسودة'}</span></td>
+        <td>${r.createdAt||''}</td>
+        <td>${placeCol}</td>
+        <td><div class="muted">${adminCell}</div></td>
+        <td>
+          <input class="js-note" data-kind="${kind}" data-id="${r.id}" type="text" placeholder="ملاحظات…" value="${noteVal.replace(/"/g,'&quot;')}" ${kind==='move'?'readonly':''}>
+        </td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          ${
+            kind==='shoot'
+              ? `<button class="btn js-save" data-id="${r.id}"><i class="fa-solid fa-floppy-disk"></i> حفظ</button>
+                 <button class="btn secondary js-view" data-id="${r.id}"><i class="fa-regular fa-eye"></i> عرض</button>`
+              : `<button class="btn secondary js-view-move" data-id="${r.id}"><i class="fa-regular fa-eye"></i> عرض</button>`
+          }
+        </td>`;
+      tb.appendChild(tr);
+    });
+
+    $$('.js-save').forEach(el=> el.addEventListener('click', async e=>{
+      const id = Number(e.currentTarget.getAttribute('data-id'));
+      const noteEl = document.querySelector(`.js-note[data-kind="shoot"][data-id="${id}"]`);
+      shootRequests = shootRequests.map(x=> Number(x.id)===Number(id)
+        ? ({...x, admin:{...(x.admin||{}), notes:(noteEl?.value||'')}})
+        : x
+      );
+      await logActivity(
+        'تعديل ملاحظات طلب تصوير',
+        `تعديل ملاحظات طلب التصوير #${id}`,
+        { requestId:id }
+      );
+      await persistAll();
+      showToast('تم حفظ الطلب');
+    }));
+
+    $$('.js-view').forEach(el=> el.addEventListener('click', e=>{
+      const id = Number(e.currentTarget.getAttribute('data-id'));
+      openReqModal(id);
+    }));
+
+    $$('.js-view-move').forEach(el=> el.addEventListener('click', e=>{
+      const id = Number(e.currentTarget.getAttribute('data-id'));
+      openMoveModal(id);
+    }));
+  }
+
+  async function markReceived(id){
+    const user = auth.currentUser;
+    const who = displayNameFor(user);
+    const stamp = `${now()} — ${who}`;
+    shootRequests = shootRequests.map(x=> Number(x.id)===Number(id)
+      ? ({...x, status:'تحت الإجراء', admin:{...(x.admin||{}), received: stamp}})
+      : x);
+    await logActivity(
+      'تأكيد استلام طلب تصوير',
+      `تأكيد استلام طلب التصوير #${id}`,
+      { requestId:id, entityType:'photoshoot_request' }
+    );
+    await persistAll();
+    metrics();
+    render();
+    showToast('تم تأكيد الاستلام ✅');
+  }
+
+  // ✅ تم التعديل هنا حسب طلبك
+  async function markDoneShoot(id){
+    const idx = shootRequests.findIndex(x=> Number(x.id)===Number(id));
+    if(idx===-1){ showToast('الطلب غير موجود'); return; }
+
+    const user  = auth.currentUser;
+    const who   = displayNameFor(user);
+    const stamp = `${now()} — ${who}`;
+
+    let req = shootRequests[idx] || {};
+    const admin = {...(req.admin||{})};
+
+    // لو مفيش استلام/تجهيز، نسجلهم تلقائيًا مع الموافقة
+    if(!admin.received){
+      admin.received = stamp;
+    }
+    if(!admin.prepared){
+      admin.prepared = stamp;
+    }
+    if(!admin.approved){
+      admin.approved = stamp;
+    }
+
+    req = {
+      ...req,
+      status: 'تم',
+      admin
+    };
+    shootRequests[idx] = req;
+
+    await logActivity(
+      'تم التصوير + موافقة إدارية وتنفيذ حركة المخزون',
+      `إنهاء طلب التصوير #${id} مع تسجيل موافقة إدارية وتنفيذ حركة المخزون`,
+      { requestId:id, entityType:'photoshoot_request', entityId:id }
+    );
+
+    await persistAll();
+    metrics();
+    render();
+
+    // تنفيذ حركة المخزون لكل هياكل الطلب (لو لسه محتاجة نقل)
+    await moveAllVINsToRequested(req);
+
+    showToast('تم التصوير، وتم تسجيل الموافقة الإدارية وتنفيذ حركة المخزون ✅');
+  }
+
+  const reqModal = $('#reqModal');
+  const reqModalClose = $('#reqModalClose');
+  const reqModalTitle = $('#reqModalTitle');
+  const reqMeta = $('#reqMeta');
+  const reqStatus = $('#reqStatus');
+  const reqPlaceRequested = $('#reqPlaceRequested');
+  const reqCarsTable = $('#reqCarsTable');
+  const btnModalReceived = $('#btnModalReceived');
+  const btnReceiveAndMove = $('#btnReceiveAndMove');
+  const btnDoneShoot = $('#btnDoneShoot');
+
+  let modalCurrentId = null;
+  let currentMoveId = null;
+
+  function openReqModal(id){
+    const r = shootRequests.find(x=> Number(x.id)===Number(id));
+    if(!r){ showToast('الطلب غير موجود'); return; }
+    modalCurrentId = id;
+
+    const requested = requestedPlaceOf(r) || '';
+
+    reqModalTitle.textContent = `عرض طلب التصوير #${r.id||'?'}`;
+    reqMeta.textContent = `المنشئ: ${r.createdBy||'-'} — بتاريخ: ${r.createdAt||'-'}`;
+    reqStatus.textContent = `الحالة: ${r.status||'-'}`;
+
+    reqPlaceRequested.value = requested || '';
+
+    reqCarsTable.innerHTML = '';
+    const rows = Array.isArray(r.rows) ? r.rows : [];
+    rows.forEach((row,i)=>{
+      const vin = row.vin || '';
+      const normVin = normalizeVin(vin);
+      const car = row.car || '';
+      const variant = row.variant || '';
+      const ext = row.extColor || row.ext || '';
+      const intl = row.intColor || row.int || '';
+      const model = row.modelYear || row.model || '';
+      const loc = currentLocationByVIN(vin) || row.location || '— غير مسجل —';
+      const note = row.note || '';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td class="mono js-vin" data-vin-norm="${normVin}">${vin}</td>
+        <td>
+          <div>${car||'—'}</div>
+          <div class="muted">${variant||''}</div>
+        </td>
+        <td>
+          <div><b>الخارجي:</b> ${ext||'—'}</div>
+          <div><b>الداخلي:</b> ${intl||'—'}</div>
+          <div><b>الموديل:</b> ${model||'—'}</div>
+        </td>
+        <td class="mono js-current-loc" data-vin-norm="${normVin}">${loc}</td>
+        <td class="mono">${requested || ''}</td>
+        <td><div class="req-note-print">${note || ''}</div></td>`;
+      reqCarsTable.appendChild(tr);
+    });
+
+    btnModalReceived.onclick = async ()=>{ if(modalCurrentId!=null) await markReceived(modalCurrentId); };
+    btnReceiveAndMove.onclick = async ()=>{ if(modalCurrentId!=null) await receiveAndMoveAndMoveCars(modalCurrentId); };
+    btnDoneShoot.onclick = async ()=>{ if(modalCurrentId!=null) await markDoneShoot(modalCurrentId); };
+
+    reqModal.style.display='flex';
+    reqModal.setAttribute('aria-hidden','false');
+  }
+
+  async function moveAllVINsToRequested(req){
+    const requested = requestedPlaceOf(req) || '';
+    if(!requested){ showToast('لا يوجد مكان تصوير لهذا الطلب'); return; }
+
+    const rows = Array.isArray(req.rows) ? req.rows : [];
+    let moved = 0;
+
+    for(const row of rows){
+      const vin = row.vin || '';
+      const norm = normalizeVin(vin);
+      const recIdx = stock.findIndex(s=> normalizeVin(s.vin)===norm);
+      if(recIdx<0) continue;
+
+      const rec = stock[recIdx];
+      const from = rec.location || row.location || '';
+      const to = requested;
+      if(!to || from===to) continue;
+
+      await recordMove(rec.vin||norm, rec.car||'', from, to, rec.id, 'نقل إلى مكان التصوير');
+      setLocationByVIN(norm, to);
+      moved++;
+    }
+
+    if(moved>0){
+      await logActivity(
+        'نقل كل السيارات لمكان التصوير',
+        `نقل ${moved} سيارة إلى مكان التصوير "${requested}" للطلب #${req.id}`,
+        { requestId:req.id, entityType:'photoshoot_request', entityId:req.id }
+      );
+      await persistAll();
+      openReqModal(req.id);
+      showToast(`تم نقل ${moved} سيارة إلى "${requested}"`);
+    }else{
+      showToast('لا توجد سيارات قابلة للنقل أو كلها في مكان التصوير بالفعل');
+    }
+  }
+
+  async function receiveAndMoveAndMoveCars(id){
+    const idx = shootRequests.findIndex(x=> Number(x.id)===Number(id));
+    if(idx<0){ showToast('الطلب غير موجود'); return; }
+
+    const user = auth.currentUser;
+    const who = displayNameFor(user);
+    const stamp = `${now()} — ${who}`;
+
+    const oldReq = shootRequests[idx];
+    const updatedReq = {
+      ...oldReq,
+      status:'تم التجهيز',
+      admin:{...(oldReq.admin||{}), prepared:stamp}
+    };
+    shootRequests[idx] = updatedReq;
+
+    await logActivity(
+      'تأكيد التجهيز ونقل السيارات',
+      `تأكيد التجهيز ونقل كل السيارات لمكان التصوير للطلب #${id}`,
+      { requestId:id, entityType:'photoshoot_request', entityId:id }
+    );
+    await persistAll();
+    metrics();
+    render();
+
+    await moveAllVINsToRequested(updatedReq);
+  }
+
+  reqModalClose.addEventListener('click', ()=>{
+    reqModal.style.display='none';
+    reqModal.setAttribute('aria-hidden','true');
+    modalCurrentId = null;
+  });
+  reqModal.addEventListener('click',(e)=>{ if(e.target===reqModal){ reqModalClose.click(); } });
+  document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && reqModal.style.display==='flex'){ reqModalClose.click(); } });
+
+  const moveModal = $('#moveModal');
+  const moveModalClose = $('#moveModalClose');
+  const moveModalTitle = $('#moveModalTitle');
+  const moveMeta = $('#moveMeta');
+  const moveStatus = $('#moveStatus');
+  const moveApprovals = $('#moveApprovals');
+  const moveRouteSummary = $('#moveRouteSummary');
+  const moveCarsTable = $('#moveCarsTable');
+  const btnMoveApproveExecute = $('#btnMoveApproveExecute');
+
+  function openMoveModal(id){
+    const r = moveRequests.find(x=> Number(x.id)===Number(id));
+    if(!r){ showToast('طلب النقل غير موجود'); return; }
+    currentMoveId = id;
+
+    moveModalTitle.textContent = `عرض طلب النقل #${r.id||'?'}`;
+    moveMeta.textContent = `المنشئ: ${r.createdBy||'-'} — بتاريخ: ${r.createdAt||'-'}`;
+    moveStatus.textContent = `الحالة: ${r.status||'-'}`;
+
+    const a = r.approvals || {};
+    const adminTxt   = a.adminApproved   ? `✔ إداري: ${a.adminApproved}`   : '✖ لا يوجد موافقة إدارية بعد';
+    const financeTxt = a.financeApproved ? `✔ مالية: ${a.financeApproved}` : '✖ لا يوجد موافقة مالية بعد';
+    moveApprovals.textContent = adminTxt + ' | ' + financeTxt;
+
+    moveRouteSummary.textContent = moveRequestLocationSummary(r);
+
+    moveCarsTable.innerHTML = '';
+    const rows = Array.isArray(r.rows) ? r.rows : [];
+    rows.forEach((row,i)=>{
+      const vin = row.vin || '';
+      const normVin = normalizeVin(vin);
+      const car = row.car || '';
+      const fromReq = row.fromLocation || '';
+      const toReq   = row.toLocation || '';
+      const note    = row.note || '';
+      const currentLoc = currentLocationByVIN(vin) || fromReq || '— غير مسجل —';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${i+1}</td>
+        <td class="mono" data-vin-norm="${normVin}">${vin}</td>
+        <td class="mono js-move-current" data-vin-norm="${normVin}">${currentLoc}</td>
+        <td>${fromReq||''}</td>
+        <td>${toReq||''}</td>
+        <td><div class="req-note-print">${note}</div><div class="muted">${car||''}</div></td>`;
+      moveCarsTable.appendChild(tr);
+    });
+
+    btnMoveApproveExecute.onclick = async ()=>{ if(currentMoveId!=null) await approveMoveAndExecute(currentMoveId); };
+
+    moveModal.style.display='flex';
+    moveModal.setAttribute('aria-hidden','false');
+  }
+
+  async function executeMoveRequest(mr){
+    const rows = Array.isArray(mr.rows)? mr.rows : [];
+    if(!rows.length){ showToast('لا توجد سيارات في طلب النقل'); return 0; }
+
+    let moved = 0;
+    for(const row of rows){
+      const vin = row.vin || '';
+      const norm = normalizeVin(vin);
+      const recIdx = stock.findIndex(s=> normalizeVin(s.vin)===norm);
+      if(recIdx<0) continue;
+
+      const rec = stock[recIdx];
+      const from = rec.location || row.fromLocation || '';
+      const to   = row.toLocation || '';
+      if(!to || from===to) continue;
+
+      await recordMove(rec.vin||norm, rec.car||'', from, to, rec.id, `تنفيذ طلب نقل #${mr.id}`);
+      setLocationByVIN(norm, to);
+      moved++;
+    }
+
+    if(moved>0){
+      await logActivity(
+        'تنفيذ طلب نقل',
+        `تنفيذ طلب نقل #${mr.id} بعدد ${moved} سيارة`,
+        { requestId:mr.id, entityType:'move_request', entityId:mr.id }
+      );
+      await persistAll();
+
+      rows.forEach(row=>{
+        const norm = normalizeVin(row.vin||'');
+        const cell = moveCarsTable.querySelector(`.js-move-current[data-vin-norm="${norm}"]`);
+        if(cell && row.toLocation) cell.textContent = row.toLocation;
+      });
+
+      showToast(`تم تنفيذ نقل ${moved} سيارة`);
+    }else{
+      showToast('لا توجد سيارات قابلة للنقل أو المواقع متطابقة');
+    }
+    return moved;
+  }
+
+  async function approveMoveAndExecute(id){
+    const idx = moveRequests.findIndex(x=> Number(x.id)===Number(id));
+    if(idx<0){ showToast('طلب النقل غير موجود'); return; }
+
+    const user = auth.currentUser;
+    const who = displayNameFor(user);
+    const stamp = `${now()} — ${who}`;
+
+    let mr = moveRequests[idx];
+    const approvals = {...(mr.approvals||{})};
+
+    if(!approvals.adminApproved){
+      approvals.adminApproved = stamp;
+    }
+
+    const needsStrict = moveRequestNeedsStrictApproval(mr);
+    const hasFinance  = !!approvals.financeApproved;
+    let newStatus = mr.status || '';
+    let movedCount = 0;
+
+    if(needsStrict){
+      if(hasFinance){
+        movedCount = await executeMoveRequest(mr);
+        if(movedCount>0){
+          newStatus = 'منفّذ';
+          mr.executedAt = now();
+        }
+      }else{
+        newStatus = 'قيد المراجعة';
+      }
+    }else{
+      movedCount = await executeMoveRequest(mr);
+      if(movedCount>0){
+        newStatus = 'منفّذ';
+        mr.executedAt = now();
+      }else if(!mr.status){
+        newStatus = 'تم';
+      }
+    }
+
+    mr = {
+      ...mr,
+      approvals,
+      status:newStatus
+    };
+    moveRequests[idx] = mr;
+
+    await logActivity(
+      'موافقة على طلب نقل',
+      needsStrict
+        ? (hasFinance
+            ? `موافقة إدارية + مالية وتنفيذ طلب نقل #${id} (عدد السيارات المنقولة: ${movedCount})`
+            : `تسجيل موافقة إدارية على طلب نقل #${id} (بانتظار الموافقة المالية، لوجود حركة على تحت التسليم / تم التسليم)`)
+        : `موافقة إدارية وتنفيذ مباشر لطلب نقل #${id} (عدد السيارات المنقولة: ${movedCount})`,
+      { requestId:id, entityType:'move_request', entityId:id }
+    );
+
+    await persistAll();
+    metrics();
+    render();
+
+    openMoveModal(id);
+    if(needsStrict && !hasFinance){
+      showToast('تم تسجيل الموافقة الإدارية، بانتظار الموافقة المالية لإتمام النقل');
+    }
+  }
+
+  moveModalClose.addEventListener('click', ()=>{
+    moveModal.style.display='none';
+    moveModal.setAttribute('aria-hidden','true');
+    currentMoveId = null;
+  });
+  moveModal.addEventListener('click',(e)=>{ if(e.target===moveModal){ moveModalClose.click(); } });
+
   onAuthStateChanged(auth, async (user)=>{
     const nf = document.getElementById('noFlash') || document.getElementById('noflash');
     if(nf) nf.remove();
+
     if(user){
       $('#authGate').style.display='none';
       $('#app').style.display='block';
-      $('#btnSignOut').style.display='inline-flex';
-      setStatus('ok', `متصل: ${user.email}`);
-      await initData();
-      subscribeLive();
-      buildFormRows();
-      updatePlaceHeader();
-      buildMoveRows();
-      renderRequestsTable();
-      renderMoveRequestsTable();
-
-      const rb = $('#reqBy'); 
-      if(rb){ rb.value = user.displayName || user.email || ''; rb.setAttribute('readonly','readonly'); }
-
-      const mb = $('#moveReqBy');
-      if(mb){ mb.value = user.displayName || user.email || ''; mb.setAttribute('readonly','readonly'); }
-
-      document.body.style.opacity='1';
+      $('#btnSignOut').style.display='inline-block';
+      setStatus('ok', `متصل: ${displayNameFor(user)}`);
+      await initData(); subscribeLive(); metrics(); render();
     }else{
       $('#app').style.display='none';
-      $('#authGate').style.display='grid';
+      $('#authGate').style.display='block';
       $('#btnSignOut').style.display='none';
-      setStatus('warn', 'لم يتم تسجيل الدخول');
-      document.body.style.opacity='1';
+      setStatus('', 'لم يتم تسجيل الدخول');
     }
   });
   $('#btnLogin').addEventListener('click', async ()=>{
     $('#authHint').textContent='';
-    try{ await signInWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
-    catch(e){ $('#authHint').textContent='خطأ: '+(e?.message||e); }
-  });
-  $('#btnSignup').addEventListener('click', async ()=>{
-    $('#authHint').textContent='';
-    try{ await createUserWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
-    catch(e){ $('#authHint').textContent='خطأ: '+(e?.message||e); }
+    try{
+      await signInWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value);
+    }catch(e){
+      $('#authHint').textContent='بيانات غير صحيحة';
+    }
   });
   $('#btnSignOut').addEventListener('click', ()=> signOut(auth));
 
-  /* ===== Data ===== */
   async function initData(){
-    try{
-      const s=await getDoc(STATE_REF);
-      if(s.exists()){
-        const d=s.data()||{};
-        stock = Array.isArray(d.stock)? d.stock: [];
-        shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: [];
-        moves = Array.isArray(d.moves)? d.moves: [];
-        moveRequests = Array.isArray(d.moveRequests)? d.moveRequests: [];
-      }else{
-        stock=[]; shootRequests=[]; moves=[]; moveRequests=[];
-      }
-      setStatus('ok','تم تحميل البيانات');
-      renderRequestsTable();
-      renderMoveRequestsTable();
-    }catch(e){
-      setStatus('warn','تعذّر تحميل البيانات');
+    const snap = await getDoc(STATE_REF);
+    if(snap.exists()){
+      const d = snap.data()||{};
+      shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: [];
+      stock         = Array.isArray(d.stock)? d.stock: [];
+      moves         = Array.isArray(d.moves)? d.moves: [];
+      moveRequests  = Array.isArray(d.moveRequests)? d.moveRequests: [];
+    }else{
+      shootRequests = [];
+      stock = [];
+      moves = [];
+      moveRequests = [];
     }
   }
   function subscribeLive(){
-    try{
-      onSnapshot(STATE_REF,(snap)=>{
-        if(!snap.exists()) return;
-        const d=snap.data()||{};
-        stock = Array.isArray(d.stock)? d.stock: stock;
-        shootRequests = Array.isArray(d.shootRequests)? d.shootRequests: shootRequests;
-        moves = Array.isArray(d.moves)? d.moves: moves;
-        moveRequests = Array.isArray(d.moveRequests)? d.moveRequests: moveRequests;
-        renderRequestsTable();
-        renderMoveRequestsTable();
-      },()=> setStatus('warn','انقطاع المزامنة مؤقتًا'));
-    }catch(e){}
-  }
-  async function persistAll(){
-    try{
-      await setDoc(STATE_REF, { stock, shootRequests, moves, moveRequests, updatedAt: now() }, { merge:true });
-    }catch(e){
-      showToast('تعذّر الحفظ إلى السحابة','err');
-    }
-  }
+    onSnapshot(STATE_REF,(snap)=>{
+      if(!snap.exists()) return;
+      const d = snap.data()||{};
+      shootRequests  = Array.isArray(d.shootRequests)? d.shootRequests: shootRequests;
+      stock          = Array.isArray(d.stock)? d.stock: stock;
+      moves          = Array.isArray(d.moves)? d.moves: moves;
+      moveRequests   = Array.isArray(d.moveRequests)? d.moveRequests: moveRequests;
 
-  /* ===== تبويب داخلي ===== */
-  const innerTabs = document.querySelectorAll('.inner-tab');
-  const tabPanes  = document.querySelectorAll('.tab-pane');
-  innerTabs.forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      innerTabs.forEach(b=>b.classList.remove('active'));
-      tabPanes.forEach(p=>p.classList.remove('active'));
-      btn.classList.add('active');
-      const id = btn.getAttribute('data-tab');
-      const pane = document.getElementById(id);
-      if(pane) pane.classList.add('active');
-    });
-  });
+      metrics(); render();
 
-  /* ===== إنشاء طلب تصوير (8 صفوف) ===== */
-  const reqRowsBody = $('#reqRows');
-  function buildFormRows(){
-    reqRowsBody.innerHTML='';
-    for(let i=0;i<8;i++){
-      const tr=document.createElement('tr');
-      tr.innerHTML = `
-        <td class="center">${i+1}</td>
-        <td>
-          <select class="req-type small-input">
-            <option value="shoot" selected>طلب تصوير</option>
-            <option value="move">طلب نقل</option>
-          </select>
-        </td>
-        <td><input class="vin mono small-input" placeholder="VIN"></td>
-        <td><input class="car small-input" readonly placeholder="—"></td>
-        <td><input class="variant small-input" readonly placeholder="—"></td>
-        <td><input class="ext small-input" readonly placeholder="—"></td>
-        <td><input class="int small-input" readonly placeholder="—"></td>
-        <td class="center"><input class="year center small-input" readonly placeholder="—"></td>
-        <td><input class="loc small-input" readonly placeholder="—"></td>
-        <td>
-          <select class="place small-input">
-            <option value="">— اختر —</option>
-            ${SHOOT_PLACES.map(p=>`<option>${p}</option>`).join('')}
-          </select>
-        </td>
-        <td><input class="note small-input" placeholder="اختياري"></td>
-        <td class="center">
-          <button class="btn btn-danger btn-ghost btn-row-del"><i class="fa-solid fa-xmark"></i> حذف</button>
-        </td>
-      `;
-      reqRowsBody.appendChild(tr);
-    }
-    const rb = $('#reqBy'); 
-    if(rb){ 
-      const u = auth.currentUser;
-      rb.value = (u?.displayName) || (u?.email) || '';
-      rb.setAttribute('readonly','readonly'); 
-    }
-  }
-  function updatePlaceHeader(){
-    const header = document.getElementById('placeHeader');
-    if(!header) return;
-    const anyMove = Array.from(document.querySelectorAll('#reqRows .req-type')).some(sel => sel.value === 'move');
-    header.textContent = anyMove ? 'مكان النقل' : 'مكان التصوير';
-  }
-  $('#btnClear').addEventListener('click', ()=>{
-    buildFormRows();
-    updatePlaceHeader();
-  });
-
-  // تحديث العنوان عند تغيير نوع الطلب
-  reqRowsBody.addEventListener('change',(e)=>{
-    if(e.target.classList && e.target.classList.contains('req-type')){
-      updatePlaceHeader();
-    }
-  });
-  // حذف صف تصوير
-  reqRowsBody.addEventListener('click',(e)=>{
-    const b=e.target.closest('.btn-row-del'); if(!b) return;
-    const tr=b.closest('tr'); tr.querySelectorAll('input,select').forEach(x=> x.value='');
-  });
-
-  // تعبئة تلقائية من المخزون عند إدخال VIN للتصوير
-  reqRowsBody.addEventListener('blur',(e)=>{
-    const vinEl = e.target.closest('input.vin'); if(!vinEl) return;
-    const norm = normalizeVin(vinEl.value); vinEl.value = norm;
-    if(!norm) return;
-    const rec = stock.find(r=> normalizeVin(r.vin)===norm);
-    const row = vinEl.closest('tr');
-    if(rec){
-      row.querySelector('.car').value    = rec.car||'';
-      row.querySelector('.variant').value= rec.variant||'';
-      row.querySelector('.ext').value    = rec.extColor||'';
-      row.querySelector('.int').value    = rec.intColor||'';
-      row.querySelector('.year').value   = rec.modelYear||'';
-      row.querySelector('.loc').value    = rec.location||'';
-      showToast('تم جلب بيانات السيارة','ok');
-    }else{
-      row.querySelectorAll('.car,.variant,.ext,.int,.year,.loc').forEach(i=> i.value='');
-      showToast('لا يوجد هيكل مطابق','info');
-    }
-  }, true);
-
-    function collectFormRows(){
-    const shootRows = [];
-    const moveRows  = [];
-    reqRowsBody.querySelectorAll('tr').forEach(tr=>{
-      const vin = normalizeVin(tr.querySelector('.vin').value||''); 
-      if(!vin) return;
-
-      const type = (tr.querySelector('.req-type')?.value)||'shoot';
-      const base = {
-        vin,
-        car:tr.querySelector('.car').value||'',
-        variant:tr.querySelector('.variant').value||'',
-        extColor:tr.querySelector('.ext').value||'',
-        intColor:tr.querySelector('.int').value||'',
-        modelYear:tr.querySelector('.year').value||'',
-        currentLocation:tr.querySelector('.loc').value||'',
-        place:(tr.querySelector('.place').value||''),
-        note:tr.querySelector('.note').value||''
-      };
-
-      if(type === 'move'){
-        moveRows.push({
-          vin: base.vin,
-          car: base.car,
-          variant: base.variant,
-          extColor: base.extColor,
-          intColor: base.intColor,
-          modelYear: base.modelYear,
-          fromLocation: base.currentLocation,
-          toLocation: base.place,
-          note: base.note
-        });
-      }else{
-        shootRows.push({
-          vin: base.vin,
-          car: base.car,
-          variant: base.variant,
-          extColor: base.extColor,
-          intColor: base.intColor,
-          modelYear: base.modelYear,
-          currentLocation: base.currentLocation,
-          shootPlace: base.place,
-          note: base.note
-        });
+      if(modalCurrentId!=null){
+        const r = shootRequests.find(x=> Number(x.id)===Number(modalCurrentId));
+        if(r){ reqStatus.textContent = `الحالة: ${r.status||'-'}`; }
+      }
+      if(currentMoveId!=null){
+        const mr = moveRequests.find(x=> Number(x.id)===Number(currentMoveId));
+        if(mr){ moveStatus.textContent = `الحالة: ${mr.status||'-'}`; }
       }
     });
-    return { shootRows, moveRows };
   }
 
-  async function saveNewRequest(statusLabel){
-    const by = ($('#reqBy').value||'').trim();
-    const { shootRows, moveRows } = collectFormRows();
-
-    if(statusLabel!=='مسودة' && shootRows.length===0 && moveRows.length===0){
-      showToast('أدخل هيكل واحد على الأقل','info');
-      return;
-    }
-
-    let msgParts = [];
-
-    // طلبات التصوير
-    if(shootRows.length){
-      const nextId = shootRequests.length? Math.max(...shootRequests.map(r=>Number(r.id)||0))+1 : 1;
-      const req = {
-        id: nextId,
-        createdAt: now(),
-        createdBy: by,
-        rows: shootRows,
-        status: statusLabel,
-        admin: { received:null, prepared:null, notes:'' }
-      };
-      shootRequests.push(req);
-      await logActivity({
-        action: statusLabel==='مسودة' ? 'إنشاء طلب تصوير (مسودة)' : 'إرسال طلب تصوير',
-        entityType: 'photoshootRequest',
-        entityId: nextId,
-        details: `عدد الهياكل: ${shootRows.length}`
-      });
-      msgParts.push(statusLabel==='مسودة' ? 'مسودة طلب التصوير' : 'طلب التصوير');
-    }
-
-    // طلبات النقل
-    if(moveRows.length){
-      const nextMoveId = moveRequests.length? Math.max(...moveRequests.map(r=>Number(r.id)||0))+1 : 1;
-      const moveStatus = statusLabel==='مسودة' ? 'مسودة' : 'قيد المراجعة';
-      const moveReq = {
-        id: nextMoveId,
-        type: 'VIN_MOVE',
-        createdAt: now(),
-        createdBy: by,
-        rows: moveRows,
-        status: moveStatus,
-        approvals: {
-          adminApproved: null,
-          financeApproved: null,
-          adminNotes: '',
-          financeNotes: '',
-          issuesNotes: ''
-        }
-      };
-      moveRequests.push(moveReq);
-      await logActivity({
-        action: statusLabel==='مسودة' ? 'إنشاء مسودة طلب نقل سيارات' : 'إرسال طلب نقل سيارات',
-        entityType: 'vinMoveRequest',
-        entityId: nextMoveId,
-        details: `عدد السيارات في الطلب: ${moveRows.length}`
-      });
-      msgParts.push(statusLabel==='مسودة' ? 'مسودة طلب النقل' : 'طلب النقل');
-    }
-
-    await persistAll();
-    buildFormRows();
-    updatePlaceHeader();
-    renderRequestsTable();
-    if(typeof renderMoveRequestsTable === 'function') renderMoveRequestsTable();
-
-    let msg;
-    if(msgParts.length === 0){
-      msg = statusLabel==='مسودة' ? 'تم حفظ المسودة' : 'تم الإرسال';
-    }else if(msgParts.length === 1){
-      msg = statusLabel==='مسودة'
-        ? `تم حفظ ${msgParts[0]}`
-        : `تم إرسال ${msgParts[0]}`;
-    }else{
-      msg = statusLabel==='مسودة'
-        ? `تم حفظ ${msgParts.join(' و ')}`
-        : `تم إرسال ${msgParts.join(' و ')}`;
-    }
-    showToast(msg,'ok');
-  }
-
-  $('#btnDraft').addEventListener('click', ()=> saveNewRequest('مسودة'));
-  $('#btnSubmit').addEventListener('click', ()=> saveNewRequest('تحت الإجراء'));
-
-  /* ===== متابعة طلبات التصوير ===== */
-  const tblBody = document.querySelector('#requestsTable tbody');
-  function renderRequestsTable(){
-    if(!tblBody) return;
-    const s = ($('#statusFilter').value||'ALL');
-    const q = ($('#searchRequests').value||'').toLowerCase().trim();
-
-    let list = shootRequests.slice().sort((a,b)=> b.id - a.id);
-    if(s!=='ALL') list = list.filter(r=> (r.status||'')===s);
-    if(q){
-      list = list.filter(r=>{
-        const hay=[
-          r.id,r.createdAt,r.createdBy,r.status,(r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),(r.adminReceived||''),(r.adminPrepared||''),
-          ...(r.rows||[]).flatMap(x=>[x.vin,x.car,x.variant,x.extColor,x.intColor,x.modelYear,x.currentLocation,x.shootPlace,x.note])
-        ].join(' ').toLowerCase();
-        return hay.includes(q);
-      });
-    }
-
-    tblBody.innerHTML='';
-    list.forEach(r=>{
-      const adminInfo = r.admin || {};
-      const receivedText = adminInfo.received ? `📥 استلام: ${adminInfo.received}` : '📥 استلام: —';
-      const preparedText = adminInfo.prepared ? `🛠 تجهيز: ${adminInfo.prepared}` : '🛠 تجهيز: —';
-
-      const tr=document.createElement('tr');
-      tr.innerHTML = `
-        <td class="nowrap">#${r.id}</td>
-        <td class="nowrap">${r.createdAt||''}</td>
-        <td class="nowrap">${r.createdBy||'-'}</td>
-        <td class="center">${r.rows?.length||0}</td>
-        <td class="nowrap">${r.status||'-'}</td>
-        <td>
-          <div style="font-size:12px;line-height:1.5">
-            <div>${receivedText}</div>
-            <div>${preparedText}</div>
-          </div>
-        </td>
-        <td class="center cell-actions">
-          <button class="btn btn-success" data-done="${r.id}"><i class="fa-solid fa-check"></i> تم التصوير</button>
-        </td>
-      `;
-      tblBody.appendChild(tr);
-    });
-  }
-  $('#statusFilter').addEventListener('change', renderRequestsTable);
-  $('#searchRequests').addEventListener('input', renderRequestsTable);
-
-  /* فتح تفاصيل طلب التصوير بالضغط على الصف */
-  tblBody.addEventListener('click',(e)=>{
-    if(e.target.closest('button')) return;
-    const row = e.target.closest('tr'); if(!row) return;
-    const firstCell = row.querySelector('td'); if(!firstCell) return;
-    const txt = (firstCell.textContent||'').trim();
-    const id  = Number(txt.replace('#','').trim());
-    if(!id) return;
-    openModal(id);
+  $('#q').addEventListener('input', render);
+  $('#f_status').addEventListener('change', render);
+  $('#date_from').addEventListener('change', render);
+  $('#date_to').addEventListener('change', render);
+  $('#f_reset').addEventListener('click', ()=>{
+    $('#q').value='';
+    $('#f_status').value='';
+    $('#date_from').value='';
+    $('#date_to').value='';
+    setKindFilter('');
   });
 
-  /* زر تم التصوير من الجدول */
-  document.addEventListener('click', async (e)=>{
-    const done=e.target.closest('button[data-done]');
-    if(done){
-      const id=Number(done.getAttribute('data-done'));
-      const req = shootRequests.find(r=>r.id===id); if(!req) return;
-      req.status='تم التصوير';
-      await persistAll(); 
-      await logActivity({
-        action: 'تحديث حالة طلب تصوير إلى تم التصوير',
-        entityType: 'photoshootRequest',
-        entityId: id,
-        details: `عدد الهياكل: ${req.rows?.length||0}`
-      });
-      renderRequestsTable(); 
-      showToast('تم إكمال طلب التصوير','ok');
-    }
-  });
-
-  /* ===== Modal (تفاصيل طلب التصوير) ===== */
-  const backdrop = $('#backdrop');
-  const modalRowsBody = document.querySelector('#modalRows tbody');
-
-  function fillModal(req){
-    $('#m_id').value = '#'+req.id;
-    $('#m_createdAt').value = req.createdAt||'';
-    $('#m_createdBy').value = req.createdBy||'';
-    const adminInfo = req.admin || {};
-    $('#m_adminReceived').value = adminInfo.received || req.adminReceived || '';
-    $('#m_adminPrepared').value = adminInfo.prepared || req.adminPrepared || '';
-
-    modalRowsBody.innerHTML='';
-    (req.rows||[]).forEach((x,i)=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML = `
-        <td class="center">${i+1}</td>
-        <td><input class="mono small-input m_vin" value="${x.vin||''}" readonly></td>
-        <td><input class="small-input m_car" value="${x.car||''}" readonly></td>
-        <td><input class="small-input m_variant" value="${x.variant||''}" readonly></td>
-        <td><input class="small-input m_ext" value="${x.extColor||''}" readonly></td>
-        <td><input class="small-input m_int" value="${x.intColor||''}" readonly></td>
-        <td class="center"><input class="small-input m_year center" value="${x.modelYear||''}" readonly></td>
-        <td><input class="small-input m_loc" value="${x.currentLocation||''}" readonly></td>
-        <td>
-          <select class="small-input m_place">
-            <option value="">— اختر —</option>
-            ${SHOOT_PLACES.map(p=>`<option ${p===(x.shootPlace||'')?'selected':''}>${p}</option>`).join('')}
-          </select>
-        </td>
-        <td><input class="small-input m_note" value="${x.note||''}"></td>
-      `;
-      modalRowsBody.appendChild(tr);
-    });
-  }
-
-  function openModal(id){
-    const req=shootRequests.find(r=>r.id===id); if(!req) return;
-    backdrop.style.display='flex';
-    $('#modalTitle').innerHTML = `<i class="fa-regular fa-rectangle-list"></i> تفاصيل الطلب #${id}`;
-    fillModal(req);
-
-    $('#btnSaveModal').onclick = async ()=>{
-      const newRows=[];
-      modalRowsBody.querySelectorAll('tr').forEach(tr=>{
-        const vin = tr.querySelector('.m_vin').value||'';
-        const old = (req.rows||[]).find(x=>x.vin===vin) || {};
-        newRows.push({
-          vin,
-          car:old.car||'',
-          variant:old.variant||'',
-          extColor:old.extColor||'',
-          intColor:old.intColor||'',
-          modelYear:old.modelYear||'',
-          currentLocation:old.currentLocation||'',
-          shootPlace: tr.querySelector('.m_place').value||'',
-          note: tr.querySelector('.m_note').value||''
-        });
-      });
-      req.rows = newRows;
-
-      await persistAll(); 
-      await logActivity({
-        action: 'تعديل بيانات هياكل طلب تصوير',
-        entityType: 'photoshootRequest',
-        entityId: id,
-        details: `عدد الهياكل: ${req.rows?.length||0}`
-      });
-      renderRequestsTable(); 
-      showToast('تم حفظ التعديلات','ok');
-    };
-  }
-  $('#btnCloseModal').addEventListener('click', ()=> backdrop.style.display='none');
-  backdrop.addEventListener('click', (e)=>{ if(e.target===backdrop) backdrop.style.display='none'; });
-
-  /* ===== تصدير Excel لطلبات التصوير ===== */
-  $('#btnExport').addEventListener('click', ()=>{
-    const header=[
-      "رقم الطلب","التاريخ","مقدّم","عدد الهياكل","الحالة",
-      "استلام إداري","تجهيز","ملاحظات الإدارة",
-      "VIN","السيارة","البيان","الخارجي","الداخلي","الموديل","مكان السيارة","مكان التصوير (صف)","ملاحظة الصف"
-    ];
-    const data=[header];
-    (shootRequests||[]).forEach(r=>{
-      if(!r.rows?.length){
-        data.push([
-          r.id,r.createdAt,r.createdBy,0,r.status,
-          (r.admin?.received||''),(r.admin?.prepared||''),(r.admin?.notes||''),
-          "","","","","","","","",""
-        ]);
-      }else{
-        r.rows.forEach((x,i)=>{
-          data.push([
-            i===0?r.id:"",
-            i===0?r.createdAt:"",
-            i===0?r.createdBy:"",
-            i===0?r.rows.length:"",
-            i===0?(r.status||""):"",
-            i===0?(r.admin?.received||""):"",
-            i===0?(r.admin?.prepared||""):"",
-            i===0?(r.admin?.notes||""):"",
-            x.vin,x.car,x.variant,x.extColor,x.intColor,x.modelYear,x.currentLocation,x.shootPlace||"",x.note||""
-          ]);
-        });
-      }
-    });
-    const ws=XLSX.utils.aoa_to_sheet(data);
-    ws['!cols']=[
-      {wch:8},{wch:18},{wch:14},{wch:8},{wch:10},
-      {wch:16},{wch:16},{wch:18},
-      {wch:20},{wch:18},{wch:12},{wch:12},{wch:10},{wch:10},{wch:16},{wch:18},{wch:20}
-    ];
-    const wb=XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb,ws,"Shoot Requests");
-    XLSX.writeFile(wb,"mzj-photoshoot-requests.xlsx");
-  });
-
-  /* ===== طلب نقل بنفس شكل طلب التصوير + سجل الطلبات ===== */
-  const moveReqRowsBody = $('#moveReqRows');
-
-  function buildMoveRows(){
-    moveReqRowsBody.innerHTML='';
-    const optionsHtml = MOVE_LOCATIONS.map(l=>`<option value="${l}">${l}</option>`).join('');
-    for(let i=0;i<8;i++){
-      const tr=document.createElement('tr');
-      tr.innerHTML = `
-        <td class="center">${i+1}</td>
-        <td><input class="mv_vin mono small-input" placeholder="VIN"></td>
-        <td><input class="mv_car small-input" readonly placeholder="—"></td>
-        <td><input class="mv_variant small-input" readonly placeholder="—"></td>
-        <td><input class="mv_ext small-input" readonly placeholder="—"></td>
-        <td><input class="mv_int small-input" readonly placeholder="—"></td>
-        <td class="center"><input class="mv_year center small-input" readonly placeholder="—"></td>
-        <td><input class="mv_currentLoc small-input" readonly placeholder="—"></td>
-        <td>
-          <select class="mv_newLoc small-input">
-            <option value="">— اختر —</option>
-            ${optionsHtml}
-          </select>
-        </td>
-        <td><input class="mv_note small-input" placeholder="اختياري"></td>
-        <td class="center">
-          <button class="btn btn-danger btn-ghost mv-row-del"><i class="fa-solid fa-xmark"></i> حذف</button>
-        </td>
-      `;
-      moveReqRowsBody.appendChild(tr);
-    }
-    const mb = $('#moveReqBy');
-    if(mb){
-      const u = auth.currentUser;
-      mb.value = (u?.displayName)|| (u?.email)||'أحمد ناجي';
-      mb.setAttribute('readonly','readonly');
-    }
-  }
-  $('#moveBtnClear').addEventListener('click', buildMoveRows);
-
-  // حذف صف نقل
-  moveReqRowsBody.addEventListener('click',(e)=>{
-    const b=e.target.closest('.mv-row-del'); if(!b) return;
-    const tr=b.closest('tr'); tr.querySelectorAll('input,select').forEach(x=> x.value='');
-  });
-
-  // تعبئة تلقائية من المخزون عند إدخال VIN للنقل
-  moveReqRowsBody.addEventListener('blur',(e)=>{
-    const vinEl = e.target.closest('input.mv_vin'); if(!vinEl) return;
-    const norm = normalizeVin(vinEl.value); vinEl.value = norm;
-    if(!norm) return;
-    const rec = stock.find(r=> normalizeVin(r.vin)===norm);
-    const row = vinEl.closest('tr');
-    if(rec){
-      row.querySelector('.mv_car').value        = rec.car||'';
-      row.querySelector('.mv_variant').value    = rec.variant||'';
-      row.querySelector('.mv_ext').value        = rec.extColor||'';
-      row.querySelector('.mv_int').value        = rec.intColor||'';
-      row.querySelector('.mv_year').value       = rec.modelYear||'';
-      row.querySelector('.mv_currentLoc').value = rec.location||'';
-      showToast('تم جلب بيانات السيارة','ok');
-    }else{
-      row.querySelectorAll('.mv_car,.mv_variant,.mv_ext,.mv_int,.mv_year,.mv_currentLoc').forEach(i=> i.value='');
-      showToast('لا يوجد هيكل مطابق','info');
-    }
-  }, true);
-
-  function collectMoveFormRows(){
-    const rows=[];
-    moveReqRowsBody.querySelectorAll('tr').forEach(tr=>{
-      const vin = normalizeVin(tr.querySelector('.mv_vin').value||''); 
-      const toLoc = (tr.querySelector('.mv_newLoc').value||'').trim();
-      if(!vin && !toLoc) return; // سطر فاضي تمامًا
-      if(!vin) return; // تجاهل سطر بدون VIN
-      const car        = tr.querySelector('.mv_car').value||'';
-      const variant    = tr.querySelector('.mv_variant').value||'';
-      const extColor   = tr.querySelector('.mv_ext').value||'';
-      const intColor   = tr.querySelector('.mv_int').value||'';
-      const modelYear  = tr.querySelector('.mv_year').value||'';
-      const fromLoc    = tr.querySelector('.mv_currentLoc').value||'';
-      const note       = tr.querySelector('.mv_note').value||'';
-      rows.push({
-        vin,
-        car,
-        variant,
-        extColor,
-        intColor,
-        modelYear,
-        fromLocation: fromLoc,
-        toLocation: toLoc,
-        note
-      });
-    });
-    return rows;
-  }
-
-  async function saveNewMoveRequest(statusLabel='قيد المراجعة'){
-    const u = auth.currentUser;
-    const createdBy = ($('#moveReqBy').value||'').trim() || u?.displayName || u?.email || 'غير محدد';
-
-    const rows = collectMoveFormRows();
-    if(rows.length===0){
-      showToast('أدخل على الأقل سيارة واحدة في طلب النقل','info');
-      return;
-    }
-
-    const errors=[];
-    rows.forEach((r,idx)=>{
-      if(!r.toLocation){
-        errors.push(`السيارة رقم ${idx+1}: اختر المكان الجديد.`);
-      }
-    });
-    if(errors.length){
-      showToast('برجاء استكمال بيانات طلب النقل','err');
-      alert(errors.join('\n'));
-      return;
-    }
-
-    const nextId = moveRequests.length? Math.max(...moveRequests.map(r=>Number(r.id)||0))+1 : 1;
-
-    const req = {
-      id: nextId,
-      type: 'VIN_MOVE',
-      createdAt: now(),
-      createdBy,
-      rows,
-      status: statusLabel, // "مسودة" أو "قيد المراجعة" أو "تم التنفيذ"
-      approvals: {
-        adminApproved: null,
-        financeApproved: null,
-        adminNotes: '',
-        financeNotes: '',
-        issuesNotes: ''
-      }
-    };
-
-    moveRequests.push(req);
-    await persistAll();
-
-    await logActivity({
-      action: statusLabel==='مسودة' ? 'إنشاء مسودة طلب نقل سيارات' : 'إرسال طلب نقل سيارات',
-      entityType: 'vinMoveRequest',
-      entityId: nextId,
-      details: `عدد السيارات في الطلب: ${rows.length}`
-    });
-
-    buildMoveRows();
-    renderMoveRequestsTable();
-    const msg = statusLabel==='مسودة'
-      ? `تم حفظ مسودة طلب النقل #${nextId}.`
-      : `تم إرسال طلب النقل رقم #${nextId} للمراجعة.`;
-    showToast(msg,'ok');
-  }
-
-  $('#moveBtnDraft').addEventListener('click', ()=> saveNewMoveRequest('مسودة'));
-  $('#moveBtnSubmit').addEventListener('click', ()=> saveNewMoveRequest('قيد المراجعة'));
-
-  /* ===== سجل طلبات النقل ===== */
-  const moveTblBody = document.querySelector('#moveRequestsTable tbody');
-  const moveStatusFilter = $('#moveStatusFilter');
-  const moveSearch = $('#moveSearch');
-
-  function renderMoveRequestsTable(){
-    if(!moveTblBody) return;
-    const s = (moveStatusFilter?.value)||'ALL';
-    const q = (moveSearch?.value||'').toLowerCase().trim();
-
-    let list = moveRequests.slice().sort((a,b)=> b.id - a.id);
-    if(s!=='ALL') list = list.filter(r=> (r.status||'')===s);
-    if(q){
-      list = list.filter(r=>{
-        const ap = r.approvals||{};
-        const hay=[
-          r.id,r.createdAt,r.createdBy,r.status,
-          ap.adminNotes||'',ap.financeNotes||'',ap.issuesNotes||'',
-          ...(r.rows||[]).flatMap(x=>[x.vin,x.car,x.variant,x.extColor,x.intColor,x.modelYear,x.fromLocation,x.toLocation,x.note])
-        ].join(' ').toLowerCase();
-        return hay.includes(q);
-      });
-    }
-
-    moveTblBody.innerHTML='';
-    list.forEach(r=>{
-      const ap = r.approvals || {};
-      const notesSummary = [ap.adminNotes, ap.financeNotes, ap.issuesNotes].filter(Boolean).join(' / ');
-      const tr=document.createElement('tr');
-      tr.innerHTML = `
-        <td class="nowrap">#${r.id}</td>
-        <td class="nowrap">${r.createdAt||''}</td>
-        <td class="nowrap">${r.createdBy||''}</td>
-        <td class="center">${r.rows?.length||0}</td>
-        <td class="nowrap">${r.status||''}</td>
-        <td class="nowrap">${notesSummary||'—'}</td>
-        <td class="center cell-actions">
-          <button class="btn btn-ghost" data-move="${r.id}"><i class="fa-regular fa-eye"></i> عرض</button>
-        </td>
-      `;
-      moveTblBody.appendChild(tr);
-    });
-  }
-
-  if(moveStatusFilter) moveStatusFilter.addEventListener('change', renderMoveRequestsTable);
-  if(moveSearch) moveSearch.addEventListener('input', renderMoveRequestsTable);
-
-  // فتح تفاصيل طلب النقل
-  const moveBackdrop = $('#moveBackdrop');
-  const moveModalRowsBody = document.querySelector('#moveModalRows tbody');
-
-  function openMoveModal(id){
-    const req = moveRequests.find(r=>r.id===id); if(!req) return;
-    moveBackdrop.style.display='flex';
-    $('#moveModalTitle').innerHTML = `<i class="fa-regular fa-rectangle-list"></i> تفاصيل طلب النقل #${id}`;
-
-    $('#moveModalId').value = '#'+req.id;
-    $('#moveModalCreatedAt').value = req.createdAt || '';
-    $('#moveModalCreatedBy').value = req.createdBy || '';
-    $('#moveModalStatus').value = req.status || '';
-
-    moveModalRowsBody.innerHTML='';
-    (req.rows||[]).forEach((x,i)=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML = `
-        <td class="center">${i+1}</td>
-        <td><input class="mono small-input" value="${x.vin||''}" readonly></td>
-        <td><input class="small-input" value="${x.car||''}" readonly></td>
-        <td><input class="small-input" value="${x.variant||''}" readonly></td>
-        <td><input class="small-input" value="${x.extColor||''}" readonly></td>
-        <td><input class="small-input" value="${x.intColor||''}" readonly></td>
-        <td class="center"><input class="small-input center" value="${x.modelYear||''}" readonly></td>
-        <td><input class="small-input" value="${x.fromLocation||''}" readonly></td>
-        <td><input class="small-input" value="${x.toLocation||''}" readonly></td>
-        <td><input class="small-input" value="${x.note||''}" readonly></td>
-      `;
-      moveModalRowsBody.appendChild(tr);
-    });
-  }
-
-  if(moveTblBody){
-    moveTblBody.addEventListener('click',(e)=>{
-      const btn = e.target.closest('button[data-move]');
-      if(btn){
-        const id = Number(btn.getAttribute('data-move'));
-        if(id) openMoveModal(id);
-        return;
-      }
-      const row = e.target.closest('tr');
-      if(!row) return;
-      const first = row.querySelector('td'); if(!first) return;
-      const txt = (first.textContent||'').trim();
-      const id  = Number(txt.replace('#','').trim());
-      if(id) openMoveModal(id);
-    });
-  }
-
-  $('#moveBtnCloseModal').addEventListener('click', ()=> moveBackdrop.style.display='none');
-  moveBackdrop.addEventListener('click',(e)=>{ if(e.target===moveBackdrop) moveBackdrop.style.display='none'; });
-
-  /* ===== Start ===== */
-  setStatus('warn', 'جارِ الاتصال…');
 </script>
 </body>
 </html>
-
-
-
-
-
