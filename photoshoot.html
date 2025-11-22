@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -833,11 +834,15 @@ body{opacity:0;transition:opacity .12s ease}
     }
   }, true);
 
-  function collectFormRows(){
-    const rows=[];
+    function collectFormRows(){
+    const shootRows = [];
+    const moveRows  = [];
     reqRowsBody.querySelectorAll('tr').forEach(tr=>{
-      const vin = normalizeVin(tr.querySelector('.vin').value||''); if(!vin) return;
-      rows.push({
+      const vin = normalizeVin(tr.querySelector('.vin').value||''); 
+      if(!vin) return;
+
+      const type = (tr.querySelector('.req-type')?.value)||'shoot';
+      const base = {
         vin,
         car:tr.querySelector('.car').value||'',
         variant:tr.querySelector('.variant').value||'',
@@ -845,39 +850,119 @@ body{opacity:0;transition:opacity .12s ease}
         intColor:tr.querySelector('.int').value||'',
         modelYear:tr.querySelector('.year').value||'',
         currentLocation:tr.querySelector('.loc').value||'',
-        shootPlace: (tr.querySelector('.place').value||''),
+        place:(tr.querySelector('.place').value||''),
         note:tr.querySelector('.note').value||''
-      });
+      };
+
+      if(type === 'move'){
+        moveRows.push({
+          vin: base.vin,
+          car: base.car,
+          variant: base.variant,
+          extColor: base.extColor,
+          intColor: base.intColor,
+          modelYear: base.modelYear,
+          fromLocation: base.currentLocation,
+          toLocation: base.place,
+          note: base.note
+        });
+      }else{
+        shootRows.push({
+          vin: base.vin,
+          car: base.car,
+          variant: base.variant,
+          extColor: base.extColor,
+          intColor: base.intColor,
+          modelYear: base.modelYear,
+          currentLocation: base.currentLocation,
+          shootPlace: base.place,
+          note: base.note
+        });
+      }
     });
-    return rows;
+    return { shootRows, moveRows };
   }
 
   async function saveNewRequest(statusLabel){
     const by = ($('#reqBy').value||'').trim();
-    const rows = collectFormRows();
-    if(statusLabel!=='مسودة' && rows.length===0) return showToast('أدخل هيكل واحد على الأقل','info');
+    const { shootRows, moveRows } = collectFormRows();
 
-    const nextId = shootRequests.length? Math.max(...shootRequests.map(r=>Number(r.id)||0))+1 : 1;
-    const req = {
-      id: nextId,
-      createdAt: now(),
-      createdBy: by,
-      rows,
-      status: statusLabel,
-      admin: { received:null, prepared:null, notes:'' }
-    };
-    shootRequests.push(req);
+    if(statusLabel!=='مسودة' && shootRows.length===0 && moveRows.length===0){
+      showToast('أدخل هيكل واحد على الأقل','info');
+      return;
+    }
+
+    let msgParts = [];
+
+    // طلبات التصوير
+    if(shootRows.length){
+      const nextId = shootRequests.length? Math.max(...shootRequests.map(r=>Number(r.id)||0))+1 : 1;
+      const req = {
+        id: nextId,
+        createdAt: now(),
+        createdBy: by,
+        rows: shootRows,
+        status: statusLabel,
+        admin: { received:null, prepared:null, notes:'' }
+      };
+      shootRequests.push(req);
+      await logActivity({
+        action: statusLabel==='مسودة' ? 'إنشاء طلب تصوير (مسودة)' : 'إرسال طلب تصوير',
+        entityType: 'photoshootRequest',
+        entityId: nextId,
+        details: `عدد الهياكل: ${shootRows.length}`
+      });
+      msgParts.push(statusLabel==='مسودة' ? 'مسودة طلب التصوير' : 'طلب التصوير');
+    }
+
+    // طلبات النقل
+    if(moveRows.length){
+      const nextMoveId = moveRequests.length? Math.max(...moveRequests.map(r=>Number(r.id)||0))+1 : 1;
+      const moveStatus = statusLabel==='مسودة' ? 'مسودة' : 'قيد المراجعة';
+      const moveReq = {
+        id: nextMoveId,
+        type: 'VIN_MOVE',
+        createdAt: now(),
+        createdBy: by,
+        rows: moveRows,
+        status: moveStatus,
+        approvals: {
+          adminApproved: null,
+          financeApproved: null,
+          adminNotes: '',
+          financeNotes: '',
+          issuesNotes: ''
+        }
+      };
+      moveRequests.push(moveReq);
+      await logActivity({
+        action: statusLabel==='مسودة' ? 'إنشاء مسودة طلب نقل سيارات' : 'إرسال طلب نقل سيارات',
+        entityType: 'vinMoveRequest',
+        entityId: nextMoveId,
+        details: `عدد السيارات في الطلب: ${moveRows.length}`
+      });
+      msgParts.push(statusLabel==='مسودة' ? 'مسودة طلب النقل' : 'طلب النقل');
+    }
+
     await persistAll();
-    await logActivity({
-      action: statusLabel==='مسودة' ? 'إنشاء طلب تصوير (مسودة)' : 'إرسال طلب تصوير',
-      entityType: 'photoshootRequest',
-      entityId: nextId,
-      details: `عدد الهياكل: ${rows.length}`
-    });
     buildFormRows();
     updatePlaceHeader();
     renderRequestsTable();
-    showToast(statusLabel==='مسودة'?'تم حفظ المسودة':'تم إرسال طلب التصوير','ok');
+    if(typeof renderMoveRequestsTable === 'function') renderMoveRequestsTable();
+
+    let msg;
+    if(msgParts.length === 0){
+      msg = statusLabel==='مسودة' ? 'تم حفظ المسودة' : 'تم الإرسال';
+    }else if(msgParts.length === 1){
+      msg = statusLabel==='مسودة'
+        ? `تم حفظ ${msgParts[0]}`
+        : `تم إرسال ${msgParts[0]}`;
+    }else{
+      msg = statusLabel==='مسودة'
+        ? `تم حفظ ${msgParts.join(' و ')}`
+        : `تم إرسال ${msgParts.join(' و ')}`;
+    }
+    showToast(msg,'ok');
   }
 
   $('#btnDraft').addEventListener('click', ()=> saveNewRequest('مسودة'));
