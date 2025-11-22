@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -589,18 +590,19 @@ body{opacity:0;transition:opacity .12s ease}
     const moveTotal  = Array.isArray(moveRequests)  ? moveRequests.length  : 0;
     const total = shootTotal + moveTotal;
 
-    const progStatuses = new Set(['تحت الإجراء','تم التجهيز','قيد المراجعة']);
-    const doneStatuses = new Set(['تم','منفّذ']);
-
     const allList = [
       ...(Array.isArray(shootRequests) ? shootRequests : []),
       ...(Array.isArray(moveRequests)  ? moveRequests  : [])
     ];
 
-    const prog = allList.filter(r=> progStatuses.has(r.status || '')).length;
-    const done = allList.filter(r=> doneStatuses.has(r.status || '')).length;
+    const norm = r => (r.status || '').toString().trim();
 
-    return { total, shootTotal, moveTotal, prog, done };
+    const inProg    = allList.filter(r => norm(r) === 'تحت الإجراء').length;
+    const prepared  = allList.filter(r => norm(r) === 'تم التجهيز').length;
+    const reviewing = allList.filter(r => norm(r) === 'قيد المراجعة').length;
+    const done      = allList.filter(r => norm(r) === 'تم' || norm(r) === 'منفّذ').length;
+
+    return { total, shootTotal, moveTotal, inProg, prepared, reviewing, done };
   }
 
 function renderShootCard(gridEl){
@@ -616,19 +618,29 @@ function renderShootCard(gridEl){
             إدارة الطلبات (تصوير + نقل)
           </h3>
           <div class="sub-metrics">
-            <span class="metric">
+            <span class="metric shoot-metric" data-status="ALL">
               <i class="fa-solid fa-list-ol"></i>
               إجمالي الطلبات:
               <b>${st.total.toLocaleString('ar-SA')}</b>
               — تصوير: <b>${st.shootTotal.toLocaleString('ar-SA')}</b>
-              | نقل: <b>${st.moveTotal.toLocaleString('ar-SA')}</b>
+              | طلب نقل: <b>${st.moveTotal.toLocaleString('ar-SA')}</b>
             </span>
-            <span class="metric">
+            <span class="metric shoot-metric" data-status="تحت الإجراء">
               <i class="fa-solid fa-gears"></i>
-              تحت الإجراء / تم التجهيز / قيد المراجعة:
-              <b>${st.prog.toLocaleString('ar-SA')}</b>
+              تحت الإجراء:
+              <b>${st.inProg.toLocaleString('ar-SA')}</b>
             </span>
-            <span class="metric">
+            <span class="metric shoot-metric" data-status="تم التجهيز">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              تم التجهيز:
+              <b>${st.prepared.toLocaleString('ar-SA')}</b>
+            </span>
+            <span class="metric shoot-metric" data-status="قيد المراجعة">
+              <i class="fa-regular fa-hourglass-half"></i>
+              قيد المراجعة:
+              <b>${st.reviewing.toLocaleString('ar-SA')}</b>
+            </span>
+            <span class="metric shoot-metric" data-status="تم">
               <i class="fa-regular fa-circle-check"></i>
               تم / منفّذ:
               <b>${st.done.toLocaleString('ar-SA')}</b>
@@ -641,9 +653,20 @@ function renderShootCard(gridEl){
       </div>
     `;
 
-    // عند الضغط على الكارت نروح مباشرة لصفحة إدارة الطلبات
-    card.addEventListener('click', ()=> {
+    // الضغط في أي مكان في الكارت (خارج المتريكس) يفتح صفحة إدارة الطلبات بشكل عام
+    card.addEventListener('click', (ev)=> {
+      if (ev.target.closest('.shoot-metric')) return;
       window.location.href = 'photoshoot-user.html';
+    });
+
+    // كل متريك تفتح صفحة إدارة الطلبات مع هاش خاص بالحالة
+    card.querySelectorAll('.shoot-metric').forEach(el => {
+      el.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const status = el.getAttribute('data-status') || '';
+        const hash = status ? ('#' + encodeURIComponent(status)) : '';
+        window.location.href = 'photoshoot-user.html' + hash;
+      });
     });
 
     gridEl.appendChild(card);
