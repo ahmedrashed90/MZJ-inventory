@@ -1609,6 +1609,14 @@ function applyTabsVisibility(role){
     const r = shootRequests[idx];
     if(!r.admin) r.admin = {};
     r.admin.prepared = now();
+    // update stock location to shootPlace
+    const rows = r.rows||[];
+    rows.forEach(row=>{
+      const vin = normalizeVin(row.vin||'');
+      if(!vin) return;
+      const idxS = stock.findIndex(s=> normalizeVin(s.vin||'')===vin);
+      if(idxS>-1){ stock[idxS].location = row.shootPlace || row.placeRequested || stock[idxS].location; }
+    });
     if(r.status==='تحت الإجراء'){
       r.status = 'تم التجهيز';
     }
