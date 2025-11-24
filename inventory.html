@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl" data-theme="light">
 <head>
@@ -710,7 +709,10 @@
             <input id="yearFilter" class="input" type="number" min="2000" max="2100" placeholder="الموديل (سنة)">
             <input id="dealerFilter" class="input" placeholder="الوكيل">
             <div>
-              <select id="locationFilter" class="select"><option value="">كل الأماكن</option></select>
+              <div class="row">
+                <select id="locationFilter" class="select"><option value="">كل الأماكن</option></select>
+                <select id="locationNoAgencyFilter" class="select"><option value="">كل الأماكن (بدون الوكالة)</option></select>
+              </div>
               <div class="under-field">
                 <button id="exportAll" class="btn btn-primary">
                   <i class="fa-regular fa-file-excel"></i> تصدير Excel (حسب الفلاتر)
@@ -948,6 +950,7 @@
   const yearFilter     = $('#yearFilter');
   const dealerFilter   = $('#dealerFilter');
   const locationFilter = $('#locationFilter');
+  const locationNoAgencyFilter = $('#locationNoAgencyFilter');
 
   const tb = $('#carsTable tbody');
 
@@ -1101,14 +1104,24 @@
   }
 
   /* Filters */
-  const filters = { q:'', model:'', year:'', dealer:'', location:'' };
+  const filters = { q:'', model:'', year:'', dealer:'', location:'', locationNoAgency:'' };
 
   function initFilters(){
     const modelsList = uniq(stock.map(r=> r.car).filter(Boolean)).sort((a,b)=> a.localeCompare(b,'ar'));
     modelFilter.innerHTML = '<option value="">كل السيارات</option>' + modelsList.map(m=> `<option value="${m}">${m}</option>`).join('');
+
     const locs = uniq(stock.map(r=> r.location || 'غير محدد')).sort((a,b)=> a.localeCompare(b,'ar'));
-    locationFilter.innerHTML = '<option value="">كل الأماكن</option>' +
-      locs.map(l=> `<option value="${l==='غير محدد'?'':l}">${l}</option>`).join('');
+
+    if(locationFilter){
+      locationFilter.innerHTML = '<option value="">كل الأماكن</option>' +
+        locs.map(l=> `<option value="${l==='غير محدد'?'':l}">${l}</option>`).join('');
+    }
+
+    if(locationNoAgencyFilter){
+      const locsNoAgency = locs.filter(l => !l.startsWith('الوكالة :'));
+      locationNoAgencyFilter.innerHTML = '<option value="">كل الأماكن (بدون الوكالة)</option>' +
+        locsNoAgency.map(l=> `<option value="${l==='غير محدد'?'':l}">${l}</option>`).join('');
+    }
   }
 
   function applyFilters(rows){
@@ -1121,6 +1134,7 @@
       if (filters.year && String(r.modelYear) !== String(filters.year)) return false;
       if (filters.dealer && (!r.dealer || !r.dealer.toLowerCase().includes(filters.dealer.toLowerCase()))) return false;
       if (filters.location && (r.location||'') !== filters.location) return false;
+      if (filters.locationNoAgency && (r.location||'') !== filters.locationNoAgency) return false;
       return true;
     });
   }
@@ -1178,6 +1192,7 @@
   yearFilter.addEventListener('input', e=>{ filters.year=e.target.value.trim(); renderAll(); });
   dealerFilter.addEventListener('input', e=>{ filters.dealer=e.target.value.trim(); renderAll(); });
   locationFilter.addEventListener('change', e=>{ filters.location=e.target.value; renderAll(); });
+  locationNoAgencyFilter.addEventListener('change', e=>{ filters.locationNoAgency=e.target.value; renderAll(); });
 
   /* VIN copy */
   document.addEventListener('click', (e)=>{
@@ -1632,5 +1647,3 @@
 </script>
 </body>
 </html>
-
-
