@@ -758,6 +758,9 @@
     </div>
     <div class="modal-footer">
       <button class="btn ghost btn-mini" data-close-req-modal>إغلاق</button>
+      <button id="btnMarkShootDone" class="btn primary btn-mini">
+        <i class="fa-solid fa-check-double"></i> تم التصوير
+      </button>
       <button id="btnMarkPrepared" class="btn secondary btn-mini">
         <i class="fa-solid fa-circle-check"></i> تم التجهيز للتصوير
       </button>
@@ -1547,9 +1550,24 @@ function applyTabsVisibility(role){
     $('#adminNotes').value = admin.notes || '';
     $('#reqModalBackdrop').classList.add('show');
 
-    $('#btnMarkPrepared').onclick = async ()=>{
-      await markPrepared(r.id, kind);
-    };
+    // إظهار/إخفاء الأزرار حسب نوع الطلب
+    const isShoot = (kind === 'shoot');
+    const btnShoot = $('#btnMarkShootDone');
+    const btnPrep  = $('#btnMarkPrepared');
+
+    if(btnShoot){
+      btnShoot.style.display = isShoot ? 'inline-flex' : 'none';
+      btnShoot.onclick = async ()=>{
+        await markShootDone(r.id);
+      };
+    }
+    if(btnPrep){
+      btnPrep.style.display = isShoot ? 'inline-flex' : 'none';
+      btnPrep.onclick = async ()=>{
+        await markPrepared(r.id, kind);
+      };
+    }
+
     $('#btnMarkReceived').onclick = async ()=>{
       await markReceived(r.id, kind);
     };
@@ -1604,6 +1622,29 @@ function applyTabsVisibility(role){
       { requestId: r.id, entityType:'photoshoot_request' }
     );
     showToast('تم تسجيل التجهيز للتصوير');
+  }
+
+  async function markShootDone(id){
+    const idx  = shootRequests.findIndex(r=> String(r.id)===String(id));
+    if(idx===-1) return;
+    const r = shootRequests[idx];
+    if(!r.admin) r.admin = {};
+    // لو ما فيش وقت تجهيز مسجل، نخليه الآن بشكل تلقائي
+    if(!r.admin.prepared){
+      r.admin.prepared = now();
+    }
+    r.status = 'تم';
+    r.completedAt = now();
+    await persistAll();
+    metrics();
+    render();
+    fillReqModal('shoot', r);
+    await logActivity(
+      'تسجيل إتمام التصوير',
+      `تم تسجيل إتمام التصوير لطلب التصوير رقم ${r.id}`,
+      { requestId: r.id, entityType:'photoshoot_request' }
+    );
+    showToast('تم تسجيل إتمام التصوير وإغلاق الطلب');
   }
 
   function openMoveModal(mr){
