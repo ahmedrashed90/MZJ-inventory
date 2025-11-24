@@ -267,7 +267,22 @@ ab-panel.active{display:block;}
     text-align:left;
     direction:ltr;
   }
-  .edit-card-actions{
+  
+  .edit-detail-input,
+  .edit-detail-select,
+  .edit-detail-textarea{
+    flex:1;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:4px 8px;
+    font-size:12px;
+    min-width:0;
+  }
+  .edit-detail-textarea{
+    resize:vertical;
+    min-height:48px;
+  }
+.edit-card-actions{
     margin-top:10px;
     padding-top:8px;
     border-top:1px dashed var(--line);
@@ -751,7 +766,7 @@ ab-panel.active{display:block;}
 <button class="btn btn-ghost" id="btnExport" title="تصدير إلى Excel">
 <i class="fa-regular fa-file-excel"></i> تصدير
           </button>
-<!-- الجديد: زر تصدير قالب  -->
+<!--الجديد: زر تصدير قالب  -->
 <button class="btn btn-ghost" id="btnExportBlank" title="تصدير قالب">
 <i class="fa-regular fa-file"></i> تصدير قالب
           </button>
@@ -1566,14 +1581,14 @@ btnLogin.addEventListener('click', async ()=>{
     XLSX.writeFile(wb,"mzj-cars-inventory.xlsx"); showToast('تم تصدير الملف','ok');
   });
 
-  /* الجديد: تصدير قالب فاضي (عناوين فقط) */
+  /* الجديد: تصدير قالب  (عناوين فقط) */
   btnExportBlank.addEventListener('click',()=>{
     const header=["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
     const ws=XLSX.utils.aoa_to_sheet([header]);
     ws['!cols']=[{wch:6},{wch:22},{wch:16},{wch:16},{wch:14},{wch:14},{wch:8},{wch:12},{wch:22},{wch:18},{wch:22},{wch:26}];
     const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Template");
     XLSX.writeFile(wb,"mzj-cars-template-blank.xlsx");
-    showToast('تم تصدير القالب الفاضي','ok');
+    showToast('تم تصدير القالب ','ok');
   });
 
   /* استيراد Excel */
@@ -2317,112 +2332,168 @@ if(!movedCount){
 
     if (!tabEdit || !table || !detailsCard || !detailsBody || !actionsContainer) return;
 
+    
     function buildDetailsFromRow(tr){
+      if (!tr) return;
       const cells = Array.from(tr.children);
       const get = (i) => (cells[i] && cells[i].textContent.trim()) || "";
 
-      const car     = get(0); // سيارة
-      const desc    = get(1); // البيان
-      const dealer  = get(2); // الوكيل
-      const extCol  = get(3); // اللون الخارجي
-      const intCol  = get(4); // اللون الداخلي
-      const model   = get(5); // موديل
-      const plate   = get(6); // اللوحة
-      const place   = get(7); // المكان
-      const batch   = get(8); // اسم الدفعة
-      const vin     = get(9); // رقم الهيكل
-      const note    = get(10); // الملاحظات
-      const actions = cells[11] ? cells[11].innerHTML : "";
+      // نحاول قراءة id من زر التعديل في نفس الصف
+      const actionsCell = cells[11] || null;
+      const editBtnInRow = actionsCell ? actionsCell.querySelector("button[data-edit]") : null;
+      const idStr = editBtnInRow ? editBtnInRow.getAttribute("data-edit") : null;
+      const recId = idStr ? Number(idStr) : null;
+      const rec = recId ? (stock.find(r => r.id === recId) || {}) : {};
+
+      const carVal      = rec.car      || get(0);
+      const variantVal  = rec.variant  || get(1);
+      const dealerVal   = rec.dealer   || get(2);
+      const extColVal   = rec.extColor || get(3);
+      const intColVal   = rec.intColor || get(4);
+      const modelVal    = rec.modelYear|| get(5);
+      const plateVal    = rec.plate    || get(6);
+      const locVal      = rec.location || get(7);
+      const batchVal    = rec.batchName|| get(8);
+      const vinVal      = rec.vin      || get(9);
+      const notesVal    = rec.notes    || get(10);
+
+      const esc = (v) => (v == null ? '' : String(v)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;"));
+
+      let locationOptions = "";
+      if (Array.isArray(FIXED_LOCATIONS)) {
+        locationOptions = FIXED_LOCATIONS.map(loc => {
+          const sel = (loc === locVal) ? " selected" : "";
+          return `<option value="${esc(loc)}"${sel}>${esc(loc)}</option>`;
+        }).join("");
+      } else {
+        locationOptions = `<option value="${esc(locVal)}" selected>${esc(locVal)}</option>`;
+      }
 
       detailsBody.innerHTML = `
         <div class="edit-detail-row">
           <span class="edit-detail-label">سيارة</span>
-          <span class="edit-detail-value">${car}</span>
+          <input id="cardEdit_car" class="edit-detail-input" type="text" value="${esc(carVal)}" />
         </div>
         <div class="edit-detail-row">
           <span class="edit-detail-label">البيان</span>
-          <span class="edit-detail-value">${desc}</span>
+          <input id="cardEdit_variant" class="edit-detail-input" type="text" value="${esc(variantVal)}" />
         </div>
         <div class="edit-detail-row">
           <span class="edit-detail-label">الوكيل</span>
-          <span class="edit-detail-value">${dealer}</span>
+          <input id="cardEdit_dealer" class="edit-detail-input" type="text" value="${esc(dealerVal)}" />
         </div>
         <div class="edit-detail-row">
           <span class="edit-detail-label">المكان</span>
-          <span class="edit-detail-value">${place}</span>
+          <select id="cardEdit_location" class="edit-detail-select">
+            ${locationOptions}
+          </select>
         </div>
         <div class="edit-detail-row">
           <span class="edit-detail-label">رقم الهيكل</span>
-          <span class="edit-detail-value">${vin}</span>
+          <input id="cardEdit_vin" class="edit-detail-input" type="text" value="${esc(vinVal)}" />
         </div>
-        ${extCol || intCol ? `
         <div class="edit-detail-row">
           <span class="edit-detail-label">الألوان</span>
-          <span class="edit-detail-value">${extCol} / ${intCol}</span>
-        </div>` : ""}
-        ${model ? `
+          <input id="cardEdit_colors" class="edit-detail-input" type="text" value="${esc(extColVal + (intColVal ? " / " + intColVal : ""))}" />
+        </div>
         <div class="edit-detail-row">
           <span class="edit-detail-label">الموديل</span>
-          <span class="edit-detail-value">${model}</span>
-        </div>` : ""}
-        ${plate ? `
+          <input id="cardEdit_modelYear" class="edit-detail-input" type="text" value="${esc(modelVal)}" />
+        </div>
         <div class="edit-detail-row">
           <span class="edit-detail-label">اللوحة</span>
-          <span class="edit-detail-value">${plate}</span>
-        </div>` : ""}
-        ${batch ? `
+          <input id="cardEdit_plate" class="edit-detail-input" type="text" value="${esc(plateVal)}" />
+        </div>
         <div class="edit-detail-row">
           <span class="edit-detail-label">اسم الدفعة</span>
-          <span class="edit-detail-value">${batch}</span>
-        </div>` : ""}
-        ${note ? `
+          <input id="cardEdit_batch" class="edit-detail-input" type="text" value="${esc(batchVal)}" />
+        </div>
         <div class="edit-detail-row">
           <span class="edit-detail-label">ملاحظات</span>
-          <span class="edit-detail-value">${note}</span>
-        </div>` : ""}
+          <textarea id="cardEdit_notes" class="edit-detail-textarea">${esc(notesVal)}</textarea>
+        </div>
       `;
 
-      actionsContainer.innerHTML = actions;
+      actionsContainer.innerHTML = `
+        <div class="cell-actions" style="justify-content:center;gap:12px;">
+          <button class="btn btn-danger" type="button" id="cardBtnDelete">حذف</button>
+          <button class="btn btn-primary" type="button" id="cardBtnSave">تعديل</button>
+        </div>
+      `;
+
       detailsCard.style.display = "block";
-      // Scroll للبطاقة عشان تبان للمستخدم
       detailsCard.scrollIntoView({ behavior: "smooth", block: "start" });
 
-      // ربط أزرار التعديل/الحذف داخل الكارت بالأزرار الأصلية في الجدول
-      try{
-        const btns = actionsContainer.querySelectorAll("button");
-        btns.forEach((btn)=>{
-          btn.addEventListener("click", function(ev){
-            ev.preventDefault();
-            ev.stopPropagation();
-            const editId = btn.getAttribute("data-edit");
-            const delId  = btn.getAttribute("data-del");
-            let selector = null;
-            if(editId){
-              selector = 'button[data-edit="' + editId + '"]';
-            }else if(delId){
-              selector = 'button[data-del="' + delId + '"]';
-            }
-            if(!selector) return;
-            const original = table.querySelector(selector);
-            if(original){
-              original.click();
-              const row = original.closest("tr");
-              if(row){
-                row.scrollIntoView({behavior:"smooth", block:"center"});
-              }
-            }
-          }, { once:false });
+      const btnSave = document.getElementById("cardBtnSave");
+      const btnDelete = document.getElementById("cardBtnDelete");
+
+      if (btnSave){
+        btnSave.addEventListener("click", async function(){
+          if (!recId) return;
+          const idx = stock.findIndex(r => r.id === recId);
+          if (idx < 0) return;
+          const updated = { ...stock[idx] };
+
+          const colorsVal = document.getElementById("cardEdit_colors")?.value || "";
+          let extC = "", intC = "";
+          if (colorsVal.includes("/")){
+            const parts = colorsVal.split("/");
+            extC = parts[0].trim();
+            intC = parts.slice(1).join("/").trim();
+          } else {
+            extC = colorsVal.trim();
+          }
+
+          updated.car       = document.getElementById("cardEdit_car")?.value.trim() || "";
+          updated.variant   = document.getElementById("cardEdit_variant")?.value.trim() || "";
+          updated.dealer    = document.getElementById("cardEdit_dealer")?.value.trim() || "";
+          updated.location  = document.getElementById("cardEdit_location")?.value.trim() || "";
+          const vinRaw      = document.getElementById("cardEdit_vin")?.value.trim() || "";
+          updated.vin       = typeof normalizeVin === "function" ? normalizeVin(vinRaw) : vinRaw;
+          updated.extColor  = extC;
+          updated.intColor  = intC;
+          updated.modelYear = document.getElementById("cardEdit_modelYear")?.value.trim() || "";
+          updated.plate     = document.getElementById("cardEdit_plate")?.value.trim() || "";
+          updated.batchName = document.getElementById("cardEdit_batch")?.value.trim() || "";
+          updated.notes     = document.getElementById("cardEdit_notes")?.value.trim() || "";
+
+          stock[idx] = updated;
+          await persistAll();
+          renderTable();
+
+          // نرجّع نختار نفس الصف في الجدول بعد التعديل
+          const rows = Array.from(table.querySelectorAll("tbody tr"));
+          const newRow = rows.find(r => {
+            const b = r.querySelector('button[data-edit="' + recId + '"]');
+            return !!b;
+          });
+          if (newRow){
+            newRow.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+
+          showToast('تم تعديل السيارة من كارت التفاصيل','ok');
         });
-      }catch(e){}
+      }
+
+      if (btnDelete){
+        btnDelete.addEventListener("click", async function(){
+          if (!recId) return;
+          const idx = stock.findIndex(r => r.id === recId);
+          if (idx < 0) return;
+          if (!confirm('هل تريد حذف هذه السيارة؟')) return;
+          stock.splice(idx,1);
+          await persistAll();
+          renderTable();
+          detailsCard.style.display = "none";
+          showToast('تم حذف السيارة','ok');
+        });
+      }
     }
-
-    table.addEventListener("click", function(ev){
-      const tr = ev.target.closest("tbody tr");
-      if (!tr) return;
-      buildDetailsFromRow(tr);
-    });
-
-    if (btnClose){
+if (btnClose){
       btnClose.addEventListener("click", function(){
         detailsCard.style.display = "none";
       });
