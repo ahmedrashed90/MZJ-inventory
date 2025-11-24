@@ -1191,8 +1191,32 @@
   modelFilter.addEventListener('change', e=>{ filters.model=e.target.value; renderAll(); });
   yearFilter.addEventListener('input', e=>{ filters.year=e.target.value.trim(); renderAll(); });
   dealerFilter.addEventListener('input', e=>{ filters.dealer=e.target.value.trim(); renderAll(); });
-  locationFilter.addEventListener('change', e=>{ filters.location=e.target.value; renderAll(); });
-  locationNoAgencyFilter.addEventListener('change', e=>{ filters.locationNoAgency=e.target.value; renderAll(); });
+
+  // فلتر "كل الأماكن"
+  locationFilter.addEventListener('change', e => {
+    filters.location = e.target.value;
+
+    // لو اخترت من هنا نمسح الفلتر التاني
+    if (filters.location) {
+      filters.locationNoAgency = '';
+      if (locationNoAgencyFilter) locationNoAgencyFilter.value = '';
+    }
+
+    renderAll();
+  });
+
+  // فلتر "كل الأماكن (بدون الوكالة)"
+  locationNoAgencyFilter.addEventListener('change', e => {
+    filters.locationNoAgency = e.target.value;
+
+    // لو اخترت من هنا نمسح الفلتر الرئيسي
+    if (filters.locationNoAgency) {
+      filters.location = '';
+      if (locationFilter) locationFilter.value = '';
+    }
+
+    renderAll();
+  });
 
   /* VIN copy */
   document.addEventListener('click', (e)=>{
@@ -1455,6 +1479,7 @@
   function updateRequirementBoxes(){
     const toVal = (moveToGlobal.value||'').trim();
     const isIssues = /سيارات بها ملاحظات/.test(toVal);
+    const isDeliveredRow = /مباع تم التسليم/.test(toVal);
     notesIssuesBox.style.display = isIssues ? 'block' : 'none';
   }
   moveToGlobal.addEventListener('change', updateRequirementBoxes);
