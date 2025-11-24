@@ -263,6 +263,21 @@
     text-align:left;
     direction:ltr;
   }
+  .edit-detail-input,
+  .edit-detail-select,
+  .edit-detail-textarea{
+    flex:1;
+    padding:6px 8px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    font-size:12px;
+    background:#fff;
+  }
+  .edit-detail-textarea{
+    min-height:48px;
+    resize:vertical;
+  }
+
   .edit-card-actions{
     margin-top:10px;
     padding-top:8px;
@@ -1277,6 +1292,7 @@ btnLogin.addEventListener('click', async ()=>{
     }
     rows.forEach(r=>{
       const tr=document.createElement('tr');
+      tr.dataset.id = r.id;
       tr.innerHTML=`
         <td><strong>${r.car||''}</strong></td>
         <td>${r.variant||''}</td>
@@ -2226,106 +2242,160 @@ if(!movedCount){
 
     if (!tabEdit || !table || !detailsCard || !detailsBody || !actionsContainer) return;
 
+    
     function buildDetailsFromRow(tr){
+      if (!tr) return;
+
+      // استخرج ID من الصف عن طريق data-id أو زرار التعديل
+      let id = Number(tr.dataset.id || '');
+      if (!id){
+        const btnEditInRow = tr.querySelector('button[data-edit]');
+        if (btnEditInRow){
+          id = Number(btnEditInRow.getAttribute('data-edit') || '0');
+        }
+      }
+
       const cells = Array.from(tr.children);
-      const get = (i) => (cells[i] && cells[i].textContent.trim()) || "";
+      const getCellText = (i) => (cells[i] && cells[i].textContent.trim()) || "";
 
-      const car     = get(0); // سيارة
-      const desc    = get(1); // البيان
-      const dealer  = get(2); // الوكيل
-      const extCol  = get(3); // اللون الخارجي
-      const intCol  = get(4); // اللون الداخلي
-      const model   = get(5); // موديل
-      const plate   = get(6); // اللوحة
-      const place   = get(7); // المكان
-      const batch   = get(8); // اسم الدفعة
-      const vin     = get(9); // رقم الهيكل
-      const note    = get(10); // الملاحظات
-      const actions = cells[11] ? cells[11].innerHTML : "";
+      // نحاول نقرأ من المخزون لو موجود، وإلا من خلايا الجدول
+      const rec   = stock.find(r => Number(r.id) === id) || {};
+      const car   = rec.car        || getCellText(0);
+      const desc  = rec.variant    || getCellText(1);
+      const dealer= rec.dealer     || getCellText(2);
+      const extCol= rec.extColor   || getCellText(3);
+      const intCol= rec.intColor   || getCellText(4);
+      const model = rec.modelYear  || getCellText(5);
+      const plate = rec.plate      || getCellText(6);
+      const place = rec.location   || getCellText(7);
+      const batch = rec.batchName  || getCellText(8);
+      const vin   = rec.vin        || getCellText(9);
+      const note  = rec.notes      || getCellText(10);
 
+      // تجهيز اختيارات المكان
+      let locationOptions = '';
+      if (Array.isArray(FIXED_LOCATIONS)){
+        locationOptions = FIXED_LOCATIONS.map(loc => `
+          <option value="${loc}" ${loc === place ? 'selected' : ''}>${loc}</option>
+        `).join('');
+      } else {
+        locationOptions = `<option value="${place}">${place}</option>`;
+      }
+
+      // بناء نموذج التعديل داخل الكارت
       detailsBody.innerHTML = `
         <div class="edit-detail-row">
           <span class="edit-detail-label">سيارة</span>
-          <span class="edit-detail-value">${car}</span>
+          <input class="edit-detail-input" id="boxCar" value="${car}">
         </div>
         <div class="edit-detail-row">
           <span class="edit-detail-label">البيان</span>
-          <span class="edit-detail-value">${desc}</span>
+          <input class="edit-detail-input" id="boxVariant" value="${desc}">
         </div>
         <div class="edit-detail-row">
           <span class="edit-detail-label">الوكيل</span>
-          <span class="edit-detail-value">${dealer}</span>
+          <input class="edit-detail-input" id="boxDealer" value="${dealer}">
+        </div>
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">اللون الخارجي</span>
+          <input class="edit-detail-input" id="boxExtColor" value="${extCol}">
+        </div>
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">اللون الداخلي</span>
+          <input class="edit-detail-input" id="boxIntColor" value="${intCol}">
+        </div>
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">موديل</span>
+          <input class="edit-detail-input" id="boxModelYear" value="${model}">
+        </div>
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">اللوحة</span>
+          <input class="edit-detail-input" id="boxPlate" value="${plate}">
         </div>
         <div class="edit-detail-row">
           <span class="edit-detail-label">المكان</span>
-          <span class="edit-detail-value">${place}</span>
+          <select class="edit-detail-select" id="boxLocation">
+            ${locationOptions}
+          </select>
+        </div>
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">اسم الدفعة</span>
+          <input class="edit-detail-input" id="boxBatchName" value="${batch}">
         </div>
         <div class="edit-detail-row">
           <span class="edit-detail-label">رقم الهيكل</span>
-          <span class="edit-detail-value">${vin}</span>
+          <input class="edit-detail-input" id="boxVin" value="${vin}">
         </div>
-        ${extCol || intCol ? `
-        <div class="edit-detail-row">
-          <span class="edit-detail-label">الألوان</span>
-          <span class="edit-detail-value">${extCol} / ${intCol}</span>
-        </div>` : ""}
-        ${model ? `
-        <div class="edit-detail-row">
-          <span class="edit-detail-label">الموديل</span>
-          <span class="edit-detail-value">${model}</span>
-        </div>` : ""}
-        ${plate ? `
-        <div class="edit-detail-row">
-          <span class="edit-detail-label">اللوحة</span>
-          <span class="edit-detail-value">${plate}</span>
-        </div>` : ""}
-        ${batch ? `
-        <div class="edit-detail-row">
-          <span class="edit-detail-label">اسم الدفعة</span>
-          <span class="edit-detail-value">${batch}</span>
-        </div>` : ""}
-        ${note ? `
         <div class="edit-detail-row">
           <span class="edit-detail-label">ملاحظات</span>
-          <span class="edit-detail-value">${note}</span>
-        </div>` : ""}
+          <textarea class="edit-detail-textarea" id="boxNotes">${note}</textarea>
+        </div>
       `;
 
-      actionsContainer.innerHTML = actions;
+      // أزرار حفظ / إلغاء داخل الكارت
+      actionsContainer.innerHTML = `
+        <div class="cell-actions">
+          <button class="btn btn-primary" id="btnSaveBox">حفظ التعديلات</button>
+          <button class="btn btn-ghost" id="btnCancelBox">إلغاء</button>
+        </div>
+      `;
+
       detailsCard.style.display = "block";
       // Scroll للبطاقة عشان تبان للمستخدم
       detailsCard.scrollIntoView({ behavior: "smooth", block: "start" });
 
-      // 🔧 ربط أزرار التعديل/الحذف داخل الكارت بالأزرار الأصلية في الصف
-      try {
-        const actionButtons = actionsContainer.querySelectorAll("button[data-edit], button[data-del]");
-        actionButtons.forEach((btn) => {
-          btn.addEventListener("click", function (ev) {
-            ev.preventDefault();
-            ev.stopPropagation();
-            const editId = btn.getAttribute("data-edit");
-            const delId  = btn.getAttribute("data-del");
-            let selector = null;
-            if (editId) {
-              selector = 'button[data-edit="' + editId + '"]';
-            } else if (delId) {
-              selector = 'button[data-del="' + delId + '"]';
-            }
-            if (!selector) return;
-            const originalBtn = table.querySelector(selector);
-            if (originalBtn) {
-              originalBtn.click();
-              const row = originalBtn.closest("tr");
-              if (row) {
-                row.scrollIntoView({ behavior: "smooth", block: "center" });
-              }
-            }
-          });
-        });
-      } catch(e) {}
+      const inpCar       = detailsBody.querySelector('#boxCar');
+      const inpVariant   = detailsBody.querySelector('#boxVariant');
+      const inpDealer    = detailsBody.querySelector('#boxDealer');
+      const inpExtColor  = detailsBody.querySelector('#boxExtColor');
+      const inpIntColor  = detailsBody.querySelector('#boxIntColor');
+      const inpModelYear = detailsBody.querySelector('#boxModelYear');
+      const inpPlate     = detailsBody.querySelector('#boxPlate');
+      const selLocation  = detailsBody.querySelector('#boxLocation');
+      const inpBatchName = detailsBody.querySelector('#boxBatchName');
+      const inpVin       = detailsBody.querySelector('#boxVin');
+      const taNotes      = detailsBody.querySelector('#boxNotes');
+
+      const btnSaveBox   = actionsContainer.querySelector('#btnSaveBox');
+      const btnCancelBox = actionsContainer.querySelector('#btnCancelBox');
+
+      if (btnCancelBox){
+        btnCancelBox.onclick = function(ev){
+          ev.preventDefault();
+          detailsCard.style.display = "none";
+        };
+      }
+
+      if (btnSaveBox){
+        btnSaveBox.onclick = function(ev){
+          ev.preventDefault();
+          if (!id) return;
+          const idx = stock.findIndex(r => Number(r.id) === id);
+          if (idx < 0) return;
+          const recToUpdate = stock[idx];
+
+          recToUpdate.car       = (inpCar.value || '').trim();
+          recToUpdate.variant   = (inpVariant.value || '').trim();
+          recToUpdate.dealer    = (inpDealer.value || '').trim();
+          recToUpdate.extColor  = (inpExtColor.value || '').trim();
+          recToUpdate.intColor  = (inpIntColor.value || '').trim();
+          recToUpdate.modelYear = (inpModelYear.value || '').trim();
+          recToUpdate.plate     = (inpPlate.value || '').trim();
+          recToUpdate.location  = selLocation ? (selLocation.value || '').trim() : recToUpdate.location;
+          recToUpdate.batchName = (inpBatchName.value || '').trim();
+          recToUpdate.vin       = normalizeVin(inpVin.value || '');
+          recToUpdate.notes     = (taNotes.value || '').trim();
+
+          stock[idx] = recToUpdate;
+          persistAll();
+          renderTable();
+          showToast('تم تعديل السيارة من البوكس ✅','ok');
+          detailsCard.style.display = "none";
+        };
+      }
     }
 
-    table.addEventListener("click", function(ev){
+table.addEventListener("click", function(ev){
       const tr = ev.target.closest("tbody tr");
       if (!tr) return;
       buildDetailsFromRow(tr);
