@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -570,10 +571,11 @@
     </div>
     <div class="body">
 
-      <!-- التابات الداخلية: إنشاء طلب / إدارة الطلبات -->
+      <!-- التابات الداخلية: إنشاء طلب / إدارة الطلبات / الطلبات المكتملة -->
       <div class="inner-tabs">
-        <button type="button" class="inner-tab active" data-tab="tab-create">إنشاء طلب</button>
-        <button type="button" class="inner-tab" data-tab="tab-manage">إدارة الطلبات</button>
+        <button type="button" class="inner-tab active" data-tab="tab-create" data-mode="create">إنشاء طلب</button>
+        <button type="button" class="inner-tab" data-tab="tab-manage" data-mode="manage">إدارة الطلبات</button>
+        <button type="button" class="inner-tab" data-tab="tab-manage" data-mode="completed">الطلبات المكتملة</button>
       </div>
 
       <!-- تاب إنشاء طلب (تصوير + نقل) -->
@@ -758,6 +760,9 @@
       <button class="btn ghost btn-mini" data-close-req-modal>إغلاق</button>
       <button id="btnMarkPrepared" class="btn secondary btn-mini">
         <i class="fa-solid fa-circle-check"></i> تم التجهيز للتصوير
+      </button>
+      <button id="btnMarkShootDone" class="btn btn-mini">
+        <i class="fa-solid fa-check-double"></i> تم التصوير
       </button>
       <button id="btnMarkReceived" class="btn beige btn-mini">
         <i class="fa-solid fa-clipboard-check"></i> تأكيد استلام الطلب
@@ -989,17 +994,35 @@ function applyTabsVisibility(role){
     return v.toString().replace(/[٠-٩]/g,d=>ar[d]).toUpperCase().replace(/[\s\-\._]/g,'').trim();
   }
 
-  /* ===== التابات الداخلية داخل لوحة الطلبات (إنشاء / إدارة) ===== */
+  /* ===== التابات الداخلية داخل لوحة الطلبات (إنشاء / إدارة / مكتملة) ===== */
+  window._viewMode = 'manage'; // الوضع الافتراضي لجدول الطلبات
+
   const innerTabsEls = Array.from(document.querySelectorAll('.inner-tab'));
   const tabPanesEls  = Array.from(document.querySelectorAll('.tab-pane'));
+
   innerTabsEls.forEach(btn=>{
     btn.addEventListener('click', ()=>{
+      // تحديث مظهر الأزرار
       innerTabsEls.forEach(b=>b.classList.remove('active'));
-      tabPanesEls.forEach(p=>p.classList.remove('active'));
       btn.classList.add('active');
-      const id = btn.getAttribute('data-tab');
-      const pane = document.getElementById(id);
-      if(pane) pane.classList.add('active');
+
+      const targetId = btn.getAttribute('data-tab');
+      const mode = btn.getAttribute('data-mode') || 'manage';
+
+      // إظهار/إخفاء التابات الرئيسية
+      tabPanesEls.forEach(p=>{
+        if(p.id === targetId){
+          p.classList.add('active');
+        }else{
+          p.classList.remove('active');
+        }
+      });
+
+      // لو دخلنا على تاب إدارة الطلبات نحدد وضع العرض (جديدة / مكتملة)
+      if(targetId === 'tab-manage'){
+        window._viewMode = mode;
+        if(typeof render === 'function') render();
+      }
     });
   });
 
@@ -1345,14 +1368,17 @@ function applyTabsVisibility(role){
       ...moveRequests .map(r=>({kind:'move',  data:r}))
     ];
 
+    // فلترة حسب الحالة المختارة من القائمة
     if(s){
       list = list.filter(x=> (x.data.status||'')===s);
     }
 
+    // فلترة بالتاريخ
     if(fromD || toD){
       list = list.filter(x=> inRange(x.data.createdAt||'', fromD, toD));
     }
 
+    // فلترة بالنص (بحث حر)
     if(q){
       list = list.filter(x=>{
         const r = x.data;
@@ -1361,10 +1387,22 @@ function applyTabsVisibility(role){
       });
     }
 
+    // فلترة حسب نوع الطلب (تصوير / نقل)
     const kindFilter = window._kindFilter || '';
     if(kindFilter==='shoot') list = list.filter(x=>x.kind==='shoot');
     if(kindFilter==='move')  list = list.filter(x=>x.kind==='move');
 
+    // فلترة حسب وضع العرض (إدارة الطلبات = جديدة / الطلبات المكتملة)
+    const viewMode = window._viewMode || 'manage';
+    if(viewMode === 'manage'){
+      // إدارة الطلبات: استبعاد الطلبات المكتملة (تم / منفّذ)
+      list = list.filter(x=> !['تم','منفّذ'].includes(x.data.status || ''));
+    }else if(viewMode === 'completed'){
+      // الطلبات المكتملة: عرض الطلبات المنتهية فقط
+      list = list.filter(x=> ['تم','منفّذ'].includes(x.data.status || ''));
+    }
+
+    // ترتيب من الأحدث إلى الأقدم
     list.sort((a,b)=>{
       const da = a.data.createdAt||'';
       const db = b.data.createdAt||'';
@@ -1498,6 +1536,19 @@ function applyTabsVisibility(role){
     $('#btnMarkReceived').onclick = async ()=>{
       await markReceived(r.id, kind);
     };
+
+    const doneBtn = $('#btnMarkShootDone');
+    if(doneBtn){
+      if(kind === 'shoot'){
+        doneBtn.style.display = '';
+        doneBtn.disabled = (r.status === 'تم');
+        doneBtn.onclick = async ()=>{
+          await markShootDone(r.id);
+        };
+      }else{
+        doneBtn.style.display = 'none';
+      }
+    }
   }
 
   function closeReqModal(){
@@ -1549,6 +1600,28 @@ function applyTabsVisibility(role){
       { requestId: r.id, entityType:'photoshoot_request' }
     );
     showToast('تم تسجيل التجهيز للتصوير');
+  }
+
+  async function markShootDone(id){
+    const idx  = shootRequests.findIndex(r=> String(r.id)===String(id));
+    if(idx===-1) return;
+    const r = shootRequests[idx];
+    if(!r.admin) r.admin = {};
+    if(!r.admin.prepared){
+      // لو لسه متسجلش تجهيز نخليه بنفس وقت الإغلاق
+      r.admin.prepared = now();
+    }
+    r.status = 'تم';
+    await persistAll();
+    metrics();
+    render();
+    fillReqModal('shoot', r);
+    await logActivity(
+      'تسجيل إتمام التصوير',
+      `تم تأكيد إتمام تصوير السيارات لطلب التصوير رقم ${r.id}`,
+      { requestId: r.id, entityType:'photoshoot_request' }
+    );
+    showToast('تم تسجيل إتمام التصوير');
   }
 
   function openMoveModal(mr){
@@ -1623,10 +1696,7 @@ function applyTabsVisibility(role){
     const mr = moveRequests[idx];
 
     const ap = mr.approvals||{};
-    if(ap.adminApproved!==true || ap.financeApproved!==true){
-      showToast('لا يمكن تنفيذ النقل قبل اكتمال الموافقات الإدارية والمالية');
-      return;
-    }
+    // تم السماح بتنفيذ النقل بدون التحقق من الموافقات الإدارية والمالية بناءً على طلب الإدارة.
 
     const rows = Array.isArray(mr.rows)?mr.rows:[];
     let updatedCount = 0;
