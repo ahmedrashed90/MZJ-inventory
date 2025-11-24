@@ -202,7 +202,7 @@
     display:none;
   }
 
-  /* تكيف الجداول مع شاشة الموبايل بدون سكرول أفقي */
+  /* تكيف الجداول مع شاشة الموبايل بدون سكرول أفقي (ما عدا تبويب تعديل السيارات) */
   @media (max-width: 768px){
     .table-wrap{
       overflow-x:hidden;
@@ -221,20 +221,26 @@
     .nowrap{
       white-space:normal;
     }
-    /* تخصيص أكبر لجدول تعديل السيارات علشان يمنع الاسكرول */
-    #carsTable{
-      table-layout:fixed;
-      width:100%;
+
+    /* رجوع تبويب تعديل السيارات لحجمه الأصلي حتى لو في سكرول أفقي */
+    #tab-edit .table-wrap{
+      overflow-x:auto;
     }
-    #carsTable th,
-    #carsTable td{
-      font-size:10px;
-      padding:4px 3px;
+    #tab-edit table{
+      font-size:13px;
     }
-    #carsTable th,
-    #carsTable td{
-      word-wrap:break-word;
-      white-space:normal;
+    #tab-edit thead th,
+    #tab-edit tbody td{
+      padding:10px 10px;
+    }
+    #tab-edit .w-120{
+      min-width:120px;
+    }
+    #tab-edit .w-160{
+      min-width:160px;
+    }
+    #tab-edit .nowrap{
+      white-space:nowrap;
     }
   }
 </style>
