@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -293,7 +292,7 @@ body{opacity:0}
         </table>
       </div>
 
-      <!-- جدول طلبات التصوير -->
+      <!-- جدول طلبات التصوير + النقل -->
       <div id="tableShootWrap" class="table-wrap" style="display:none">
         <table id="modalTableShoot">
           <thead>
@@ -437,12 +436,11 @@ body{opacity:0}
   }
 
   /* ===== Helpers ===== */
-function liftNoFlash(){
-  const nf = document.getElementById('noFlash');
-  if(nf) nf.remove();
-  document.body.style.opacity = '1';
-}
-
+  function liftNoFlash(){
+    const nf = document.getElementById('noFlash');
+    if(nf) nf.remove();
+    document.body.style.opacity = '1';
+  }
 
   const $ = s => document.querySelector(s);
   const toast = $('#toast');
@@ -532,7 +530,7 @@ function liftNoFlash(){
       liftNoFlash();
     }
   });
-$('#btnLogin').addEventListener('click', async ()=>{
+  $('#btnLogin').addEventListener('click', async ()=>{
     $('#authHint').textContent='';
     try{ await signInWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
     catch(e){ $('#authHint').textContent='فشل تسجيل الدخول: '+(e?.message||e); }
@@ -657,7 +655,6 @@ $('#btnLogin').addEventListener('click', async ()=>{
   }
 
   /* ===== تصوير + نقل: إحصائيات + بطاقة ===== */
- 
   function shootStats(){
     // نفس أرقام كروت إدارة الطلبات (تصوير + نقل)
     const shootTotal = Array.isArray(shootRequests) ? shootRequests.length : 0;
@@ -673,14 +670,20 @@ $('#btnLogin').addEventListener('click', async ()=>{
 
     const inProg    = allList.filter(r => norm(r) === 'تحت الإجراء').length;
     const prepared  = allList.filter(r => norm(r) === 'تم التجهيز').length;
-    const reviewing = allList.filter(r => norm(r) === 'قيد المراجعة').length;
-    const done      = allList.filter(r => norm(r) === 'تم' || norm(r) === 'منفّذ').length;
+    // "تم الاستلام" بدل "قيد المراجعة" مع دعم البيانات القديمة
+    const reviewing = allList.filter(r => {
+      const s = norm(r);
+      return s === 'تم الاستلام' || s === 'قيد المراجعة';
+    }).length;
+    const done      = allList.filter(r => {
+      const s = norm(r);
+      return s === 'تم' || s === 'منفّذ';
+    }).length;
 
     return { total, shootTotal, moveTotal, inProg, prepared, reviewing, done };
   }
 
-
-function renderShootCard(gridEl){
+  function renderShootCard(gridEl){
     const st = shootStats();
     const card = document.createElement('div');
     card.className = 'card group-card';
@@ -710,9 +713,9 @@ function renderShootCard(gridEl){
               تم التجهيز:
               <b>${st.prepared.toLocaleString('ar-SA')}</b>
             </span>
-            <span class="metric shoot-metric" data-status="قيد المراجعة">
+            <span class="metric shoot-metric" data-status="تم الاستلام">
               <i class="fa-regular fa-hourglass-half"></i>
-              قيد المراجعة:
+              تم الاستلام:
               <b>${st.reviewing.toLocaleString('ar-SA')}</b>
             </span>
             <span class="metric shoot-metric" data-status="تم">
@@ -728,7 +731,7 @@ function renderShootCard(gridEl){
       </div>
     `;
 
-    // الضغط في أي مكان في الكارت (خارج المتريكس) يفتح تفاصيل كل طلبات التصوير
+    // الضغط في أي مكان في الكارت (خارج المتريكس) يفتح تفاصيل كل طلبات التصوير + النقل
     card.addEventListener('click', (ev)=> {
       if (ev.target.closest('.shoot-metric')) return;
       openShootModal('ALL');
@@ -745,8 +748,8 @@ function renderShootCard(gridEl){
           openShootModal('تحت الإجراء');
         } else if (status === 'تم التجهيز') {
           openShootModal('prepared');
-        } else if (status === 'قيد المراجعة') {
-          openShootModal('قيد المراجعة');
+        } else if (status === 'تم الاستلام') {
+          openShootModal('تم الاستلام');
         } else if (status === 'تم') {
           openShootModal('تم');
         } else {
@@ -758,9 +761,7 @@ function renderShootCard(gridEl){
     gridEl.appendChild(card);
   }
 
-
-
-/* ===== طلبات نقل السيارات: من moves ===== */
+  /* ===== طلبات نقل السيارات: من moves ===== */
   function isTransferPending(m){
     const toLoc = (m.to || m.toLocation || m.target || '').toString();
 
@@ -938,7 +939,7 @@ function renderShootCard(gridEl){
     currentMode = mode;
     modalTitle.textContent = title || (
       mode==='rows' ? 'السيارات' :
-      mode==='shoot' ? 'طلبات التصوير' :
+      mode==='shoot' ? 'طلبات التصوير والنقل' :
       mode==='transfers' ? 'طلبات نقل السيارات' :
       'النواقص — الفروع'
     );
@@ -1220,26 +1221,37 @@ function renderShootCard(gridEl){
     activateShortTab(key);
   });
 
-  /* ===== SHOOT modal ===== */
+  /* ===== SHOOT modal (تصوير + نقل) ===== */
   function matchesShootFilter(r, filter){
     if(filter==='ALL' || !filter) return true;
     if(filter==='received') return !!(r.admin && r.admin.received);
     if(filter==='prepared') return !!(r.admin && r.admin.prepared);
     if(filter==='done') return isShootDone(r);
+    if(filter==='تم الاستلام') {
+      const s = (r.status||'').toString().trim();
+      return s === 'تم الاستلام' || s === 'قيد المراجعة';
+    }
     return (r.status||'')===filter;
   }
 
   function openShootModal(filter='ALL'){
     currentShootFilter = filter;
-    currentShoot = shootRequests.slice().sort((a,b)=> Number(b.id) - Number(a.id));
+
+    // دمج طلبات التصوير + طلبات النقل في جدول واحد
+    const allRequests = [
+      ...(Array.isArray(shootRequests) ? shootRequests.map(r => ({...r, _type:'shoot'})) : []),
+      ...(Array.isArray(moveRequests)  ? moveRequests.map(r  => ({...r, _type:'move'}))  : [])
+    ];
+
+    currentShoot = allRequests.slice().sort((a,b)=> Number(b.id) - Number(a.id));
     filteredShoot = currentShoot.filter(r=> matchesShootFilter(r, currentShootFilter));
 
     let title;
-    if(filter==='ALL')          title='طلبات التصوير — الكل';
-    else if(filter==='received')title='طلبات التصوير — استلام إداري';
-    else if(filter==='prepared')title='طلبات التصوير — تم التجهيز';
-    else if(filter==='done')    title='طلبات التصوير — تم التصوير';
-    else                        title=`طلبات التصوير — ${filter}`;
+    if(filter==='ALL')          title='طلبات التصوير والنقل — الكل';
+    else if(filter==='received')title='طلبات التصوير والنقل — استلام إداري';
+    else if(filter==='prepared')title='طلبات التصوير والنقل — تم التجهيز';
+    else if(filter==='done')    title='طلبات التصوير والنقل — تم التصوير';
+    else                        title=`طلبات التصوير والنقل — ${filter}`;
 
     if(shootDetailsBox) shootDetailsBox.style.display='none';
     openModal('shoot', title);
@@ -1249,6 +1261,13 @@ function renderShootCard(gridEl){
     modalTableShootBody.innerHTML='';
     filteredShoot.forEach(r=>{
       const tr=document.createElement('tr');
+      const detailsCell = (r._type === 'shoot')
+        ? `
+          <button class="btn btn-outline" data-view-id="${String(r.id)}" title="عرض تفاصيل الطلب">
+            <i class="fa-solid fa-up-right-from-square"></i> تفاصيل
+          </button>
+        `
+        : '—';
       tr.innerHTML = `
         <td>#${r.id}</td>
         <td>${r.createdAt||''}</td>
@@ -1258,11 +1277,7 @@ function renderShootCard(gridEl){
         <td>${r?.admin?.received? '✅ '+r.admin.received : '—'}</td>
         <td>${r?.admin?.prepared? '✅ '+r.admin.prepared : '—'}</td>
         <td>${r?.admin?.notes||''}</td>
-        <td>
-          <button class="btn btn-outline" data-view-id="${String(r.id)}" title="عرض تفاصيل الطلب">
-            <i class="fa-solid fa-up-right-from-square"></i> تفاصيل
-          </button>
-        </td>
+        <td>${detailsCell}</td>
       `;
       modalTableShootBody.appendChild(tr);
     });
@@ -1574,6 +1589,3 @@ function renderShootCard(gridEl){
 </script>
 </body>
 </html>
-
-
-
