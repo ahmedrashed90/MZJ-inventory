@@ -162,21 +162,19 @@
   .copyable{cursor:pointer;text-decoration:underline;text-decoration-style:dotted}
 
   .inner-tabs{
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
+    display:flex;
+    flex-wrap:wrap;
     gap:8px;
     margin-bottom:16px;
   }
   .inner-tab{
     border:1px solid var(--line);
     background:#fff;
-    padding:8px 10px;
+    padding:6px 14px;
     border-radius:999px;
-    font-size:13px;
+    font-size:14px;
     cursor:pointer;
     color:var(--text);
-    font-weight:800;
-    text-align:center;
   }
   .inner-tab.active{
     background:var(--brown);
@@ -202,46 +200,76 @@
     display:none;
   }
 
-  /* تكيف الجداول مع شاشة الموبايل بدون سكرول أفقي (ما عدا تبويب تعديل السيارات) */
+  /* موبايل: تنسيق خاص لتبويب تعديل السيارات (جدول خفيف + كارت تفاصيل) */
   @media (max-width: 768px){
-    .table-wrap{
-      overflow-x:hidden;
-    }
-    table{
-      font-size:11px;
-    }
-    thead th,
-    tbody td{
-      padding:6px 4px;
-    }
-    .w-120,
-    .w-160{
-      min-width:0;
-    }
-    .nowrap{
-      white-space:normal;
+    /* إخفاء الأعمدة الثانوية في جدول تعديل السيارات */
+    #tab-edit table#carsTable th:nth-child(4),
+    #tab-edit table#carsTable td:nth-child(4), /* اللون الخارجي */
+    #tab-edit table#carsTable th:nth-child(5),
+    #tab-edit table#carsTable td:nth-child(5), /* اللون الداخلي */
+    #tab-edit table#carsTable th:nth-child(6),
+    #tab-edit table#carsTable td:nth-child(6), /* موديل */
+    #tab-edit table#carsTable th:nth-child(7),
+    #tab-edit table#carsTable td:nth-child(7), /* اللوحة */
+    #tab-edit table#carsTable th:nth-child(9),
+    #tab-edit table#carsTable td:nth-child(9), /* اسم الدفعة */
+    #tab-edit table#carsTable th:nth-child(11),
+    #tab-edit table#carsTable td:nth-child(11), /* الملاحظات */
+    #tab-edit table#carsTable th:nth-child(12),
+    #tab-edit table#carsTable td:nth-child(12) /* تحكم (أزرار) */
+    {
+      display:none;
     }
 
-    /* رجوع تبويب تعديل السيارات لحجمه الأصلي حتى لو في سكرول أفقي */
     #tab-edit .table-wrap{
-      overflow-x:auto;
+      overflow-x:hidden;
     }
-    #tab-edit table{
-      font-size:13px;
+    #tab-edit table#carsTable{
+      width:100%;
+      font-size:11px;
     }
     #tab-edit thead th,
     #tab-edit tbody td{
-      padding:10px 10px;
+      padding:6px 4px;
+      white-space:normal;
     }
-    #tab-edit .w-120{
-      min-width:120px;
-    }
-    #tab-edit .w-160{
-      min-width:160px;
-    }
-    #tab-edit .nowrap{
-      white-space:nowrap;
-    }
+  }
+
+  /* كارت تفاصيل السيارة المختارة في تبويب تعديل السيارات */
+  .edit-details-card{
+    margin-top:10px;
+  }
+  .edit-details-card .card{
+    border-style:dashed;
+  }
+  .edit-details-card .card-body{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    font-size:12px;
+  }
+  .edit-detail-row{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+  }
+  .edit-detail-label{
+    color:var(--muted);
+    font-weight:500;
+  }
+  .edit-detail-value{
+    font-weight:700;
+    color:var(--text);
+    text-align:left;
+    direction:ltr;
+  }
+  .edit-card-actions{
+    margin-top:10px;
+    padding-top:8px;
+    border-top:1px dashed var(--line);
+    display:flex;
+    flex-direction:column;
+    gap:6px;
   }
 </style>
 <style id="noFlash">
@@ -854,6 +882,27 @@
 <tbody></tbody>
 </table>
 </div>
+<div id="editCarDetailsCard" class="edit-details-card" style="display:none">
+  <div class="card">
+    <div class="card-header">
+      <div class="section-title">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <h3 style="margin:0">تفاصيل السيارة المختارة</h3>
+      </div>
+      <button class="btn btn-ghost" id="btnCloseEditDetails" type="button" style="font-size:12px;padding:4px 10px">
+        إخفاء
+      </button>
+    </div>
+    <div class="card-body" id="editCarDetailsBody">
+      <!-- يتم تعبئة التفاصيل عند اختيار صف من الجدول -->
+    </div>
+    <div class="edit-card-actions">
+      <span class="hint">أزرار التحكم من نفس الصف:</span>
+      <div id="editCarActionsContainer"></div>
+    </div>
+  </div>
+</div>
+
 <p class="hint">الحفظ يتم مباشرة على Firestore.</p>
 </div>
 </div>
@@ -2163,6 +2212,103 @@ if(!movedCount){
       closeDrawer();
     }
   });
+</script>
+
+<script>
+  // كارت تفاصيل تبويب تعديل السيارات (نسخة الموبايل)
+  (function(){
+    const tabEdit = document.getElementById("tab-edit");
+    const table = document.getElementById("carsTable");
+    const detailsCard = document.getElementById("editCarDetailsCard");
+    const detailsBody = document.getElementById("editCarDetailsBody");
+    const actionsContainer = document.getElementById("editCarActionsContainer");
+    const btnClose = document.getElementById("btnCloseEditDetails");
+
+    if (!tabEdit || !table || !detailsCard || !detailsBody || !actionsContainer) return;
+
+    function buildDetailsFromRow(tr){
+      const cells = Array.from(tr.children);
+      const get = (i) => (cells[i] && cells[i].textContent.trim()) || "";
+
+      const car     = get(0); // سيارة
+      const desc    = get(1); // البيان
+      const dealer  = get(2); // الوكيل
+      const extCol  = get(3); // اللون الخارجي
+      const intCol  = get(4); // اللون الداخلي
+      const model   = get(5); // موديل
+      const plate   = get(6); // اللوحة
+      const place   = get(7); // المكان
+      const batch   = get(8); // اسم الدفعة
+      const vin     = get(9); // رقم الهيكل
+      const note    = get(10); // الملاحظات
+      const actions = cells[11] ? cells[11].innerHTML : "";
+
+      detailsBody.innerHTML = `
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">سيارة</span>
+          <span class="edit-detail-value">${car}</span>
+        </div>
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">البيان</span>
+          <span class="edit-detail-value">${desc}</span>
+        </div>
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">الوكيل</span>
+          <span class="edit-detail-value">${dealer}</span>
+        </div>
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">المكان</span>
+          <span class="edit-detail-value">${place}</span>
+        </div>
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">رقم الهيكل</span>
+          <span class="edit-detail-value">${vin}</span>
+        </div>
+        ${extCol || intCol ? `
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">الألوان</span>
+          <span class="edit-detail-value">${extCol} / ${intCol}</span>
+        </div>` : ""}
+        ${model ? `
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">الموديل</span>
+          <span class="edit-detail-value">${model}</span>
+        </div>` : ""}
+        ${plate ? `
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">اللوحة</span>
+          <span class="edit-detail-value">${plate}</span>
+        </div>` : ""}
+        ${batch ? `
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">اسم الدفعة</span>
+          <span class="edit-detail-value">${batch}</span>
+        </div>` : ""}
+        ${note ? `
+        <div class="edit-detail-row">
+          <span class="edit-detail-label">ملاحظات</span>
+          <span class="edit-detail-value">${note}</span>
+        </div>` : ""}
+      `;
+
+      actionsContainer.innerHTML = actions;
+      detailsCard.style.display = "block";
+      // Scroll للبطاقة عشان تبان للمستخدم
+      detailsCard.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    table.addEventListener("click", function(ev){
+      const tr = ev.target.closest("tbody tr");
+      if (!tr) return;
+      buildDetailsFromRow(tr);
+    });
+
+    if (btnClose){
+      btnClose.addEventListener("click", function(){
+        detailsCard.style.display = "none";
+      });
+    }
+  })();
 </script>
 </body>
 
