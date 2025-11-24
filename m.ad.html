@@ -1,5 +1,5 @@
-<!DOCTYPE html>
 
+<!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
 <meta charset="utf-8"/>
@@ -206,60 +206,352 @@
 </style>
 
 <style>
-/* === تعديلات نسخة التليفون (بدون أي تغيير في الهيكل أو الجافاسكربت) === */
-@media (max-width: 768px) {
-  body {
-    background: radial-gradient(circle at top, #3b221d 0, #050609 55%, #000 100%);
+  .mobile-shell{
+    width:100%;
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    background:radial-gradient(circle at top left, rgba(252,211,77,.12), transparent 55%) #020617;
+    border-left:1px solid rgba(15,23,42,.95);
+    border-right:1px solid rgba(15,23,42,.95);
   }
-  .container {
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 8px 8px 16px !important;
+  .topbar-mobile{
+    position:sticky;
+    top:0;
+    z-index:20;
+    background:rgba(2,6,23,.96);
+    backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(30,64,175,.45);
   }
-  table {
-    font-size: 11px !important;
+  .topbar-inner-mobile{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 14px;
+    gap:10px;
   }
-  th, td {
-    padding: 4px 6px !important;
-    white-space: nowrap;
+  .topbar-brand-mobile{
+    display:flex;
+    align-items:center;
+    gap:8px;
   }
-  .cards-row, .flex-row, .row {
-    flex-direction: column !important;
-    gap: 8px !important;
+  .brand-mark-mobile{
+    width:26px;
+    height:26px;
+    border-radius:999px;
+    background:radial-gradient(circle at 30% 0,#facc6b,#b45309 45%,#111827 100%);
+    display:grid;
+    place-items:center;
+    font-size:13px;
+    font-weight:800;
+    color:#111827;
+    box-shadow:0 0 18px rgba(250,204,21,.9);
   }
-  .card, .box, .panel {
-    width: 100% !important;
+  .brand-text-mobile{
+    display:flex;
+    flex-direction:column;
+    gap:1px;
   }
-}
+  .brand-text-mobile .main{
+    font-size:13px;
+    color:#f9fafb;
+    font-weight:700;
+  }
+  .brand-text-mobile .sub{
+    font-size:10px;
+    color:#9ca3af;
+  }
+  .topbar-actions-mobile{
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .chip-live-mobile{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    padding:3px 8px;
+    border-radius:999px;
+    border:1px solid rgba(55,65,81,1);
+    background:rgba(15,23,42,.98);
+    font-size:10px;
+    color:#e5e7eb;
+  }
+  .chip-live-dot-mobile{
+    width:8px;
+    height:8px;
+    border-radius:999px;
+    background:#22c55e;
+    box-shadow:0 0 10px rgba(34,197,94,.95);
+  }
+  .btn-icon-mobile{
+    border:none;
+    outline:none;
+    padding:7px 9px;
+    border-radius:999px;
+    background:rgba(15,23,42,.96);
+    border:1px solid rgba(55,65,81,.95);
+    color:#e5e7eb;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease;
+  }
+  .btn-icon-mobile:hover{
+    background:rgba(15,23,42,1);
+    border-color:rgba(148,163,184,.9);
+    box-shadow:0 10px 28px rgba(0,0,0,.8);
+  }
+  .btn-icon-mobile:active{
+    transform:scale(.96);
+    box-shadow:none;
+  }
+  .mobile-content{
+    flex:1;
+    position:relative;
+    overflow:hidden;
+  }
+  .mobile-scroll{
+    height:100%;
+    overflow-y:auto;
+    padding:10px 10px 14px;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(148,163,184,.8) transparent;
+  }
+  .mobile-scroll::-webkit-scrollbar{
+    width:6px;
+  }
+  .mobile-scroll::-webkit-scrollbar-track{
+    background:transparent;
+  }
+  .mobile-scroll::-webkit-scrollbar-thumb{
+    background:rgba(148,163,184,.8);
+    border-radius:999px;
+  }
+  .drawer-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,.7);
+    backdrop-filter:blur(4px);
+    z-index:40;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .18s ease-out;
+  }
+  .drawer-backdrop.visible{
+    opacity:1;
+    pointer-events:auto;
+  }
+  .drawer-panel{
+    position:fixed;
+    top:0;
+    right:0;
+    height:100vh;
+    width:min(280px,82vw);
+    background:radial-gradient(circle at top left, rgba(250,204,21,.15), transparent 55%) #020617;
+    box-shadow:-12px 0 40px rgba(0,0,0,.9);
+    border-left:1px solid rgba(30,64,175,.55);
+    z-index:50;
+    display:flex;
+    flex-direction:column;
+    transform:translateX(100%);
+    transition:transform .22s cubic-bezier(.22,.61,.36,1);
+  }
+  .drawer-panel.open{
+    transform:translateX(0);
+  }
+  .drawer-header{
+    padding:12px 14px 8px;
+    border-bottom:1px solid rgba(31,41,55,1);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+  }
+  .drawer-title{
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+  .drawer-title .main{
+    font-size:14px;
+    font-weight:700;
+    color:#f9fafb;
+  }
+  .drawer-title .sub{
+    font-size:11px;
+    color:#9ca3af;
+  }
+  .drawer-close-btn{
+    border:none;
+    outline:none;
+    padding:6px 8px;
+    border-radius:999px;
+    background:rgba(15,23,42,.98);
+    border:1px solid rgba(55,65,81,.95);
+    color:#e5e7eb;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:14px;
+    cursor:pointer;
+    transition:background .12s ease, transform .12s ease, box-shadow .12s ease;
+  }
+  .drawer-close-btn:hover{
+    background:rgba(15,23,42,1);
+    box-shadow:0 10px 26px rgba(0,0,0,.85);
+  }
+  .drawer-close-btn:active{
+    transform:scale(.96);
+    box-shadow:none;
+  }
+  .drawer-body{
+    flex:1;
+    overflow-y:auto;
+    padding:8px 8px 12px;
+  }
+  .drawer-section-label{
+    margin:4px 4px 6px;
+    font-size:11px;
+    color:#9ca3af;
+  }
+  .menu-list{
+    list-style:none;
+    padding:0;
+    margin:0;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .menu-item{border-radius:999px;overflow:hidden;}
+  .menu-link{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:6px;
+    padding:8px 10px;
+    font-size:13px;
+    color:#e5e7eb;
+    text-decoration:none;
+    background:rgba(15,23,42,.96);
+    border:1px solid rgba(51,65,85,1);
+    transition:background .12s ease, border-color .12s ease, transform .1s ease, box-shadow .12s ease;
+  }
+  .menu-link-main{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+  }
+  .menu-icon{
+    width:22px;
+    height:22px;
+    border-radius:999px;
+    background:radial-gradient(circle at 30% 0,#facc6b,#b45309 60%,#111827 100%);
+    display:grid;
+    place-items:center;
+    font-size:12px;
+    color:#111827;
+    box-shadow:0 0 10px rgba(250,204,21,.85);
+  }
+  .menu-text-main{
+    display:flex;
+    flex-direction:column;
+    gap:1px;
+  }
+  .menu-text-main .title{
+    font-size:13px;
+    font-weight:600;
+  }
+  .menu-text-main .desc{
+    font-size:10px;
+    color:#9ca3af;
+  }
+  .menu-link-arrow{
+    font-size:12px;
+    color:#9ca3af;
+  }
+  .menu-link:hover{
+    background:rgba(15,23,42,1);
+    border-color:rgba(148,163,184,.9);
+    transform:translateY(-1px);
+    box-shadow:0 12px 30px rgba(0,0,0,.95);
+  }
+  .menu-link.active{
+    background:radial-gradient(circle at top left, rgba(250,204,21,.2), transparent 55%) #0b1120;
+    border-color:rgba(250,204,21,.85);
+    box-shadow:0 0 18px rgba(250,204,21,.45),0 14px 36px rgba(0,0,0,.95);
+  }
+  .menu-link.logout{
+    background:rgba(127,29,29,.96);
+    border-color:rgba(248,113,113,.9);
+  }
+  .menu-link.logout:hover{
+    background:rgba(153,27,27,1);
+    box-shadow:0 14px 34px rgba(127,29,29,.95);
+  }
+  .drawer-footer{
+    padding:8px 10px 10px;
+    border-top:1px solid rgba(31,41,55,1);
+    font-size:10px;
+    color:#6b7280;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:6px;
+  }
+  .drawer-footer .label-strong{
+    color:#e5e7eb;
+  }
+  body.drawer-open{
+    overscroll-behavior:none;
+  }
+
+  /* صغّر container للموبايل */
+  @media (max-width: 768px){
+    .container{
+      max-width:100%;
+      padding-inline:0;
+      margin-inline:0;
+    }
+  }
 </style>
 
 </head>
+
 <body>
-<!-- Topbar -->
-<div class="topbar">
-<div class="topbar-inner">
-<div class="brand">
-<div class="logo" title="MZJ">MZJ</div>
-<div>
-<h1>لوحة إدارة السيارات</h1>
-<small class="hint">مجموعة محمد بن ذعار العجمي للسيارات</small>
-</div>
-</div>
-<div class="tabs">
-<a class="tab active" href="admin.html">الإدارة</a>
-<a class="tab" href="inventory.html">المخزون</a>
-<a class="tab" href="dashboard.html">الداش بورد</a>
-<a class="tab" href="vt.html">نقل السيارات</a>
-<a class="tab" href="photoshoot-user.html">إدارة الطلبات</a>
-<a class="tab" href="cars.html">كل السيارات</a>
-<a class="tab" href="Activity.html">سجل النشاط</a>
-</div>
-<div class="row">
-<div class="status-badge"><span class="dot warn" id="connDot"></span><span id="connText">جارِ الاتصال…</span></div>
-<button class="btn btn-ghost" id="btnSignOut" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
-</div>
-</div>
-</div>
+<div class="mobile-shell">
+  <!-- ===== Top Bar (Mobile) ===== -->
+  <header class="topbar-mobile">
+    <div class="topbar-inner-mobile">
+      <div class="topbar-brand-mobile">
+        <div class="brand-mark-mobile">★</div>
+        <div class="brand-text-mobile">
+          <span class="main">نجم الطريق</span>
+          <span class="sub">لوحة الإدارة · نسخة التليفون</span>
+        </div>
+      </div>
+      <div class="topbar-actions-mobile">
+        <div class="chip-live-mobile">
+          <span class="chip-live-dot-mobile" id="connDot"></span>
+          <span id="connText">جارِ الاتصال…</span>
+        </div>
+        <button class="btn btn-ghost" id="btnSignOut" style="display:none;font-size:11px;padding:4px 9px;margin-left:6px">
+          تسجيل الخروج
+        </button>
+        <button class="btn-icon-mobile" id="btnOpenDrawer" aria-label="فتح القائمة">
+          ☰
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== Content Area ===== -->
+  <main class="mobile-content">
+    <div class="mobile-scroll">
 <!-- Auth Gate -->
 <div class="auth-wrap" id="authGate">
 <div class="auth-card">
@@ -1679,7 +1971,155 @@ if(!movedCount){
   }
 
   </script>
-</div></body>
+</div>
+    </div>
+  </main>
+</div>
+
+<!-- ===== Drawer / Side Menu ===== -->
+<div class="drawer-backdrop" id="drawerBackdrop"></div>
+<aside class="drawer-panel" id="drawerPanel" aria-hidden="true">
+  <div class="drawer-header">
+    <div class="drawer-title">
+      <span class="main">قائمة الصفحات</span>
+      <span class="sub">اختر صفحة العمل التي تريد فتحها</span>
+    </div>
+    <button class="drawer-close-btn" id="btnCloseDrawer" aria-label="إغلاق القائمة">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section-label">الواجهة الرئيسية</div>
+    <ul class="menu-list">
+      <li class="menu-item">
+        <a href="dashboard-mobile.html" class="menu-link">
+          <div class="menu-link-main">
+            <div class="menu-icon">DB</div>
+            <div class="menu-text-main">
+              <span class="title">لوحة المؤشرات</span>
+              <span class="desc">نظرة سريعة على الطلبات والمخزون والأداء.</span>
+            </div>
+          </div>
+          <span class="menu-link-arrow">‹</span>
+        </a>
+      </li>
+      <li class="menu-item">
+        <a href="photoshoot-user-mobile.html" class="menu-link">
+          <div class="menu-link-main">
+            <div class="menu-icon">OR</div>
+            <div class="menu-text-main">
+              <span class="title">إدارة الطلبات</span>
+              <span class="desc">استلام، تجهيز، تصوير، نقل… خطوة بخطوة.</span>
+            </div>
+          </div>
+          <span class="menu-link-arrow">‹</span>
+        </a>
+      </li>
+      <li class="menu-item">
+        <a href="inventory-mobile.html" class="menu-link">
+          <div class="menu-link-main">
+            <div class="menu-icon">IN</div>
+            <div class="menu-text-main">
+              <span class="title">المخزون</span>
+              <span class="desc">كل السيارات حسب الفرع، الحالة، والألوان.</span>
+            </div>
+          </div>
+          <span class="menu-link-arrow">‹</span>
+        </a>
+      </li>
+      <li class="menu-item">
+        <a href="vt-mobile.html" class="menu-link">
+          <div class="menu-link-main">
+            <div class="menu-icon">MV</div>
+            <div class="menu-text-main">
+              <span class="title">نقل السيارات</span>
+              <span class="desc">نقل السيارات بين الفروع وحالة التنفيذ.</span>
+            </div>
+          </div>
+          <span class="menu-link-arrow">‹</span>
+        </a>
+      </li>
+      <li class="menu-item">
+        <a href="cars-mobile.html" class="menu-link">
+          <div class="menu-link-main">
+            <div class="menu-icon">CR</div>
+            <div class="menu-text-main">
+              <span class="title">كل السيارات</span>
+              <span class="desc">عرض شامل لكل السيارات المسجلة بالنظام.</span>
+            </div>
+          </div>
+          <span class="menu-link-arrow">‹</span>
+        </a>
+      </li>
+      <li class="menu-item">
+        <a href="admin-mobile.html" class="menu-link active">
+          <div class="menu-link-main">
+            <div class="menu-icon">AD</div>
+            <div class="menu-text-main">
+              <span class="title">لوحة الإدارة</span>
+              <span class="desc">صلاحيات المستخدمين وإعدادات النظام.</span>
+            </div>
+          </div>
+          <span class="menu-link-arrow">‹</span>
+        </a>
+      </li>
+    </ul>
+
+    <div class="drawer-section-label">جلسة العمل</div>
+    <ul class="menu-list">
+      <li class="menu-item">
+        <a href="#" class="menu-link logout">
+          <div class="menu-link-main">
+            <div class="menu-icon">⎋</div>
+            <div class="menu-text-main">
+              <span class="title">تسجيل الخروج</span>
+              <span class="desc">إنهاء الجلسة الحالية بأمان.</span>
+            </div>
+          </div>
+          <span class="menu-link-arrow">‹</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="drawer-footer">
+    <span>نسخة التليفون</span>
+    <span class="label-strong">MZJ Workspace · Mobile</span>
+  </div>
+</aside>
+
+<script>
+  const btnOpenDrawer = document.getElementById("btnOpenDrawer");
+  const btnCloseDrawer = document.getElementById("btnCloseDrawer");
+  const drawerPanel = document.getElementById("drawerPanel");
+  const drawerBackdrop = document.getElementById("drawerBackdrop");
+
+  function openDrawer() {
+    document.body.classList.add("drawer-open");
+    drawerPanel.classList.add("open");
+    drawerBackdrop.classList.add("visible");
+  }
+
+  function closeDrawer() {
+    document.body.classList.remove("drawer-open");
+    drawerPanel.classList.remove("open");
+    drawerBackdrop.classList.remove("visible");
+  }
+
+  if (btnOpenDrawer) {
+    btnOpenDrawer.addEventListener("click", openDrawer);
+  }
+  if (btnCloseDrawer) {
+    btnCloseDrawer.addEventListener("click", closeDrawer);
+  }
+  if (drawerBackdrop) {
+    drawerBackdrop.addEventListener("click", closeDrawer);
+  }
+
+  window.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape") {
+      closeDrawer();
+    }
+  });
+</script>
+</body>
+
 </html>
-
-
