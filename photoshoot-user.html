@@ -571,7 +571,7 @@
     </div>
     <div class="body">
 
-      <!-- التابات الداخلية: إنشاء طلب / إدارة الطلبات / الطلبات المكتملة -->
+      <!-- التابات الداخلية: إنشاء طلب / إدارة الطلبات -->
       <div class="inner-tabs">
         <button type="button" class="inner-tab active" data-tab="tab-create" data-mode="create">إنشاء طلب</button>
         <button type="button" class="inner-tab" data-tab="tab-manage" data-mode="manage">إدارة الطلبات</button>
@@ -760,9 +760,6 @@
       <button class="btn ghost btn-mini" data-close-req-modal>إغلاق</button>
       <button id="btnMarkPrepared" class="btn secondary btn-mini">
         <i class="fa-solid fa-circle-check"></i> تم التجهيز للتصوير
-      </button>
-      <button id="btnMarkShootDone" class="btn btn-mini">
-        <i class="fa-solid fa-check-double"></i> تم التصوير
       </button>
       <button id="btnMarkReceived" class="btn beige btn-mini">
         <i class="fa-solid fa-clipboard-check"></i> تأكيد استلام الطلب
@@ -995,21 +992,19 @@ function applyTabsVisibility(role){
   }
 
   /* ===== التابات الداخلية داخل لوحة الطلبات (إنشاء / إدارة / مكتملة) ===== */
-  window._viewMode = 'manage'; // الوضع الافتراضي لجدول الطلبات
+  window._viewMode = 'manage'; // الوضع الافتراضي: إدارة الطلبات (الطلبات الجديدة)
 
   const innerTabsEls = Array.from(document.querySelectorAll('.inner-tab'));
   const tabPanesEls  = Array.from(document.querySelectorAll('.tab-pane'));
 
   innerTabsEls.forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      // تحديث مظهر الأزرار
+      // تحديث حالة الأزرار
       innerTabsEls.forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
 
+      // إظهار/إخفاء البلوكات الرئيسية (إنشاء طلب / جدول الطلبات)
       const targetId = btn.getAttribute('data-tab');
-      const mode = btn.getAttribute('data-mode') || 'manage';
-
-      // إظهار/إخفاء التابات الرئيسية
       tabPanesEls.forEach(p=>{
         if(p.id === targetId){
           p.classList.add('active');
@@ -1018,10 +1013,11 @@ function applyTabsVisibility(role){
         }
       });
 
-      // لو دخلنا على تاب إدارة الطلبات نحدد وضع العرض (جديدة / مكتملة)
+      // تحديد وضع العرض للجدول (إدارة / مكتملة)
+      const mode = btn.getAttribute('data-mode') || 'manage';
       if(targetId === 'tab-manage'){
         window._viewMode = mode;
-        if(typeof render === 'function') render();
+        render();
       }
     });
   });
@@ -1392,13 +1388,13 @@ function applyTabsVisibility(role){
     if(kindFilter==='shoot') list = list.filter(x=>x.kind==='shoot');
     if(kindFilter==='move')  list = list.filter(x=>x.kind==='move');
 
-    // فلترة حسب وضع العرض (إدارة الطلبات = جديدة / الطلبات المكتملة)
+    // فلترة حسب وضع العرض (إدارة الطلبات = الجديدة فقط / الطلبات المكتملة)
     const viewMode = window._viewMode || 'manage';
     if(viewMode === 'manage'){
       // إدارة الطلبات: استبعاد الطلبات المكتملة (تم / منفّذ)
       list = list.filter(x=> !['تم','منفّذ'].includes(x.data.status || ''));
     }else if(viewMode === 'completed'){
-      // الطلبات المكتملة: عرض الطلبات المنتهية فقط
+      // التاب الجديد: عرض الطلبات المكتملة فقط (تم / منفّذ)
       list = list.filter(x=> ['تم','منفّذ'].includes(x.data.status || ''));
     }
 
@@ -1443,14 +1439,34 @@ function applyTabsVisibility(role){
       }
 
       let approvalsCell = '';
+      const viewMode = window._viewMode || 'manage';
       if(isMove){
-        const ap = r.approvals||{};
-        const a = ap.adminApproved;
-        const f = ap.financeApproved;
-        const map = v=> v===true?'✅ تمت':'⏳ بانتظار';
-        approvalsCell =
-          `إدارية: ${map(a)}\nمالية: ${map(f)}`;
+        if(viewMode === 'completed'){
+          // في تبويب الطلبات المكتملة لطلبات النقل:
+          // أولاً لو عندنا وقت تنفيذ الطلب نعرضه، وإلا نعرض أوقات الاستلام / التجهيز لو موجودة
+          const admin = r.admin||{};
+          const recv  = admin.received;
+          const prep  = admin.prepared;
+          const executedAt = r.executedAt || '';
+          
+          if(executedAt && !recv && !prep){
+            approvalsCell = `تم تنفيذ الطلب في: ${executedAt}`;
+          }else{
+            const recvText = recv ? `تم الاستلام: ${recv}` : 'لم يتم التأكيد بعد';
+            const prepText = prep ? `تم التجهيز: ${prep}` : 'لم يتم التجهيز بعد';
+            approvalsCell = `${recvText}\n${prepText}`;
+          }
+        }else{
+          // في تبويب إدارة الطلبات: إظهار حالة الموافقات الإدارية والمالية
+          const ap = r.approvals||{};
+          const a = ap.adminApproved;
+          const f = ap.financeApproved;
+          const map = v=> v===true?'✅ تمت':'⏳ بانتظار';
+          approvalsCell =
+            `إدارية: ${map(a)}\nمالية: ${map(f)}`;
+        }
       }else{
+        // طلبات التصوير: دائمًا إظهار أوقات الاستلام / التجهيز
         const admin = r.admin||{};
         const recv  = admin.received;
         const prep  = admin.prepared;
@@ -1458,6 +1474,7 @@ function applyTabsVisibility(role){
         const prepText = prep ? `تم التجهيز: ${prep}` : 'لم يتم التجهيز بعد';
         approvalsCell = `${recvText}\n${prepText}`;
       }
+
 
       const adminNotes = (r.admin && r.admin.notes) || '';
 
@@ -1536,19 +1553,6 @@ function applyTabsVisibility(role){
     $('#btnMarkReceived').onclick = async ()=>{
       await markReceived(r.id, kind);
     };
-
-    const doneBtn = $('#btnMarkShootDone');
-    if(doneBtn){
-      if(kind === 'shoot'){
-        doneBtn.style.display = '';
-        doneBtn.disabled = (r.status === 'تم');
-        doneBtn.onclick = async ()=>{
-          await markShootDone(r.id);
-        };
-      }else{
-        doneBtn.style.display = 'none';
-      }
-    }
   }
 
   function closeReqModal(){
@@ -1600,28 +1604,6 @@ function applyTabsVisibility(role){
       { requestId: r.id, entityType:'photoshoot_request' }
     );
     showToast('تم تسجيل التجهيز للتصوير');
-  }
-
-  async function markShootDone(id){
-    const idx  = shootRequests.findIndex(r=> String(r.id)===String(id));
-    if(idx===-1) return;
-    const r = shootRequests[idx];
-    if(!r.admin) r.admin = {};
-    if(!r.admin.prepared){
-      // لو لسه متسجلش تجهيز نخليه بنفس وقت الإغلاق
-      r.admin.prepared = now();
-    }
-    r.status = 'تم';
-    await persistAll();
-    metrics();
-    render();
-    fillReqModal('shoot', r);
-    await logActivity(
-      'تسجيل إتمام التصوير',
-      `تم تأكيد إتمام تصوير السيارات لطلب التصوير رقم ${r.id}`,
-      { requestId: r.id, entityType:'photoshoot_request' }
-    );
-    showToast('تم تسجيل إتمام التصوير');
   }
 
   function openMoveModal(mr){
@@ -1694,9 +1676,6 @@ function applyTabsVisibility(role){
     const idx = moveRequests.findIndex(r=> String(r.id)===String(id));
     if(idx===-1) return;
     const mr = moveRequests[idx];
-
-    const ap = mr.approvals||{};
-    // تم السماح بتنفيذ النقل بدون التحقق من الموافقات الإدارية والمالية بناءً على طلب الإدارة.
 
     const rows = Array.isArray(mr.rows)?mr.rows:[];
     let updatedCount = 0;
