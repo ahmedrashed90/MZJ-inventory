@@ -161,20 +161,23 @@
 
   .copyable{cursor:pointer;text-decoration:underline;text-decoration-style:dotted}
 
+  
   .inner-tabs{
-    display:flex;
-    flex-wrap:wrap;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
     gap:8px;
     margin-bottom:16px;
   }
   .inner-tab{
     border:1px solid var(--line);
     background:#fff;
-    padding:6px 14px;
+    padding:8px 10px;
     border-radius:999px;
-    font-size:14px;
+    font-size:13px;
     cursor:pointer;
     color:var(--text);
+    font-weight:800;
+    text-align:center;
   }
   .inner-tab.active{
     background:var(--brown);
@@ -183,6 +186,7 @@
   }
   .inner-tab-panel{display:none;}
   .inner-tab-panel.active{display:block;}
+ab-panel.active{display:block;}
 
   .move-row-title{
     font-weight:600;
@@ -337,6 +341,25 @@
       display:flex;
       justify-content:flex-start;
       gap:8px;
+    }
+  }
+
+  @media (max-width:768px){
+    .card-header .row{
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .card-header .row > *{
+      margin-bottom:4px;
+    }
+    .import-menu{
+      display:inline-flex;
+      align-items:center;
+    }
+    .import-dropdown{
+      min-width:220px;
+      right:0;
+      left:auto;
     }
   }
 </style>
@@ -2363,6 +2386,34 @@ if(!movedCount){
       detailsCard.style.display = "block";
       // Scroll للبطاقة عشان تبان للمستخدم
       detailsCard.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      // ربط أزرار التعديل/الحذف داخل الكارت بالأزرار الأصلية في الجدول
+      try{
+        const btns = actionsContainer.querySelectorAll("button");
+        btns.forEach((btn)=>{
+          btn.addEventListener("click", function(ev){
+            ev.preventDefault();
+            ev.stopPropagation();
+            const editId = btn.getAttribute("data-edit");
+            const delId  = btn.getAttribute("data-del");
+            let selector = null;
+            if(editId){
+              selector = 'button[data-edit="' + editId + '"]';
+            }else if(delId){
+              selector = 'button[data-del="' + delId + '"]';
+            }
+            if(!selector) return;
+            const original = table.querySelector(selector);
+            if(original){
+              original.click();
+              const row = original.closest("tr");
+              if(row){
+                row.scrollIntoView({behavior:"smooth", block:"center"});
+              }
+            }
+          }, { once:false });
+        });
+      }catch(e){}
     }
 
     table.addEventListener("click", function(ev){
