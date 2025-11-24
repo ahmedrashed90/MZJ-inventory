@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -292,13 +294,14 @@ body{opacity:0}
         </table>
       </div>
 
-      <!-- جدول طلبات التصوير + النقل -->
+      <!-- جدول طلبات التصوير -->
       <div id="tableShootWrap" class="table-wrap" style="display:none">
         <table id="modalTableShoot">
           <thead>
             <tr>
               <th>رقم</th>
               <th>التاريخ</th>
+              <th>نوع الطلب</th>
               <th>مقدّم</th>
               <th>عدد الهياكل</th>
               <th>الحالة</th>
@@ -436,11 +439,12 @@ body{opacity:0}
   }
 
   /* ===== Helpers ===== */
-  function liftNoFlash(){
-    const nf = document.getElementById('noFlash');
-    if(nf) nf.remove();
-    document.body.style.opacity = '1';
-  }
+function liftNoFlash(){
+  const nf = document.getElementById('noFlash');
+  if(nf) nf.remove();
+  document.body.style.opacity = '1';
+}
+
 
   const $ = s => document.querySelector(s);
   const toast = $('#toast');
@@ -530,7 +534,7 @@ body{opacity:0}
       liftNoFlash();
     }
   });
-  $('#btnLogin').addEventListener('click', async ()=>{
+$('#btnLogin').addEventListener('click', async ()=>{
     $('#authHint').textContent='';
     try{ await signInWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
     catch(e){ $('#authHint').textContent='فشل تسجيل الدخول: '+(e?.message||e); }
@@ -654,7 +658,51 @@ body{opacity:0}
     return st === 'تم التصوير' || doneFlag || hasDoneText;
   }
 
+  // تحويل وقت الطلب إلى رقم علشان نرتّب من الأحدث للأقدم
+  function getRequestTimestamp(r){
+    const raw = r && (r.createdAt || r.requestedAt || r.date || '');
+    if (typeof raw === 'number') return raw;
+    if (!raw) return 0;
+
+    if (typeof raw === 'string') {
+      const trimmed = raw.trim();
+
+      // حاول مباشرة قراءة السلسلة كما هي (مع استبدال المسافة بـ T مرة واحدة)
+      let direct = trimmed.replace(' ', 'T');
+      let ts = Date.parse(direct);
+      if (!Number.isNaN(ts)) return ts;
+
+      // جرّب كل الأنماط الشائعة: "وقت تاريخ" أو "تاريخ وقت"
+      const parts = trimmed.split(/\s+/);
+      if (parts.length >= 2) {
+        const p1 = parts[0];
+        const p2 = parts[1];
+
+        const isDate = v => /\d{4}-\d{2}-\d{2}/.test(v);
+        const isTime = v => /\d{2}:\d{2}/.test(v);
+
+        let iso = null;
+        if (isDate(p1) && isTime(p2)) {
+          iso = `${p1}T${p2}`;
+        } else if (isTime(p1) && isDate(p2)) {
+          iso = `${p2}T${p1}`;
+        }
+
+        if (iso) {
+          ts = Date.parse(iso);
+          if (!Number.isNaN(ts)) return ts;
+        }
+      }
+
+      const asNum = Number(trimmed);
+      return Number.isNaN(asNum) ? 0 : asNum;
+    }
+
+    return 0;
+  }
+
   /* ===== تصوير + نقل: إحصائيات + بطاقة ===== */
+ 
   function shootStats(){
     // نفس أرقام كروت إدارة الطلبات (تصوير + نقل)
     const shootTotal = Array.isArray(shootRequests) ? shootRequests.length : 0;
@@ -670,20 +718,17 @@ body{opacity:0}
 
     const inProg    = allList.filter(r => norm(r) === 'تحت الإجراء').length;
     const prepared  = allList.filter(r => norm(r) === 'تم التجهيز').length;
-    // "تم الاستلام" بدل "قيد المراجعة" مع دعم البيانات القديمة
     const reviewing = allList.filter(r => {
       const s = norm(r);
       return s === 'تم الاستلام' || s === 'قيد المراجعة';
     }).length;
-    const done      = allList.filter(r => {
-      const s = norm(r);
-      return s === 'تم' || s === 'منفّذ';
-    }).length;
+    const done      = allList.filter(r => norm(r) === 'تم' || norm(r) === 'منفّذ').length;
 
     return { total, shootTotal, moveTotal, inProg, prepared, reviewing, done };
   }
 
-  function renderShootCard(gridEl){
+
+function renderShootCard(gridEl){
     const st = shootStats();
     const card = document.createElement('div');
     card.className = 'card group-card';
@@ -731,7 +776,7 @@ body{opacity:0}
       </div>
     `;
 
-    // الضغط في أي مكان في الكارت (خارج المتريكس) يفتح تفاصيل كل طلبات التصوير + النقل
+    // الضغط في أي مكان في الكارت (خارج المتريكس) يفتح تفاصيل كل طلبات التصوير
     card.addEventListener('click', (ev)=> {
       if (ev.target.closest('.shoot-metric')) return;
       openShootModal('ALL');
@@ -761,7 +806,9 @@ body{opacity:0}
     gridEl.appendChild(card);
   }
 
-  /* ===== طلبات نقل السيارات: من moves ===== */
+
+
+/* ===== طلبات نقل السيارات: من moves ===== */
   function isTransferPending(m){
     const toLoc = (m.to || m.toLocation || m.target || '').toString();
 
@@ -939,7 +986,7 @@ body{opacity:0}
     currentMode = mode;
     modalTitle.textContent = title || (
       mode==='rows' ? 'السيارات' :
-      mode==='shoot' ? 'طلبات التصوير والنقل' :
+      mode==='shoot' ? 'طلبات التصوير' :
       mode==='transfers' ? 'طلبات نقل السيارات' :
       'النواقص — الفروع'
     );
@@ -1221,17 +1268,24 @@ body{opacity:0}
     activateShortTab(key);
   });
 
-  /* ===== SHOOT modal (تصوير + نقل) ===== */
+  /* ===== SHOOT modal ===== */
   function matchesShootFilter(r, filter){
     if(filter==='ALL' || !filter) return true;
+
+    const status = (r.status || '').toString().trim();
+
+    // الفلاتر الرئيسية بالعربي
+    if(filter==='تحت الإجراء')   return status === 'تحت الإجراء';
+    if(filter==='تم التجهيز')    return status === 'تم التجهيز';
+    if(filter==='تم الاستلام')   return status === 'تم الاستلام' || status === 'قيد المراجعة';
+    if(filter==='تم')            return status === 'تم' || status === 'منفّذ';
+
+    // دعم الأسماء القديمة للفلاتر
     if(filter==='received') return !!(r.admin && r.admin.received);
     if(filter==='prepared') return !!(r.admin && r.admin.prepared);
-    if(filter==='done') return isShootDone(r);
-    if(filter==='تم الاستلام') {
-      const s = (r.status||'').toString().trim();
-      return s === 'تم الاستلام' || s === 'قيد المراجعة';
-    }
-    return (r.status||'')===filter;
+    if(filter==='done')     return isShootDone(r);
+
+    return status === filter;
   }
 
   function openShootModal(filter='ALL'){
@@ -1239,19 +1293,21 @@ body{opacity:0}
 
     // دمج طلبات التصوير + طلبات النقل في جدول واحد
     const allRequests = [
-      ...(Array.isArray(shootRequests) ? shootRequests.map(r => ({...r, _type:'shoot'})) : []),
-      ...(Array.isArray(moveRequests)  ? moveRequests.map(r  => ({...r, _type:'move'}))  : [])
+      ...(Array.isArray(shootRequests) ? shootRequests.map(r => ({ ...r, _type: 'shoot' })) : []),
+      ...(Array.isArray(moveRequests)  ? moveRequests.map(r  => ({ ...r, _type: 'move'  }))  : [])
     ];
 
-    currentShoot = allRequests.slice().sort((a,b)=> Number(b.id) - Number(a.id));
+    // ترتيب حسب أحدث وقت
+    currentShoot = allRequests.slice().sort((a,b)=> getRequestTimestamp(b) - getRequestTimestamp(a));
     filteredShoot = currentShoot.filter(r=> matchesShootFilter(r, currentShootFilter));
 
     let title;
-    if(filter==='ALL')          title='طلبات التصوير والنقل — الكل';
-    else if(filter==='received')title='طلبات التصوير والنقل — استلام إداري';
-    else if(filter==='prepared')title='طلبات التصوير والنقل — تم التجهيز';
-    else if(filter==='done')    title='طلبات التصوير والنقل — تم التصوير';
-    else                        title=`طلبات التصوير والنقل — ${filter}`;
+    if(filter==='ALL')               title = 'طلبات التصوير والنقل — الكل';
+    else if(filter==='تحت الإجراء')  title = 'طلبات التصوير والنقل — تحت الإجراء';
+    else if(filter==='تم التجهيز')   title = 'طلبات التصوير والنقل — تم التجهيز';
+    else if(filter==='تم الاستلام')  title = 'طلبات التصوير والنقل — تم الاستلام';
+    else if(filter==='تم')           title = 'طلبات التصوير والنقل — تم / منفّذ';
+    else                             title = `طلبات التصوير والنقل — ${filter}`;
 
     if(shootDetailsBox) shootDetailsBox.style.display='none';
     openModal('shoot', title);
@@ -1261,53 +1317,66 @@ body{opacity:0}
     modalTableShootBody.innerHTML='';
     filteredShoot.forEach(r=>{
       const tr=document.createElement('tr');
-      const detailsCell = (r._type === 'shoot')
-        ? `
-          <button class="btn btn-outline" data-view-id="${String(r.id)}" title="عرض تفاصيل الطلب">
-            <i class="fa-solid fa-up-right-from-square"></i> تفاصيل
-          </button>
-        `
-        : '—';
+      const typeLabel = r._type === 'move' ? 'طلب نقل' : 'طلب تصوير';
       tr.innerHTML = `
         <td>#${r.id}</td>
-        <td>${r.createdAt||''}</td>
-        <td>${r.createdBy||'-'}</td>
-        <td>${(r.rows||[]).length}</td>
-        <td>${r.status||'-'}</td>
-        <td>${r?.admin?.received? '✅ '+r.admin.received : '—'}</td>
-        <td>${r?.admin?.prepared? '✅ '+r.admin.prepared : '—'}</td>
-        <td>${r?.admin?.notes||''}</td>
-        <td>${detailsCell}</td>
+        <td>${r.createdAt || r.requestedAt || r.date || ''}</td>
+        <td>${typeLabel}</td>
+        <td>${r.createdBy || '-'}</td>
+        <td>${(r.rows || []).length}</td>
+        <td>${r.status || '-'}</td>
+        <td>${r?.admin?.received ? '✅ ' + r.admin.received : '—'}</td>
+        <td>${r?.admin?.prepared ? '✅ ' + r.admin.prepared : '—'}</td>
+        <td>${r?.admin?.notes || ''}</td>
+        <td>
+          <button class="btn btn-outline" data-view-id="${String(r.id)}" data-view-type="${r._type || 'shoot'}" title="عرض تفاصيل الطلب">
+            <i class="fa-solid fa-up-right-from-square"></i> تفاصيل
+          </button>
+        </td>
       `;
       modalTableShootBody.appendChild(tr);
     });
     modalCount.textContent = `عدد الطلبات الظاهرة: ${filteredShoot.length.toLocaleString('ar-SA')} من ${currentShoot.length.toLocaleString('ar-SA')}`;
   }
 
-  function openShootDetails(id){
-    const req = shootRequests.find(r => String(r.id)===String(id));
+  function openShootDetails(id, type){
+    const isMove = type === 'move';
+    const source = isMove ? (Array.isArray(moveRequests) ? moveRequests : []) : (Array.isArray(shootRequests) ? shootRequests : []);
+    const req = source.find(r => String(r.id) === String(id));
     if(!req){
       showToast('تعذّر العثور على هذا الطلب');
       return;
     }
-    shootDetailsIdSpan.textContent = '#'+id;
-    const rows = Array.isArray(req.rows)? req.rows: [];
-    shootDetailsTableBody.innerHTML='';
+
+    shootDetailsIdSpan.textContent = '#' + id + (isMove ? ' — طلب نقل' : ' — طلب تصوير');
+
+    const rows = Array.isArray(req.rows) ? req.rows : [];
+    shootDetailsTableBody.innerHTML = '';
     rows.forEach((row,idx)=>{
+      const vin        = row.vin || row.chassis || '';
+      const car        = row.car || row.model || '';
+      const variant    = row.variant || row.trim || '';
+      const extColor   = row.extColor || row.color || row.ext_color || '';
+      const modelYear  = row.modelYear || row.year || '';
+      const currLoc    = row.currentLocation || row.from || row.fromLocation || req.fromLocation || '';
+      const shootPlace = row.shootPlace || row.to || row.toLocation || req.toLocation || '';
+      const note       = row.note || row.message || req.note || '';
+
       const tr=document.createElement('tr');
       tr.innerHTML = `
         <td>${idx+1}</td>
-        <td>${row.vin||''}</td>
-        <td>${row.car||''}</td>
-        <td>${row.variant||''}</td>
-        <td>${row.extColor||''}</td>
-        <td>${row.modelYear||''}</td>
-        <td>${row.currentLocation||''}</td>
-        <td>${row.shootPlace||''}</td>
-        <td>${row.note||''}</td>
+        <td>${vin}</td>
+        <td>${car}</td>
+        <td>${variant}</td>
+        <td>${extColor}</td>
+        <td>${modelYear}</td>
+        <td>${currLoc}</td>
+        <td>${shootPlace}</td>
+        <td>${note}</td>
       `;
       shootDetailsTableBody.appendChild(tr);
     });
+
     shootDetailsBox.style.display='block';
     shootDetailsBox.scrollIntoView({behavior:'smooth',block:'center'});
   }
@@ -1317,7 +1386,8 @@ body{opacity:0}
     if(!btn) return;
     const id = btn.getAttribute('data-view-id');
     if(!id) return;
-    openShootDetails(id);
+    const type = btn.getAttribute('data-view-type') || 'shoot';
+    openShootDetails(id, type);
   });
 
   /* ===== Transfers modal ===== */
@@ -1546,10 +1616,11 @@ body{opacity:0}
       const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws, tabTitle(shortActiveKey));
       XLSX.writeFile(wb, `mzj-shortages-branches-${tabTitle(shortActiveKey).replace(/\s+/g,'-')}.xlsx`);
     }else if(currentMode==='shoot'){
-      const header=["رقم الطلب","التاريخ","مقدّم","عدد الهياكل","الحالة","استلام إداري","تجهيز","ملاحظات الإدارة"];
+      const header=["رقم الطلب","التاريخ","نوع الطلب","مقدّم","عدد الهياكل","الحالة","استلام إداري","تجهيز","ملاحظات الإدارة"];
       const data=[header];
       filteredShoot.forEach(r=>{
-        data.push([r.id,r.createdAt||'',r.createdBy||'',(r.rows||[]).length,r.status||'',
+        const typeLabel = r._type === 'move' ? 'طلب نقل' : 'طلب تصوير';
+        data.push([r.id, r.createdAt || r.requestedAt || r.date || '', typeLabel, r.createdBy || '', (r.rows||[]).length, r.status||'',
           r?.admin?.received||'', r?.admin?.prepared||'', r?.admin?.notes||'']);
       });
       const ws=XLSX.utils.aoa_to_sheet(data);
@@ -1589,3 +1660,6 @@ body{opacity:0}
 </script>
 </body>
 </html>
+
+
+
