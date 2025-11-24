@@ -766,9 +766,9 @@ ab-panel.active{display:block;}
 <button class="btn btn-ghost" id="btnExport" title="تصدير إلى Excel">
 <i class="fa-regular fa-file-excel"></i> تصدير
           </button>
-<!--الجديد: زر تصدير قالب  -->
+<!-- الجديد: زر تصدير قالب  -->
 <button class="btn btn-ghost" id="btnExportBlank" title="تصدير قالب">
-<i class="fa-regular fa-file"></i> تصدير قالب
+<i class="fa-regular fa-file"></i> تصدير قالب 
           </button>
 <div class="import-menu">
 <button class="btn btn-ghost" id="btnImportMenu" title="استيراد من Excel">
@@ -1065,19 +1065,19 @@ ab-panel.active{display:block;}
 <table id="movesTable">
 <thead>
 <tr>
-<th class="w-10">#</th>
-<th class="w-10">التاريخ</th>
+<th class="w-5">#</th>
+<th class="w-5">التاريخ</th>
 <th>رقم الهيكل</th>
 <th>سيارة</th>
 <th>من</th>
 <th>إلى</th>
-<th class="w-10">ID</th>
+<th class="w-5">ID</th>
 </tr>
 </thead>
 <tbody></tbody>
 </table>
 </div>
-<div class="row" style="margin-top:6px">
+<div class="row" style="margin-top:8px">
 <button class="btn btn-ghost" id="btnClearMoves" title="تفريغ السجل">
 <i class="fa-regular ف-trash-can"></i> تفريغ
         </button>
@@ -2332,7 +2332,21 @@ if(!movedCount){
 
     if (!tabEdit || !table || !detailsCard || !detailsBody || !actionsContainer) return;
 
-    
+    // عند الضغط على أي صف في جدول تعديل السيارات نعرض كارت التعديل
+    table.addEventListener("click", function(ev){
+      const target = ev.target;
+      // تجاهل الضغط على الأزرار أو العناصر القابلة للنسخ
+      if (target.closest("button")) return;
+      if (target.closest(".copyable")) return;
+
+      // نتأكد أننا داخل تبويب تعديل السيارات
+      if (!tabEdit.classList.contains("active")) return;
+
+      const tr = target.closest("tr");
+      if (!tr || !table.contains(tr)) return;
+      buildDetailsFromRow(tr);
+    });
+
     function buildDetailsFromRow(tr){
       if (!tr) return;
       const cells = Array.from(tr.children);
