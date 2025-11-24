@@ -162,19 +162,21 @@
   .copyable{cursor:pointer;text-decoration:underline;text-decoration-style:dotted}
 
   .inner-tabs{
-    display:flex;
-    flex-wrap:wrap;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
     gap:8px;
     margin-bottom:16px;
   }
   .inner-tab{
     border:1px solid var(--line);
     background:#fff;
-    padding:6px 14px;
+    padding:8px 10px;
     border-radius:999px;
-    font-size:14px;
+    font-size:13px;
     cursor:pointer;
     color:var(--text);
+    font-weight:800;
+    text-align:center;
   }
   .inner-tab.active{
     background:var(--brown);
@@ -588,6 +590,25 @@
       max-width:100%;
       padding-inline:0;
       margin-inline:0;
+    }
+  }
+
+  @media (max-width:768px){
+    .card-header .row{
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    .card-header .row > *{
+      margin-bottom:2px;
+    }
+    .import-menu{
+      display:inline-flex;
+      align-items:center;
+    }
+    .import-dropdown{
+      min-width:220px;
+      right:0;
+      left:auto;
     }
   }
 </style>
@@ -2291,8 +2312,30 @@ if(!movedCount){
         </div>` : ""}
       `;
 
-      actionsContainer.innerHTML = actions;
+      // نخزن الـ <tr> الحالي في خاصية على الكارت
+      detailsCard._currentRow = tr;
+
+      // نعرض زر واحد واضح ينفّذ التعديل من الصف الأصلي
+      actionsContainer.innerHTML = `
+        <button class="btn btn-primary" type="button" id="btnEditFromRowCard">
+          تعديل هذه السيارة من الصف
+        </button>
+      `;
       detailsCard.style.display = "block";
+
+      // ربط زر الكارت بزر التعديل الأصلي في الصف
+      const btnFromCard = document.getElementById("btnEditFromRowCard");
+      if (btnFromCard) {
+        btnFromCard.addEventListener("click", function(){
+          const row = detailsCard._currentRow;
+          if (!row) return;
+          const originalEditBtn = row.querySelector("button[data-edit]");
+          if (originalEditBtn) {
+            originalEditBtn.click();
+            row.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        });
+      }
       // Scroll للبطاقة عشان تبان للمستخدم
       detailsCard.scrollIntoView({ behavior: "smooth", block: "start" });
     }
