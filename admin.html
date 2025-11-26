@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <html dir="rtl" lang="ar">
@@ -1423,7 +1424,7 @@ for (const rowData of rowsWithVin){
         continue;
       }
 
-      // ميتاداتا أساسية للحركة / الطلب
+            // ميتاداتا أساسية للحركة / الطلب
       const moveMeta = {
         adminApproved: null,
         adminNotes: '',
@@ -1434,7 +1435,6 @@ for (const rowData of rowsWithVin){
 
       const oldLoc = rec.location || from;
 
-            
       // 🚗 منطق خاص بـ "مباع تم التسليم"
       if (goingDeliveredRow) {
         const stamp = now();
@@ -1481,7 +1481,7 @@ for (const rowData of rowsWithVin){
           stock[recIdx] = rec;
           movedCount++;
           successLines.push(
-            `تم نقل ${rec.car||''} (${rec.vin||rowData.vinRaw}) إلى "مباع تم التسليم" بعد استكمال الموافقات المالية والإدارية.`
+            `تم نقل ${rec.car || ''} (${rowData.vinRaw}) إلى "${toVal}" بعد استكمال الموافقات المالية والإدارية.`
           );
           continue;
         }
@@ -1522,18 +1522,18 @@ for (const rowData of rowsWithVin){
         }
 
         successLines.push(
-          `تم تسجيل طلب نقل ${rec.car||''} (${rec.vin||rowData.vinRaw}) من "${oldLoc}" إلى "${toVal}" ${extra}`
+          `تم تسجيل طلب نقل ${rec.car || ''} (${rowData.vinRaw}) من "${oldLoc}" إلى "${toVal}" ${extra}`
         );
         continue;
       }
 
-// الحركات العادية (نقل فعلي)
+      // الحركات العادية (نقل فعلي)
       rec.location = toVal;
-      if(goingIssuesRow && noteText){
+      if (goingIssuesRow && noteText) {
         const existingNotes = rec.notes || '';
         rec.notes = existingNotes ? (existingNotes + " | " + noteText) : noteText;
       }
-      const stamp = now();
+const stamp = now();
       moves.push({
         when: stamp,
         date: onlyDate(stamp),
