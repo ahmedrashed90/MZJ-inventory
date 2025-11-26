@@ -1,6 +1,3 @@
-
-
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -397,6 +394,13 @@ body{opacity:0}
   const ROLE_IDARI   = 'اداري';
   const ROLE_BRANCH  = 'مدراء فروع';
 
+  // الدور الحالي للمستخدم
+  let currentUserRole = null;
+
+  // الأدوار المسموح لها بعمل الموافقات على طلبات النقل
+  const ADMIN_APPROVAL_ROLES   = [ROLE_ADMIN]; // موافقة الإدارة
+  const FINANCE_APPROVAL_ROLES = [ROLE_ADMIN]; // موافقة مالية (يمكن توسيعها لاحقًا)
+
   // الصفحات المسموح بها لكل تصنيف
   const ROLE_PAGES = {
     [ROLE_ADMIN] : 'ALL', // الإدارة تشوف كل الصفحات
@@ -499,6 +503,7 @@ function liftNoFlash(){
     if(user){
       try{
         const role = await fetchUserRole(user);
+        currentUserRole = role || null;
 
         if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
           window.location.href = 'unauthorized.html';
@@ -1426,8 +1431,11 @@ function renderShootCard(gridEl){
 
       const statusTxt = adminStatusTxt + ' — ' + financeStatusTxt;
 
-      const adminDisabledAttr   = (adminOk || idxInMoves===-1) ? 'disabled' : '';
-      const financeDisabledAttr = (financeOk || idxInMoves===-1) ? 'disabled' : '';
+      const canAdminApproveBtn   = ADMIN_APPROVAL_ROLES.includes(currentUserRole);
+      const canFinanceApproveBtn = FINANCE_APPROVAL_ROLES.includes(currentUserRole);
+
+      const adminDisabledAttr   = (!canAdminApproveBtn || adminOk || idxInMoves===-1) ? 'disabled' : '';
+      const financeDisabledAttr = (!canFinanceApproveBtn || financeOk || idxInMoves===-1) ? 'disabled' : '';
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -1455,79 +1463,89 @@ function renderShootCard(gridEl){
   }
 
   async function approveTransfer(moveIdx, kind){
-    const idx = Number(moveIdx);
-    if (isNaN(idx) || !moves[idx]) {
-      showToast('تعذّر العثور على هذا الطلب');
-      return;
-    }
-    const m = moves[idx];
-    const isAdmin   = (kind === 'admin');
-    const isFinance = (kind === 'finance');
+const idx = Number(moveIdx);
+if (isNaN(idx) || !moves[idx]) {
+  showToast('تعذّر العثور على هذا الطلب');
+  return;
+}
+const m = moves[idx];
+const isAdmin   = (kind === 'admin');
+const isFinance = (kind === 'finance');
 
-    if (!isAdmin && !isFinance) {
-      showToast('نوع الموافقة غير معروف');
-      return;
-    }
+if (!isAdmin && !isFinance) {
+  showToast('نوع الموافقة غير معروف');
+  return;
+}
 
-    // تحديث بيانات الطلب نفسه
-    if (isAdmin) {
-      const adminOk = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
-      if (adminOk) {
-        showToast('تمت موافقة الإدارة على هذا الطلب مسبقًا');
-        return;
-      }
-      m.adminApproved   = true;
-      m.adminApproval   = true;
-      m.adminApprovedAt = now();
-    } else if (isFinance) {
-      const financeOk = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
-      if (financeOk) {
-        showToast('تمت الموافقة المالية على هذا الطلب مسبقًا');
-        return;
-      }
-      m.financeApproved   = true;
-      m.financeApproval   = true;
-      m.financeApprovedAt = now();
-    }
+// 🔐 فحص الصلاحيات بناءً على الدور الحالي
+if (isAdmin && !ADMIN_APPROVAL_ROLES.includes(currentUserRole)) {
+  showToast('ليس لديك صلاحية لإضافة موافقة الإدارة على طلبات النقل');
+  return;
+}
+if (isFinance && !FINANCE_APPROVAL_ROLES.includes(currentUserRole)) {
+  showToast('ليس لديك صلاحية لإضافة الموافقة المالية على طلبات النقل');
+  return;
+}
 
-    // تحديث حالة الطلب العامة بناءً على الموافقتين
-    const adminOkNow   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
-    const financeOkNow = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
+// تحديث بيانات الطلب نفسه
+if (isAdmin) {
+  const adminOk = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
+  if (adminOk) {
+    showToast('تمت موافقة الإدارة على هذا الطلب مسبقًا');
+    return;
+  }
+  m.adminApproved   = true;
+  m.adminApproval   = true;
+  m.adminApprovedAt = now();
+} else if (isFinance) {
+  const financeOk = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
+  if (financeOk) {
+    showToast('تمت الموافقة المالية على هذا الطلب مسبقًا');
+    return;
+  }
+  m.financeApproved   = true;
+  m.financeApproval   = true;
+  m.financeApprovedAt = now();
+}
 
-    // نحدّث فلاغات الموافقات على المخزون فقط (بدون تحريك السيارة)
-    const stockIndex = stock.findIndex(r => String(r.vin) === String(m.vin));
-    if (stockIndex !== -1) {
-      stock[stockIndex].adminApproved   = adminOkNow;
-      stock[stockIndex].adminApproval   = adminOkNow;
-      stock[stockIndex].financeApproved = financeOkNow;
-      stock[stockIndex].financeApproval = financeOkNow;
-    }
+// تحديث حالة الطلب العامة بناءً على الموافقتين
+const adminOkNow   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
+const financeOkNow = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
 
-    if (adminOkNow && financeOkNow) {
-      // تمّت الموافقة المالية والإدارية معًا
-      m.status = 'approved';
-      m.requiresAdminApproval   = false;
-      m.needsAdminApproval      = false;
-      m.requiresFinanceApproval = false;
-      m.needsFinanceApproval    = false;
-      // ⚠️ لا يوجد نقل تلقائي هنا؛ النقل النهائي يتم من صفحة الإدارة
-    } else {
-      // لسه في موافقة ناقصة
-      m.status = 'awaiting_approvals';
-    }
+// تحديث فلاغات الموافقات على المخزون فقط (بدون تحريك السيارة)
+const stockIndex = stock.findIndex(r => String(r.vin) === String(m.vin));
+if (stockIndex !== -1) {
+  stock[stockIndex].adminApproved   = adminOkNow;
+  stock[stockIndex].adminApproval   = adminOkNow;
+  stock[stockIndex].financeApproved = financeOkNow;
+  stock[stockIndex].financeApproval = financeOkNow;
+}
+
+if (adminOkNow && financeOkNow) {
+  // تمّت الموافقة المالية والإدارية معًا
+  m.status = 'approved';
+  m.requiresAdminApproval   = false;
+  m.needsAdminApproval      = false;
+  m.requiresFinanceApproval = false;
+  m.needsFinanceApproval    = false;
+  // ⚠️ لا يوجد نقل تلقائي هنا؛ النقل النهائي يتم من صفحة الإدارة
+} else {
+  // لسه في موافقة ناقصة
+  m.status = 'awaiting_approvals';
+}
 
 moves[idx] = m;
 
-    try{
-      await setDoc(STATE_REF, { moves, stock }, { merge:true });
-      computeTransferRequests();
-      filteredTransfers = transferRequests.slice();
-      renderTransfersTable();
-      showToast(isAdmin ? 'تمت موافقة الإدارة على طلب النقل' : 'تمت الموافقة المالية على طلب النقل');
-    }catch(e){
-      console.error(e);
-      setStatus('warn','تعذّر حفظ الموافقة على طلب النقل');
-    }
+try{
+  await setDoc(STATE_REF, { moves, stock }, { merge:true });
+  computeTransferRequests();
+  filteredTransfers = transferRequests.slice();
+  renderTransfersTable();
+  showToast(isAdmin ? 'تمت موافقة الإدارة على طلب النقل' : 'تمت الموافقة المالية على طلب النقل');
+}catch(e){
+  console.error(e);
+  setStatus('warn','تعذّر حفظ الموافقة على طلب النقل');
+}
   }
 
   tableTransfersWrap.addEventListener('click',(e)=>{
