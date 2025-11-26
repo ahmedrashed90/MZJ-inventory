@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -1453,6 +1454,7 @@ function renderShootCard(gridEl){
     modalCount.textContent = `عدد طلبات النقل الظاهرة: ${filteredTransfers.length.toLocaleString('ar-SA')} من ${transferRequests.length.toLocaleString('ar-SA')}`;
   }
 
+
   async function approveTransfer(moveIdx, kind){
     const idx = Number(moveIdx);
     if (isNaN(idx) || !moves[idx]) {
@@ -1493,6 +1495,15 @@ function renderShootCard(gridEl){
     const adminOkNow   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
     const financeOkNow = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
 
+    // تحديث فلاغات الموافقات على المخزون فقط (بدون تحريك السيارة)
+    const stockIndex = stock.findIndex(r => String(r.vin) === String(m.vin));
+    if (stockIndex !== -1) {
+      stock[stockIndex].adminApproved   = adminOkNow;
+      stock[stockIndex].adminApproval   = adminOkNow;
+      stock[stockIndex].financeApproved = financeOkNow;
+      stock[stockIndex].financeApproval = financeOkNow;
+    }
+
     if (adminOkNow && financeOkNow) {
       // تمّت الموافقة المالية والإدارية معًا
       m.status = 'approved';
@@ -1500,26 +1511,7 @@ function renderShootCard(gridEl){
       m.needsAdminApproval      = false;
       m.requiresFinanceApproval = false;
       m.needsFinanceApproval    = false;
-
-      // ✅ نقل السيارة تلقائيًا للمكان المكتوب في الطلب
-      const toLoc = (m.to || m.toLocation || m.target || '').toString();
-      const stockIndex = stock.findIndex(r => String(r.vin) === String(m.vin));
-      if (stockIndex !== -1 && toLoc) {
-        stock[stockIndex].location   = toLoc;
-        if ('place' in stock[stockIndex]) {
-          stock[stockIndex].place  = toLoc;
-        }
-        // في حالة مباع تم التسليم نعلّمها كـ delivered
-        if (toLoc.includes('مباع تم التسليم')) {
-          stock[stockIndex].delivered   = true;
-          stock[stockIndex].deliveredAt = now();
-        }
-        // مزامنة فلاغ الموافقات في المخزون أيضًا (لو حابب تستخدمها في شاشات ثانية)
-        stock[stockIndex].adminApproved = adminOkNow;
-        stock[stockIndex].adminApproval = adminOkNow;
-        stock[stockIndex].financeApproved = financeOkNow;
-        stock[stockIndex].financeApproval = financeOkNow;
-      }
+      // ⚠️ لا يوجد نقل تلقائي هنا؛ النقل النهائي يتم من صفحة الإدارة
     } else {
       // لسه في موافقة ناقصة
       m.status = 'awaiting_approvals';
@@ -1538,6 +1530,7 @@ function renderShootCard(gridEl){
       setStatus('warn','تعذّر حفظ الموافقة على طلب النقل');
     }
   }
+
 
   tableTransfersWrap.addEventListener('click',(e)=>{
     const btn = e.target.closest('button[data-transfer-idx]');
