@@ -1399,19 +1399,26 @@ function renderShootCard(gridEl){
   });
 
   /* ===== Transfers modal ===== */
-  function openTransfersModal(){
-    // ترتيب الطلبات من الأحدث إلى الأقدم حسب وقت الطلب
+      function openTransfersModal(){
+    // A) ترتيب حسب آخر حركة نقل داخل مصفوفة moves (الأحدث في الأعلى)
     filteredTransfers = transferRequests.slice().sort((a,b)=>{
-      const ta = getRequestTimestamp(a);
-      const tb = getRequestTimestamp(b);
-      if (tb !== ta) return tb - ta; // الجديد فوق
-      // في حالة تساوي الوقت، نرجّع لأي رقم طلب (إن وجد) من الأكبر للأصغر
-      const ida = Number(a.id||0), idb = Number(b.id||0);
-      if(!isNaN(ida) && !isNaN(idb)) return idb-ida;
-      return 0;
+      const ia = (typeof a._idx === 'number') ? a._idx : -1;
+      const ib = (typeof b._idx === 'number') ? b._idx : -1;
+
+      // لو عندنا إندكس واضح في moves نرتّب عليه (الأكبر = الأحدث)
+      if (ia !== -1 && ib !== -1 && ia !== ib) {
+        return ib - ia; // الأحدث (إندكس أكبر) يطلع فوق
+      }
+
+      //Fallback بسيط لو مفيش _idx واضح: نستخدم وقت الحركة نفسه إن وجد، وإلّا التاريخ كنص
+      const wa = (a.when || a.date || a.requestedAt || a.createdAt || '').toString();
+      const wb = (b.when || b.date || b.requestedAt || b.createdAt || '').toString();
+      return wb.localeCompare(wa);
     });
     openModal('transfers','طلبات نقل السيارات');
   }
+
+
 
   function renderTransfersTable(){
     modalTableTransfersBody.innerHTML = '';
