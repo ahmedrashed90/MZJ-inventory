@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -864,6 +865,15 @@ function renderShootCard(gridEl){
 
   function renderTransferCard(gridEl){
     const total = transferRequests.length;
+
+    const adminApprovedCount = transferRequests.filter(t =>
+      t.adminApproved === true || t.adminApproved === 'true' || t.adminApproval === true
+    ).length;
+
+    const financeApprovedCount = transferRequests.filter(t =>
+      t.financeApproved === true || t.financeApproved === 'true' || t.financeApproval === true
+    ).length;
+
     const card = document.createElement('div');
     card.className = 'card group-card';
     card.id = 'transferCard';
@@ -875,6 +885,12 @@ function renderShootCard(gridEl){
             <span class="metric">
               <i class="fa-solid fa-list-check"></i> طلبات النقل إلى مباع تم التسليم: <b>${total.toLocaleString('ar-SA')}</b>
             </span>
+            <span class="metric">
+              <i class="fa-solid fa-user-check"></i> موافقة إدارية: <b>${adminApprovedCount.toLocaleString('ar-SA')}</b>
+            </span>
+            <span class="metric">
+              <i class="fa-solid fa-coins"></i> موافقة مالية: <b>${financeApprovedCount.toLocaleString('ar-SA')}</b>
+            </span>
           </div>
         </div>
         <div class="group-total" title="طلبات النقل بانتظار الموافقات">${total.toLocaleString('ar-SA')}</div>
@@ -884,7 +900,7 @@ function renderShootCard(gridEl){
     gridEl.appendChild(card);
   }
 
-  /* ===== Render ===== */
+/* ===== Render ===== */
   function renderShortagesCard(){
     const { total, summary } = computeShortagesSummaryBranches();
     $('#shortagesTotal').textContent = total.toLocaleString('ar-SA');
@@ -1399,9 +1415,8 @@ function renderShootCard(gridEl){
   });
 
   /* ===== Transfers modal ===== */
-      function openTransfersModal(){
-    // A) ترتيب حسب آخر حركة نقل داخل مصفوفة moves (الأحدث في الأعلى)
-    filteredTransfers = transferRequests.slice().sort((a,b)=>{
+  function sortTransfers(list){
+    return list.slice().sort((a,b)=>{
       const ia = (typeof a._idx === 'number') ? a._idx : -1;
       const ib = (typeof b._idx === 'number') ? b._idx : -1;
 
@@ -1410,16 +1425,21 @@ function renderShootCard(gridEl){
         return ib - ia; // الأحدث (إندكس أكبر) يطلع فوق
       }
 
-      //Fallback بسيط لو مفيش _idx واضح: نستخدم وقت الحركة نفسه إن وجد، وإلّا التاريخ كنص
+      //Fallback إضافي: استخدم وقت الطلب إن وُجد
+      const ta = getRequestTimestamp(a);
+      const tb = getRequestTimestamp(b);
+      if (ta !== tb) return tb - ta;
+
       const wa = (a.when || a.date || a.requestedAt || a.createdAt || '').toString();
       const wb = (b.when || b.date || b.requestedAt || b.createdAt || '').toString();
       return wb.localeCompare(wa);
     });
-    openModal('transfers','طلبات نقل السيارات');
   }
 
-
-
+  function openTransfersModal(){
+    filteredTransfers = sortTransfers(transferRequests);
+    openModal('transfers','طلبات نقل السيارات');
+  }
   function renderTransfersTable(){
     modalTableTransfersBody.innerHTML = '';
     filteredTransfers.forEach((t,idx)=>{
@@ -1551,7 +1571,7 @@ moves[idx] = m;
 try{
   await setDoc(STATE_REF, { moves, stock }, { merge:true });
   computeTransferRequests();
-  filteredTransfers = transferRequests.slice();
+  filteredTransfers = sortTransfers(transferRequests);
   renderTransfersTable();
   showToast(isAdmin ? 'تمت موافقة الإدارة على طلب النقل' : 'تمت الموافقة المالية على طلب النقل');
 }catch(e){
