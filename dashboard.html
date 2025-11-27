@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -1399,12 +1400,15 @@ function renderShootCard(gridEl){
 
   /* ===== Transfers modal ===== */
   function openTransfersModal(){
+    // ترتيب الطلبات من الأحدث إلى الأقدم حسب وقت الطلب
     filteredTransfers = transferRequests.slice().sort((a,b)=>{
+      const ta = getRequestTimestamp(a);
+      const tb = getRequestTimestamp(b);
+      if (tb !== ta) return tb - ta; // الجديد فوق
+      // في حالة تساوي الوقت، نرجّع لأي رقم طلب (إن وجد) من الأكبر للأصغر
       const ida = Number(a.id||0), idb = Number(b.id||0);
       if(!isNaN(ida) && !isNaN(idb)) return idb-ida;
-      const da = a.requestedAt || a.createdAt || a.date || '';
-      const db = b.requestedAt || b.createdAt || b.date || '';
-      return db.localeCompare(da);
+      return 0;
     });
     openModal('transfers','طلبات نقل السيارات');
   }
@@ -1440,7 +1444,7 @@ function renderShootCard(gridEl){
 
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td>${t.id || (idx+1)}</td>
+        <td>${idx+1}</td>
         <td>${date}</td>
         <td>${vin}</td>
         <td>${fromLoc}</td>
