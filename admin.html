@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 
 <html dir="rtl" lang="ar">
@@ -1445,58 +1446,32 @@ for (const rowData of rowsWithVin){
         const financeOk =
           (rec.financeApproved === true || rec.financeApproved === 'true' || rec.financeApproval === true);
 
-        // ✅ لو مكتملة الموافقات: نفّذ النقل فعليًا من هنا مباشرة
-        if (adminOk && financeOk) {
-          rec.location = toVal;
-          if ('place' in rec) {
-            rec.place = toVal;
-          }
-          // نعلّم السيارة إنها تم تسليمها فعلاً
-          rec.delivered   = true;
-          rec.deliveredAt = stamp;
-
-          const immediateMoveMeta = {
-            ...moveMeta,
-            adminApproved: true,
-            adminApproval: true,
-            financeApproved: true,
-            financeApproval: true,
-            requiresAdminApproval: false,
-            requiresFinanceApproval: false,
-            status: 'approved',
-            message: 'تم نقل السيارة بعد استكمال الموافقات المالية والإدارية'
-          };
-
-          moves.push({
-            when: stamp,
-            date: onlyDate(stamp),
-            vin: rec.vin || '',
-            car: rec.car || '',
-            from: oldLoc,
-            to: toVal,
-            id: rec.id,
-            ...immediateMoveMeta
-          });
-
-          stock[recIdx] = rec;
-          movedCount++;
-          successLines.push(
-            `تم نقل ${rec.car || ''} (${rowData.vinRaw}) إلى "${toVal}" بعد استكمال الموافقات المالية والإدارية.`
-          );
+        // ❗ لو الموافقات غير مكتملة: يمنع النقل ويظهر رسالة خطأ حمراء
+        if (!adminOk || !financeOk) {
+          const errMsg = 'لايمكن نقل السيارة لعدم وجود موافقة مالية و موافقة ادارية';
+          errors.push(errMsg);
           continue;
         }
 
-        // ❗ لو لسه الموافقات ناقصة: نسجّل طلب نقل فقط، بدون تغيير المكان
-        const reqMeta = {
+        // ✅ موافقات مكتملة: نفّذ النقل فعليًا من هنا مباشرة
+        rec.location = toVal;
+        if ('place' in rec) {
+          rec.place = toVal;
+        }
+        // نعلّم السيارة إنها تم تسليمها فعلاً
+        rec.delivered   = true;
+        rec.deliveredAt = stamp;
+
+        const immediateMoveMeta = {
           ...moveMeta,
-          adminApproved: adminOk ? true : false,
-          adminApproval: adminOk ? true : false,
-          financeApproved: financeOk ? true : false,
-          financeApproval: financeOk ? true : false,
-          requiresAdminApproval: !adminOk,
-          requiresFinanceApproval: !financeOk,
-          status: 'pending',
-          message: 'طلب نقل السيارة بانتظار موافقة الإدارة والمالية'
+          adminApproved: true,
+          adminApproval: true,
+          financeApproved: true,
+          financeApproval: true,
+          requiresAdminApproval: false,
+          requiresFinanceApproval: false,
+          status: 'approved',
+          message: 'تم نقل السيارة بعد استكمال الموافقات المالية والإدارية'
         };
 
         moves.push({
@@ -1507,22 +1482,13 @@ for (const rowData of rowsWithVin){
           from: oldLoc,
           to: toVal,
           id: rec.id,
-          ...reqMeta
+          ...immediateMoveMeta
         });
 
+        stock[recIdx] = rec;
         movedCount++;
-
-        let extra = '';
-        if (!adminOk && !financeOk) {
-          extra = 'بانتظار موافقة الإدارة والمالية.';
-        } else if (!adminOk && financeOk) {
-          extra = 'بانتظار موافقة الإدارة.';
-        } else if (adminOk && !financeOk) {
-          extra = 'بانتظار الموافقة المالية.';
-        }
-
         successLines.push(
-          `تم تسجيل طلب نقل ${rec.car || ''} (${rowData.vinRaw}) من "${oldLoc}" إلى "${toVal}" ${extra}`
+          `تم نقل ${rec.car || ''} (${rowData.vinRaw}) إلى "${toVal}" بعد استكمال الموافقات المالية والإدارية.`
         );
         continue;
       }
