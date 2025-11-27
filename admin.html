@@ -1389,7 +1389,7 @@ btnLogin.addEventListener('click', async ()=>{
       return;
     }
 
-    const goingUnderDeliveryRow = false;
+    const goingUnderDeliveryRow = /مباع تحت التسليم/.test(dest);
     const goingIssuesRow        = /سيارات بها ملاحظات/.test(dest);
     const goingDeliveredRow     = /مباع تم التسليم/.test(dest);
 
@@ -1435,6 +1435,62 @@ for (const rowData of rowsWithVin){
       };
 
       const oldLoc = rec.location || from;
+
+      // 🚚 منطق خاص بـ "مباع تحت التسليم"
+      if (goingUnderDeliveryRow) {
+        const stamp = now();
+
+        // 1) ننقل السيارة فعليًا إلى مباع تحت التسليم
+        rec.location = toVal;
+        if ('place' in rec) {
+          rec.place = toVal;
+        }
+
+        stock[recIdx] = rec;
+        movedCount++;
+        successLines.push(`تم نقل ${rec.car||''} (${rec.vin||rowData.vinRaw}) من "${oldLoc}" إلى "${toVal}".`);
+
+        // نسجل حركة النقل إلى "مباع تحت التسليم"
+        moves.push({
+          when: stamp,
+          date: onlyDate(stamp),
+          vin: rec.vin || '',
+          car: rec.car || '',
+          from: oldLoc,
+          to: toVal,
+          id: rec.id,
+          ...moveMeta,
+          status: (moveMeta.status || 'under_delivery'),
+          message: moveMeta.message || 'تم نقل السيارة إلى مباع تحت التسليم بانتظار الموافقات لنقلها إلى مباع تم التسليم'
+        });
+
+        // 2) ننشئ طلب نقل إلى "مباع تم التسليم" في نفس الفرع لصفحة الداش بورد
+        const targetDelivered = toVal.replace('مباع تحت التسليم', 'مباع تم التسليم');
+
+        moves.push({
+          when: stamp,
+          date: onlyDate(stamp),
+          vin: rec.vin || '',
+          car: rec.car || '',
+          from: toVal,
+          to: targetDelivered,
+          id: rec.id,
+          adminApproved: false,
+          adminApproval: false,
+          financeApproved: false,
+          financeApproval: false,
+          requiresAdminApproval: true,
+          needsAdminApproval: true,
+          requiresFinanceApproval: true,
+          needsFinanceApproval: true,
+          status: 'pending',
+          message: 'طلب نقل إلى مباع تم التسليم من نفس الفرع (بانتظار موافقة الإدارة والمالية)'
+        });
+
+        // ننتقل مباشرة للعنصر التالي بدون تنفيذ منطق "مباع تم التسليم" أو الحركة العادية
+        continue;
+      }
+
 
       // 🚗 منطق خاص بـ "مباع تم التسليم"
       if (goingDeliveredRow) {
