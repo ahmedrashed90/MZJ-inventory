@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 
 <html dir="rtl" lang="ar">
@@ -1492,17 +1493,34 @@ for (const rowData of rowsWithVin){
       }
 
 
+
       // 🚗 منطق خاص بـ "مباع تم التسليم"
       if (goingDeliveredRow) {
         const stamp = now();
 
-        // نشيك على حالة الموافقات الحالية في المخزون
-        const adminOk =
-          (rec.adminApproved === true || rec.adminApproved === 'true' || rec.adminApproval === true);
-        const financeOk =
-          (rec.financeApproved === true || rec.financeApproved === 'true' || rec.financeApproval === true);
+        // يجب أن تكون السيارة أولًا في "مباع تحت التسليم" لنفس الفرع
+        if (!/مباع تحت التسليم/.test(oldLoc)) {
+          const errMsg = `لايمكن نقل السيارة ${rec.car || ''} (${rec.vin || rowData.vinRaw}) مباشرة إلى "مباع تم التسليم". يجب أن تمر أولًا على "مباع تحت التسليم" لنفس الفرع.`;
+          errors.push(errMsg);
+          continue;
+        }
 
-        // ❗ لو الموافقات غير مكتملة: يمنع النقل ويظهر رسالة خطأ حمراء
+        // نبحث عن آخر طلب نقل إلى "مباع تم التسليم" لنفس الـ VIN
+        const deliveredTarget = toVal;
+        const relatedMoves = moves.filter(m =>
+          normalizeVin(m.vin || '') === norm && (m.to || '') === deliveredTarget
+        );
+        const lastMove = relatedMoves.length ? relatedMoves[relatedMoves.length - 1] : null;
+
+        if (!lastMove) {
+          const errMsg = 'لايمكن نقل السيارة إلى "مباع تم التسليم" قبل إنشاء طلب موافقة من "مباع تحت التسليم".';
+          errors.push(errMsg);
+          continue;
+        }
+
+        const adminOk = !!(lastMove.adminApproved === true || lastMove.adminApproval === true);
+        const financeOk = !!(lastMove.financeApproved === true || lastMove.financeApproval === true);
+
         if (!adminOk || !financeOk) {
           const errMsg = 'لايمكن نقل السيارة لعدم وجود موافقة مالية و موافقة ادارية';
           errors.push(errMsg);
@@ -1518,18 +1536,6 @@ for (const rowData of rowsWithVin){
         rec.delivered   = true;
         rec.deliveredAt = stamp;
 
-        const immediateMoveMeta = {
-          ...moveMeta,
-          adminApproved: true,
-          adminApproval: true,
-          financeApproved: true,
-          financeApproval: true,
-          requiresAdminApproval: false,
-          requiresFinanceApproval: false,
-          status: 'approved',
-          message: 'تم نقل السيارة بعد استكمال الموافقات المالية والإدارية'
-        };
-
         moves.push({
           when: stamp,
           date: onlyDate(stamp),
@@ -1538,7 +1544,14 @@ for (const rowData of rowsWithVin){
           from: oldLoc,
           to: toVal,
           id: rec.id,
-          ...immediateMoveMeta
+          adminApproved: true,
+          adminApproval: true,
+          financeApproved: true,
+          financeApproval: true,
+          requiresAdminApproval: false,
+          requiresFinanceApproval: false,
+          status: 'delivered',
+          message: 'تم تنفيذ نقل السيارة إلى مباع تم التسليم بعد اكتمال الموافقات'
         });
 
         stock[recIdx] = rec;
@@ -1548,6 +1561,7 @@ for (const rowData of rowsWithVin){
         );
         continue;
       }
+
 
       // الحركات العادية (نقل فعلي)
       rec.location = toVal;
