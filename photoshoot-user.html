@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -1503,28 +1504,27 @@
   }
 
   async function markShootStep1(req){
-    const clone = {...req, admin:{...(req.admin||{}), received: now()}};
-    if(clone.status === "مسودة") clone.status = "تحت الإجراء";
+    const base = (shootRequests || []).find(r => r.id === req.id) || req;
+    const admin = { ...(base.admin || {}) };
+    if (!admin.received) admin.received = now();
+    const clone = { ...base, admin };
+    if (clone.status === "مسودة") clone.status = "تحت الإجراء";
     updateShootRequestLocal(clone);
     await persistAll();
     metrics(); render(); renderShootTimeline(clone);
     showToast("تم استلام الطلب");
   }
 
-  function moveCarsToShootPlace(rows){
-    rows.forEach(row=>{
-      const vin = normalizeVin(row.vin);
-      if(!vin) return;
-      const idx = stock.findIndex(s=> normalizeVin(s.vin)===vin);
-      if(idx>=0){
-        stock[idx] = {...stock[idx], location: row.shootPlace || stock[idx].location};
-      }
-    });
-  }
 
   async function markShootStep2(req){
-    const clone = {...req, admin:{...(req.admin||{}), prepared: now()}};
-    if(clone.status === "مسودة") clone.status = "تحت الإجراء";
+    // خطوة إرسال السيارة للتصوير — نجعلها تراكمية
+    const base = (shootRequests || []).find(r => r.id === req.id) || req;
+    const admin = { ...(base.admin || {}) };
+    const ts = now();
+    if (!admin.received) admin.received = ts;
+    if (!admin.prepared) admin.prepared = ts;
+    const clone = { ...base, admin };
+    if (clone.status === "مسودة") clone.status = "تحت الإجراء";
     moveCarsToShootPlace(clone.rows || []);
     updateShootRequestLocal(clone);
     await persistAll();
@@ -1532,16 +1532,33 @@
     showToast("تم ارسال السيارة للتصوير وتحديث أماكن السيارات");
   }
 
+
   async function markShootStep3(req){
-    const clone = {...req, admin:{...(req.admin||{}), carReceived: now()}};
+    // تأكيد استلام السيارة في موقع التصوير — نجعلها تراكمية
+    const base = (shootRequests || []).find(r => r.id === req.id) || req;
+    const admin = { ...(base.admin || {}) };
+    const ts = now();
+    if (!admin.received) admin.received = ts;
+    if (!admin.prepared) admin.prepared = ts;
+    if (!admin.carReceived) admin.carReceived = ts;
+    const clone = { ...base, admin };
     updateShootRequestLocal(clone);
     await persistAll();
     metrics(); render(); renderShootTimeline(clone);
     showToast("تم تأكيد استلام السيارة بموقع التصوير");
   }
 
+
   async function markShootStep4(req){
-    const clone = {...req, admin:{...(req.admin||{}), finished: now()}};
+    // إنهاء طلب التصوير — نجعل كل الخطوات مكتملة
+    const base = (shootRequests || []).find(r => r.id === req.id) || req;
+    const admin = { ...(base.admin || {}) };
+    const ts = now();
+    if (!admin.received) admin.received = ts;
+    if (!admin.prepared) admin.prepared = ts;
+    if (!admin.carReceived) admin.carReceived = ts;
+    if (!admin.finished) admin.finished = ts;
+    const clone = { ...base, admin };
     clone.status = "تم";
     updateShootRequestLocal(clone);
     await persistAll();
@@ -1549,255 +1566,78 @@
     showToast("تم الانتهاء من طلب التصوير");
   }
 
-  /* ==== نقل: إجراءات ==== */
-  function updateMoveRequestLocal(updated){
-    moveRequests = moveRequests.map(r=> r.id===updated.id ? updated : r);
-  }
-
-  function applyMoveToStock(rows){
-    rows.forEach(row=>{
-      const vin = normalizeVin(row.vin);
-      if(!vin) return;
-      const idx = stock.findIndex(s=> normalizeVin(s.vin)===vin);
-      if(idx>=0){
-        stock[idx] = {...stock[idx], location: row.toLocation || stock[idx].location};
-      }
-    });
-  }
 
   async function markMoveStep1(req){
-    const clone = {...req, admin:{...(req.admin||{}), received: now()}};
-    if(clone.status === "مسودة") clone.status = "قيد المراجعة";
+    // استلام طلب النقل — نأخذ أحدث نسخة من الطلب ونجعل الخطوة الأولى مكتملة
+    const base = (moveRequests || []).find(r => r.id === req.id) || req;
+    const admin = { ...(base.admin || {}) };
+    if (!admin.received) admin.received = now();
+    const clone = { ...base, admin };
+    if (clone.status === "مسودة") clone.status = "قيد المراجعة";
     updateMoveRequestLocal(clone);
     await persistAll();
     metrics(); render(); renderMoveTimeline(clone);
     showToast("تم استلام الطلب");
   }
 
+
   async function markMoveStep2(req){
-    const clone = {...req, admin:{...(req.admin||{}), sent: now()}};
-    if(clone.status === "مسودة" || clone.status==="قيد المراجعة") clone.status = "تحت الإجراء";
+    // إرسال السيارة — تراكمياً: نتأكد أن استلام الطلب مسجل أيضاً
+    const base = (moveRequests || []).find(r => r.id === req.id) || req;
+    const admin = { ...(base.admin || {}) };
+    const ts = now();
+    if (!admin.received) admin.received = ts;
+    if (!admin.sent) admin.sent = ts;
+    const clone = { ...base, admin };
+    if (clone.status === "مسودة" || clone.status === "قيد المراجعة") clone.status = "تحت الإجراء";
     updateMoveRequestLocal(clone);
     await persistAll();
     metrics(); render(); renderMoveTimeline(clone);
     showToast("تم ارسال السيارة");
   }
 
+
   async function markMoveStep3(req){
-    const clone = {...req, admin:{...(req.admin||{}), carReceived: now()}};
+    // استلام السيارة في الموقع الجديد — تراكمياً نضمن كل ما قبلها
+    const base = (moveRequests || []).find(r => r.id === req.id) || req;
+    const admin = { ...(base.admin || {}) };
+    const ts = now();
+    if (!admin.received) admin.received = ts;
+    if (!admin.sent) admin.sent = ts;
+    if (!admin.carReceived) admin.carReceived = ts;
+    const clone = { ...base, admin };
     updateMoveRequestLocal(clone);
     await persistAll();
     metrics(); render(); renderMoveTimeline(clone);
     showToast("تم استلام السيارة في الموقع الجديد");
   }
 
+
   async function markMoveStep4(req){
-    if(req.executedAt){
+    // إنهاء طلب النقل — لو منتهي قبل كده نمنع التكرار، وإلا نكمل كل الخطوات
+    const latest = (moveRequests || []).find(r => r.id === req.id) || req;
+    if (latest.executedAt) {
       showToast("تم الانتهاء من الطلب مسبقًا");
       return;
     }
-    const clone = {...req};
+    const admin = { ...(latest.admin || {}) };
+    const ts = now();
+    if (!admin.received) admin.received = ts;
+    if (!admin.sent) admin.sent = ts;
+    if (!admin.carReceived) admin.carReceived = ts;
+    if (!admin.finished) admin.finished = ts;
+
+    const clone = { ...latest, admin };
     clone.status     = "منفّذ";
-    clone.executedAt = now();
-    clone.admin = {...(clone.admin||{}), finished: clone.executedAt};
-    applyMoveToStock(clone.rows||[]);
+    clone.executedAt = ts;
+
+    applyMoveToStock(clone.rows || []);
     updateMoveRequestLocal(clone);
     await persistAll();
     metrics(); render(); renderMoveTimeline(clone);
     showToast("تم تنفيذ حركة النقل وتحديث المخزون");
   }
 
-  /* ==== Modals ==== */
-  const reqModalBackdrop  = document.getElementById("reqModalBackdrop");
-  const moveModalBackdrop = document.getElementById("moveModalBackdrop");
-  let currentShootReq = null;
-  let currentMoveReq  = null;
-
-  function openReqModal(req){
-    currentShootReq = req;
-    if(!reqModalBackdrop) return;
-    document.getElementById("reqModalTitle").textContent = "تفاصيل طلب التصوير #" + (req.id||"");
-    document.getElementById("reqModalSub").textContent   = "أنشئ بواسطة: "+(req.createdBy||"") + " في " + (req.createdAt||"");
-
-    const tbody = document.getElementById("reqModalRows");
-    tbody.innerHTML = "";
-    const rows = Array.isArray(req.rows)?req.rows:[];
-    rows.forEach((r,idx)=>{
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="center">${idx+1}</td>
-        <td>${r.vin||""}</td>
-        <td>${r.car||""}</td>
-        <td>${r.variant||""}</td>
-        <td>${r.extColor||""}</td>
-        <td>${r.intColor||""}</td>
-        <td>${r.modelYear||""}</td>
-        <td>${r.location||""}</td>
-        <td>${r.shootPlace||""}</td>
-        <td>${r.note||""}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    const status = req.status||"";
-    document.getElementById("reqModalStatusBox").textContent =
-      "حالة الطلب الحالية: " + (status || "—");
-
-    const admin = req.admin || {};
-    document.getElementById("reqModalReceiveInfo").textContent =
-      admin.received ? ("تم استلام الطلب في: "+admin.received) : "لم يتم استلام الطلب بعد";
-    document.getElementById("reqModalPrepInfo").textContent =
-      admin.prepared ? ("تم ارسال السيارة للتصوير في: "+admin.prepared) : "لم يتم ارسال السيارة بعد";
-
-
-    // صلاحيات الأزرار حسب المكان وصاحب الطلب
-    const reqRows = Array.isArray(req.rows) ? req.rows : [];
-    const firstRow = reqRows.length ? reqRows[0] : {};
-    const sourcePlace = (firstRow.location || "").trim();
-    const targetPlace = (firstRow.shootPlace || "").trim();
-
-    const canSourceUser = isSuperAdmin() || userMatchesPlace(sourcePlace);
-    const canTargetUser = isSuperAdmin() || userMatchesPlace(targetPlace);
-    const owner         = isSuperAdmin() || isRequestOwner(req);
-
-    const b1 = document.getElementById("btnShootStep1");
-    const b2 = document.getElementById("btnShootStep2");
-    const b3 = document.getElementById("btnShootStep3");
-    const b4 = document.getElementById("btnShootStep4");
-
-    if (b1) b1.disabled = !canSourceUser;
-    if (b2) b2.disabled = !canSourceUser;
-    if (b3) b3.disabled = !canTargetUser;
-    if (b4) b4.disabled = !owner;
-
-    renderShootTimeline(req);
-
-    reqModalBackdrop.classList.add("show");
-  }
-
-  function openMoveModal(req){
-    currentMoveReq = req;
-    if(!moveModalBackdrop) return;
-    document.getElementById("moveModalTitle").textContent = "تفاصيل طلب النقل #" + (req.id||"");
-    document.getElementById("moveModalSub").textContent   = "أنشئ بواسطة: "+(req.createdBy||"") + " في " + (req.createdAt||"");
-
-    const tbody = document.getElementById("moveModalRows");
-    tbody.innerHTML = "";
-    const rows = Array.isArray(req.rows)?req.rows:[];
-    rows.forEach((r,idx)=>{
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="center">${idx+1}</td>
-        <td>${r.vin||""}</td>
-        <td>${r.car||""}</td>
-        <td>${r.variant||""}</td>
-        <td>${r.extColor||""}</td>
-        <td>${r.intColor||""}</td>
-        <td>${r.modelYear||""}</td>
-        <td>${r.fromLocation||""}</td>
-        <td>${r.toLocation||""}</td>
-        <td>${r.note||""}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    const status = req.status||"";
-    const admin  = req.admin || {};
-    const lines = [];
-    lines.push("حالة الطلب الحالية: "+(status||"—"));
-    lines.push(admin.received ? "تم استلام الطلب في: "+admin.received : "لم يتم استلام الطلب بعد");
-    lines.push(admin.sent ? "تم ارسال السيارة في: "+admin.sent : "لم يتم ارسال السيارة بعد");
-    lines.push(admin.carReceived ? "تم استلام السيارة في: "+admin.carReceived : "لم يتم استلام السيارة بعد");
-    if(req.executedAt){
-      lines.push("تم الانتهاء في: "+req.executedAt);
-    }else{
-      lines.push("لم يتم الانتهاء بعد");
-    }
-    document.getElementById("moveModalStatusBox").textContent = lines.join(" | ");
-
-
-    // صلاحيات الأزرار لطلب النقل
-    const moveRows = Array.isArray(req.rows) ? req.rows : [];
-    const firstMoveRow = moveRows.length ? moveRows[0] : {};
-    const sourceMovePlace = (firstMoveRow.fromLocation || "").trim();
-    const targetMovePlace = (firstMoveRow.toLocation || "").trim();
-
-    const canSourceUserMove = isSuperAdmin() || userMatchesPlace(sourceMovePlace);
-    const canTargetUserMove = isSuperAdmin() || userMatchesPlace(targetMovePlace);
-    const ownerMove         = isSuperAdmin() || isRequestOwner(req);
-
-    const m1 = document.getElementById("btnMoveStep1");
-    const m2 = document.getElementById("btnMoveStep2");
-    const m3 = document.getElementById("btnMoveStep3");
-    const m4 = document.getElementById("btnMoveStep4");
-
-    if (m1) m1.disabled = !canSourceUserMove;
-    if (m2) m2.disabled = !canSourceUserMove;
-    if (m3) m3.disabled = !canTargetUserMove;
-    if (m4) m4.disabled = !ownerMove;
-
-    renderMoveTimeline(req);
-
-    moveModalBackdrop.classList.add("show");
-  }
-
-  document.querySelectorAll("[data-close-req-modal]").forEach(btn=>{
-    btn.addEventListener("click", ()=> reqModalBackdrop.classList.remove("show"));
-  });
-  document.querySelectorAll("[data-close-move-modal]").forEach(btn=>{
-    btn.addEventListener("click", ()=> moveModalBackdrop.classList.remove("show"));
-  });
-
-  reqModalBackdrop?.addEventListener("click",(e)=>{
-    if(e.target === reqModalBackdrop) reqModalBackdrop.classList.remove("show");
-  });
-  moveModalBackdrop?.addEventListener("click",(e)=>{
-    if(e.target === moveModalBackdrop) moveModalBackdrop.classList.remove("show");
-  });
-
-  document.getElementById("btnShootStep1")?.addEventListener("click",()=>{
-    if(currentShootReq) markShootStep1(currentShootReq);
-  });
-  document.getElementById("btnShootStep2")?.addEventListener("click",()=>{
-    if(currentShootReq) markShootStep2(currentShootReq);
-  });
-  document.getElementById("btnShootStep3")?.addEventListener("click",()=>{
-    if(currentShootReq) markShootStep3(currentShootReq);
-  });
-  document.getElementById("btnShootStep4")?.addEventListener("click",()=>{
-    if(currentShootReq) markShootStep4(currentShootReq);
-  });
-
-  document.getElementById("btnMoveStep1")?.addEventListener("click",()=>{
-    if(currentMoveReq) markMoveStep1(currentMoveReq);
-  });
-  document.getElementById("btnMoveStep2")?.addEventListener("click",()=>{
-    if(currentMoveReq) markMoveStep2(currentMoveReq);
-  });
-  document.getElementById("btnMoveStep3")?.addEventListener("click",()=>{
-    if(currentMoveReq) markMoveStep3(currentMoveReq);
-  });
-  document.getElementById("btnMoveStep4")?.addEventListener("click",()=>{
-    if(currentMoveReq) markMoveStep4(currentMoveReq);
-  });
-
-  /* ==== Firebase state sync ==== */
-  onSnapshot(STATE_REF,(snap)=>{
-    const data = snap.data() || {};
-    shootRequests = Array.isArray(data.shootRequests) ? data.shootRequests : [];
-    moveRequests  = Array.isArray(data.moveRequests)  ? data.moveRequests  : [];
-    stock         = Array.isArray(data.stock)         ? data.stock         : [];
-    moves         = Array.isArray(data.moves)         ? data.moves         : [];
-    metrics();
-    render();
-    if(data.updatedAt) $("#stat_updated").textContent = data.updatedAt;
-    setStatus("ok","متصل بقاعدة البيانات");
-  }, err=>{
-    console.error(err);
-    setStatus("err","تعذر الاتصال");
-  });
-
-  /* ==== Auth & Roles ==== */
   
   async function fetchUserRole(user){
     currentUserUid = user?.uid || null;
