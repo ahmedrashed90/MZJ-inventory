@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -861,6 +862,13 @@
   const ROLE_IDARI = "اداري";
   const PAGE_ALLOWED_ROLES = [ROLE_ADMIN, ROLE_IDARI];
 
+  // معلومات المستخدم الحالي لاستخدامها في صلاحيات الأزرار
+  let currentUserUid = null;
+  let currentUserEmail = "";
+  let currentUserLocations = [];
+  let currentUserRole = null;
+
+
   const SHOOT_PLACES = [
     "",
     "الاستديو",
@@ -1255,6 +1263,8 @@
       (rb && rb.value && rb.value.trim()) ||
       (user && (user.displayName || user.email)) ||
       "غير محدد";
+    const createdByUid   = user ? user.uid : null;
+    const createdByEmail = user ? (user.email || "") : "";
 
     const {shootRows,moveRows} = collectFormRows();
     if(!shootRows.length && !moveRows.length){
@@ -1272,6 +1282,8 @@
         id: nextId,
         createdAt: now(),
         createdBy,
+        createdByUid,
+        createdByEmail,
         rows: shootRows,
         status,
         admin:{ received:null, prepared:null, carReceived:null, finished:null }
@@ -1296,6 +1308,8 @@
         type:"VIN_MOVE",
         createdAt: now(),
         createdBy,
+        createdByUid,
+        createdByEmail,
         rows: moveRows,
         status,
         executedAt: null,
@@ -1617,6 +1631,38 @@
     document.getElementById("reqModalPrepInfo").textContent =
       admin.prepared ? ("تم ارسال السيارة للتصوير في: "+admin.prepared) : "لم يتم ارسال السيارة بعد";
 
+    // صلاحيات الأزرار في طلب التصوير حسب المكان وصاحب الطلب
+    const rowsArr = Array.isArray(req.rows) ? req.rows : [];
+    const firstRow = rowsArr.length ? rowsArr[0] : {};
+    const sourcePlace = (firstRow.location || "").trim();
+    const targetPlace = (firstRow.shootPlace || "").trim();
+
+    const canSourceUser = userMatchesPlace(sourcePlace);
+    const canTargetUser = userMatchesPlace(targetPlace);
+    const owner         = isRequestOwner(req);
+
+    const btn1 = document.getElementById("btnShootStep1");
+    const btn2 = document.getElementById("btnShootStep2");
+    const btn3 = document.getElementById("btnShootStep3");
+    const btn4 = document.getElementById("btnShootStep4");
+
+    if(btn1){
+      btn1.disabled = !canSourceUser;
+      btn1.title = canSourceUser ? "" : "هذه الخطوة متاحة لمسؤول مكان خروج السيارة فقط";
+    }
+    if(btn2){
+      btn2.disabled = !canSourceUser;
+      btn2.title = canSourceUser ? "" : "هذه الخطوة متاحة لمسؤول مكان خروج السيارة فقط";
+    }
+    if(btn3){
+      btn3.disabled = !canTargetUser;
+      btn3.title = canTargetUser ? "" : "هذه الخطوة متاحة لمسؤول مكان التصوير فقط";
+    }
+    if(btn4){
+      btn4.disabled = !owner;
+      btn4.title = owner ? "" : "هذه الخطوة متاحة لمقدّم الطلب فقط";
+    }
+
     renderShootTimeline(req);
     reqModalBackdrop.classList.add("show");
   }
@@ -1660,6 +1706,38 @@
       lines.push("لم يتم الانتهاء بعد");
     }
     document.getElementById("moveModalStatusBox").textContent = lines.join(" | ");
+
+    // صلاحيات الأزرار في طلب النقل حسب المكان وصاحب الطلب
+    const rowsArr = Array.isArray(req.rows) ? req.rows : [];
+    const firstRow = rowsArr.length ? rowsArr[0] : {};
+    const sourcePlace = (firstRow.fromLocation || "").trim();
+    const targetPlace = (firstRow.toLocation || "").trim();
+
+    const canSourceUser = userMatchesPlace(sourcePlace);
+    const canTargetUser = userMatchesPlace(targetPlace);
+    const owner         = isRequestOwner(req);
+
+    const m1 = document.getElementById("btnMoveStep1");
+    const m2 = document.getElementById("btnMoveStep2");
+    const m3 = document.getElementById("btnMoveStep3");
+    const m4 = document.getElementById("btnMoveStep4");
+
+    if(m1){
+      m1.disabled = !canSourceUser;
+      m1.title = canSourceUser ? "" : "هذه الخطوة متاحة لمسؤول مكان خروج السيارة فقط";
+    }
+    if(m2){
+      m2.disabled = !canSourceUser;
+      m2.title = canSourceUser ? "" : "هذه الخطوة متاحة لمسؤول مكان خروج السيارة فقط";
+    }
+    if(m3){
+      m3.disabled = !canTargetUser;
+      m3.title = canTargetUser ? "" : "هذه الخطوة متاحة لمسؤول مكان استقبال السيارة فقط";
+    }
+    if(m4){
+      m4.disabled = !owner;
+      m4.title = owner ? "" : "هذه الخطوة متاحة لمقدّم الطلب فقط";
+    }
 
     renderMoveTimeline(req);
     moveModalBackdrop.classList.add("show");
@@ -1722,17 +1800,54 @@
   });
 
   /* ==== Auth & Roles ==== */
+  
   async function fetchUserRole(user){
     try{
       const snap = await getDoc(doc(db,"user",user.uid));
       if(snap.exists()){
-        return snap.data().role || null;
+        const data = snap.data() || {};
+        currentUserRole = data.role || null;
+
+        // locations قد تكون Array أو قيمة واحدة
+        if (Array.isArray(data.locations)) {
+          currentUserLocations = data.locations;
+        } else if (data.locations) {
+          currentUserLocations = [data.locations];
+        } else {
+          currentUserLocations = [];
+        }
+
+        currentUserUid = user.uid;
+        currentUserEmail = user.email || data.email || "";
+
+        return currentUserRole;
       }
     }catch(e){
       console.error("fetch role error", e);
     }
     return null;
   }
+
+  // دالة للتحقق هل المستخدم الحالي مسؤول عن مكان معيّن
+  function userMatchesPlace(place){
+    if(!place) return false;
+    if(!Array.isArray(currentUserLocations)) return false;
+    return currentUserLocations.includes(place);
+  }
+
+  // دالة للتحقق هل المستخدم الحالي هو مقدّم الطلب
+  function isRequestOwner(req){
+    if(!currentUserUid && !currentUserEmail) return false;
+
+    if(req.createdByUid){
+      return req.createdByUid === currentUserUid;
+    }
+    if(req.createdByEmail && currentUserEmail){
+      return (req.createdByEmail === currentUserEmail);
+    }
+    return false;
+  }
+
 
   function showAuthGate(){
     document.getElementById("authGate").style.display = "block";
