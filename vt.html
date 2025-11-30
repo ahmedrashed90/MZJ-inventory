@@ -306,7 +306,7 @@
   const ROLE_BRANCH  = 'مدراء فروع';
 
   // هذه الصفحة مسموحة لنفس صلاحيات admin.html (الإدارة فقط حالياً)
-  const PAGE_ALLOWED_ROLES = [ROLE_ADMIN];
+  const PAGE_ALLOWED_ROLES = [ROLE_ADMIN, ROLE_IDARI];
 
   async function fetchUserRole(user){
     try{
@@ -968,3 +968,4 @@
 </script>
 </body>
 </html>
+
