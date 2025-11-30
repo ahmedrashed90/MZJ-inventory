@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -757,14 +758,14 @@ function renderShootCard(gridEl){
               — تصوير: <b>${st.shootTotal.toLocaleString('ar-SA')}</b>
               | طلب نقل: <b>${st.moveTotal.toLocaleString('ar-SA')}</b>
             </span>
-            <span class="metric shoot-metric" data-status="تحت الإجراء">
+            <span class="metric shoot-metric" data-status="تم الإنشاء">
               <i class="fa-solid fa-gears"></i>
-              تحت الإجراء:
+              تم الإنشاء:
               <b>${st.inProg.toLocaleString('ar-SA')}</b>
             </span>
-            <span class="metric shoot-metric" data-status="تم التجهيز">
+            <span class="metric shoot-metric" data-status="تم الإرسال">
               <i class="fa-solid fa-wand-magic-sparkles"></i>
-              تم التجهيز:
+              تم الإرسال:
               <b>${st.prepared.toLocaleString('ar-SA')}</b>
             </span>
             <span class="metric shoot-metric" data-status="تم الاستلام">
@@ -772,9 +773,9 @@ function renderShootCard(gridEl){
               تم الاستلام:
               <b>${st.reviewing.toLocaleString('ar-SA')}</b>
             </span>
-            <span class="metric shoot-metric" data-status="تم">
+            <span class="metric shoot-metric" data-status="تم التنفيذ">
               <i class="fa-regular fa-circle-check"></i>
-              تم / منفّذ:
+              تم التنفيذ:
               <b>${st.done.toLocaleString('ar-SA')}</b>
             </span>
           </div>
@@ -798,14 +799,14 @@ function renderShootCard(gridEl){
         const status = el.getAttribute('data-status') || 'ALL';
         if (status === 'ALL') {
           openShootModal('ALL');
-        } else if (status === 'تحت الإجراء') {
-          openShootModal('تحت الإجراء');
-        } else if (status === 'تم التجهيز') {
-          openShootModal('prepared');
+        } else if (status === 'تم الإنشاء') {
+          openShootModal('تم الإنشاء');
+        } else if (status === 'تم الإرسال') {
+          openShootModal('تم الإرسال');
         } else if (status === 'تم الاستلام') {
           openShootModal('تم الاستلام');
-        } else if (status === 'تم') {
-          openShootModal('تم');
+        } else if (status === 'تم التنفيذ') {
+          openShootModal('تم التنفيذ');
         } else {
           openShootModal(status);
         }
@@ -874,22 +875,25 @@ function renderShootCard(gridEl){
       t.financeApproved === true || t.financeApproved === 'true' || t.financeApproval === true
     ).length;
 
+    const adminPendingCount = total - adminApprovedCount;
+    const financePendingCount = total - financeApprovedCount;
+
     const card = document.createElement('div');
     card.className = 'card group-card';
     card.id = 'transferCard';
     card.innerHTML = `
       <div class="group-head">
         <div class="group-left">
-          <h3 class="group-title"><i class="fa-solid fa-right-left"></i> طلبات نقل السيارات</h3>
+          <h3 class="group-title"><i class="fa-solid fa-right-left"></i> الموافقة المالية والإدارية</h3>
           <div class="sub-metrics">
             <span class="metric">
               <i class="fa-solid fa-list-check"></i> طلبات النقل إلى مباع تم التسليم: <b>${total.toLocaleString('ar-SA')}</b>
             </span>
             <span class="metric">
-              <i class="fa-solid fa-user-check"></i> موافقة إدارية: <b>${adminApprovedCount.toLocaleString('ar-SA')}</b>
+              <i class="fa-solid fa-user-check"></i> موافقة إدارية: <b>${adminPendingCount.toLocaleString('ar-SA')}</b>
             </span>
             <span class="metric">
-              <i class="fa-solid fa-coins"></i> موافقة مالية: <b>${financeApprovedCount.toLocaleString('ar-SA')}</b>
+              <i class="fa-solid fa-coins"></i> موافقة مالية: <b>${financePendingCount.toLocaleString('ar-SA')}</b>
             </span>
           </div>
         </div>
@@ -1299,10 +1303,10 @@ function renderShootCard(gridEl){
     const status = (r.status || '').toString().trim();
 
     // الفلاتر الرئيسية بالعربي
-    if(filter==='تحت الإجراء')   return status === 'تحت الإجراء';
-    if(filter==='تم التجهيز')    return status === 'تم التجهيز';
-    if(filter==='تم الاستلام')   return status === 'تم الاستلام' || status === 'قيد المراجعة';
-    if(filter==='تم')            return status === 'تم' || status === 'منفّذ';
+    if(filter==='تم الإنشاء' || filter==='تحت الإجراء')   return status === 'تحت الإجراء';
+    if(filter==='تم الإرسال' || filter==='تم التجهيز')    return status === 'تم التجهيز';
+    if(filter==='تم الاستلام')                            return status === 'تم الاستلام' || status === 'قيد المراجعة';
+    if(filter==='تم التنفيذ' || filter==='تم')            return status === 'تم' || status === 'منفّذ';
 
     // دعم الأسماء القديمة للفلاتر
     if(filter==='received') return !!(r.admin && r.admin.received);
@@ -1326,12 +1330,12 @@ function renderShootCard(gridEl){
     filteredShoot = currentShoot.filter(r=> matchesShootFilter(r, currentShootFilter));
 
     let title;
-    if(filter==='ALL')               title = 'طلبات التصوير والنقل — الكل';
-    else if(filter==='تحت الإجراء')  title = 'طلبات التصوير والنقل — تحت الإجراء';
-    else if(filter==='تم التجهيز')   title = 'طلبات التصوير والنقل — تم التجهيز';
+    if(filter==='ALL')                title = 'طلبات التصوير والنقل — الكل';
+    else if(filter==='تم الإنشاء')   title = 'طلبات التصوير والنقل — تم الإنشاء';
+    else if(filter==='تم الإرسال')   title = 'طلبات التصوير والنقل — تم الإرسال';
     else if(filter==='تم الاستلام')  title = 'طلبات التصوير والنقل — تم الاستلام';
-    else if(filter==='تم')           title = 'طلبات التصوير والنقل — تم / منفّذ';
-    else                             title = `طلبات التصوير والنقل — ${filter}`;
+    else if(filter==='تم التنفيذ')   title = 'طلبات التصوير والنقل — تم التنفيذ';
+    else                              title = `طلبات التصوير والنقل — ${filter}`;
 
     if(shootDetailsBox) shootDetailsBox.style.display='none';
     openModal('shoot', title);
@@ -1481,11 +1485,11 @@ function renderShootCard(gridEl){
         <td style="text-align:center">${financeOk ? '✅' : '—'}</td>
         <td>${statusTxt}</td>
         <td>
-          <button class="btn btn-outline btn-xs" data-transfer-idx="${idxInMoves}" data-transfer-kind="admin" ${adminDisabledAttr}>
-            <i class="fa-solid fa-user-check"></i> موافقة الإدارة
-          </button>
           <button class="btn btn-outline btn-xs" data-transfer-idx="${idxInMoves}" data-transfer-kind="finance" ${financeDisabledAttr}>
             <i class="fa-solid fa-coins"></i> موافقة مالية
+          </button>
+          <button class="btn btn-outline btn-xs" data-transfer-idx="${idxInMoves}" data-transfer-kind="admin" ${adminDisabledAttr}>
+            <i class="fa-solid fa-user-check"></i> موافقة إدارية
           </button>
         </td>
       `;
