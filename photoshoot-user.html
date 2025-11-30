@@ -1,6 +1,4 @@
 
-
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -961,7 +959,7 @@
     if(user.displayName && user.displayName.trim()) return user.displayName.trim();
     const e = (user.email||"").toLowerCase();
     const local = e.split("@")[0]||"";
-    return local.replace(/[._-]+/g," ").replace(/\\b\\w/g,c=>c.toUpperCase());
+    return local.replace(/[._-]+/g," ").replace(/\b\w/g,c=>c.toUpperCase());
   }
 
   async function logActivity(actionType, details, extra={}){
@@ -1133,14 +1131,14 @@
         }else{
           lines.push("لم يتم الانتهاء بعد");
         }
-        approvalsText = lines.join("\\n");
+        approvalsText = lines.join("\n");
       }else{
         const admin = r.admin || {};
         const recv  = admin.received;
         const prep  = admin.prepared;
         const recvText = recv ? ("تم استلام الطلب في: "+recv) : "لم يتم استلام الطلب بعد";
         const prepText = prep ? ("تم ارسال السيارة للتصوير في: "+prep) : "لم يتم الارسال بعد";
-        approvalsText = recvText + "\\n" + prepText;
+        approvalsText = recvText + "\n" + prepText;
       }
 
       tr.innerHTML = `
@@ -1726,6 +1724,20 @@
     // تطبيق صلاحيات التابات حسب الدور
     applyTabsVisibility(role);
     buildFormRows();
+
+    // ✅ تحميل حالة النظام (المخزون + الطلبات) من STATE_REF
+    onSnapshot(STATE_REF, (snap) => {
+      const data = snap.data() || {};
+      shootRequests = Array.isArray(data.shootRequests) ? data.shootRequests : [];
+      moveRequests  = Array.isArray(data.moveRequests)  ? data.moveRequests  : [];
+      stock         = Array.isArray(data.stock)         ? data.stock         : [];
+      moves         = Array.isArray(data.moves)         ? data.moves         : [];
+
+      metrics();
+      render();
+      const su = document.getElementById("stat_updated");
+      if (su) su.textContent = data.updatedAt || "—";
+    });
   });
 
   document.getElementById("btnSignOut")?.addEventListener("click",async ()=>{
