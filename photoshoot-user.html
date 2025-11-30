@@ -1664,6 +1664,203 @@
   }
 
   
+  
+  function updateMoveRequestLocal(updated){
+    moveRequests = (moveRequests || []).map(r => r.id === updated.id ? updated : r);
+  }
+
+  function moveCarsToShootPlace(rows){
+    if (!Array.isArray(rows) || !rows.length) return;
+    const newStock = (stock || []).map(rec => ({...rec}));
+    rows.forEach(row => {
+      const vin = normalizeVin(row.vin || "");
+      if (!vin) return;
+      const idx = newStock.findIndex(s => normalizeVin(s.vin) === vin);
+      if (idx === -1) return;
+      const place = row.shootPlace || row.place || "";
+      if (place) newStock[idx].location = place;
+    });
+    stock = newStock;
+  }
+
+  function applyMoveToStock(rows){
+    if (!Array.isArray(rows) || !rows.length) return;
+    const newStock = (stock || []).map(rec => ({...rec}));
+    rows.forEach(row => {
+      const vin = normalizeVin(row.vin || "");
+      if (!vin) return;
+      const idx = newStock.findIndex(s => normalizeVin(s.vin) === vin);
+      if (idx === -1) return;
+      const toLoc = row.toLocation || row.place || "";
+      if (toLoc) newStock[idx].location = toLoc;
+    });
+    stock = newStock;
+  }
+
+  let currentShootReqId = null;
+  let currentMoveReqId  = null;
+
+  function openReqModal(req){
+    currentShootReqId = req.id;
+    const backdrop = document.getElementById("reqModalBackdrop");
+    if (!backdrop) return;
+    const titleEl  = document.getElementById("reqModalTitle");
+    const subEl    = document.getElementById("reqModalSub");
+    const rowsBody = document.getElementById("reqModalRows");
+    const statusBox= document.getElementById("reqModalStatusBox");
+    const recvBox  = document.getElementById("reqModalReceiveInfo");
+    const prepBox  = document.getElementById("reqModalPrepInfo");
+    const notesEl  = document.getElementById("adminNotes");
+
+    if (titleEl) titleEl.textContent = "تفاصيل طلب التصوير #" + (req.id || "-");
+    if (subEl) subEl.textContent = (req.createdAt || "") + " — " + (req.createdBy || "");
+
+    rowsBody.innerHTML = "";
+    const rows = Array.isArray(req.rows) ? req.rows : [];
+    rows.forEach((row, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="center">${idx+1}</td>
+        <td>${row.vin || ""}</td>
+        <td>${row.car || ""}</td>
+        <td>${row.variant || ""}</td>
+        <td>${row.extColor || ""}</td>
+        <td>${row.intColor || ""}</td>
+        <td>${row.modelYear || ""}</td>
+        <td>${row.location || ""}</td>
+        <td>${row.shootPlace || row.place || ""}</td>
+        <td>${row.note || ""}</td>
+      `;
+      rowsBody.appendChild(tr);
+    });
+
+    const admin = req.admin || {};
+    if (statusBox) {
+      statusBox.textContent = "الحالة الحالية: " + (req.status || "—");
+    }
+    if (recvBox) {
+      recvBox.textContent = admin.received
+        ? ("تم استلام الطلب في: " + admin.received)
+        : "لم يتم استلام الطلب بعد";
+    }
+    if (prepBox) {
+      prepBox.textContent = admin.prepared
+        ? ("تم ارسال السيارة للتصوير في: " + admin.prepared)
+        : "لم يتم ارسال السيارة بعد";
+    }
+    if (notesEl) {
+      notesEl.value = req.adminNotes || "";
+    }
+
+    renderShootTimeline(req);
+    backdrop.classList.add("show");
+  }
+
+  function openMoveModal(req){
+    currentMoveReqId = req.id;
+    const backdrop = document.getElementById("moveModalBackdrop");
+    if (!backdrop) return;
+    const titleEl  = document.getElementById("moveModalTitle");
+    const subEl    = document.getElementById("moveModalSub");
+    const rowsBody = document.getElementById("moveModalRows");
+    const statusBox= document.getElementById("moveModalStatusBox");
+
+    if (titleEl) titleEl.textContent = "تفاصيل طلب النقل #" + (req.id || "-");
+    if (subEl) subEl.textContent    = (req.createdAt || "") + " — " + (req.createdBy || "");
+
+    rowsBody.innerHTML = "";
+    const rows = Array.isArray(req.rows) ? req.rows : [];
+    rows.forEach((row, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="center">${idx+1}</td>
+        <td>${row.vin || ""}</td>
+        <td>${row.car || ""}</td>
+        <td>${row.variant || ""}</td>
+        <td>${row.extColor || ""}</td>
+        <td>${row.intColor || ""}</td>
+        <td>${row.modelYear || ""}</td>
+        <td>${row.fromLocation || ""}</td>
+        <td>${row.toLocation || ""}</td>
+        <td>${row.note || ""}</td>
+      `;
+      rowsBody.appendChild(tr);
+    });
+
+    const admin = req.admin || {};
+    const lines = [];
+    lines.push(admin.received ? "تم استلام الطلب في: " + admin.received : "لم يتم استلام الطلب بعد");
+    lines.push(admin.sent ? "تم ارسال السيارة في: " + admin.sent : "لم يتم ارسال السيارة بعد");
+    lines.push(admin.carReceived ? "تم استلام السيارة في: " + admin.carReceived : "لم يتم استلام السيارة بعد");
+    if (req.executedAt) {
+      lines.push("تم الانتهاء في: " + req.executedAt);
+    } else {
+      lines.push("لم يتم الانتهاء بعد");
+    }
+    if (statusBox) {
+      statusBox.textContent = lines.join(" | ");
+    }
+
+    renderMoveTimeline(req);
+    backdrop.classList.add("show");
+  }
+
+  (function bindModalEvents(){
+    const reqBackdrop  = document.getElementById("reqModalBackdrop");
+    const moveBackdrop = document.getElementById("moveModalBackdrop");
+
+    document.querySelectorAll("[data-close-req-modal]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (reqBackdrop) reqBackdrop.classList.remove("show");
+      });
+    });
+    document.querySelectorAll("[data-close-move-modal]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (moveBackdrop) moveBackdrop.classList.remove("show");
+      });
+    });
+
+    const notesEl = document.getElementById("adminNotes");
+
+    const btnS1 = document.getElementById("btnShootStep1");
+    const btnS2 = document.getElementById("btnShootStep2");
+    const btnS3 = document.getElementById("btnShootStep3");
+    const btnS4 = document.getElementById("btnShootStep4");
+
+    function withCurrentShoot(fn){
+      if (currentShootReqId == null) return;
+      const idx = (shootRequests || []).findIndex(r => r.id === currentShootReqId);
+      if (idx === -1) return;
+      if (notesEl) {
+        shootRequests[idx].adminNotes = notesEl.value || "";
+      }
+      fn(shootRequests[idx]);
+    }
+
+    if (btnS1) btnS1.addEventListener("click", () => withCurrentShoot(markShootStep1));
+    if (btnS2) btnS2.addEventListener("click", () => withCurrentShoot(markShootStep2));
+    if (btnS3) btnS3.addEventListener("click", () => withCurrentShoot(markShootStep3));
+    if (btnS4) btnS4.addEventListener("click", () => withCurrentShoot(markShootStep4));
+
+    const btnM1 = document.getElementById("btnMoveStep1");
+    const btnM2 = document.getElementById("btnMoveStep2");
+    const btnM3 = document.getElementById("btnMoveStep3");
+    const btnM4 = document.getElementById("btnMoveStep4");
+
+    function withCurrentMove(fn){
+      if (currentMoveReqId == null) return;
+      const idx = (moveRequests || []).findIndex(r => r.id === currentMoveReqId);
+      if (idx === -1) return;
+      fn(moveRequests[idx]);
+    }
+
+    if (btnM1) btnM1.addEventListener("click", () => withCurrentMove(markMoveStep1));
+    if (btnM2) btnM2.addEventListener("click", () => withCurrentMove(markMoveStep2));
+    if (btnM3) btnM3.addEventListener("click", () => withCurrentMove(markMoveStep3));
+    if (btnM4) btnM4.addEventListener("click", () => withCurrentMove(markMoveStep4));
+  })();
+
+
   async function fetchUserRole(user){
     currentUserUid = user?.uid || null;
     currentUserEmail = user?.email || "";
