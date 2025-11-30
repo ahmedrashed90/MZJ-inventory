@@ -1,7 +1,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -450,51 +449,42 @@
       .pt-desc{display:none}
     }
 
-  
-
-  /* Unified Topbar from dashboard */
-/* Topbar + Tabs */
-  .topbar{position:sticky;top:0;z-index:60;background:#fff;border-bottom:1px solid var(--line)}
-  .topbar-inner{max-width:1280px;margin:auto;display:flex;align-items:center;justify-content:space-between;padding:12px 18px}
-  .brand{display:flex;align-items:center;gap:10px}
-  .brand .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--brown),#2a1613);display:grid;place-items:center;color:#fff;font-weight:900}
-  .brand h1{margin:0;font-size:18px;color:var(--brown);font-weight:800}
-  .brand small{color:var(--muted)}
-  .tabs{display:flex;gap:8px}
-  .tab{padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;text-decoration:none;color:var(--muted);font-size:13px;font-weight:600;}
-  .tab.active{background:var(--brown);border-color:var(--brown);color:#fff;font-weight:800;box-shadow:0 6px 16px rgba(62,36,32,.25);}
-  .status-badge{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;font-size:12px}
-  .dot{width:10px;height:10px;border-radius:999px;background:var(--warn)}
-  .dot.ok{background:var(--ok)} .dot.err{background:var(--danger)} .dot.warn{background:var(--warn)}
-
-</style>
+  </style>
 </head>
 <body>
-
-<!-- Topbar -->
-<div class="topbar">
-  <div class="topbar-inner">
-    <div class="brand">
-      <div class="logo">MZJ</div>
+<div class="top">
+  <div class="inner">
+    <div class="top-left">
+      <div class="logo"><i class="fa-solid fa-star"></i></div>
       <div>
-        <h1>MZJ إدارة الطلبات</h1>
-        <small class="hint">متابعة طلبات التصوير والنقل في مكان واحد</small>
+        <p class="brand-title">MZJ إدارة طلبات التصوير والنقل</p>
+        <p class="brand-sub">مسار واحد لمتابعة جميع الطلبات من الإنشاء حتى التنفيذ</p>
       </div>
     </div>
-    <div class="tabs">
-      <a class="tab" href="admin.html">الإدارة</a>
-      <a class="tab" href="inventory.html">المخزون</a>
-      <a class="tab" href="dashboard.html">الداش بورد</a>
-      <a class="tab" href="vt.html">نقل السيارات</a>
-      <a class="tab active" href="photoshoot-user.html">إدارة الطلبات</a>
-      <a class="tab" href="cars.html">كل السيارات</a>
-      <a class="tab" href="Activity.html">سجل النشاط</a>
-    </div>
-    <div class="row">
-      <div class="status-badge"><span id="connDot" class="dot warn"></span><span id="connText">جارِ الاتصال…</span></div>
-      <button id="btnSignOut" class="btn btn-ghost" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+    <div class="top-right">
+      <span class="chip">
+        <i class="fa-solid fa-circle-nodes"></i>
+        <span class="status">
+          <span id="connDot" class="dot"></span>
+          <span id="connText">جارٍ الاتصال…</span>
+        </span>
+      </span>
+      <span class="user-info" id="userLabel">غير مسجل</span>
+      <button class="btn ghost btn-mini" id="btnSignOut" style="display:none">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل خروج
+      </button>
     </div>
   </div>
+</div>
+
+<div class="tabs">
+  <a class="tab" href="admin.html">الإدارة</a>
+  <a class="tab" href="inventory.html">المخزون</a>
+  <a class="tab" href="dashboard.html">الداش بورد</a>
+  <a class="tab" href="vt.html">نقل السيارات</a>
+  <a class="tab active" href="photoshoot-user.html">إدارة الطلبات</a>
+  <a class="tab" href="cars.html">كل السيارات</a>
+  <a class="tab" href="Activity.html">سجل النشاط</a>
 </div>
 
 <main class="wrap">
@@ -869,39 +859,17 @@
   const STATE_REF   = doc(db, "mzj_admin_state", "v1");
   const ACTIVITY_CL = collection(db, "mzj_activity_log");
 
-  const ROLE_ADMIN   = 'الادارة';
-  const ROLE_IDARI   = 'اداري';
-  const ROLE_BRANCH  = 'مدراء فروع';
-
-  // هذه الصفحة مسموحة لنفس صلاحيات admin.html (الإدارة + الإداري)
+  const ROLE_ADMIN = "الادارة";
+  const ROLE_IDARI = "اداري";
   const PAGE_ALLOWED_ROLES = [ROLE_ADMIN, ROLE_IDARI];
 
-  // الصفحات المسموح بها لكل دور (استخدامها لإخفاء التابات)
+
+  // الصفحات المسموح بها حسب كل دور
   const ROLE_PAGES = {
-    [ROLE_ADMIN] : 'ALL', // الإدارة تشوف كل الصفحات
+    [ROLE_ADMIN]: 'ALL', // الإدارة تشوف كل الصفحات
     // الإداري: يشوف فقط الداشبورد + نقل السيارات + إدارة الطلبات + كل السيارات
-    [ROLE_IDARI] : ['dashboard.html','vt.html','photoshoot-user.html','cars.html'],
-    [ROLE_BRANCH]: ['dashboard.html']
+    [ROLE_IDARI]: ['dashboard.html','vt.html','photoshoot-user.html','cars.html']
   };
-
-  function applyTabsVisibility(role){
-    const tabs = document.querySelectorAll('.tab');
-    tabs.forEach(tab=>{
-      const href = tab.getAttribute('href') || '';
-      const page = (href.split('/').pop() || '').split('?')[0];
-      if(!page) return;
-      const perm = ROLE_PAGES[role];
-      if(!perm){
-        tab.style.display = 'none';
-        return;
-      }
-      if(perm === 'ALL') return; // الدور يشوف كل حاجة
-      if(!perm.includes(page)){
-        tab.style.display = 'none';
-      }
-    });
-  }
-
 
   let currentUserRole = null;
   let currentUserLocations = [];
@@ -950,6 +918,26 @@
     t.style.display = "block";
     setTimeout(()=>{t.style.display="none";}, 1800);
   }
+
+  // إظهار أو إخفاء التابات حسب صلاحية الدور
+  function applyTabsVisibility(role){
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab=>{
+      const href = tab.getAttribute('href') || '';
+      const page = (href.split('/').pop() || '').split('?')[0];
+      if(!page) return;
+      const perm = ROLE_PAGES[role];
+      if(!perm){
+        tab.style.display = 'none';
+        return;
+      }
+      if(perm === 'ALL') return; // الإدارة تشوف كل حاجة
+      if(!perm.includes(page)){
+        tab.style.display = 'none';
+      }
+    });
+  }
+
   function setStatus(mode,txt){
     const dot=$("#connDot");
     const txtEl=$("#connText");
@@ -1729,16 +1717,14 @@
 
     const role = await fetchUserRole(user);
     if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
-      window.location.href = 'unauthorized.html';
+      // تحويل مباشر لصفحة عدم الصلاحية
+      window.location.href = "unauthorized.html";
       return;
     }
-
     setStatus("ok","متصل بحساب الإدارة");
-
-    // إخفاء التابات غير المسموح بها حسب الدور
-    applyTabsVisibility(role);
-
     showApp();
+    // تطبيق صلاحيات التابات حسب الدور
+    applyTabsVisibility(role);
     buildFormRows();
   });
 
