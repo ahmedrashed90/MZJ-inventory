@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -447,6 +448,21 @@
       .pt-desc{display:none}
     }
 
+  
+    .step-num {
+      background: #3e2420;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 4px;
+    }
+
   </style>
 </head>
 <body>
@@ -769,10 +785,10 @@
     </div>
     <div class="modal-footer">
       <button class="btn ghost btn-mini" data-close-req-modal>إغلاق</button>
-      <button id="btnShootStep1" class="btn secondary btn-mini"><i class="fa-regular fa-clipboard-check"></i> تم استلام الطلب</button>
-      <button id="btnShootStep2" class="btn secondary btn-mini"><i class="fa-solid fa-truck"></i> تم ارسال السيارة</button>
-      <button id="btnShootStep3" class="btn secondary btn-mini"><i class="fa-solid fa-car-side"></i> تم استلام السيارة</button>
-      <button id="btnShootStep4" class="btn primary btn-mini"><i class="fa-solid fa-flag-checkered"></i> تم الانتهاء</button>
+      <button id="btnShootStep1" class="btn secondary btn-mini"><span class="step-num">1</span> <i class="fa-regular fa-clipboard-check"></i> تم استلام الطلب</button>
+      <button id="btnShootStep2" class="btn secondary btn-mini"><span class="step-num">2</span> <i class="fa-solid fa-truck"></i> تم ارسال السيارة</button>
+      <button id="btnShootStep3" class="btn secondary btn-mini"><span class="step-num">3</span> <i class="fa-solid fa-car-side"></i> تم استلام السيارة</button>
+      <button id="btnShootStep4" class="btn primary btn-mini"><span class="step-num">4</span> <i class="fa-solid fa-flag-checkered"></i> تم الانتهاء</button>
     </div>
   </div>
 </div>
@@ -824,10 +840,10 @@
     </div>
     <div class="modal-footer">
       <button class="btn ghost btn-mini" data-close-move-modal>إغلاق</button>
-      <button id="btnMoveStep1" class="btn secondary btn-mini"><i class="fa-regular fa-clipboard-check"></i> تم استلام الطلب</button>
-      <button id="btnMoveStep2" class="btn secondary btn-mini"><i class="fa-solid fa-truck"></i> تم ارسال السيارة</button>
-      <button id="btnMoveStep3" class="btn secondary btn-mini"><i class="fa-solid fa-car-side"></i> تم استلام السيارة</button>
-      <button id="btnMoveStep4" class="btn primary btn-mini"><i class="fa-solid fa-flag-checkered"></i> تم الانتهاء</button>
+      <button id="btnMoveStep1" class="btn secondary btn-mini"><span class="step-num">1</span> <i class="fa-regular fa-clipboard-check"></i> تم استلام الطلب</button>
+      <button id="btnMoveStep2" class="btn secondary btn-mini"><span class="step-num">2</span> <i class="fa-solid fa-truck"></i> تم ارسال السيارة</button>
+      <button id="btnMoveStep3" class="btn secondary btn-mini"><span class="step-num">3</span> <i class="fa-solid fa-car-side"></i> تم استلام السيارة</button>
+      <button id="btnMoveStep4" class="btn primary btn-mini"><span class="step-num">4</span> <i class="fa-solid fa-flag-checkered"></i> تم الانتهاء</button>
     </div>
   </div>
 </div>
