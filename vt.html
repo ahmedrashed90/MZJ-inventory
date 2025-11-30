@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
@@ -308,6 +309,32 @@
   // هذه الصفحة مسموحة لنفس صلاحيات admin.html (الإدارة فقط حالياً)
   const PAGE_ALLOWED_ROLES = [ROLE_ADMIN, ROLE_IDARI];
 
+  // الصفحات المسموح بها لكل دور (استخدامها لإخفاء التابات)
+  const ROLE_PAGES = {
+    [ROLE_ADMIN] : 'ALL', // الإدارة تشوف كل الصفحات
+    // الإداري: يشوف فقط الداشبورد + نقل السيارات + إدارة الطلبات + كل السيارات
+    [ROLE_IDARI] : ['dashboard.html','vt.html','photoshoot-user.html','cars.html'],
+    [ROLE_BRANCH]: ['dashboard.html']
+  };
+
+  function applyTabsVisibility(role){
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab=>{
+      const href = tab.getAttribute('href') || '';
+      const page = (href.split('/').pop() || '').split('?')[0];
+      if(!page) return;
+      const perm = ROLE_PAGES[role];
+      if(!perm){
+        tab.style.display = 'none';
+        return;
+      }
+      if(perm === 'ALL') return; // الدور يشوف كل حاجة
+      if(!perm.includes(page)){
+        tab.style.display = 'none';
+      }
+    });
+  }
+
   async function fetchUserRole(user){
     try{
       const userDocRef = doc(db, 'user', user.uid);
@@ -386,6 +413,10 @@
         appRoot.style.display  = 'block';
         btnSignOut.style.display = 'inline-flex';
         setStatus('ok', `متصل: ${user.email} — الدور: ${role}`);
+
+        // إخفاء التابات غير المسموح بها حسب الدور
+        applyTabsVisibility(role);
+
         liftNoFlash();
         await initData();
         subscribeLive();
