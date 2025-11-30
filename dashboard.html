@@ -3,6 +3,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -715,7 +716,30 @@ $('#btnLogin').addEventListener('click', async ()=>{
 
   /* ===== تصوير + نقل: إحصائيات + بطاقة ===== */
  
-  function shootStats(){
+  
+  // تحديد المرحلة الحالية للطلب (بايبلاين حصري لكل طلب)
+  function getOrderStage(r){
+    const status   = (r.status || '').toString().trim();
+    const received = !!(r.admin && r.admin.received);
+    const prepared = !!(r.admin && r.admin.prepared);
+
+    // المرحلة النهائية
+    if (status === 'تم' || status === 'منفّذ' || isShootDone(r)) {
+      return 'تم التنفيذ';
+    }
+    // تم الإرسال بعد تجهيز السيارة
+    if (prepared) {
+      return 'تم الإرسال';
+    }
+    // تم الاستلام بعد استلام الطلب
+    if (received) {
+      return 'تم الاستلام';
+    }
+    // أي حالة أخرى تعتبر تم الإنشاء
+    return 'تم الإنشاء';
+  }
+
+function shootStats(){
     // نفس أرقام كروت إدارة الطلبات (تصوير + نقل)
     const shootTotal = Array.isArray(shootRequests) ? shootRequests.length : 0;
     const moveTotal  = Array.isArray(moveRequests)  ? moveRequests.length  : 0;
@@ -726,19 +750,14 @@ $('#btnLogin').addEventListener('click', async ()=>{
       ...(Array.isArray(moveRequests)  ? moveRequests  : [])
     ];
 
-    const norm = r => (r.status || '').toString().trim();
-
-    const inProg    = allList.filter(r => norm(r) === 'تحت الإجراء').length;
-    const prepared  = allList.filter(r => norm(r) === 'تم التجهيز').length;
-    const reviewing = allList.filter(r => {
-      const s = norm(r);
-      return s === 'تم الاستلام' || s === 'قيد المراجعة';
-    }).length;
-    const done      = allList.filter(r => norm(r) === 'تم' || norm(r) === 'منفّذ').length;
+    // نستخدم مرحلة واحدة حصرية لكل طلب
+    const inProg   = allList.filter(r => getOrderStage(r) === 'تم الإنشاء').length;
+    const reviewing= allList.filter(r => getOrderStage(r) === 'تم الاستلام').length;
+    const prepared = allList.filter(r => getOrderStage(r) === 'تم الإرسال').length;
+    const done     = allList.filter(r => getOrderStage(r) === 'تم التنفيذ').length;
 
     return { total, shootTotal, moveTotal, inProg, prepared, reviewing, done };
   }
-
 
 function renderShootCard(gridEl){
     const st = shootStats();
@@ -1302,23 +1321,33 @@ function renderShootCard(gridEl){
   function matchesShootFilter(r, filter){
     if(filter==='ALL' || !filter) return true;
 
-    const status = (r.status || '').toString().trim();
+    const stage        = getOrderStage(r);
+    const status       = (r.status || '').toString().trim();
+    const receivedFlag = !!(r.admin && r.admin.received);
+    const preparedFlag = !!(r.admin && r.admin.prepared);
 
-    // الفلاتر الرئيسية بالعربي
-    if(filter==='تم الإنشاء' || filter==='تحت الإجراء')   return status === 'تحت الإجراء';
-    if(filter==='تم الإرسال' || filter==='تم التجهيز')    return status === 'تم التجهيز';
-    if(filter==='تم الاستلام')                            return status === 'تم الاستلام' || status === 'قيد المراجعة';
-    if(filter==='تم التنفيذ' || filter==='تم')            return status === 'تم' || status === 'منفّذ';
+    // الفلاتر الرئيسية مبنية على المرحلة الحالية
+    if(filter==='تم الإنشاء' || filter==='تحت الإجراء')
+      return stage === 'تم الإنشاء';
+
+    if(filter==='تم الإرسال' || filter==='تم التجهيز')
+      return stage === 'تم الإرسال';
+
+    if(filter==='تم الاستلام')
+      return stage === 'تم الاستلام';
+
+    if(filter==='تم التنفيذ' || filter==='تم')
+      return stage === 'تم التنفيذ';
 
     // دعم الأسماء القديمة للفلاتر
-    if(filter==='received') return !!(r.admin && r.admin.received);
-    if(filter==='prepared') return !!(r.admin && r.admin.prepared);
+    if(filter==='received') return receivedFlag;
+    if(filter==='prepared') return preparedFlag;
     if(filter==='done')     return isShootDone(r);
 
     return status === filter;
   }
 
-  function openShootModal(filter='ALL'){
+function openShootModal(filter='ALL'){
     currentShootFilter = filter;
 
     // دمج طلبات التصوير + طلبات النقل في جدول واحد
