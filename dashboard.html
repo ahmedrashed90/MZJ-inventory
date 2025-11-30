@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -408,7 +409,8 @@ body{opacity:0}
   // الصفحات المسموح بها لكل تصنيف
   const ROLE_PAGES = {
     [ROLE_ADMIN] : 'ALL', // الإدارة تشوف كل الصفحات
-    [ROLE_IDARI] : ['photoshoot.html','photoshoot-user.html','cars.html'],
+    // الإداري: يشوف فقط الداشبورد + نقل السيارات + إدارة الطلبات + كل السيارات
+    [ROLE_IDARI] : ['dashboard.html','vt.html','photoshoot-user.html','cars.html'],
     [ROLE_BRANCH]: ['dashboard.html']
   };
 
