@@ -698,15 +698,13 @@
           <button type="button" class="version-btn" data-version="desktop">
             <div class="version-headline">
               <h4>💻 نسخة الكمبيوتر الكاملة</h4>
-              <span class="badge">مقترحة لأجهزة المكتب</span>
+              <span class="badge"></span>
             </div>
             <div class="version-body">
-              تجربة كاملة للداش بورد، المخزون، حركة النقل، وإدارة الطلبات بتفاصيل دقيقة.
             </div>
             <div class="version-footer">
               <div class="hint">
                 <i class="fa-solid fa-display"></i>
-                أفضل مع شاشات 13 بوصة فأعلى
               </div>
               <div class="hint">
                 سيتم التحويل تلقائيًا بعد الاختيار
@@ -723,15 +721,12 @@
               <span class="badge">للمتابعة من المعرض أو الطريق</span>
             </div>
             <div class="version-body">
-              واجهة خفيفة وسريعة للوصول للمهام الأساسية من الموبايل بدون ضغط على الشاشة.
             </div>
             <div class="version-footer">
               <div class="hint">
                 <i class="fa-solid fa-mobile-screen-button"></i>
-                مخصصة للشاشات الصغيرة
               </div>
               <div class="hint">
-                تدعم العمل بيد واحدة
               </div>
             </div>
           </button>
@@ -959,7 +954,7 @@
     currentTargetUrl = isMobile ? MOBILE_URL : DESKTOP_URL;
 
     splashTargetLabel.textContent = isMobile ? "نسخة التليفون" : "نسخة الكمبيوتر";
-    countdown = 5.5;
+    countdown = 5;
     splashCountdown.textContent = String(countdown);
 
     splashOverlay.style.display = "flex";
@@ -1016,5 +1011,6 @@
 </script>
 </body>
 </html>
+
 
 
