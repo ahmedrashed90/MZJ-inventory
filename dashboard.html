@@ -1939,7 +1939,10 @@ try{
       ws['!cols']=[{wch:12},{wch:22},{wch:22},{wch:30},{wch:14},{wch:18},{wch:16},{wch:18}];
       const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Sales Orders");
       XLSX.writeFile(wb,"mzj-sales-orders.xlsx");
-    }/* ===== Events ===== */
+    }
+  });
+
+  /* ===== Events ===== */
   document.getElementById('shortagesCard').addEventListener('click', ()=> openShortagesModalBranches());
 
   // فتح مودال طلبات المبيعات عند الضغط على أي مقياس في الكارت
