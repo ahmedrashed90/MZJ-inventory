@@ -6,6 +6,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -321,6 +322,23 @@ body{opacity:0}
         </table>
       </div>
 
+      <!-- جدول طلبات المبيعات (ERP + تتبع) -->
+      <div id="tableSalesOrdersWrap" class="table-wrap" style="display:none">
+        <table id="modalTableSalesOrders">
+          <thead>
+            <tr>
+              <th>رقم الطلب</th>
+              <th>العميل</th>
+              <th>رقم الهيكل</th>
+              <th>آخر مرحلة</th>
+              <th>الحالة</th>
+              <th>آخر تحديث</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
       <!-- جدول طلبات نقل السيارات -->
       <div id="tableTransfersWrap" class="table-wrap" style="display:none">
         <table id="modalTableTransfers">
@@ -495,8 +513,71 @@ function liftNoFlash(){
 
   // ملخص طلبات المبيعات من نظام التتبع / ERP
   let salesSummary = null;
+  // قائمة الطلبات بالتفصيل (للمودال)
+  let salesOrders = [];
+  let filteredSalesOrders = [];
   // حالة تسجيل الدخول في مشروع التتبع
   let trackingUser = null;
+
+  // أسماء المراحل حسب الترتيب
+  const STAGE_LABELS = {
+    1: "طلب الشراء. (خاص بالعميل)",
+    2: "إيصال الدفع. (خاص بالعميل)",
+    3: "التواصل من قِبل ممثلي خدمة العملاء بإرسال البطاقة الجركية. (خاص بالمعرض)",
+    4: "سداد رسوم التسجيل. (خاص بالعميل)",
+    5: "التأمين - شرط الربط على السيستم. (خاص بالعميل)",
+    6: "إستيفاء المبالغ المتبقية. (خاص بالعميل)",
+    7: "إصدار اللوحات أو نقل الملكية. (خاص بالمعرض)",
+    8: "إستيفاء الأوراق المتبقية. (خاص بالعميل)",
+    9: "جاهزية السيارة للإستلام. (خاص بالمعرض)",
+    10:"إتمام عملية التسليم بنجاح."
+  };
+
+  // حقول ERP الأساسية التي نحتاجها
+  const ERP_FIELD_SYNONYMS = {
+    CustomerName: ["CustomerName","customerName"],
+    CustomerPhone:["CustomerPhone","customerPhone","customer_phone","contact_mobile"],
+    VIN:          ["VIN","vin"],
+    DeliveryDate: ["DeliveryDate","deliveryDate"],
+    Branch:       ["Branch","branch"]
+  };
+
+  function buildErpCandidates(name){
+    const syns = ERP_FIELD_SYNONYMS[name] || [name];
+    const arr = [];
+    syns.forEach(s=>{
+      if(!s) return;
+      arr.push(s, s.toLowerCase(), s.toUpperCase());
+    });
+    return Array.from(new Set(arr));
+  }
+
+  function lookupErpField(obj, candidates){
+    if(!obj) return undefined;
+    for(const key of candidates){
+      if(Object.prototype.hasOwnProperty.call(obj, key) && obj[key] !== undefined){
+        return obj[key];
+      }
+    }
+    return undefined;
+  }
+
+  function erpGetField(fieldName, data){
+    if(!data) return "";
+    const candidates = buildErpCandidates(fieldName);
+    const fromRoot   = lookupErpField(data, candidates);
+    if(fromRoot !== undefined) return fromRoot;
+    if(data.item){
+      const fromItem = lookupErpField(data.item, candidates);
+      if(fromItem !== undefined) return fromItem;
+    }
+    if(data.totals){
+      const fromTotals = lookupErpField(data.totals, candidates);
+      if(fromTotals !== undefined) return fromTotals;
+    }
+    return "";
+  }
+
 
   // سياق الموافقات (مباع تحت التسليم)
   let approvalContext = null;
@@ -618,52 +699,101 @@ $('#btnLogin').addEventListener('click', async ()=>{
     // لو المستخدم غير مسجّل دخول في مشروع التتبع نعيد قيم صفرية
     if(!trackingAuth.currentUser){
       salesSummary = { total: 0, notStarted: 0, inProgress: 0, completed: 0 };
+      salesOrders = [];
+      filteredSalesOrders = [];
       return;
     }
     try{
-      let total = 0, notStarted = 0, inProgress = 0, completed = 0;
-
       const colRef = collection(trackingDb, ERP_COLLECTION);
       const snap = await getDocs(query(colRef, limit(200)));
 
       if(snap.empty){
         salesSummary = { total: 0, notStarted: 0, inProgress: 0, completed: 0 };
+        salesOrders = [];
+        filteredSalesOrders = [];
         return;
       }
 
-      total = snap.size;
+      const rows = [];
       const docs = snap.docs;
 
       await Promise.all(docs.map(async (docSnap)=>{
         const d = docSnap.data() || {};
         const orderNo = d.orderNo || d.OrderNo || docSnap.id;
 
+        // قراءة بعض الحقول من ERP
+        const customerName = erpGetField("CustomerName", d) || "";
+        const vinVal       = erpGetField("VIN", d) || "";
+        const deliveryDate = erpGetField("DeliveryDate", d) || "";
+        const branch       = erpGetField("Branch", d) || "";
+
+        // قراءة مراحل الطلب من مجموعة التتبع
         let doneCount = 0;
+        let lastUpdate = "";
         try{
           const tSnap = await getDoc(doc(trackingDb, TRACK_COLLECTION, orderNo + "_1"));
           if(tSnap.exists()){
             const tData = tSnap.data() || {};
             const stagesObj = tData.stages || {};
             doneCount = Object.keys(stagesObj).filter(k=> stagesObj[k]).length;
+            lastUpdate = tData.updatedAt || tData.lastUpdate || tData.lastChanged || "";
           }
         }catch(err){
           console.error('tracking read error', err);
         }
 
+        let statusType, statusText;
         if(doneCount === 0){
-          notStarted++;
+          statusType = 'notStarted';
+          statusText = 'لم تبدأ';
         }else if(doneCount >= STAGES_COUNT){
-          completed++;
+          statusType = 'completed';
+          statusText = 'مكتملة';
         }else{
-          inProgress++;
+          statusType = 'inProgress';
+          statusText = 'تحت المتابعة';
         }
+
+        const lastStage = doneCount;
+        const stageName = lastStage > 0 ? (STAGE_LABELS[lastStage] || '') : '';
+        const stageLabel = lastStage > 0
+          ? `المرحلة ${lastStage} — ${stageName}`
+          : 'لم يتم بدء أي مرحلة';
+
+        rows.push({
+          orderNo,
+          customerName,
+          vinVal,
+          deliveryDate,
+          branch,
+          lastStage,
+          stageLabel,
+          statusType,
+          statusText,
+          lastUpdate
+        });
       }));
+
+      salesOrders = rows;
+      filteredSalesOrders = rows.slice();
+
+      const total = rows.length;
+      let notStarted = 0, inProgress = 0, completed = 0;
+      rows.forEach(r=>{
+        if(r.statusType === 'notStarted') notStarted++;
+        else if(r.statusType === 'completed') completed++;
+        else if(r.statusType === 'inProgress') inProgress++;
+      });
 
       salesSummary = { total, notStarted, inProgress, completed };
     }catch(err){
       console.error('fetchSalesSummary error', err);
       if(!salesSummary){
         salesSummary = { total: 0, notStarted: 0, inProgress: 0, completed: 0 };
+      }
+      if(!salesOrders){
+        salesOrders = [];
+        filteredSalesOrders = [];
       }
     }
   }
@@ -1070,19 +1200,19 @@ function renderShootCard(gridEl){
             طلبات المبيعات (ERP + تتبع)
           </h3>
           <div class="sub-metrics">
-            <span class="metric">
+            <span class="metric sales-metric" data-filter="total">
               <i class="fa-solid fa-list-ol"></i>
               إجمالي الطلبات: <b>${s.total.toLocaleString('ar-SA')}</b>
             </span>
-            <span class="metric">
+            <span class="metric sales-metric" data-filter="notStarted">
               <i class="fa-solid fa-circle-dot"></i>
               لم تبدأ: <b>${s.notStarted.toLocaleString('ar-SA')}</b>
             </span>
-            <span class="metric">
+            <span class="metric sales-metric" data-filter="inProgress">
               <i class="fa-solid fa-spinner"></i>
               تحت المتابعة: <b>${s.inProgress.toLocaleString('ar-SA')}</b>
             </span>
-            <span class="metric">
+            <span class="metric sales-metric" data-filter="completed">
               <i class="fa-solid fa-circle-check"></i>
               مكتملة: <b>${s.completed.toLocaleString('ar-SA')}</b>
             </span>
@@ -1177,12 +1307,14 @@ function renderShootCard(gridEl){
   const tableShortWrap= $('#tableShortWrap');
   const tableShootWrap= $('#tableShootWrap');
   const tableTransfersWrap = $('#tableTransfersWrap');
+  const tableSalesOrdersWrap = $('#tableSalesOrdersWrap');
 
   const modalTableRowsHead = $('#rowsHeadTr');
   const modalTableRowsBody  = document.querySelector('#modalTableRows tbody');
   const modalTableShortBody = document.querySelector('#modalTableShort tbody');
   const modalTableShootBody = document.querySelector('#modalTableShoot tbody');
   const modalTableTransfersBody = document.querySelector('#modalTableTransfers tbody');
+  const modalTableSalesOrdersBody = document.querySelector('#modalTableSalesOrders tbody');
   const modalCount = $('#modalCount');
 
   const shortTabs = $('#shortTabs');
@@ -1209,6 +1341,7 @@ function renderShootCard(gridEl){
       mode==='rows' ? 'السيارات' :
       mode==='shoot' ? 'طلبات التصوير' :
       mode==='transfers' ? 'طلبات نقل السيارات' :
+      mode==='sales' ? 'طلبات المبيعات (ERP + تتبع)' :
       'النواقص — الفروع'
     );
 
@@ -1218,24 +1351,35 @@ function renderShootCard(gridEl){
       tableShortWrap.style.display='none';
       tableShootWrap.style.display='none';
       tableTransfersWrap.style.display='none';
+      tableSalesOrdersWrap.style.display='none';
     }else if(mode==='shortagesBranches'){
       shortTabs.style.display='flex';
       tableRowsWrap.style.display='none';
       tableShortWrap.style.display='block';
       tableShootWrap.style.display='none';
       tableTransfersWrap.style.display='none';
+      tableSalesOrdersWrap.style.display='none';
     }else if(mode==='shoot'){
       shortTabs.style.display='none';
       tableRowsWrap.style.display='none';
       tableShortWrap.style.display='none';
       tableShootWrap.style.display='block';
       tableTransfersWrap.style.display='none';
+      tableSalesOrdersWrap.style.display='none';
     }else if(mode==='transfers'){
       shortTabs.style.display='none';
       tableRowsWrap.style.display='none';
       tableShortWrap.style.display='none';
       tableShootWrap.style.display='none';
       tableTransfersWrap.style.display='block';
+      tableSalesOrdersWrap.style.display='none';
+    }else if(mode==='sales'){
+      shortTabs.style.display='none';
+      tableRowsWrap.style.display='none';
+      tableShortWrap.style.display='none';
+      tableShootWrap.style.display='none';
+      tableTransfersWrap.style.display='none';
+      tableSalesOrdersWrap.style.display='block';
     }
 
     modalSearch.value='';
@@ -1246,185 +1390,16 @@ function renderShootCard(gridEl){
       approvalBox.style.display='none';
       approvalContext = null;
     }
+    backdrop.classList.add('show');
     renderModal();
-    backdrop.style.display='flex';
-  }
-  function closeModal(){
-    backdrop.style.display='none';
-    currentRows=[]; filteredRows=[];
-    shortDataByKey.clear(); shortFiltered=[];
-    currentShoot=[]; filteredShoot=[];
-    currentFilterKey=null;
-    if(shootDetailsBox) shootDetailsBox.style.display='none';
-    approvalBox.style.display='none';
-    approvalContext = null;
-  }
-  btnCloseModal.addEventListener('click', closeModal);
-  backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) closeModal(); });
-
-  /* ===== Rows table (cars) ===== */
-  function buildRowsHeader(){
-    const common = `
-      <th>م</th>
-      <th>السيارة</th>
-      <th>البيان</th>
-      <th>الوكيل</th>
-      <th>اللون الخارجي</th>
-      <th>اللون الداخلي</th>
-      <th>الموديل</th>
-      <th>اللوحة</th>
-      <th>المكان</th>
-      <th>اسم الدفعة</th>
-      <th>رقم الهيكل</th>
-      <th>الملاحظات</th>
-    `;
-    modalTableRowsHead.innerHTML = common;
   }
 
-  function renderRowsTable(){
-    buildRowsHeader();
-    modalTableRowsBody.innerHTML='';
-    filteredRows.forEach(r=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=`
-        <td>${r.id||''}</td>
-        <td>${r.car||''}</td>
-        <td>${r.variant||''}</td>
-        <td><span class="tag">${r.dealer||'-'}</span></td>
-        <td>${r.extColor||''}</td>
-        <td>${r.intColor||''}</td>
-        <td>${r.modelYear||''}</td>
-        <td>${r.plate||''}</td>
-        <td>${r.location||''}</td>
-        <td>${r.batchName||''}</td>
-        <td>${r.vin||''}</td>
-        <td>${[r.notes,r.adminNotes,r.financeNotes,(r.admin&&r.admin.notes)].filter(v => (v||'').toString().trim()!=='').join(' | ')}</td>
-      `;
-      modalTableRowsBody.appendChild(tr);
-    });
-    modalCount.textContent = `عدد السيارات الظاهرة: ${filteredRows.length.toLocaleString('ar-SA')} من ${currentRows.length.toLocaleString('ar-SA')}`;
-
-    // إخفاء صندوق الموافقات بالكامل من أي فلتر "تحت التسليم"
-    if(typeof approvalBox !== 'undefined' && approvalBox){
-      approvalBox.style.display='none';
-      approvalContext = null;
-    }
-  }
-
-  function getApprovalText(kind){
-    return kind === 'admin' ? 'الإدارية' : 'المالية';
-  }
-
-  function openApprovalBoxFor(vin, kind){
-    if(!vin) return;
-    const idx = stock.findIndex(r => String(r.vin)===String(vin));
-    if(idx===-1){
-      showToast('تعذّر العثور على السيارة في المخزون');
-      return;
-    }
-    const row = stock[idx];
-    const isAdmin = (kind==='admin');
-    const apprKey = isAdmin ? 'adminApproved' : 'financeApproved';
-    const noteKey = isAdmin ? 'adminNotes' : 'financeNotes';
-
-    const currentVal = row[apprKey];
-    let statusVal = '';
-    if(currentVal===true || currentVal==='true') statusVal='true';
-    else if(currentVal===false || currentVal==='false') statusVal='false';
-
-    approvalContext = { vin, kind };
-    approvalStatus.value = statusVal;
-    approvalNotes.value  = row[noteKey] || '';
-
-    const label = getApprovalText(kind);
-    approvalTarget.textContent = `تحديث الموافقة ${label} لرقم الهيكل: ${vin}`;
-    approvalBox.style.display='block';
-    approvalBox.scrollIntoView({behavior:'smooth',block:'start'});
-  }
-
-  async function saveApproval(){
-    if(!approvalContext){
-      showToast('اختر السيارة من زر "إداري" أو "مالية" أولاً');
-      return;
-    }
-    const { vin, kind } = approvalContext;
-    const idx = stock.findIndex(r => String(r.vin)===String(vin));
-    if(idx===-1){
-      showToast('تعذّر العثور على السيارة في المخزون');
-      return;
-    }
-    const row = stock[idx];
-    const isAdmin = (kind==='admin');
-    const apprKey = isAdmin ? 'adminApproved' : 'financeApproved';
-    const noteKey = isAdmin ? 'adminNotes' : 'financeNotes';
-
-    const statusVal = approvalStatus.value;
-    let newVal = null;
-    if(statusVal==='true') newVal = true;
-    else if(statusVal==='false') newVal = false;
-    else newVal = null;
-
-    row[apprKey] = newVal;
-    row[noteKey] = approvalNotes.value || '';
-
-    stock[idx] = row;
-
-    try{
-      await setDoc(STATE_REF,{stock},{merge:true});
-      showToast('تم حفظ الموافقات');
-      if(currentMode==='rows' && currentFilterKey==='pending'){
-        renderRowsTable();
-      }
-    }catch(e){
-      console.error(e);
-      setStatus('warn','تعذّر حفظ الموافقات، حاول مرة أخرى');
-    }
-  }
-
-  function cancelApproval(){
-    approvalContext = null;
-    approvalStatus.value='';
-    approvalNotes.value='';
-    approvalTarget.textContent = '';
-  }
-
-  btnSaveApproval.addEventListener('click', saveApproval);
-  btnCancelApproval.addEventListener('click', cancelApproval);
-
-  modalTableRowsBody.addEventListener('click', (e)=>{
-    const btn = e.target.closest('button[data-approve]');
-    if(!btn) return;
-    if(currentFilterKey!=='pending') return;
-    const kind = btn.getAttribute('data-approve');
-    const vin  = btn.getAttribute('data-vin');
-    openApprovalBoxFor(vin, kind);
-  });
-
-  /* ===== Shortages table ===== */
-  function renderShortTable(){
-    modalTableShortBody.innerHTML='';
-    shortFiltered.forEach(s=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=`
-        <td>${s.car||''}</td>
-        <td>${s.variant||''}</td>
-        <td>${s.extColor||''}</td>
-        <td>${s.intColor||''}</td>
-        <td>${s.modelYear||''}</td>
-        <td style="text-align:center"><span class="tag">${s.countBranch}</span></td>
-        <td style="text-align:center"><span class="tag">${s.countGlobal}</span></td>
-      `;
-      modalTableShortBody.appendChild(tr);
-    });
-    const totalAll = (shortDataByKey.get(shortActiveKey)||[]).length;
-    modalCount.textContent = `عدد التركيبات الناقصة الظاهرة: ${shortFiltered.length.toLocaleString('ar-SA')} من ${totalAll.toLocaleString('ar-SA')} — ${tabTitle(shortActiveKey)}`;
-  }
-
-  function renderModal(){
+function renderModal(){
     if(currentMode==='rows'){ renderRowsTable(); }
     else if(currentMode==='shortagesBranches'){ renderShortTable(); }
     else if(currentMode==='shoot'){ renderShootTable(); }
     else if(currentMode==='transfers'){ renderTransfersTable(); }
+    else if(currentMode==='sales'){ renderSalesOrdersTable(); }
   }
 
   // فتح سيارات الجهة
@@ -1699,9 +1674,46 @@ function openShootModal(filter='ALL'){
       modalTableTransfersBody.appendChild(tr);
     });
     modalCount.textContent = `عدد طلبات النقل الظاهرة: ${filteredTransfers.length.toLocaleString('ar-SA')} من ${transferRequests.length.toLocaleString('ar-SA')}`;
+  
+  
+  function renderSalesOrdersTable(){
+    modalTableSalesOrdersBody.innerHTML = '';
+    (filteredSalesOrders || []).forEach(function(o){
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + (o.orderNo || '') + '</td>' +
+        '<td>' + (o.customerName || '') + '</td>' +
+        '<td>' + (o.vinVal || '') + '</td>' +
+        '<td>' + (o.stageLabel || '') + '</td>' +
+        '<td>' + (o.statusText || '') + '</td>' +
+        '<td>' + (o.lastUpdate || '') + '</td>';
+      modalTableSalesOrdersBody.appendChild(tr);
+    });
+    const shown = (filteredSalesOrders || []).length;
+    const total = (salesOrders || []).length;
+    modalCount.textContent = 'عدد طلبات المبيعات الظاهرة: ' +
+      shown.toLocaleString('ar-SA') + ' من ' +
+      total.toLocaleString('ar-SA');
   }
 
-  async function approveTransfer(moveIdx, kind){
+  function openSalesOrdersModal(filter){
+    if(!Array.isArray(salesOrders) || !salesOrders.length){
+      filteredSalesOrders = [];
+    }else if(!filter || filter==='total'){
+      filteredSalesOrders = salesOrders.slice();
+    }else if(filter==='notStarted'){
+      filteredSalesOrders = salesOrders.filter(function(o){ return o.statusType === 'notStarted'; });
+    }else if(filter==='inProgress'){
+      filteredSalesOrders = salesOrders.filter(function(o){ return o.statusType === 'inProgress'; });
+    }else if(filter==='completed'){
+      filteredSalesOrders = salesOrders.filter(function(o){ return o.statusType === 'completed'; });
+    }else{
+      filteredSalesOrders = salesOrders.slice();
+    }
+    openModal('sales','طلبات المبيعات (ERP + تتبع)');
+  }
+
+async function approveTransfer(moveIdx, kind){
 const idx = Number(moveIdx);
 if (isNaN(idx) || !moves[idx]) {
   showToast('تعذّر العثور على هذا الطلب');
@@ -1838,6 +1850,17 @@ try{
         ].join(' ').toLowerCase();
         return hay.includes(q);
       });
+    }else if(currentMode==='sales'){
+      if(!q){
+        filteredSalesOrders = salesOrders.slice();
+        return renderModal();
+      }
+      filteredSalesOrders = salesOrders.filter(o=>{
+        const hay = [
+          o.orderNo, o.customerName, o.vinVal, o.stageLabel, o.statusText, o.lastUpdate, o.branch, o.deliveryDate
+        ].join(' ').toLowerCase();
+        return hay.includes(q);
+      });
     }
     renderModal();
   });
@@ -1845,7 +1868,7 @@ try{
   // تصدير Excel حسب الوضع
   document.getElementById('btnExportGroup').addEventListener('click', ()=>{
     if(currentMode==='rows'){
-      const header = ["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
+      const header = ["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","الموديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
       const data=[header];
       filteredRows.forEach(r=>{
         const row = [r.id,r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName||'',r.vin,r.notes];
@@ -1897,11 +1920,36 @@ try{
       ws['!cols']=[{wch:8},{wch:18},{wch:22},{wch:20},{wch:20},{wch:30},{wch:16},{wch:16},{wch:22},{wch:18}];
       const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Transfer Requests");
       XLSX.writeFile(wb,"mzj-transfer-requests.xlsx");
-    }
+    }else if(currentMode==='sales'){
+      const header=["رقم الطلب","اسم العميل","رقم الهيكل","آخر مرحلة","الحالة","آخر تحديث","الفرع","تاريخ التسليم"];
+      const data=[header];
+      filteredSalesOrders.forEach(o=>{
+        data.push([
+          o.orderNo||'',
+          o.customerName||'',
+          o.vinVal||'',
+          o.stageLabel||'',
+          o.statusText||'',
+          o.lastUpdate||'',
+          o.branch||'',
+          o.deliveryDate||''
+        ]);
+      });
+      const ws=XLSX.utils.aoa_to_sheet(data);
+      ws['!cols']=[{wch:12},{wch:22},{wch:22},{wch:30},{wch:14},{wch:18},{wch:16},{wch:18}];
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Sales Orders");
+      XLSX.writeFile(wb,"mzj-sales-orders.xlsx");
+    }/* ===== Events ===== */
+  document.getElementById('shortagesCard').addEventListener('click', ()=> openShortagesModalBranches());
+
+  // فتح مودال طلبات المبيعات عند الضغط على أي مقياس في الكارت
+  document.addEventListener('click', (ev)=>{
+    const el = ev.target.closest('.sales-metric');
+    if(!el) return;
+    const filt = el.getAttribute('data-filter') || 'total';
+    openSalesOrdersModal(filt);
   });
 
-  /* ===== Events ===== */
-  document.getElementById('shortagesCard').addEventListener('click', ()=> openShortagesModalBranches());
 
   /* ===== Start ===== */
   setStatus('warn','جارِ الاتصال…');
