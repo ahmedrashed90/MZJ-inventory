@@ -492,8 +492,6 @@ function liftNoFlash(){
   let shootRequests=[];
   let moveRequests=[];
   let currentFilterKey = null;
-  let salesRows = [];
-  let filteredSalesRows = [];
 
   // ملخص طلبات المبيعات من نظام التتبع / ERP
   let salesSummary = null;
@@ -1096,113 +1094,6 @@ function renderShootCard(gridEl){
       </div>
     `;
     gridEl.appendChild(card);
-
-  // ===== طلبات المبيعات (ERP + تتبع) — فتح مودال مفصل =====
-  function openSalesOrdersModal(filter){
-    if(!trackingAuth.currentUser){
-      showToast('سجّل الدخول أولاً لعرض طلبات التتبع');
-      return;
-    }
-    let title = 'طلبات المبيعات — ';
-    if(filter === 'notStarted')      title += 'لم تبدأ';
-    else if(filter === 'inProgress') title += 'تحت المتابعة';
-    else if(filter === 'completed')  title += 'مكتملة';
-    else                             title = 'كل طلبات المبيعات';
-
-    loadSalesOrders(filter, title);
-  }
-
-  async function loadSalesOrders(filter, title){
-    const colRef = collection(trackingDb, ERP_COLLECTION);
-    const snap   = await getDocs(query(colRef, limit(300)));
-    const rows   = [];
-
-    for(const docSnap of snap.docs){
-      const d = docSnap.data() || {};
-      const orderNo = d.orderNo || d.OrderNo || docSnap.id;
-
-      let doneCount = 0;
-      try{
-        const tSnap = await getDoc(doc(trackingDb, TRACK_COLLECTION, orderNo + "_1"));
-        if(tSnap.exists()){
-          const tData = tSnap.data() || {};
-          const stagesObj = tData.stages || {};
-          doneCount = Object.keys(stagesObj).filter(k=> stagesObj[k]).length;
-        }
-      }catch(e){
-        console.error('sales orders tracking read error', e);
-      }
-
-      const stage =
-        doneCount === 0          ? 'notStarted' :
-        doneCount >= STAGES_COUNT? 'completed'  :
-                                   'inProgress';
-
-      if(!filter || filter === stage){
-        rows.push({
-          orderNo,
-          customer: d.customerName || d.customer || '-',
-          phone:    d.customerPhone || d.phone || '-',
-          created:  d.creation || d.postingDate || d.date || '',
-          stage,
-          doneCount
-        });
-      }
-    }
-
-    openSalesListModal(title, rows);
-  }
-
-  function openSalesListModal(title, rows){
-    currentMode = 'salesOrders';
-    salesRows = Array.isArray(rows) ? rows.slice() : [];
-    filteredSalesRows = salesRows.slice();
-
-    modalTitle.textContent = title || 'طلبات المبيعات';
-
-    shortTabs.style.display = 'none';
-    tableRowsWrap.style.display = 'block';
-    tableShortWrap.style.display = 'none';
-    tableShootWrap.style.display = 'none';
-    tableTransfersWrap.style.display = 'none';
-
-    approvalBox.style.display = 'none';
-    approvalContext = null;
-
-    modalSearch.value = '';
-    renderSalesOrdersTable();
-    backdrop.style.display = 'flex';
-  }
-
-  function renderSalesOrdersTable(){
-    modalTableRowsHead.innerHTML = `
-      <th>م</th>
-      <th>رقم الطلب</th>
-      <th>اسم العميل</th>
-      <th>الجوال</th>
-      <th>تاريخ الإنشاء</th>
-      <th>المرحلة</th>
-      <th>عدد المراحل المكتملة</th>
-    `;
-    modalTableRowsBody.innerHTML = '';
-
-    filteredSalesRows.forEach((r,idx)=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${idx+1}</td>
-        <td>${r.orderNo || ''}</td>
-        <td>${r.customer || ''}</td>
-        <td>${r.phone || ''}</td>
-        <td>${r.created || ''}</td>
-        <td>${r.stage || ''}</td>
-        <td>${(r.doneCount || 0).toString()}</td>
-      `;
-      modalTableRowsBody.appendChild(tr);
-    });
-
-    modalCount.textContent = `عدد الطلبات الظاهرة: ${filteredSalesRows.length.toLocaleString('ar-SA')} من ${salesRows.length.toLocaleString('ar-SA')}`;
-  }
-
   }
 
   function renderShortagesCard(){
@@ -1361,7 +1252,6 @@ function renderShootCard(gridEl){
   function closeModal(){
     backdrop.style.display='none';
     currentRows=[]; filteredRows=[];
-    salesRows=[]; filteredSalesRows=[];
     shortDataByKey.clear(); shortFiltered=[];
     currentShoot=[]; filteredShoot=[];
     currentFilterKey=null;
@@ -1531,17 +1421,10 @@ function renderShootCard(gridEl){
   }
 
   function renderModal(){
-    if(currentMode==='rows'){
-      renderRowsTable();
-    }else if(currentMode==='salesOrders'){
-      renderSalesOrdersTable();
-    }else if(currentMode==='shortagesBranches'){
-      renderShortTable();
-    }else if(currentMode==='shoot'){
-      renderShootTable();
-    }else if(currentMode==='transfers'){
-      renderTransfersTable();
-    }
+    if(currentMode==='rows'){ renderRowsTable(); }
+    else if(currentMode==='shortagesBranches'){ renderShortTable(); }
+    else if(currentMode==='shoot'){ renderShootTable(); }
+    else if(currentMode==='transfers'){ renderTransfersTable(); }
   }
 
   // فتح سيارات الجهة
@@ -1914,7 +1797,6 @@ try{
   });
 
   // بحث موحّد في المودال
-
   modalSearch.addEventListener('input', ()=>{
     const q = (modalSearch.value||'').trim().toLowerCase();
     if(currentMode==='rows'){
@@ -1922,12 +1804,6 @@ try{
       filteredRows = currentRows.filter(r=>{
         const hay=[r.car,r.variant,r.dealer,r.extColor,r.intColor,r.modelYear,r.plate,r.location,r.batchName,r.vin,r.notes,
                    r.adminNotes,r.financeNotes, String(r.adminApproved), String(r.financeApproved)].join(' ').toLowerCase();
-        return hay.includes(q);
-      });
-    }else if(currentMode==='salesOrders'){
-      if(!q){ filteredSalesRows = salesRows.slice(); return renderModal(); }
-      filteredSalesRows = salesRows.filter(r=>{
-        const hay=[r.orderNo,r.customer,r.phone,r.created,r.stage, String(r.doneCount||0)].join(' ').toLowerCase();
         return hay.includes(q);
       });
     }else if(currentMode==='shortagesBranches'){
@@ -1966,10 +1842,7 @@ try{
     renderModal();
   });
 
-  });
-
   // تصدير Excel حسب الوضع
-
   document.getElementById('btnExportGroup').addEventListener('click', ()=>{
     if(currentMode==='rows'){
       const header = ["م","سيارة","البيان","الوكيل","اللون الخارجي","اللون الداخلي","موديل","اللوحة","المكان","اسم الدفعة","رقم الهيكل","الملاحظات"];
@@ -1982,16 +1855,6 @@ try{
       ws['!cols']=[{wch:5},{wch:24},{wch:30},{wch:18},{wch:16},{wch:16},{wch:10},{wch:10},{wch:20},{wch:16},{wch:22},{wch:26}];
       const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Rows");
       XLSX.writeFile(wb, `mzj-dashboard-${modalTitle.textContent.replace(/\s+/g,'-')}.xlsx`);
-    }else if(currentMode==='salesOrders'){
-      const header = ["م","رقم الطلب","اسم العميل","الجوال","تاريخ الإنشاء","المرحلة","عدد المراحل المكتملة"];
-      const data=[header];
-      filteredSalesRows.forEach((r,idx)=>{
-        data.push([idx+1, r.orderNo||'', r.customer||'', r.phone||'', r.created||'', r.stage||'', r.doneCount||0]);
-      });
-      const ws=XLSX.utils.aoa_to_sheet(data);
-      ws['!cols']=[{wch:5},{wch:18},{wch:24},{wch:16},{wch:18},{wch:16},{wch:14}];
-      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"SalesOrders");
-      XLSX.writeFile(wb, "mzj-sales-orders.xlsx");
     }else if(currentMode==='shortagesBranches'){
       const header=["السيارة","البيان","اللون الخارجي","اللون الداخلي","الموديل","عدد الفرع","الإجمالي العام"];
       const data=[header];
@@ -2036,7 +1899,6 @@ try{
       XLSX.writeFile(wb,"mzj-transfer-requests.xlsx");
     }
   });
-
 
   /* ===== Events ===== */
   document.getElementById('shortagesCard').addEventListener('click', ()=> openShortagesModalBranches());
