@@ -5,6 +5,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -380,7 +381,7 @@ body{opacity:0}
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   /* ===== Firebase ===== */
   const firebaseConfig = {
@@ -395,6 +396,22 @@ body{opacity:0}
   const auth = getAuth(app);
   const db   = getFirestore(app);
   const STATE_REF = doc(db, "mzj_admin_state", "v1");
+  // Firebase لمشروع نظام التتبع / إدارة المبيعات (mzj-tracking)
+  const trackingConfig = {
+    apiKey: "AIzaSyCorGtT5_Z68jCtLODvqnv0Fb7QW5eR6MQ",
+    authDomain: "mzj-tracking.firebaseapp.com",
+    projectId: "mzj-tracking",
+    storageBucket: "mzj-tracking.firebasestorage.app",
+    messagingSenderId: "655452217491",
+    appId: "1:655452217491:web:9348d172c47bdd411fad66"
+  };
+  const trackingApp  = initializeApp(trackingConfig, "tracking-app");
+  const trackingDb   = getFirestore(trackingApp);
+  const trackingAuth = getAuth(trackingApp);
+  const ERP_COLLECTION  = "erp_orders";
+  const TRACK_COLLECTION = "orders";
+  const STAGES_COUNT = 10;
+
 
   /* ===== Roles & Permissions ===== */
   const ROLE_ADMIN   = 'الادارة';
@@ -476,6 +493,11 @@ function liftNoFlash(){
   let moveRequests=[];
   let currentFilterKey = null;
 
+  // ملخص طلبات المبيعات من نظام التتبع / ERP
+  let salesSummary = null;
+  // حالة تسجيل الدخول في مشروع التتبع
+  let trackingUser = null;
+
   // سياق الموافقات (مباع تحت التسليم)
   let approvalContext = null;
 
@@ -547,11 +569,41 @@ function liftNoFlash(){
       // إزالة طبقة منع الوميض بعد استقرار الواجهة
       liftNoFlash();
     }
+
+  // متابعة حالة تسجيل الدخول في مشروع التتبع (mzj-tracking)
+  onAuthStateChanged(trackingAuth, async (user)=>{
+    trackingUser = user;
+    if(user){
+      try{
+        await fetchSalesSummary();
+        renderAll();
+      }catch(err){
+        console.error('trackingAuth state error', err);
+      }
+    }else{
+      // لو خرج المستخدم من مشروع التتبع نصفر الملخص
+      salesSummary = { total: 0, notStarted: 0, inProgress: 0, completed: 0 };
+      renderAll();
+    }
+  });
+
   });
 $('#btnLogin').addEventListener('click', async ()=>{
     $('#authHint').textContent='';
-    try{ await signInWithEmailAndPassword(auth, $('#email').value.trim(), $('#password').value); }
-    catch(e){ $('#authHint').textContent='فشل تسجيل الدخول: '+(e?.message||e); }
+    const email = $('#email').value.trim();
+    const pass  = $('#password').value;
+    try{
+      // تسجيل الدخول في مشروع لوحة التحكم الأساسي
+      await signInWithEmailAndPassword(auth, email, pass);
+      // محاولة تسجيل الدخول بنفس الحساب في مشروع التتبع
+      try{
+        await signInWithEmailAndPassword(trackingAuth, email, pass);
+      }catch(e2){
+        console.warn('tracking login failed', e2);
+      }
+    }catch(e){
+      $('#authHint').textContent='فشل تسجيل الدخول: '+(e?.message||e);
+    }
   });
   $('#btnSignup').addEventListener('click', async ()=>{
     $('#authHint').textContent='';
@@ -561,6 +613,61 @@ $('#btnLogin').addEventListener('click', async ()=>{
   $('#btnSignOut').addEventListener('click', ()=> signOut(auth));
 
   /* ===== Data ===== */
+  // تحميل ملخص طلبات المبيعات من مشروع التتبع (ERP + Tracking)
+  async function fetchSalesSummary(){
+    // لو المستخدم غير مسجّل دخول في مشروع التتبع نعيد قيم صفرية
+    if(!trackingAuth.currentUser){
+      salesSummary = { total: 0, notStarted: 0, inProgress: 0, completed: 0 };
+      return;
+    }
+    try{
+      let total = 0, notStarted = 0, inProgress = 0, completed = 0;
+
+      const colRef = collection(trackingDb, ERP_COLLECTION);
+      const snap = await getDocs(query(colRef, limit(200)));
+
+      if(snap.empty){
+        salesSummary = { total: 0, notStarted: 0, inProgress: 0, completed: 0 };
+        return;
+      }
+
+      total = snap.size;
+      const docs = snap.docs;
+
+      await Promise.all(docs.map(async (docSnap)=>{
+        const d = docSnap.data() || {};
+        const orderNo = d.orderNo || d.OrderNo || docSnap.id;
+
+        let doneCount = 0;
+        try{
+          const tSnap = await getDoc(doc(trackingDb, TRACK_COLLECTION, orderNo + "_1"));
+          if(tSnap.exists()){
+            const tData = tSnap.data() || {};
+            const stagesObj = tData.stages || {};
+            doneCount = Object.keys(stagesObj).filter(k=> stagesObj[k]).length;
+          }
+        }catch(err){
+          console.error('tracking read error', err);
+        }
+
+        if(doneCount === 0){
+          notStarted++;
+        }else if(doneCount >= STAGES_COUNT){
+          completed++;
+        }else{
+          inProgress++;
+        }
+      }));
+
+      salesSummary = { total, notStarted, inProgress, completed };
+    }catch(err){
+      console.error('fetchSalesSummary error', err);
+      if(!salesSummary){
+        salesSummary = { total: 0, notStarted: 0, inProgress: 0, completed: 0 };
+      }
+    }
+  }
+
   async function initData(){
     try{
       const s=await getDoc(STATE_REF);
@@ -950,6 +1057,45 @@ function renderShootCard(gridEl){
   }
 
 /* ===== Render ===== */
+  // بطاقة ملخص طلبات المبيعات من نظام التتبع / ERP
+  function renderSalesSummaryCard(gridEl){
+    const s = salesSummary || { total: 0, notStarted: 0, inProgress: 0, completed: 0 };
+    const card = document.createElement('div');
+    card.className = 'card group-card';
+    card.innerHTML = `
+      <div class="group-head">
+        <div class="group-left">
+          <h3 class="group-title">
+            <i class="fa-solid fa-file-invoice-dollar"></i>
+            طلبات المبيعات (ERP + تتبع)
+          </h3>
+          <div class="sub-metrics">
+            <span class="metric">
+              <i class="fa-solid fa-list-ol"></i>
+              إجمالي الطلبات: <b>${s.total.toLocaleString('ar-SA')}</b>
+            </span>
+            <span class="metric">
+              <i class="fa-solid fa-circle-dot"></i>
+              لم تبدأ: <b>${s.notStarted.toLocaleString('ar-SA')}</b>
+            </span>
+            <span class="metric">
+              <i class="fa-solid fa-spinner"></i>
+              تحت المتابعة: <b>${s.inProgress.toLocaleString('ar-SA')}</b>
+            </span>
+            <span class="metric">
+              <i class="fa-solid fa-circle-check"></i>
+              مكتملة: <b>${s.completed.toLocaleString('ar-SA')}</b>
+            </span>
+          </div>
+        </div>
+        <div class="group-total" title="إجمالي الطلبات">
+          ${s.total.toLocaleString('ar-SA')}
+        </div>
+      </div>
+    `;
+    gridEl.appendChild(card);
+  }
+
   function renderShortagesCard(){
     const { total, summary } = computeShortagesSummaryBranches();
     $('#shortagesTotal').textContent = total.toLocaleString('ar-SA');
@@ -999,6 +1145,8 @@ function renderShootCard(gridEl){
     renderTransferCard(grid);
     /* بطاقة إدارة الطلبات (تصوير + نقل) */
     renderShootCard(grid);
+    /* بطاقة ملخص طلبات المبيعات (ERP + تتبع) */
+    renderSalesSummaryCard(grid);
 
     // حدث الشرائح للجهات
     grid.addEventListener('click',(e)=>{
