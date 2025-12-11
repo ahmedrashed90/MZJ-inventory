@@ -1674,8 +1674,8 @@ function openShootModal(filter='ALL'){
       modalTableTransfersBody.appendChild(tr);
     });
     modalCount.textContent = `عدد طلبات النقل الظاهرة: ${filteredTransfers.length.toLocaleString('ar-SA')} من ${transferRequests.length.toLocaleString('ar-SA')}`;
-  
-  
+  }
+
   function renderSalesOrdersTable(){
     modalTableSalesOrdersBody.innerHTML = '';
     (filteredSalesOrders || []).forEach(function(o){
