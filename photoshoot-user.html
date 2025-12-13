@@ -1,7 +1,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -1051,19 +1050,24 @@ const ROLE_PAGES = {
     // Step4 (finished) يتحكم فيه مقدم الطلب (أو الإدارة) عبر canFinishRequest
     if(stage==="finished") return false;
 
-    // received + sent: مسؤول المكان الحالي/المصدر
-    if(stage==="received" || stage==="sent"){
-      const place = (kind==="move") ? (row.fromLocation||"") : (row.location||"");
-      return userMatchesPlace(place);
-    }
-
-    // carReceived: مسؤول الوجهة
-    if(stage==="carReceived"){
+    // received: مسؤول الوجهة (toLocation / shootPlace)
+    if(stage==="received"){
       const place = (kind==="move") ? (row.toLocation||"") : (row.shootPlace||row.place||"");
       return userMatchesPlace(place);
     }
 
-    return false;
+    // sent: مسؤول المصدر (fromLocation / location)
+    if(stage==="sent"){
+      const place = (kind==="move") ? (row.fromLocation||"") : (row.location||"");
+      return userMatchesPlace(place);
+    }
+
+    // carReceived: مسؤول الوجهة (toLocation / shootPlace)
+    if(stage==="carReceived"){
+      const place = (kind==="move") ? (row.toLocation||"") : (row.shootPlace||row.place||"");
+      return userMatchesPlace(place);
+    }
+return false;
   }
 
   function requestStarted(req){
@@ -2120,6 +2124,31 @@ function openReqModal(req){
 
     renderMoveTimeline(req);
 
+    // إظهار الأزرار حسب مكان المستخدم (لكل VIN داخل الطلب)
+    const btnM1 = document.getElementById("btnMoveStep1");
+    const btnM2 = document.getElementById("btnMoveStep2");
+    const btnM3 = document.getElementById("btnMoveStep3");
+
+    const eligible1 = rows.filter(r=>canActOnRow('move', r, 'received')).length;
+    const eligible2 = rows.filter(r=>canActOnRow('move', r, 'sent')).length;
+    const eligible3 = rows.filter(r=>canActOnRow('move', r, 'carReceived')).length;
+
+    if(btnM1){
+      const show = isSuperAdmin() || eligible1>0;
+      btnM1.style.display = show ? "inline-flex" : "none";
+      btnM1.disabled = !show;
+    }
+    if(btnM2){
+      const show = isSuperAdmin() || eligible2>0;
+      btnM2.style.display = show ? "inline-flex" : "none";
+      btnM2.disabled = !show;
+    }
+    if(btnM3){
+      const show = isSuperAdmin() || eligible3>0;
+      btnM3.style.display = show ? "inline-flex" : "none";
+      btnM3.disabled = !show;
+    }
+
     const btnFinish = document.getElementById("btnMoveStep4");
     if(btnFinish){
       btnFinish.style.display = (canFinishRequest(req) || isSuperAdmin()) ? "inline-flex" : "none";
@@ -2254,6 +2283,15 @@ function openReqModal(req){
       const snap = await getDoc(doc(db,"user", user.uid));
       if(snap.exists()){
         const data = snap.data() || {};
+      if(__firstStateLoad){
+        __firstStateLoad = false;
+        showApp();
+        // تطبيق صلاحيات التابات حسب الدور + فتح إدارة الطلبات افتراضي
+        applyTabsVisibility(role);
+        buildFormRows();
+        try{ showPage("orders"); }catch(e){}
+        setStatus("ok","متصل — تم تحميل البيانات");
+      }
         currentUserRole = data.role || null;
         const loc = data.locations;
         if(Array.isArray(loc)){
@@ -2313,15 +2351,31 @@ function openReqModal(req){
       window.location.href = "unauthorized.html";
       return;
     }
-    setStatus("ok","متصل بحساب الإدارة");
-    showApp();
-    // تطبيق صلاحيات التابات حسب الدور
-    applyTabsVisibility(role);
-    buildFormRows();
+
+    // ✅ Page Guard (يحمي من فتح صفحة غير مسموحة للدور)
+    const currentPage = (location.pathname.split('/').pop() || 'dashboard.html').split('?')[0];
+    const allowed = ROLE_PAGES[role];
+    if(allowed !== 'ALL' && Array.isArray(allowed) && !allowed.includes(currentPage)){
+      window.location.href = allowed[0] || 'dashboard.html';
+      return;
+    }
+
+    setStatus("ok","جارٍ تحميل البيانات…");
+    // ملاحظة: إظهار التطبيق بعد أول Snapshot لضمان عدم ظهور صفحة فاضية
 
     // ✅ تحميل حالة النظام (المخزون + الطلبات) من STATE_REF
+    let __firstStateLoad = true;
     onSnapshot(STATE_REF, (snap) => {
       const data = snap.data() || {};
+      if(__firstStateLoad){
+        __firstStateLoad = false;
+        showApp();
+        // تطبيق صلاحيات التابات حسب الدور + فتح إدارة الطلبات افتراضي
+        applyTabsVisibility(role);
+        buildFormRows();
+        try{ showPage("orders"); }catch(e){}
+        setStatus("ok","متصل — تم تحميل البيانات");
+      }
       shootRequests = Array.isArray(data.shootRequests) ? data.shootRequests : [];
       moveRequests  = Array.isArray(data.moveRequests)  ? data.moveRequests  : [];
 
@@ -2366,3 +2420,4 @@ function openReqModal(req){
 </script>
 </body>
 </html>
+
