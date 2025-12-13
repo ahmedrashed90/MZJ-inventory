@@ -1,60 +1,32 @@
 
 
-<!DOCTYPE html>
 
-<html dir="rtl" lang="ar">
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 <head>
-<link href="admin.html" rel="prefetch"/>
-<link href="inventory.html" rel="prefetch"/>
-<link href="dashboard.html" rel="prefetch"/>
-<link href="vt.html" rel="prefetch"/>
-<link href="photoshoot-user.html" rel="prefetch"/>
-<link href="cars.html" rel="prefetch"/>
-<link href="Activity.html" rel="prefetch"/>
+<link rel="prefetch" href="admin.html">
+<link rel="prefetch" href="inventory.html">
+<link rel="prefetch" href="dashboard.html">
+<link rel="prefetch" href="vt.html">
+<link rel="prefetch" href="photoshoot-user.html">
+<link rel="prefetch" href="cars.html">
+<link rel="prefetch" href="Activity.html">
 <style id="noFlash">
 html{background:#fff8ef}
 body{opacity:0}
-
-    /* Sales status colors */
-    .tag.status-not-started{
-      background: rgba(220,38,38,.10);
-      border: 1px solid rgba(220,38,38,.25);
-      color: #b91c1c;
-    }
-    .tag.status-in-progress{
-      background: rgba(245,158,11,.12);
-      border: 1px solid rgba(245,158,11,.28);
-      color: #b45309;
-    }
-    .tag.status-completed{
-      background: rgba(22,163,74,.12);
-      border: 1px solid rgba(22,163,74,.28);
-      color: #15803d;
-    }
-
-    /* Track button */
-    .btn-track{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:8px 12px;
-      border-radius:999px;
-      background: var(--brown);
-      color:#fff !important;
-      text-decoration:none;
-      font-weight:800;
-      font-size:13px;
-      white-space:nowrap;
-      box-shadow:0 6px 18px rgba(0,0,0,.10);
-    }
-    .btn-track:hover{ opacity:.92; transform: translateY(-1px); }
-
 </style>
 <meta charset="utf-8"/>
-<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>لوحة المؤشرات — MZJ Cars</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&amp;display=swap" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+
 <style>
   :root{
     --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef;
@@ -192,224 +164,273 @@ body{opacity:0}
     display:block;
     margin-bottom:6px;
   }
+
+/* ===== Sales Status Row Coloring ===== */
+
+/* Badges */
+.tag[data-status="لم تبدأ"]{
+  background: rgba(220,38,38,.12) !important;
+  border: 1px solid rgba(220,38,38,.35) !important;
+  color: #b91c1c !important;
+}
+.tag[data-status="تحت المتابعة"]{
+  background: rgba(245,158,11,.15) !important;
+  border: 1px solid rgba(245,158,11,.4) !important;
+  color: #b45309 !important;
+}
+.tag[data-status="مكتملة"]{
+  background: rgba(22,163,74,.15) !important;
+  border: 1px solid rgba(22,163,74,.4) !important;
+  color: #15803d !important;
+}
+
+/* Full row coloring */
+tr:has(.tag[data-status="لم تبدأ"]){
+  background: rgba(220,38,38,.04) !important;
+}
+tr:has(.tag[data-status="تحت المتابعة"]){
+  background: rgba(245,158,11,.05) !important;
+}
+tr:has(.tag[data-status="مكتملة"]){
+  background: rgba(22,163,74,.05) !important;
+}
+
+tr:hover{ filter: brightness(0.98); }
 </style>
-</link></link></head>
+</head>
 <body>
+
 <!-- Topbar -->
 <div class="topbar">
-<div class="topbar-inner">
-<div class="brand">
-<div class="logo">MZJ</div>
-<div>
-<h1>لوحة المؤشرات</h1>
-<small class="hint">مجموعة محمد بن ذعار العجمي للسيارات</small>
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="logo">MZJ</div>
+      <div>
+        <h1>لوحة المؤشرات</h1>
+        <small class="hint">مجموعة محمد بن ذعار العجمي للسيارات</small>
+      </div>
+    </div>
+    <div class="tabs">
+      <a class="tab" href="admin.html">الإدارة</a>
+      <a class="tab" href="inventory.html">المخزون</a>
+      <a class="tab active" href="dashboard.html">الداش بورد</a>
+      <a class="tab" href="vt.html">نقل السيارات</a>
+      <a class="tab" href="photoshoot-user.html">إدارة الطلبات</a>
+      <a class="tab" href="cars.html">كل السيارات</a>
+      <a class="tab" href="Activity.html">سجل النشاط</a>
+    </div>
+    <div class="row">
+      <div class="status-badge"><span id="connDot" class="dot warn"></span><span id="connText">جارِ الاتصال…</span></div>
+      <button id="btnSignOut" class="btn btn-ghost" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+    </div>
+  </div>
 </div>
-</div>
-<div class="tabs">
-<a class="tab" href="admin.html">الإدارة</a>
-<a class="tab" href="inventory.html">المخزون</a>
-<a class="tab active" href="dashboard.html">الداش بورد</a>
-<a class="tab" href="vt.html">نقل السيارات</a>
-<a class="tab" href="photoshoot-user.html">إدارة الطلبات</a>
-<a class="tab" href="cars.html">كل السيارات</a>
-<a class="tab" href="Activity.html">سجل النشاط</a>
-</div>
-<div class="row">
-<div class="status-badge"><span class="dot warn" id="connDot"></span><span id="connText">جارِ الاتصال…</span></div>
-<button class="btn btn-ghost" id="btnSignOut" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
-</div>
-</div>
-</div>
+
 <!-- Auth Gate -->
 <div id="authGate" style="min-height:60vh;display:none;place-items:center;padding:24px">
-<div class="card" style="max-width:440px;width:96%">
-<h2 style="margin:0 0 10px;color:var(--brown)">تسجيل الدخول</h2>
-<label>البريد الإلكتروني</label>
-<input class="input" id="email" placeholder="you@example.com" type="email"/>
-<label style="margin-top:8px">كلمة المرور</label>
-<input class="input" id="password" placeholder="••••••••" type="password"/>
-<div class="row" style="margin-top:10px">
-<button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
-<button class="btn btn-outline" id="btnSignup">إنشاء حساب</button>
+  <div class="card" style="max-width:440px;width:96%">
+    <h2 style="margin:0 0 10px;color:var(--brown)">تسجيل الدخول</h2>
+    <label>البريد الإلكتروني</label>
+    <input id="email" class="input" type="email" placeholder="you@example.com"/>
+    <label style="margin-top:8px">كلمة المرور</label>
+    <input id="password" class="input" type="password" placeholder="••••••••"/>
+    <div class="row" style="margin-top:10px">
+      <button class="btn btn-primary" id="btnLogin">تسجيل الدخول</button>
+      <button class="btn btn-outline" id="btnSignup">إنشاء حساب</button>
+    </div>
+    <p class="hint" id="authHint" style="margin-top:10px"></p>
+  </div>
 </div>
-<p class="hint" id="authHint" style="margin-top:10px"></p>
-</div>
-</div>
+
 <!-- App -->
 <div id="app" style="display:none">
-<div class="container">
-<!-- Shortages Summary Card (Branches only) -->
-<div class="card short-card" id="shortagesCard" title="عرض النواقص لأفرع المعارض (حسب السيارة + البيان + الألوان + الموديل | العدد داخل الفرع = 0)">
-<div class="group-head">
-<div class="group-left">
-<h3 class="group-title"><i class="fa-solid fa-list-check"></i> النواقص — الفروع فقط</h3>
-<div class="sub-metrics">
-<span class="metric"><i class="fa-solid fa-equals"></i> ملخص</span>
+  <div class="container">
+
+    <!-- Shortages Summary Card (Branches only) -->
+    <div class="card short-card" id="shortagesCard" title="عرض النواقص لأفرع المعارض (حسب السيارة + البيان + الألوان + الموديل | العدد داخل الفرع = 0)">
+      <div class="group-head">
+        <div class="group-left">
+          <h3 class="group-title"><i class="fa-solid fa-list-check"></i> النواقص — الفروع فقط</h3>
+          <div class="sub-metrics">
+            <span class="metric"><i class="fa-solid fa-equals"></i> ملخص</span>
+          </div>
+        </div>
+        <div class="group-total" id="shortagesTotal">0</div>
+      </div>
+      <div class="short-pills" id="shortagesPills"></div>
+    </div>
+
+    <!-- Group Cards + تصوير + طلبات نقل -->
+    <div class="cards" id="groupsGrid"></div>
+
+  </div>
 </div>
-</div>
-<div class="group-total" id="shortagesTotal">0</div>
-</div>
-<div class="short-pills" id="shortagesPills"></div>
-</div>
-<!-- Group Cards + تصوير + طلبات نقل -->
-<div class="cards" id="groupsGrid"></div>
-</div>
-</div>
+
 <!-- Modal -->
-<div aria-hidden="true" class="backdrop" id="backdrop">
-<div aria-labelledby="modalTitle" aria-modal="true" class="modal" role="dialog">
-<header>
-<h3 id="modalTitle">عرض</h3>
-<div class="tools">
-<input class="input" id="modalSearch" placeholder="بحث..." style="min-width:280px"/>
-<button class="btn" id="btnExportGroup"><i class="fa-regular fa-file-excel"></i> تصدير Excel</button>
-<button class="btn btn-danger" id="btnCloseModal"><i class="fa-solid fa-xmark"></i> إغلاق</button>
-</div>
-</header>
-<div class="body">
-<!-- صندوق إجراءات الموافقات (يظهر فقط في تحت التسليم) -->
-<div id="approvalBox">
-<h4></h4>
-<small id="approvalTarget"></small>
-<div class="row" style="margin-bottom:6px">
-<div style="flex:1;min-width:180px">
-<label style="font-size:12px;display:block;margin-bottom:4px">حالة الموافقة</label>
-<select class="input" id="approvalStatus" style="max-width:220px">
-<option value="">— بدون حالة —</option>
-<option value="true">✔ موافق</option>
-<option value="false">✖ مرفوض</option>
-</select>
-</div>
-<div style="flex:3;min-width:220px">
-<label style="font-size:12px;display:block;margin-bottom:4px">ملاحظات</label>
-<textarea class="input" id="approvalNotes" placeholder="ملاحظات مختصرة توضح سبب الموافقة أو الرفض (اختياري)" rows="2"></textarea>
-</div>
-</div>
-<div class="row" style="justify-content:flex-end">
-<button class="btn btn-ghost" id="btnCancelApproval"><i class="fa-solid fa-rotate-left"></i> إلغاء</button>
-<button class="btn btn-primary" id="btnSaveApproval"><i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات</button>
-</div>
-</div>
-<!-- تبويبات لنواقص الفروع فقط -->
-<div class="tabs2" id="shortTabs" style="display:none"></div>
-<!-- جدول السيارات (rows) -->
-<div class="table-wrap" id="tableRowsWrap" style="display:none">
-<table id="modalTableRows">
-<thead>
-<tr id="rowsHeadTr"></tr>
-</thead>
-<tbody></tbody>
-</table>
-</div>
-<!-- جدول النواقص (Shortages) -->
-<div class="table-wrap" id="tableShortWrap" style="display:none">
-<table id="modalTableShort">
-<thead>
-<tr>
-<th>السيارة</th>
-<th>البيان</th>
-<th>اللون الخارجي</th>
-<th>اللون الداخلي</th>
-<th>الموديل</th>
-<th>عدد الفرع</th>
-<th>الإجمالي العام</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-</div>
-<!-- جدول طلبات التصوير -->
-<div class="table-wrap" id="tableShootWrap" style="display:none">
-<table id="modalTableShoot">
-<thead>
-<tr>
-<th>رقم</th>
-<th>التاريخ</th>
-<th>نوع الطلب</th>
-<th>مقدّم</th>
-<th>عدد الهياكل</th>
-<th>الحالة</th>
-<th>التتبع</th>
-<th>استلام إداري</th>
-<th>تجهيز</th>
-<th>ملاحظات الإدارة</th>
-<th>تفاصيل الطلب</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-</div>
-<!-- جدول طلبات نقل السيارات -->
-<div class="table-wrap" id="tableTransfersWrap" style="display:none">
-<table id="modalTableTransfers">
-<thead>
-<tr>
-<th>#</th>
-<th>التاريخ</th>
-<th>رقم الهيكل</th>
-<th>من مكان</th>
-<th>إلى مكان</th>
-<th>ملاحظات</th>
-<th>الموافقة الإدارية</th>
-<th>الموافقة المالية</th>
-<th>الحالة</th>
-<th>الإجراء</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-</div>
-<!-- جدول طلبات المبيعات (ERP + تتبع) -->
-<div class="table-wrap" id="tableSalesWrap" style="display:none">
-<table id="modalTableSales">
-<thead>
-<tr>
-<th>#</th>
-<th>رقم الطلب</th>
-<th>اسم العميل</th>
-<th>رقم الجوال</th>
-<th>الفرع</th>
-<th>رقم الهيكل VIN</th>
-<th>تاريخ التسليم</th>
-<th>آخر مرحلة</th>
-<th>الحالة</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
-</div>
+<div id="backdrop" class="backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <header>
+      <h3 id="modalTitle">عرض</h3>
+      <div class="tools">
+        <input id="modalSearch" class="input" placeholder="بحث..." style="min-width:280px">
+        <button id="btnExportGroup" class="btn"><i class="fa-regular fa-file-excel"></i> تصدير Excel</button>
+        <button id="btnCloseModal" class="btn btn-danger"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+      </div>
+    </header>
+    <div class="body">
+      <!-- صندوق إجراءات الموافقات (يظهر فقط في تحت التسليم) -->
+      <div id="approvalBox">
+        <h4></h4>
+        <small id="approvalTarget"></small>
+        <div class="row" style="margin-bottom:6px">
+          <div style="flex:1;min-width:180px">
+            <label style="font-size:12px;display:block;margin-bottom:4px">حالة الموافقة</label>
+            <select id="approvalStatus" class="input" style="max-width:220px">
+              <option value="">— بدون حالة —</option>
+              <option value="true">✔ موافق</option>
+              <option value="false">✖ مرفوض</option>
+            </select>
+          </div>
+          <div style="flex:3;min-width:220px">
+            <label style="font-size:12px;display:block;margin-bottom:4px">ملاحظات</label>
+            <textarea id="approvalNotes" class="input" rows="2" placeholder="ملاحظات مختصرة توضح سبب الموافقة أو الرفض (اختياري)"></textarea>
+          </div>
+        </div>
+        <div class="row" style="justify-content:flex-end">
+          <button id="btnCancelApproval" class="btn btn-ghost"><i class="fa-solid fa-rotate-left"></i> إلغاء</button>
+          <button id="btnSaveApproval" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات</button>
+        </div>
+      </div>
+
+      <!-- تبويبات لنواقص الفروع فقط -->
+      <div id="shortTabs" class="tabs2" style="display:none"></div>
+
+      <!-- جدول السيارات (rows) -->
+      <div id="tableRowsWrap" class="table-wrap" style="display:none">
+        <table id="modalTableRows">
+          <thead>
+            <tr id="rowsHeadTr"></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- جدول النواقص (Shortages) -->
+      <div id="tableShortWrap" class="table-wrap" style="display:none">
+        <table id="modalTableShort">
+          <thead>
+            <tr>
+              <th>السيارة</th>
+              <th>البيان</th>
+              <th>اللون الخارجي</th>
+              <th>اللون الداخلي</th>
+              <th>الموديل</th>
+              <th>عدد الفرع</th>
+              <th>الإجمالي العام</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- جدول طلبات التصوير -->
+      <div id="tableShootWrap" class="table-wrap" style="display:none">
+        <table id="modalTableShoot">
+          <thead>
+            <tr>
+              <th>رقم</th>
+              <th>التاريخ</th>
+              <th>نوع الطلب</th>
+              <th>مقدّم</th>
+              <th>عدد الهياكل</th>
+              <th>الحالة</th>
+              <th>استلام إداري</th>
+              <th>تجهيز</th>
+              <th>ملاحظات الإدارة</th>
+              <th>تفاصيل الطلب</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- جدول طلبات نقل السيارات -->
+      <div id="tableTransfersWrap" class="table-wrap" style="display:none">
+        <table id="modalTableTransfers">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>التاريخ</th>
+              <th>رقم الهيكل</th>
+              <th>من مكان</th>
+              <th>إلى مكان</th>
+              <th>ملاحظات</th>
+              <th>الموافقة الإدارية</th>
+              <th>الموافقة المالية</th>
+              <th>الحالة</th>
+              <th>الإجراء</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      
+      <!-- جدول طلبات المبيعات (ERP + تتبع) -->
+      <div id="tableSalesWrap" class="table-wrap" style="display:none">
+        <table id="modalTableSales">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>رقم الطلب</th>
+              <th>اسم العميل</th>
+              <th>رقم الجوال</th>
+              <th>الفرع</th>
+              <th>رقم الهيكل VIN</th>
+              <th>تاريخ التسليم</th>
+              <th>آخر مرحلة</th>
+              <th>الحالة</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
 <!-- مربع تفاصيل طلب التصوير -->
-<div class="card" id="shootDetailsBox" style="margin-top:10px;display:none">
-<h4 style="margin:0 0 8px;color:var(--brown)">
+      <div id="shootDetailsBox" class="card" style="margin-top:10px;display:none">
+        <h4 style="margin:0 0 8px;color:var(--brown)">
           تفاصيل الطلب رقم <span id="shootDetailsId"></span>
-</h4>
-<p class="hint" style="margin:0 0 6px">
+        </h4>
+        <p class="hint" style="margin:0 0 6px">
           قائمة الهياكل ومسميات السيارات وأماكن التصوير الخاصة بهذا الطلب.
         </p>
-<div class="table-wrap">
-<table id="shootDetailsTable">
-<thead>
-<tr>
-<th>#</th>
-<th>رقم الهيكل</th>
-<th>السيارة</th>
-<th>البيان</th>
-<th>اللون الخارجي</th>
-<th>الموديل</th>
-<th>المكان الحالي</th>
-<th>مكان التصوير</th>
-<th>ملاحظات</th>
-</tr>
-</thead>
-<tbody></tbody>
-</table>
+        <div class="table-wrap">
+          <table id="shootDetailsTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>رقم الهيكل</th>
+                <th>السيارة</th>
+                <th>البيان</th>
+                <th>اللون الخارجي</th>
+                <th>الموديل</th>
+                <th>المكان الحالي</th>
+                <th>مكان التصوير</th>
+                <th>ملاحظات</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <p class="hint" id="modalCount" style="margin-top:8px"></p>
+    </div>
+  </div>
 </div>
-</div>
-<p class="hint" id="modalCount" style="margin-top:8px"></p>
-</div>
-</div>
-</div>
-<div class="toast" id="toast">تم</div>
+
+<div id="toast" class="toast">تم</div>
+
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
@@ -1222,30 +1243,16 @@ function renderShootCard(gridEl){
     modalTableSalesBody.innerHTML = '';
     (filteredSales||[]).forEach((o,idx)=>{
       const tr = document.createElement('tr');
-
-      const statusTxt = (o.status||'').trim();
-      const statusClass =
-        statusTxt.includes('لم تبدأ') ? 'status-not-started' :
-        statusTxt.includes('مكتملة') ? 'status-completed' :
-        'status-in-progress';
-
-      const vinVal = (o.vin||'').trim();
-      const trackURL = vinVal ? ('https://mzj-tracking.vercel.app/Test-Track.html?vin=' + encodeURIComponent(vinVal)) : '';
-      const trackCell = trackURL
-        ? ('<a class="btn-track" href="'+trackURL+'" target="_blank" rel="noopener">فتح التتبع</a>')
-        : '<span class="muted">—</span>';
-
       tr.innerHTML = `
         <td>${idx+1}</td>
         <td>${o.orderNo||''}</td>
         <td>${o.customerName||''}</td>
         <td>${o.phone||''}</td>
         <td>${o.branch||''}</td>
-        <td>${vinVal||''}</td>
+        <td>${o.vin||''}</td>
         <td>${o.deliveryDate||''}</td>
         <td>${o.lastStageLabel||'—'}</td>
-        <td><span class="tag ${statusClass}">${statusTxt||''}</span></td>
-        <td>${trackCell}</td>
+        <td><span class="tag">${o.status||''}</span></td>
       `;
       modalTableSalesBody.appendChild(tr);
     });
@@ -2153,3 +2160,6 @@ try{
 </script>
 </body>
 </html>
+
+
+
