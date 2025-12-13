@@ -2110,71 +2110,7 @@ function openReqModal(req){
     backdrop.classList.add("show");
     attachMoveLive(req.id);
   }
-    if(btnM2){
-      const show = isSuperAdmin() || eligible2>0;
-      btnM2.style.display = show ? "inline-flex" : "none";
-      btnM2.disabled = !show;
-    }
-    if(btnM3){
-      const show = isSuperAdmin() || eligible3>0;
-      btnM3.style.display = show ? "inline-flex" : "none";
-      btnM3.disabled = !show;
-    }
-
-    const btnFinish = document.getElementById("btnMoveStep4");
-    if(btnFinish){
-      btnFinish.style.display = (canFinishRequest(req) || isSuperAdmin()) ? "inline-flex" : "none";
-      btnFinish.disabled = !canFinishRequest(req) && !isSuperAdmin();
-    // زر تعديل الطلب: للمنشئ + الإدارة فقط (قبل بدء التنفيذ)
-    const btnEdit = document.getElementById("btnEditMove");
-    if(btnEdit){
-      const canEdit = (isRequestOwner(req) || isSuperAdmin());
-      const started = requestStarted(req);
-      btnEdit.style.display = canEdit ? "inline-flex" : "none";
-      btnEdit.disabled = started && !isEditMoveMode;
-      btnEdit.innerHTML = isEditMoveMode
-        ? '<i class="fa-solid fa-floppy-disk"></i> حفظ التعديل'
-        : '<i class="fa-solid fa-pen"></i> تعديل الطلب';
-
-      btnEdit.onclick = async ()=>{
-        if(!canEdit) return;
-
-        if(started && !isEditMoveMode && !isSuperAdmin()){
-          showToast("لا يمكن تعديل الطلب بعد بدء التنفيذ");
-          return;
-        }
-
-        if(isEditMoveMode){
-          const latest = (moveRequests||[]).find(r=>r.id===req.id) || req;
-          const rows = Array.isArray(latest.rows)?latest.rows:[];
-          document.querySelectorAll(".edit-move-to").forEach(sel=>{
-            const idx = Number(sel.getAttribute("data-idx")||"-1");
-            if(idx>=0 && rows[idx]) rows[idx].toLocation = sel.value || "";
-          });
-          document.querySelectorAll(".edit-move-note").forEach(inp=>{
-            const idx = Number(inp.getAttribute("data-idx")||"-1");
-            if(idx>=0 && rows[idx]) rows[idx].note = inp.value || "";
-          });
-
-          latest.rows = rows;
-          updateMoveRequestLocal(latest);
-          await logActivity("تعديل طلب نقل","تعديل بيانات الطلب #"+(latest.id||""),{requestId:latest.id, entityType:"move_request", role: currentUserRole||""});
-          isEditMoveMode = false;
-          await persistAll();
-          metrics(); render();
-          openMoveModal(latest);
-          showToast("تم حفظ تعديل الطلب");
-        }else{
-          isEditMoveMode = true;
-          openMoveModal(req);
-        }
-      };
-    }
-
-    }
-
-    backdrop.classList.add("show");
-  
+    
 
   (function bindModalEvents(){
     const reqBackdrop  = document.getElementById("reqModalBackdrop");
@@ -2188,7 +2124,6 @@ function openReqModal(req){
     document.querySelectorAll("[data-close-move-modal]").forEach(btn => {
       btn.addEventListener("click", () => {
         if (moveBackdrop) moveBackdrop.classList.remove("show");
-        stopMoveLive();
         stopMoveLive();
       });
     });
@@ -2483,4 +2418,3 @@ function showAuthGate(){
 </script>
 </body>
 </html>
-
