@@ -660,6 +660,7 @@
         <div id="reqModalTitle" class="modal-title">تفاصيل طلب التصوير</div>
         <div id="reqModalSub" class="muted" style="font-size:11px;margin-top:2px"></div>
       </div>
+      <button id="btnEditReq" class="btn ghost btn-mini" style="margin-left:8px;display:none"><i class="fa-solid fa-pen"></i> تعديل الطلب</button>
       <button class="modal-close" data-close-req-modal><i class="fa-solid fa-xmark"></i></button>
     </div>
 
@@ -722,6 +723,7 @@
         <div id="moveModalTitle" class="modal-title">تفاصيل طلب النقل</div>
         <div id="moveModalSub" class="muted" style="font-size:11px;margin-top:2px"></div>
       </div>
+      <button id="btnEditMove" class="btn ghost btn-mini" style="margin-left:8px;display:none"><i class="fa-solid fa-pen"></i> تعديل الطلب</button>
       <button class="modal-close" data-close-move-modal><i class="fa-solid fa-xmark"></i></button>
     </div>
 
@@ -961,7 +963,14 @@
     return false;
   }
 
-  function canFinishRequest(req){
+  
+  function requestStarted(req){
+    ensureRowStates(req);
+    const rs = req.rowStates || [];
+    return rs.some(r=> r.received || r.sent || r.carReceived || r.finished);
+  }
+
+function canFinishRequest(req){
     // admin can always finish (but button shown also for owner)
     if(isSuperAdmin()) return true;
     if(!isRequestOwner(req)) return false;
@@ -1793,7 +1802,30 @@
     stock = newStock;
   }
 
-  let currentShootReqId = null;
+  
+  let isEditShootMode = false;
+  let isEditMoveMode  = false;
+
+  function isModalOpen(backdropId){
+    const el = document.getElementById(backdropId);
+    return !!(el && el.classList.contains("show"));
+  }
+
+  function refreshOpenModalIfAny(){
+    // لا نعمل refresh أثناء وضع التعديل حتى لا نفقد مدخلات المستخدم
+    if(isEditShootMode || isEditMoveMode) return;
+
+    if(currentShootReqId != null && isModalOpen("reqModalBackdrop")){
+      const latest = (shootRequests||[]).find(r=>r.id===currentShootReqId);
+      if(latest) openReqModal(latest);
+    }
+    if(currentMoveReqId != null && isModalOpen("moveModalBackdrop")){
+      const latest = (moveRequests||[]).find(r=>r.id===currentMoveReqId);
+      if(latest) openMoveModal(latest);
+    }
+  }
+
+let currentShootReqId = null;
   let currentMoveReqId  = null;
 
   function openReqModal(req){
@@ -1824,8 +1856,19 @@
         <td>${row.intColor || ""}</td>
         <td>${row.modelYear || ""}</td>
         <td>${row.location || ""}</td>
-        <td>${row.shootPlace || row.place || ""}</td>
-        <td>${row.note || ""}</td>
+        <td>${
+          isEditShootMode
+            ? `<select class="small-input edit-shoot-place" data-idx="${idx}">
+                 <option value="">— اختر —</option>
+                 ${SHOOT_PLACES.filter(Boolean).map(p=>`<option ${((row.shootPlace||row.place||"")==p)?"selected":""}>${p}</option>`).join("")}
+               </select>`
+            : (row.shootPlace || row.place || "")
+        }</td>
+        <td>${
+          isEditShootMode
+            ? `<input class="small-input edit-shoot-note" data-idx="${idx}" value="${(row.note||"").replace(/"/g,'&quot;')}">`
+            : (row.note || "")
+        }</td>
       `;
       rowsBody.appendChild(tr);
     });
@@ -1849,6 +1892,55 @@
     if(btnFinish){
       btnFinish.style.display = (canFinishRequest(req) || isSuperAdmin()) ? "inline-flex" : "none";
       btnFinish.disabled = !canFinishRequest(req) && !isSuperAdmin();
+    }
+
+        // زر تعديل الطلب: للمنشئ + الإدارة فقط (قبل بدء التنفيذ)
+    const btnEdit = document.getElementById("btnEditReq");
+    if(btnEdit){
+      const canEdit = (isRequestOwner(req) || isSuperAdmin());
+      const started = requestStarted(req);
+      btnEdit.style.display = canEdit ? "inline-flex" : "none";
+      btnEdit.disabled = started && !isEditShootMode;
+      btnEdit.innerHTML = isEditShootMode
+        ? '<i class="fa-solid fa-floppy-disk"></i> حفظ التعديل'
+        : '<i class="fa-solid fa-pen"></i> تعديل الطلب';
+
+      btnEdit.onclick = async ()=>{
+        if(!canEdit) return;
+
+        // منع التعديل بعد بدء التنفيذ (إلا لو الإدارة عايزة تجبر — ممكن نفعلها لاحقاً)
+        if(started && !isEditShootMode && !isSuperAdmin()){
+          showToast("لا يمكن تعديل الطلب بعد بدء التنفيذ");
+          return;
+        }
+
+        // حفظ
+        if(isEditShootMode){
+          const latest = (shootRequests||[]).find(r=>r.id===req.id) || req;
+          const rows = Array.isArray(latest.rows)?latest.rows:[];
+          document.querySelectorAll(".edit-shoot-place").forEach(sel=>{
+            const idx = Number(sel.getAttribute("data-idx")||"-1");
+            if(idx>=0 && rows[idx]) rows[idx].shootPlace = sel.value || "";
+          });
+          document.querySelectorAll(".edit-shoot-note").forEach(inp=>{
+            const idx = Number(inp.getAttribute("data-idx")||"-1");
+            if(idx>=0 && rows[idx]) rows[idx].note = inp.value || "";
+          });
+
+          latest.rows = rows;
+          updateShootRequestLocal(latest);
+          await logActivity("تعديل طلب تصوير","تعديل بيانات الطلب #"+(latest.id||""),{requestId:latest.id, entityType:"photoshoot_request", role: currentUserRole||""});
+          isEditShootMode = false;
+          await persistAll();
+          metrics(); render();
+          openReqModal(latest);
+          showToast("تم حفظ تعديل الطلب");
+        }else{
+          // دخول وضع التعديل
+          isEditShootMode = true;
+          openReqModal(req);
+        }
+      };
     }
 
     backdrop.classList.add("show");
@@ -1879,8 +1971,19 @@
         <td>${row.intColor || ""}</td>
         <td>${row.modelYear || ""}</td>
         <td>${row.fromLocation || ""}</td>
-        <td>${row.toLocation || ""}</td>
-        <td>${row.note || ""}</td>
+        <td>${
+          isEditMoveMode
+            ? `<select class="small-input edit-move-to" data-idx="${idx}">
+                 <option value="">— اختر —</option>
+                 ${SHOOT_PLACES.filter(Boolean).map(p=>`<option ${((row.toLocation||"")==p)?"selected":""}>${p}</option>`).join("")}
+               </select>`
+            : (row.toLocation || "")
+        }</td>
+        <td>${
+          isEditMoveMode
+            ? `<input class="small-input edit-move-note" data-idx="${idx}" value="${(row.note||"").replace(/"/g,'&quot;')}">`
+            : (row.note || "")
+        }</td>
       `;
       rowsBody.appendChild(tr);
     });
@@ -1904,6 +2007,52 @@
     if(btnFinish){
       btnFinish.style.display = (canFinishRequest(req) || isSuperAdmin()) ? "inline-flex" : "none";
       btnFinish.disabled = !canFinishRequest(req) && !isSuperAdmin();
+    // زر تعديل الطلب: للمنشئ + الإدارة فقط (قبل بدء التنفيذ)
+    const btnEdit = document.getElementById("btnEditMove");
+    if(btnEdit){
+      const canEdit = (isRequestOwner(req) || isSuperAdmin());
+      const started = requestStarted(req);
+      btnEdit.style.display = canEdit ? "inline-flex" : "none";
+      btnEdit.disabled = started && !isEditMoveMode;
+      btnEdit.innerHTML = isEditMoveMode
+        ? '<i class="fa-solid fa-floppy-disk"></i> حفظ التعديل'
+        : '<i class="fa-solid fa-pen"></i> تعديل الطلب';
+
+      btnEdit.onclick = async ()=>{
+        if(!canEdit) return;
+
+        if(started && !isEditMoveMode && !isSuperAdmin()){
+          showToast("لا يمكن تعديل الطلب بعد بدء التنفيذ");
+          return;
+        }
+
+        if(isEditMoveMode){
+          const latest = (moveRequests||[]).find(r=>r.id===req.id) || req;
+          const rows = Array.isArray(latest.rows)?latest.rows:[];
+          document.querySelectorAll(".edit-move-to").forEach(sel=>{
+            const idx = Number(sel.getAttribute("data-idx")||"-1");
+            if(idx>=0 && rows[idx]) rows[idx].toLocation = sel.value || "";
+          });
+          document.querySelectorAll(".edit-move-note").forEach(inp=>{
+            const idx = Number(inp.getAttribute("data-idx")||"-1");
+            if(idx>=0 && rows[idx]) rows[idx].note = inp.value || "";
+          });
+
+          latest.rows = rows;
+          updateMoveRequestLocal(latest);
+          await logActivity("تعديل طلب نقل","تعديل بيانات الطلب #"+(latest.id||""),{requestId:latest.id, entityType:"move_request", role: currentUserRole||""});
+          isEditMoveMode = false;
+          await persistAll();
+          metrics(); render();
+          openMoveModal(latest);
+          showToast("تم حفظ تعديل الطلب");
+        }else{
+          isEditMoveMode = true;
+          openMoveModal(req);
+        }
+      };
+    }
+
     }
 
     backdrop.classList.add("show");
@@ -1922,6 +2071,20 @@
       btn.addEventListener("click", () => {
         if (moveBackdrop) moveBackdrop.classList.remove("show");
       });
+    });
+
+
+    // إغلاق المودال بزر ESC
+    document.addEventListener("keydown",(e)=>{
+      if(e.key !== "Escape") return;
+      if(reqBackdrop && reqBackdrop.classList.contains("show")){
+        reqBackdrop.classList.remove("show");
+        isEditShootMode = false;
+      }
+      if(moveBackdrop && moveBackdrop.classList.contains("show")){
+        moveBackdrop.classList.remove("show");
+        isEditMoveMode = false;
+      }
     });
 
     const notesEl = document.getElementById("adminNotes");
@@ -2041,6 +2204,7 @@
 
       metrics();
       render();
+      refreshOpenModalIfAny();
       const su = document.getElementById("stat_updated");
       if (su) su.textContent = data.updatedAt || "—";
     });
