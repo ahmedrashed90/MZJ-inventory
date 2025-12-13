@@ -485,23 +485,6 @@
   </style>
 </head>
 <body>
-
-<script>
-(function(){
-  try{
-    if(location.protocol === 'file:'){
-      document.addEventListener('DOMContentLoaded', function(){
-        var warn = document.createElement('div');
-        warn.style.cssText='max-width:1200px;margin:12px auto 0;padding:10px 12px;border:1px solid #ef4444;border-radius:12px;background:#fff;color:#991b1b;font-family:Tajawal,system-ui';
-        warn.innerHTML='⚠️ الصفحة مفتوحة كـ <b>file://</b> — لازم تفتحها عبر <b>http://localhost</b> أو على الدومين (Vercel) عشان Firebase يشتغل.';
-        var main = document.querySelector('main.wrap');
-        if(main) main.parentNode.insertBefore(warn, main);
-      });
-    }
-  }catch(e){}
-})();
-</script>
-
 <div class="top">
   <div class="inner">
     <div class="top-left">
@@ -516,7 +499,7 @@
         <i class="fa-solid fa-circle-nodes"></i>
         <span class="status">
           <span id="connDot" class="dot"></span>
-          <span id="connText">غير متصل</span>
+          <span id="connText">جارٍ الاتصال…</span>
         </span>
       </span>
       <span class="user-info" id="userLabel">غير مسجل</span>
@@ -542,7 +525,7 @@
 </section>
 
   <!-- بوابة الدخول -->
-  <section id="authGate" class="panel" style="display:block">
+  <section id="authGate" class="panel" style="display:none">
     <div class="head">
       <strong>تسجيل الدخول لإدارة الطلبات</strong>
       <div class="muted">مطلوب صلاحية للوصول لطلبات التصوير والنقل</div>
@@ -967,16 +950,6 @@ const ROLE_PAGES = {
   const $$ = s => Array.from(document.querySelectorAll(s));
   const pad = n => n<10 ? "0"+n : ""+n;
 
-  // تنبيه لو الصفحة اتفتحت كـ file:// (ممكن يمنع Firebase/Modules)
-  if (location.protocol === "file:") {
-    try{
-      const warn = document.createElement("div");
-      warn.style.cssText = "max-width:1200px;margin:10px auto 0;padding:10px 14px;border:1px solid #f59e0b;background:#fff7ed;border-radius:12px;color:#92400e;font-weight:700";
-      warn.textContent = "⚠️ افتح الصفحة عبر http(s) (مثلاً localhost) وليس file:// لأن ده قد يمنع تسجيل الدخول.";
-      document.body.prepend(warn);
-    }catch(e){}
-  }
-
   function now(){
     const d=new Date();
     return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+
@@ -1077,19 +1050,13 @@ const ROLE_PAGES = {
     // Step4 (finished) يتحكم فيه مقدم الطلب (أو الإدارة) عبر canFinishRequest
     if(stage==="finished") return false;
 
-    // received: based on current location / fromLocation
-    if(stage==="received"){
+    // received + sent: مسؤول المكان الحالي/المصدر
+    if(stage==="received" || stage==="sent"){
       const place = (kind==="move") ? (row.fromLocation||"") : (row.location||"");
       return userMatchesPlace(place);
     }
 
-    // sent: مسؤول المكان الحالي (تسليم من المصدر) + الإدارة
-    if(stage==="sent"){
-      const place = (kind==="move") ? (row.fromLocation||"") : (row.location||"");
-      return userMatchesPlace(place);
-    }
-
-    // carReceived: based on destination (shootPlace/toLocation)
+    // carReceived: مسؤول الوجهة
     if(stage==="carReceived"){
       const place = (kind==="move") ? (row.toLocation||"") : (row.shootPlace||row.place||"");
       return userMatchesPlace(place);
@@ -1098,22 +1065,6 @@ const ROLE_PAGES = {
     return false;
   }
 
-    // received: based on current location / fromLocation
-    if(stage==="received"){
-      const place = (kind==="move") ? (row.fromLocation||"") : (row.location||"");
-      return userMatchesPlace(place);
-    }
-
-    // carReceived: based on destination (shootPlace/toLocation)
-    if(stage==="carReceived"){
-      const place = (kind==="move") ? (row.toLocation||"") : (row.shootPlace||row.place||"");
-      return userMatchesPlace(place);
-    }
-
-    return false;
-  }
-
-  
   function requestStarted(req){
     ensureRowStates(req);
     const rs = req.rowStates || [];
@@ -2404,25 +2355,8 @@ function openReqModal(req){
         await signInWithEmailAndPassword(auth,email,pass);
         showToast("تم تسجيل الدخول");
       }catch(err){
-        console.error("LOGIN_ERROR", err);
-        const code = err?.code || "";
-        const msg  = err?.message || "";
-        // رسائل أوضح بدل "بيانات الدخول غير صحيحة"
-        if(code === "auth/unauthorized-domain"){
-          alert(
-            "❌ الدومين غير مُصرّح به في Firebase Auth.\n\n" +
-            "الحل:\n" +
-            "1) Firebase Console → Authentication → Settings → Authorized domains\n" +
-            "2) أضف: localhost + الدومين اللي فاتح عليه الصفحة (Vercel/موقعك)\n\n" +
-            "الكود: " + code
-          );
-        }else if(code){
-          alert("❌ تعذّر تسجيل الدخول.\n\nالكود: " + code + "\n" + msg);
-        }else{
-          alert("❌ تعذّر تسجيل الدخول.\n\n" + msg);
-        }
-        showToast("فشل تسجيل الدخول: " + (code || "unknown"));
-        setStatus("err","فشل تسجيل الدخول");
+        console.error(err);
+        alert("بيانات الدخول غير صحيحة");
       }finally{
         btn.disabled = false;
       }
