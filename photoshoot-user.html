@@ -927,6 +927,12 @@ const ROLE_PAGES = {
       const aliases = LOCATION_ALIASES[baseTrim] || [];
       if(aliases.some(a => pLow.includes(String(a).toLowerCase()))) return true;
     }
+
+
+  function canCreateMoveFromLocation(fromLoc){
+    if(isSuperAdmin()) return true;
+    return userMatchesPlace(fromLoc||"");
+  }
     return false;
   }
   function isRequestOwner(req){
@@ -1412,6 +1418,14 @@ window.__shootEditMode = false;
       const note      = tr.querySelector(".req-note")?.value || "";
 
       if(kind === "move"){
+        // ✅ منع إنشاء طلب نقل لسيارات خارج أماكن المستخدم (إلا الإدارة)
+        if(!canCreateMoveFromLocation(location)){
+          showToast("لا يمكنك إنشاء طلب نقل لهذا الهيكل لأنه ليس ضمن أماكنك الحالية", true);
+          tr.classList.add('row-error');
+          setTimeout(()=>tr.classList.remove('row-error'), 2000);
+          return;
+        }
+
         moveRows.push({
           vin,car,variant,extColor,intColor,modelYear,
           fromLocation: location,
@@ -1937,6 +1951,24 @@ let currentShootReqId = null;
   let currentMoveReqId  = null;
 
   
+
+
+  // Live listeners (for instant progress updates)
+  let moveLiveUnsubDoc = null;
+  let moveLiveUnsubRows = null;
+  let shootLiveUnsubDoc = null;
+  let shootLiveUnsubRows = null;
+
+  function stopMoveLive(){
+    try{ if(moveLiveUnsubDoc) moveLiveUnsubDoc(); }catch(e){}
+    try{ if(moveLiveUnsubRows) moveLiveUnsubRows(); }catch(e){}
+    moveLiveUnsubDoc = null; moveLiveUnsubRows = null;
+  }
+  function stopShootLive(){
+    try{ if(shootLiveUnsubDoc) shootLiveUnsubDoc(); }catch(e){}
+    try{ if(shootLiveUnsubRows) shootLiveUnsubRows(); }catch(e){}
+    shootLiveUnsubDoc = null; shootLiveUnsubRows = null;
+  }
 function openReqModal(req){
   currentShootReqId = req.id;
 
@@ -2075,73 +2107,9 @@ function openReqModal(req){
     currentMoveReqId = req.id;
     const backdrop = document.getElementById("moveModalBackdrop");
     if (!backdrop) return;
-    const titleEl  = document.getElementById("moveModalTitle");
-    const subEl    = document.getElementById("moveModalSub");
-    const rowsBody = document.getElementById("moveModalRows");
-    const statusBox= document.getElementById("moveModalStatusBox");
-
-    if (titleEl) titleEl.textContent = "تفاصيل طلب النقل #" + (req.id || "-");
-    if (subEl) subEl.textContent    = (req.createdAt || "") + " — " + (req.createdBy || "");
-
-    rowsBody.innerHTML = "";
-    const rows = Array.isArray(req.rows) ? req.rows : [];
-    rows.forEach((row, idx) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="center">${idx+1}</td>
-        <td>${row.vin || ""}</td>
-        <td>${row.car || ""}</td>
-        <td>${row.variant || ""}</td>
-        <td>${row.extColor || ""}</td>
-        <td>${row.intColor || ""}</td>
-        <td>${row.modelYear || ""}</td>
-        <td>${row.fromLocation || ""}</td>
-        <td>${
-          isEditMoveMode
-            ? `<select class="small-input edit-move-to" data-idx="${idx}">
-                 <option value="">— اختر —</option>
-                 ${SHOOT_PLACES.filter(Boolean).map(p=>`<option ${((row.toLocation||"")==p)?"selected":""}>${p}</option>`).join("")}
-               </select>`
-            : (row.toLocation || "")
-        }</td>
-        <td>${
-          isEditMoveMode
-            ? `<input class="small-input edit-move-note" data-idx="${idx}" value="${(row.note||"").replace(/"/g,'&quot;')}">`
-            : (row.note || "")
-        }</td>
-      `;
-      rowsBody.appendChild(tr);
-    });
-
-    const c1 = stageCount(req,"received");
-    const c2 = stageCount(req,"sent");
-    const c3 = stageCount(req,"carReceived");
-    const c4 = stageCount(req,"finished");
-    if (statusBox) {
-      statusBox.textContent = [
-        `استلام الطلب: ${pct(c1.done,c1.total)}% (${c1.done}/${c1.total})`,
-        `ارسال السيارة: ${pct(c2.done,c2.total)}% (${c2.done}/${c2.total})`,
-        `استلام السيارة: ${pct(c3.done,c3.total)}% (${c3.done}/${c3.total})`,
-        `الانتهاء: ${pct(c4.done,c4.total)}% (${c4.done}/${c4.total})`,
-      ].join(" | ");
-    }
-
-    renderMoveTimeline(req);
-
-    // إظهار الأزرار حسب مكان المستخدم (لكل VIN داخل الطلب)
-    const btnM1 = document.getElementById("btnMoveStep1");
-    const btnM2 = document.getElementById("btnMoveStep2");
-    const btnM3 = document.getElementById("btnMoveStep3");
-
-    const eligible1 = rows.filter(r=>canActOnRow('move', r, 'received')).length;
-    const eligible2 = rows.filter(r=>canActOnRow('move', r, 'sent')).length;
-    const eligible3 = rows.filter(r=>canActOnRow('move', r, 'carReceived')).length;
-
-    if(btnM1){
-      const show = isSuperAdmin() || eligible1>0;
-      btnM1.style.display = show ? "inline-flex" : "none";
-      btnM1.disabled = !show;
-    }
+    backdrop.classList.add("show");
+    attachMoveLive(req.id);
+  }
     if(btnM2){
       const show = isSuperAdmin() || eligible2>0;
       btnM2.style.display = show ? "inline-flex" : "none";
@@ -2220,8 +2188,100 @@ function openReqModal(req){
     document.querySelectorAll("[data-close-move-modal]").forEach(btn => {
       btn.addEventListener("click", () => {
         if (moveBackdrop) moveBackdrop.classList.remove("show");
+        stopMoveLive();
+        stopMoveLive();
       });
     });
+
+
+    
+  function renderMoveModalUI(reqDoc, rowsArr){
+    const titleEl  = document.getElementById("moveModalTitle");
+    const subEl    = document.getElementById("moveModalSub");
+    const rowsBody = document.getElementById("moveModalRows");
+    const statusBox= document.getElementById("moveModalStatusBox");
+
+    if (titleEl) titleEl.textContent = "تفاصيل طلب النقل #" + (reqDoc.id || "-");
+    if (subEl) subEl.textContent    = (reqDoc.createdAt || "") + " — " + (reqDoc.createdBy || "");
+
+    if(rowsBody){
+      rowsBody.innerHTML = "";
+      (rowsArr||[]).forEach((row, idx)=>{
+        const tr = document.createElement("tr");
+        const from = row.fromLocation || row.location || "";
+        const to   = row.toLocation || row.place || row.shootPlace || "";
+        tr.innerHTML = `
+          <td class="center">${idx+1}</td>
+          <td class="mono">${row.vin||""}</td>
+          <td>${row.car||""}</td>
+          <td class="muted">${from||"-"}</td>
+          <td class="muted">${to||"-"}</td>
+        `;
+        rowsBody.appendChild(tr);
+      });
+    }
+
+    // تحديث شريط التقدم + الحالة
+    const c1 = stageCount({rows:rowsArr},"received");
+    const c2 = stageCount({rows:rowsArr},"sent");
+    const c3 = stageCount({rows:rowsArr},"carReceived");
+    const c4 = stageCount({rows:rowsArr},"finished");
+    if(statusBox){
+      statusBox.textContent = [
+        `استلام الطلب: ${pct(c1.done,c1.total)}% (${c1.done}/${c1.total})`,
+        `ارسال السيارة: ${pct(c2.done,c2.total)}% (${c2.done}/${c2.total})`,
+        `استلام السيارة: ${pct(c3.done,c3.total)}% (${c3.done}/${c3.total})`,
+        `الانتهاء: ${pct(c4.done,c4.total)}% (${c4.done}/${c4.total})`,
+      ].join("\n");
+    }
+
+    // أزرار المراحل حسب مكان المستخدم (Admin يشوف كله) + زر الانتهاء لمنشئ الطلب أو Admin
+    const btnM1 = document.getElementById("btnMoveStep1");
+    const btnM2 = document.getElementById("btnMoveStep2");
+    const btnM3 = document.getElementById("btnMoveStep3");
+    const btnFinish = document.getElementById("btnMoveFinish");
+
+    const eligible1 = (rowsArr||[]).filter(r=>canActOnRow('move', r, 'received')).length;
+    const eligible2 = (rowsArr||[]).filter(r=>canActOnRow('move', r, 'sent')).length;
+    const eligible3 = (rowsArr||[]).filter(r=>canActOnRow('move', r, 'carReceived')).length;
+
+    if(btnM1){ btnM1.style.display = (isSuperAdmin() || eligible1>0) ? "inline-flex":"none"; }
+    if(btnM2){ btnM2.style.display = (isSuperAdmin() || eligible2>0) ? "inline-flex":"none"; }
+    if(btnM3){ btnM3.style.display = (isSuperAdmin() || eligible3>0) ? "inline-flex":"none"; }
+
+    if(btnFinish){
+      const canFinish = isSuperAdmin() || isCreator({createdByUid:reqDoc.createdByUid});
+      btnFinish.style.display = canFinish ? "inline-flex" : "none";
+    }
+  }
+
+  function attachMoveLive(reqId){
+    stopMoveLive();
+    if(!reqId) return;
+    const reqRef = db.collection("requests").doc(String(reqId));
+    // doc listener
+    moveLiveUnsubDoc = reqRef.onSnapshot((snap)=>{
+      if(!snap.exists) return;
+      const d = snap.data()||{};
+      d.id = snap.id;
+      window.__moveReqDoc = d;
+    }, (err)=>{
+      console.error("move doc snapshot error", err);
+    });
+
+    // rows listener
+    moveLiveUnsubRows = reqRef.collection("rows").onSnapshot((qs)=>{
+      const rowsArr = [];
+      qs.forEach(doc=>{
+        const r = doc.data()||{};
+        rowsArr.push(r);
+      });
+      const reqDoc = window.__moveReqDoc || {id:reqId};
+      renderMoveModalUI(reqDoc, rowsArr);
+    }, (err)=>{
+      console.error("move rows snapshot error", err);
+    });
+  }
 
 
     // إغلاق المودال بزر ESC
@@ -2233,6 +2293,7 @@ function openReqModal(req){
       }
       if(moveBackdrop && moveBackdrop.classList.contains("show")){
         moveBackdrop.classList.remove("show");
+        stopMoveLive();
         isEditMoveMode = false;
       }
     });
@@ -2422,4 +2483,3 @@ function showAuthGate(){
 </script>
 </body>
 </html>
-
