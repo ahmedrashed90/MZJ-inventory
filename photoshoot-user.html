@@ -223,6 +223,15 @@ body{
 
 <div class="container">
 
+  <div class="card" id="runtimeBanner" style="display:none; margin-bottom:14px">
+    <div class="card-hd"><h2>تنبيه تشغيل</h2><span class="small">تشخيص سريع</span></div>
+    <div class="card-bd">
+      <div class="alert err" id="runtimeMsg">—</div>
+      <div class="small">لو الرسالة فيها Permission Denied يبقى Rules محتاجة تعديل لقراءة user/requests.</div>
+    </div>
+  </div>
+
+
   <!-- DASHBOARD PAGE (Placeholder) -->
   <div class="card" id="page-dashboard" style="display:none">
     <div class="card-hd"><h2>لوحة المؤشرات</h2><span class="small">Placeholder — سيتم ربطها لاحقًا</span></div>
@@ -614,6 +623,18 @@ function setProfileBadges(){
   authState.textContent = currentUser ? "مسجل ✅" : "غير مسجل";
   roleBadge.textContent = userProfile ? ("الدور: " + (myRole()||"—")) : "—";
   locBadge.textContent  = userProfile ? ("الأماكن: " + (myLocations().length||0)) : "—";
+
+  // show banner if profile load error
+  const banner = document.getElementById('runtimeBanner');
+  const msg = document.getElementById('runtimeMsg');
+  if(userProfile && userProfile.__error){
+    if(banner && msg){
+      banner.style.display='block';
+      msg.textContent = "تعذر قراءة صلاحيات المستخدم من Firestore (user/{uid}). السبب: " + userProfile.__error;
+    }
+  }else{
+    if(banner) banner.style.display='none';
+  }
 }
 
 function showPage(page){
@@ -1281,8 +1302,14 @@ document.getElementById('btnLogin').addEventListener('click', async ()=>{
 btnLogout.addEventListener('click', async ()=>{ await auth.signOut(); });
 
 async function loadUserProfile(u){
-  const snap = await db.collection("user").doc(u.uid).get();
-  return snap.exists ? (snap.data()||{}) : null;
+  try{
+    const snap = await db.collection("user").doc(u.uid).get();
+    return snap.exists ? (snap.data()||{}) : null;
+  }catch(e){
+    console.error("Failed to load user profile from Firestore:", e);
+    // fallback minimal profile so UI still works
+    return { role: "", locations: [], name: (u.displayName||u.email||"") , __error: (e.code||e.message||String(e)) };
+  }
 }
 
 auth.onAuthStateChanged(async (u)=>{
@@ -1326,9 +1353,9 @@ auth.onAuthStateChanged(async (u)=>{
   showInner('create');
   buildFormRows();
 
-  watchAdminState();
-  watchRequests();
-  watchActivity();
+  try{watchAdminState();}catch(e){console.error(e);}
+  try{watchRequests();}catch(e){console.error(e);}
+  try{watchActivity();}catch(e){console.error(e);}
 });
 </script>
 
