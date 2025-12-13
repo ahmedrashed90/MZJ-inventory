@@ -1045,7 +1045,10 @@ const ROLE_PAGES = {
   }
 
   function canActOnRow(kind, row, stage){
-    if(isSuperAdmin()) return true;
+    
+    // ✅ ADMIN BYPASS
+    if (isSuperAdmin && isSuperAdmin()) return true;
+if(isSuperAdmin()) return true;
 
     // Step4 (finished) يتحكم فيه مقدم الطلب (أو الإدارة) عبر canFinishRequest
     if(stage==="finished") return false;
@@ -2420,4 +2423,3 @@ function openReqModal(req){
 </script>
 </body>
 </html>
-
