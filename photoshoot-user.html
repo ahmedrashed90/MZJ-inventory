@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -463,6 +464,20 @@
       margin-left: 4px;
     }
 
+
+    /* ===== Progress Bars ===== */
+    .progress-wrap{margin-top:10px}
+    .progress-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+    .progress-label{font-size:11px;color:var(--brown);font-weight:800;white-space:nowrap}
+    .progress-pct{font-size:11px;color:var(--muted);white-space:nowrap}
+    .bar{width:100%;height:10px;border-radius:999px;background:#e5e7eb;overflow:hidden}
+    .bar-fill{height:100%;width:0%;background:var(--beige);border-radius:999px;transition:width .25s ease}
+    .phase-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+    .phase-card{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px}
+    .phase-title{font-size:11px;font-weight:800;color:var(--brown);margin:0 0 6px}
+    .phase-meta{display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:6px}
+    @media (max-width:720px){ .phase-grid{grid-template-columns:repeat(2,1fr);} }
+
   </style>
 </head>
 <body>
@@ -550,40 +565,10 @@
         </div>
       </div>
     </article>
-
-    <article class="card">
-      <div class="inner">
-        <div class="card-title">
-          <strong>حالات المسودة</strong>
-          <span>طلبات لم تُرسل بعد</span>
-        </div>
-        <div class="stat-main">
-          <span class="num" id="stat_draft">0</span>
-          <span class="label">طلب</span>
-        </div>
-        <div class="stat-sub">
-          استخدم هذا القسم لمراجعة المسودات وتحويلها لطلبات فعلية
-        </div>
-      </div>
-    </article>
-
-    <article class="card" style="grid-column:1/-1">
-      <div class="inner">
-        <div class="card-title">
-          <strong>دليل الحالات</strong>
-          <span>فهم سريع لمسار الطلب</span>
-        </div>
-        <div class="legend">
-          <span class="pill"><span class="pill-dot draft"></span> <span>مسودة: لم يتم إرسال الطلب رسميًا</span></span>
-          <span class="pill"><span class="pill-dot prog"></span> <span>تحت الإجراء / تم التجهيز / قيد المراجعة</span></span>
-          <span class="pill"><span class="pill-dot done"></span> <span>تم (تصوير مكتمل) / منفّذ (نقل مكتمل)</span></span>
-        </div>
-      </div>
-    </article>
-  </section>
+</section>
 
   <!-- بوابة الدخول -->
-  <section id="authGate" class="panel" style="display:none">
+  <section id="authGate" class="panel" style="display:block">
     <div class="head">
       <strong>تسجيل الدخول لإدارة الطلبات</strong>
       <div class="muted">مطلوب صلاحية للوصول لطلبات التصوير والنقل</div>
@@ -659,7 +644,6 @@
             </div>
 
             <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">
-              <button type="button" class="btn secondary" id="btnDraft"><i class="fa-regular fa-floppy-disk"></i> حفظ كمسودة</button>
               <button type="button" class="btn beige" id="btnSubmit"><i class="fa-solid fa-paper-plane"></i> إرسال الطلب</button>
               <button type="button" class="btn ghost" id="btnClear"><i class="fa-solid fa-rotate-right"></i> تفريغ</button>
             </div>
@@ -687,8 +671,7 @@
               <label>الحالة</label>
               <select id="f_status">
                 <option value="">كل الحالات</option>
-                <option>مسودة</option>
-                <option>تحت الإجراء</option>
+                                <option>تحت الإجراء</option>
                 <option>تم التجهيز</option>
                 <option>قيد المراجعة</option>
                 <option>تم</option>
@@ -746,6 +729,37 @@
       <div class="process-timeline-title">مسار تنفيذ الطلب</div>
       <div class="process-timeline-sub">من استلام الطلب حتى الانتهاء.</div>
       <div class="pt-track" id="reqTimelineTrack"></div>
+      <div class="progress-wrap" id="shootProgressWrap">
+        <div class="progress-row">
+          <div class="progress-label">نسبة إنجاز الطلب</div>
+          <div class="progress-pct" id="shootOverallPct">0%</div>
+        </div>
+        <div class="bar"><div class="bar-fill" id="shootOverallBar"></div></div>
+
+        <div class="phase-grid" style="margin-top:10px">
+          <div class="phase-card">
+            <div class="phase-title">تم استلام الطلب</div>
+            <div class="bar"><div class="bar-fill" id="shootPhase1Bar"></div></div>
+            <div class="phase-meta"><span id="shootPhase1Pct">0%</span><span id="shootPhase1Count">0/0</span></div>
+          </div>
+          <div class="phase-card">
+            <div class="phase-title">تم ارسال السيارة</div>
+            <div class="bar"><div class="bar-fill" id="shootPhase2Bar"></div></div>
+            <div class="phase-meta"><span id="shootPhase2Pct">0%</span><span id="shootPhase2Count">0/0</span></div>
+          </div>
+          <div class="phase-card">
+            <div class="phase-title">تم استلام السيارة</div>
+            <div class="bar"><div class="bar-fill" id="shootPhase3Bar"></div></div>
+            <div class="phase-meta"><span id="shootPhase3Pct">0%</span><span id="shootPhase3Count">0/0</span></div>
+          </div>
+          <div class="phase-card">
+            <div class="phase-title">تم الانتهاء</div>
+            <div class="bar"><div class="bar-fill" id="shootPhase4Bar"></div></div>
+            <div class="phase-meta"><span id="shootPhase4Pct">0%</span><span id="shootPhase4Count">0/0</span></div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <div class="modal-body">
@@ -788,7 +802,7 @@
       <button id="btnShootStep1" class="btn secondary btn-mini"><span class="step-num">1</span> <i class="fa-regular fa-clipboard-check"></i> تم استلام الطلب</button>
       <button id="btnShootStep2" class="btn secondary btn-mini"><span class="step-num">2</span> <i class="fa-solid fa-truck"></i> تم ارسال السيارة</button>
       <button id="btnShootStep3" class="btn secondary btn-mini"><span class="step-num">3</span> <i class="fa-solid fa-car-side"></i> تم استلام السيارة</button>
-      <button id="btnShootStep4" class="btn primary btn-mini"><span class="step-num">4</span> <i class="fa-solid fa-flag-checkered"></i> تم الانتهاء</button>
+      <button id="btnShootStep4" class="btn secondary btn-mini"><span class="step-num">4</span> <i class="fa-solid fa-flag-checkered"></i> تم الانتهاء</button>
     </div>
   </div>
 </div>
@@ -808,6 +822,37 @@
       <div class="process-timeline-title">مسار تنفيذ الطلب</div>
       <div class="process-timeline-sub">من استلام الطلب حتى إتمام حركة النقل.</div>
       <div class="pt-track" id="moveTimelineTrack"></div>
+      <div class="progress-wrap" id="moveProgressWrap">
+        <div class="progress-row">
+          <div class="progress-label">نسبة إنجاز طلب النقل</div>
+          <div class="progress-pct" id="moveOverallPct">0%</div>
+        </div>
+        <div class="bar"><div class="bar-fill" id="moveOverallBar"></div></div>
+
+        <div class="phase-grid" style="margin-top:10px">
+          <div class="phase-card">
+            <div class="phase-title">تم استلام الطلب</div>
+            <div class="bar"><div class="bar-fill" id="movePhase1Bar"></div></div>
+            <div class="phase-meta"><span id="movePhase1Pct">0%</span><span id="movePhase1Count">0/0</span></div>
+          </div>
+          <div class="phase-card">
+            <div class="phase-title">تم ارسال السيارة</div>
+            <div class="bar"><div class="bar-fill" id="movePhase2Bar"></div></div>
+            <div class="phase-meta"><span id="movePhase2Pct">0%</span><span id="movePhase2Count">0/0</span></div>
+          </div>
+          <div class="phase-card">
+            <div class="phase-title">تم استلام السيارة</div>
+            <div class="bar"><div class="bar-fill" id="movePhase3Bar"></div></div>
+            <div class="phase-meta"><span id="movePhase3Pct">0%</span><span id="movePhase3Count">0/0</span></div>
+          </div>
+          <div class="phase-card">
+            <div class="phase-title">تم الانتهاء</div>
+            <div class="bar"><div class="bar-fill" id="movePhase4Bar"></div></div>
+            <div class="phase-meta"><span id="movePhase4Pct">0%</span><span id="movePhase4Count">0/0</span></div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <div class="modal-body">
@@ -843,7 +888,7 @@
       <button id="btnMoveStep1" class="btn secondary btn-mini"><span class="step-num">1</span> <i class="fa-regular fa-clipboard-check"></i> تم استلام الطلب</button>
       <button id="btnMoveStep2" class="btn secondary btn-mini"><span class="step-num">2</span> <i class="fa-solid fa-truck"></i> تم ارسال السيارة</button>
       <button id="btnMoveStep3" class="btn secondary btn-mini"><span class="step-num">3</span> <i class="fa-solid fa-car-side"></i> تم استلام السيارة</button>
-      <button id="btnMoveStep4" class="btn primary btn-mini"><span class="step-num">4</span> <i class="fa-solid fa-flag-checkered"></i> تم الانتهاء</button>
+      <button id="btnMoveStep4" class="btn secondary btn-mini"><span class="step-num">4</span> <i class="fa-solid fa-flag-checkered"></i> تم الانتهاء</button>
     </div>
   </div>
 </div>
@@ -959,10 +1004,126 @@
     dot.className="dot"+(mode==="ok"?" ok":mode==="err"?" err":"");
     txtEl.textContent = txt;
   }
+
+  // ---- Fallback (خصوصاً لو الصفحة اتفتحت file://) ----
+  let __authResolved = false;
+  window.addEventListener("load", () => {
+    setTimeout(() => {
+      const gate = document.getElementById("authGate");
+      const appEl = document.getElementById("app");
+      const dotEl = document.getElementById("connDot");
+      const txtEl = document.getElementById("connText");
+
+      // لو الـ JS اتعطل أو auth ما ردّش، خلّي بوابة الدخول ظاهرة
+      if (gate && appEl) {
+        const gateHidden = getComputedStyle(gate).display === "none";
+        const appHidden  = getComputedStyle(appEl).display === "none";
+        if (gateHidden && appHidden) {
+          gate.style.display = "block";
+          appEl.style.display = "none";
+        }
+      }
+
+      // لو الصفحة file:// غالباً Firebase modules بتتمنع في بعض المتصفحات
+      if (location.protocol === "file:") {
+        if (dotEl) dotEl.className = "dot err";
+        if (txtEl) txtEl.textContent = "افتح الصفحة عبر https أو localhost";
+        console.warn("Open via http(s) (e.g., localhost) instead of file://");
+      }
+    }, 1500);
+  });
+
   function normalizeVin(v){
     if(!v) return "";
     const ar={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
     return v.toString().replace(/[٠-٩]/g,d=>ar[d]).toUpperCase().replace(/[\s\-\._]/g,"").trim();
+  }
+
+  // ===== Per-VIN progress model (rowStates) =====
+  // rowStates: same length as rows
+  // each item: { received:null, sent:null, carReceived:null, finished:null }
+  function ensureRowStates(req){
+    const rows = Array.isArray(req.rows)?req.rows:[];
+    if(!Array.isArray(req.rowStates) || req.rowStates.length !== rows.length){
+      req.rowStates = rows.map(()=>({received:null,sent:null,carReceived:null,finished:null}));
+    }else{
+      req.rowStates = req.rowStates.map(s=>({
+        received: s?.received || null,
+        sent: s?.sent || null,
+        carReceived: s?.carReceived || null,
+        finished: s?.finished || null
+      }));
+    }
+    return req.rowStates;
+  }
+
+  function countDone(req, key){
+    ensureRowStates(req);
+    const rows = req.rowStates || [];
+    const done = rows.filter(r=>!!r[key]).length;
+    return {done, total: rows.length};
+  }
+
+  function pct(done,total){
+    if(!total) return 0;
+    return Math.round((done/total)*100);
+  }
+
+  function calcOverall(req){
+    ensureRowStates(req);
+    const rows = req.rowStates || [];
+    const totalSteps = rows.length * 4;
+    const doneSteps =
+      rows.reduce((acc,r)=> acc + (r.received?1:0) + (r.sent?1:0) + (r.carReceived?1:0) + (r.finished?1:0), 0);
+    const percent = totalSteps ? Math.round((doneSteps/totalSteps)*100) : 0;
+    return {doneSteps,totalSteps,percent};
+  }
+
+  function updateProgressUI(req, prefix){
+    const overall = calcOverall(req);
+    const s1 = countDone(req,"received");
+    const s2 = countDone(req,"sent");
+    const s3 = countDone(req,"carReceived");
+    const s4 = countDone(req,"finished");
+
+    const set = (id,val)=>{ const el=document.getElementById(prefix+id); if(el) el.textContent=val; };
+    const setw = (id,val)=>{ const el=document.getElementById(prefix+id); if(el) el.style.width=val+"%"; };
+
+    set("OverallPct", overall.percent+"%");
+    setw("OverallBar", overall.percent);
+
+    const p1=pct(s1.done,s1.total), p2=pct(s2.done,s2.total), p3=pct(s3.done,s3.total), p4=pct(s4.done,s4.total);
+    set("Phase1Pct", p1+"%"); setw("Phase1Bar", p1); set("Phase1Count", `${s1.done}/${s1.total}`);
+    set("Phase2Pct", p2+"%"); setw("Phase2Bar", p2); set("Phase2Count", `${s2.done}/${s2.total}`);
+    set("Phase3Pct", p3+"%"); setw("Phase3Bar", p3); set("Phase3Count", `${s3.done}/${s3.total}`);
+    set("Phase4Pct", p4+"%"); setw("Phase4Bar", p4); set("Phase4Count", `${s4.done}/${s4.total}`);
+
+    return {overall,p1,p2,p3,p4};
+  }
+
+  function responsiblePlaceForRow(kind, row, step){
+    // step: "received" / "sent" / "carReceived" / "finished"
+    if(kind === "move"){
+      if(step === "received" || step === "sent") return row.fromLocation || "";
+      if(step === "carReceived") return row.toLocation || "";
+      return "";
+    }
+    // shoot
+    if(step === "received") return row.location || "";
+    if(step === "sent") return row.location || "";
+    if(step === "carReceived") return row.shootPlace || row.place || "";
+    return "";
+  }
+
+  function canActOnRow(kind, row, step){
+    if(isSuperAdmin()) return true;
+    // Step 2 (sent) admin-only
+    if(step === "sent") return false;
+    // Step 4: creator-only (plus admin)
+    if(step === "finished") return false;
+
+    const place = responsiblePlaceForRow(kind,row,step);
+    return userMatchesPlace(place);
   }
 
   let shootRequests = [];
@@ -1010,7 +1171,8 @@
 
   function metrics(){
     const allCount = shootRequests.length + moveRequests.length;
-    const progStatuses = new Set(["تحت الإجراء","تم التجهيز","قيد المراجعة"]);
+
+    const progStatuses = new Set(["تحت الإجراء","تم التجهيز","قيد المراجعة","تحت المتابعة"]);
     const doneStatuses = new Set(["تم","منفّذ"]);
 
     const progCount =
@@ -1021,14 +1183,12 @@
       shootRequests.filter(x=> doneStatuses.has(x.status||"")).length +
       moveRequests .filter(x=> doneStatuses.has(x.status||"")).length;
 
-    const draftCount =
-      shootRequests.filter(x=> (x.status||"")==="مسودة").length +
-      moveRequests .filter(x=> (x.status||"")==="مسودة").length;
-
-    $("#stat_all").textContent   = allCount;
-    $("#stat_prog").textContent  = progCount;
-    $("#stat_done").textContent  = doneCount;
-    $("#stat_draft").textContent = draftCount;
+    const elAll  = document.getElementById("stat_all");
+    const elProg = document.getElementById("stat_prog");
+    const elDone = document.getElementById("stat_done");
+    if(elAll)  elAll.textContent  = allCount;
+    if(elProg) elProg.textContent = progCount;
+    if(elDone) elDone.textContent = doneCount;
   }
 
   function requestedPlaceOf(req){
@@ -1136,18 +1296,17 @@
       }
 
       let approvalsText = "";
-      if(isMove){
-        const admin = r.admin || {};
-        let lines = [];
-        lines.push(admin.received ? "تم استلام الطلب في: "+admin.received : "لم يتم استلام الطلب بعد");
-        lines.push(admin.sent ? "تم ارسال السيارة في: "+admin.sent : "لم يتم ارسال السيارة بعد");
-        lines.push(admin.carReceived ? "تم استلام السيارة في: "+admin.carReceived : "لم يتم استلام السيارة بعد");
-        if(r.executedAt){
-          lines.push("تم الانتهاء في: "+r.executedAt);
-        }else{
-          lines.push("لم يتم الانتهاء بعد");
-        }
-        approvalsText = lines.join("\n");
+      ensureRowStates(r);
+      const c1 = countDone(r,"received"), c2 = countDone(r,"sent"), c3 = countDone(r,"carReceived"), c4 = countDone(r,"finished");
+      const p1 = pct(c1.done,c1.total), p2 = pct(c2.done,c2.total), p3 = pct(c3.done,c3.total), p4 = pct(c4.done,c4.total);
+      approvalsText =
+        `استلام الطلب: ${p1}% (${c1.done}/${c1.total})
+`+
+        `ارسال السيارة: ${p2}% (${c2.done}/${c2.total})
+`+
+        `استلام السيارة: ${p3}% (${c3.done}/${c3.total})
+`+
+        `الانتهاء: ${p4}% (${c4.done}/${c4.total})`;
       }else{
         const admin = r.admin || {};
         const recv  = admin.received;
@@ -1315,7 +1474,7 @@
     return {shootRows,moveRows};
   }
 
-  async function saveNewRequest(asDraft){
+  async function saveNewRequest(){
     const rb = document.getElementById("reqBy");
     const user = auth.currentUser;
     const createdBy =
@@ -1336,7 +1495,7 @@
       const nextId = shootRequests.length
         ? Math.max(...shootRequests.map(r=> Number(r.id)||0))+1
         : 1;
-      const status = asDraft ? "مسودة" : "تحت الإجراء";
+      const status = "تحت الإجراء";
 
       const req = {
         id: nextId,
@@ -1345,13 +1504,14 @@
         createdByUid,
         createdByEmail,
         rows: shootRows,
+        rowStates: shootRows.map(()=>({received:null,sent:null,carReceived:null,finished:null})),
         status,
         admin:{ received:null, prepared:null, carReceived:null, finished:null }
       };
       shootRequests.push(req);
 
       await logActivity(
-        asDraft ? "إنشاء طلب تصوير (مسودة)" : "إرسال طلب تصوير",
+        "إرسال طلب تصوير",
         "عدد الهياكل: "+shootRows.length+" | الطلب #"+nextId,
         {requestId:nextId, entityType:"photoshoot_request"}
       );
@@ -1361,7 +1521,7 @@
       const nextMoveId = moveRequests.length
         ? Math.max(...moveRequests.map(r=> Number(r.id)||0))+1
         : 1;
-      const status = asDraft ? "مسودة" : "قيد المراجعة";
+      const status = "قيد المراجعة";
 
       const mr = {
         id: nextMoveId,
@@ -1371,6 +1531,7 @@
         createdByUid,
         createdByEmail,
         rows: moveRows,
+        rowStates: moveRows.map(()=>({received:null,sent:null,carReceived:null,finished:null})),
         status,
         executedAt: null,
         admin:{ received:null, sent:null, carReceived:null, finished:null }
@@ -1378,7 +1539,7 @@
       moveRequests.push(mr);
 
       await logActivity(
-        asDraft ? "إنشاء مسودة طلب نقل سيارات" : "إرسال طلب نقل سيارات",
+        "إرسال طلب نقل سيارات",
         "عدد السيارات في الطلب: "+moveRows.length+" | الطلب #"+nextMoveId,
         {requestId:nextMoveId, entityType:"move_request"}
       );
@@ -1388,14 +1549,9 @@
     metrics();
     render();
     buildFormRows();
-    showToast(asDraft ? "تم حفظ المسودة" : "تم إرسال الطلب");
+    showToast("تم إرسال الطلب");
   }
-
-  const btnDraft  = document.getElementById("btnDraft");
-  const btnSubmit = document.getElementById("btnSubmit");
-  const btnClear  = document.getElementById("btnClear");
-  if(btnDraft)  btnDraft .addEventListener("click", ()=> saveNewRequest(true));
-  if(btnSubmit) btnSubmit.addEventListener("click", ()=> saveNewRequest(false));
+  if(btnSubmit) btnSubmit.addEventListener("click", ()=> saveNewRequest());
   if(btnClear)  btnClear .addEventListener("click", ()=> buildFormRows());
 
   /* ==== inner tabs ==== */
@@ -1482,202 +1638,277 @@
     track.innerHTML = html;
   }
 
+  
   function renderShootTimeline(req){
-    const admin = req.admin || {};
-    const status = req.status || "";
+    ensureRowStates(req);
+    const st = updateProgressUI(req,"shoot");
     const steps = [
-      {
-        label:"تم استلام الطلب",
-        desc: admin.received || "لم يتم الاستلام بعد",
-        done: !!admin.received
-      },
-      {
-        label:"تم ارسال السيارة",
-        desc: admin.prepared || "لم يتم الارسال بعد",
-        done: !!admin.prepared
-      },
-      {
-        label:"تم استلام السيارة",
-        desc: admin.carReceived || "لم يتم الاستلام بعد",
-        done: !!admin.carReceived
-      },
-      {
-        label:"تم الانتهاء",
-        desc: status==="تم" ? (admin.finished || "تم إنهاء الطلب") : "لم يتم الانتهاء بعد",
-        done: status==="تم"
-      }
+      { label:"تم استلام الطلب",  desc: st.p1+"% مكتمل", done: st.p1===100 },
+      { label:"تم ارسال السيارة", desc: st.p2+"% مكتمل", done: st.p2===100 },
+      { label:"تم استلام السيارة",desc: st.p3+"% مكتمل", done: st.p3===100 },
+      { label:"تم الانتهاء",      desc: st.p4+"% مكتمل", done: st.p4===100 }
     ];
     renderTimelineSteps(steps,"reqTimelineTrack");
   }
 
+
+  
   function renderMoveTimeline(moveReq){
-    const admin = moveReq.admin || {};
-    const executed = moveReq.executedAt || "";
-    const status   = moveReq.status || "";
+    ensureRowStates(moveReq);
+    const st = updateProgressUI(moveReq,"move");
     const steps = [
-      {
-        label:"تم استلام الطلب",
-        desc: admin.received || "لم يتم الاستلام بعد",
-        done: !!admin.received
-      },
-      {
-        label:"تم ارسال السيارة",
-        desc: admin.sent || "لم يتم الارسال بعد",
-        done: !!admin.sent
-      },
-      {
-        label:"تم استلام السيارة",
-        desc: admin.carReceived || "لم يتم الاستلام بعد",
-        done: !!admin.carReceived
-      },
-      {
-        label:"تم الانتهاء",
-        desc: executed || (status==="منفّذ" ? (admin.finished || "تم تنفيذ الطلب") : "لم يتم الانتهاء بعد"),
-        done: status==="منفّذ"
-      }
+      { label:"تم استلام الطلب",  desc: st.p1+"% مكتمل", done: st.p1===100 },
+      { label:"تم ارسال السيارة", desc: st.p2+"% مكتمل", done: st.p2===100 },
+      { label:"تم استلام السيارة",desc: st.p3+"% مكتمل", done: st.p3===100 },
+      { label:"تم الانتهاء",      desc: st.p4+"% مكتمل", done: st.p4===100 }
     ];
     renderTimelineSteps(steps,"moveTimelineTrack");
   }
+
 
   /* ==== تصوير: إجراءات ==== */
   function updateShootRequestLocal(updated){
     shootRequests = shootRequests.map(r=> r.id===updated.id ? updated : r);
   }
 
+  
   async function markShootStep1(req){
     const base = (shootRequests || []).find(r => r.id === req.id) || req;
-    const admin = { ...(base.admin || {}) };
-    if (!admin.received) admin.received = now();
-    const clone = { ...base, admin };
-    if (clone.status === "مسودة") clone.status = "تحت الإجراء";
-    updateShootRequestLocal(clone);
+    ensureRowStates(base);
+    const rows = Array.isArray(base.rows)?base.rows:[];
+    const ts = now();
+    let changed = 0;
+
+    rows.forEach((row,idx)=>{
+      if(!canActOnRow("shoot", row, "received")) return;
+      if(!base.rowStates[idx].received){
+        base.rowStates[idx].received = ts;
+        changed++;
+      }
+    });
+
+    if(!changed){ showToast("لا توجد سيارات تابعة لمكانك في هذه الخطوة"); return; }
+
+    // status derived
+    base.status = calcOverall(base).percent === 100 ? "تم" : "تحت الإجراء";
+
+    updateShootRequestLocal(base);
     await persistAll();
-    metrics(); render(); renderShootTimeline(clone);
-    showToast("تم استلام الطلب");
+    metrics(); render(); renderShootTimeline(base);
+    showToast("تم استلام الطلب (للسيارات التابعة لمكانك)");
   }
 
 
+
+  
   async function markShootStep2(req){
-    // خطوة إرسال السيارة للتصوير — نجعلها تراكمية
-    const base = (shootRequests || []).find(r => r.id === req.id) || req;
-    const admin = { ...(base.admin || {}) };
-    const ts = now();
-    if (!admin.received) admin.received = ts;
-    if (!admin.prepared) admin.prepared = ts;
-    const clone = { ...base, admin };
-    if (clone.status === "مسودة") clone.status = "تحت الإجراء";
-    moveCarsToShootPlace(clone.rows || []);
-    updateShootRequestLocal(clone);
-    await persistAll();
-    metrics(); render(); renderShootTimeline(clone);
-    showToast("تم ارسال السيارة للتصوير وتحديث أماكن السيارات");
-  }
-
-
-  async function markShootStep3(req){
-    // تأكيد استلام السيارة في موقع التصوير — نجعلها تراكمية
-    const base = (shootRequests || []).find(r => r.id === req.id) || req;
-    const admin = { ...(base.admin || {}) };
-    const ts = now();
-    if (!admin.received) admin.received = ts;
-    if (!admin.prepared) admin.prepared = ts;
-    if (!admin.carReceived) admin.carReceived = ts;
-    const clone = { ...base, admin };
-    updateShootRequestLocal(clone);
-    await persistAll();
-    metrics(); render(); renderShootTimeline(clone);
-    showToast("تم تأكيد استلام السيارة بموقع التصوير");
-  }
-
-
-  async function markShootStep4(req){
-    // إنهاء طلب التصوير — نجعل كل الخطوات مكتملة
-    const base = (shootRequests || []).find(r => r.id === req.id) || req;
-    const admin = { ...(base.admin || {}) };
-    const ts = now();
-    if (!admin.received) admin.received = ts;
-    if (!admin.prepared) admin.prepared = ts;
-    if (!admin.carReceived) admin.carReceived = ts;
-    if (!admin.finished) admin.finished = ts;
-    const clone = { ...base, admin };
-    clone.status = "تم";
-    updateShootRequestLocal(clone);
-    await persistAll();
-    metrics(); render(); renderShootTimeline(clone);
-    showToast("تم الانتهاء من طلب التصوير");
-  }
-
-
-  async function markMoveStep1(req){
-    // استلام طلب النقل — نأخذ أحدث نسخة من الطلب ونجعل الخطوة الأولى مكتملة
-    const base = (moveRequests || []).find(r => r.id === req.id) || req;
-    const admin = { ...(base.admin || {}) };
-    if (!admin.received) admin.received = now();
-    const clone = { ...base, admin };
-    if (clone.status === "مسودة") clone.status = "قيد المراجعة";
-    updateMoveRequestLocal(clone);
-    await persistAll();
-    metrics(); render(); renderMoveTimeline(clone);
-    showToast("تم استلام الطلب");
-  }
-
-
-  async function markMoveStep2(req){
-    // إرسال السيارة — تراكمياً: نتأكد أن استلام الطلب مسجل أيضاً
-    const base = (moveRequests || []).find(r => r.id === req.id) || req;
-    const admin = { ...(base.admin || {}) };
-    const ts = now();
-    if (!admin.received) admin.received = ts;
-    if (!admin.sent) admin.sent = ts;
-    const clone = { ...base, admin };
-    if (clone.status === "مسودة" || clone.status === "قيد المراجعة") clone.status = "تحت الإجراء";
-    updateMoveRequestLocal(clone);
-    await persistAll();
-    metrics(); render(); renderMoveTimeline(clone);
-    showToast("تم ارسال السيارة");
-  }
-
-
-  async function markMoveStep3(req){
-    // استلام السيارة في الموقع الجديد — تراكمياً نضمن كل ما قبلها
-    const base = (moveRequests || []).find(r => r.id === req.id) || req;
-    const admin = { ...(base.admin || {}) };
-    const ts = now();
-    if (!admin.received) admin.received = ts;
-    if (!admin.sent) admin.sent = ts;
-    if (!admin.carReceived) admin.carReceived = ts;
-    const clone = { ...base, admin };
-    updateMoveRequestLocal(clone);
-    await persistAll();
-    metrics(); render(); renderMoveTimeline(clone);
-    showToast("تم استلام السيارة في الموقع الجديد");
-  }
-
-
-  async function markMoveStep4(req){
-    // إنهاء طلب النقل — لو منتهي قبل كده نمنع التكرار، وإلا نكمل كل الخطوات
-    const latest = (moveRequests || []).find(r => r.id === req.id) || req;
-    if (latest.executedAt) {
-      showToast("تم الانتهاء من الطلب مسبقًا");
+    // إرسال السيارة: Admin فقط
+    if(!isSuperAdmin()){
+      showToast("غير مسموح: خطوة الإرسال للإدارة فقط");
       return;
     }
-    const admin = { ...(latest.admin || {}) };
+    const base = (shootRequests || []).find(r => r.id === req.id) || req;
+    ensureRowStates(base);
     const ts = now();
-    if (!admin.received) admin.received = ts;
-    if (!admin.sent) admin.sent = ts;
-    if (!admin.carReceived) admin.carReceived = ts;
-    if (!admin.finished) admin.finished = ts;
+    let changed = 0;
 
-    const clone = { ...latest, admin };
-    clone.status     = "منفّذ";
-    clone.executedAt = ts;
+    (base.rowStates||[]).forEach((s)=>{
+      if(!s.sent){ s.sent = ts; changed++; }
+      if(!s.received) s.received = ts;
+    });
 
-    applyMoveToStock(clone.rows || []);
-    updateMoveRequestLocal(clone);
+    moveCarsToShootPlace(base.rows || []);
+    base.status = calcOverall(base).percent === 100 ? "تم" : "تحت الإجراء";
+
+    updateShootRequestLocal(base);
     await persistAll();
-    metrics(); render(); renderMoveTimeline(clone);
-    showToast("تم تنفيذ حركة النقل وتحديث المخزون");
+    metrics(); render(); renderShootTimeline(base);
+    showToast("تم تسجيل إرسال السيارات للتصوير");
   }
+
+
+
+  
+  async function markShootStep3(req){
+    const base = (shootRequests || []).find(r => r.id === req.id) || req;
+    ensureRowStates(base);
+    const rows = Array.isArray(base.rows)?base.rows:[];
+    const ts = now();
+    let changed = 0;
+
+    rows.forEach((row,idx)=>{
+      if(!canActOnRow("shoot", row, "carReceived")) return;
+      const st = base.rowStates[idx];
+      if(!st.received) st.received = ts;
+      if(!st.sent && isSuperAdmin()) st.sent = ts; // لو الإدارة ونسيت خطوة الإرسال
+      if(!st.carReceived){
+        st.carReceived = ts;
+        changed++;
+      }
+    });
+
+    if(!changed){ showToast("لا توجد سيارات تابعة لمكانك في هذه الخطوة"); return; }
+
+    base.status = calcOverall(base).percent === 100 ? "تم" : "تحت الإجراء";
+    updateShootRequestLocal(base);
+    await persistAll();
+    metrics(); render(); renderShootTimeline(base);
+    showToast("تم استلام السيارة (للسيارات التابعة لمكانك)");
+  }
+
+
+
+  
+  async function markShootStep4(req){
+    const base = (shootRequests || []).find(r => r.id === req.id) || req;
+    ensureRowStates(base);
+
+    // يظهر لمقدم الطلب أو الإدارة فقط
+    if(!(isSuperAdmin() || isRequestOwner(base))){
+      showToast("زر الإنهاء لمقدم الطلب فقط");
+      return;
+    }
+
+    // لازم كل السيارات تكون مستلمة (مرحلة 3) قبل الإنهاء
+    const st3 = countDone(base,"carReceived");
+    if(st3.done !== st3.total){
+      showToast("لا يمكن الإنهاء قبل استلام كل السيارات");
+      return;
+    }
+
+    const ts = now();
+    (base.rowStates||[]).forEach(s=>{
+      if(!s.received) s.received = ts;
+      if(!s.sent) s.sent = ts;
+      if(!s.carReceived) s.carReceived = ts;
+      if(!s.finished) s.finished = ts;
+    });
+
+    base.status = "تم";
+    updateShootRequestLocal(base);
+    await persistAll();
+    metrics(); render(); renderShootTimeline(base);
+    showToast("تم الانتهاء من الطلب");
+  }
+
+
+
+  
+  async function markMoveStep1(req){
+    const base = (moveRequests || []).find(r => r.id === req.id) || req;
+    ensureRowStates(base);
+    const rows = Array.isArray(base.rows)?base.rows:[];
+    const ts = now();
+    let changed = 0;
+
+    rows.forEach((row,idx)=>{
+      if(!canActOnRow("move", row, "received")) return;
+      if(!base.rowStates[idx].received){
+        base.rowStates[idx].received = ts;
+        changed++;
+      }
+    });
+
+    if(!changed){ showToast("لا توجد سيارات تابعة لمكانك في هذه الخطوة"); return; }
+
+    base.status = calcOverall(base).percent === 100 ? "منفّذ" : "تحت الإجراء";
+
+    updateMoveRequestLocal(base);
+    await persistAll();
+    metrics(); render(); renderMoveTimeline(base);
+    showToast("تم استلام طلب النقل (للسيارات التابعة لمكانك)");
+  }
+
+
+
+  
+  async function markMoveStep2(req){
+    if(!isSuperAdmin()){
+      showToast("غير مسموح: خطوة الإرسال للإدارة فقط");
+      return;
+    }
+    const base = (moveRequests || []).find(r => r.id === req.id) || req;
+    ensureRowStates(base);
+    const ts = now();
+
+    (base.rowStates||[]).forEach(s=>{
+      if(!s.received) s.received = ts;
+      if(!s.sent) s.sent = ts;
+    });
+
+    base.status = calcOverall(base).percent === 100 ? "منفّذ" : "تحت الإجراء";
+    updateMoveRequestLocal(base);
+    await persistAll();
+    metrics(); render(); renderMoveTimeline(base);
+    showToast("تم تسجيل إرسال السيارات");
+  }
+
+
+
+  
+  async function markMoveStep3(req){
+    const base = (moveRequests || []).find(r => r.id === req.id) || req;
+    ensureRowStates(base);
+    const rows = Array.isArray(base.rows)?base.rows:[];
+    const ts = now();
+    let changed = 0;
+
+    rows.forEach((row,idx)=>{
+      if(!canActOnRow("move", row, "carReceived")) return;
+      const st = base.rowStates[idx];
+      if(!st.received) st.received = ts;
+      if(!st.sent && isSuperAdmin()) st.sent = ts;
+      if(!st.carReceived){
+        st.carReceived = ts;
+        changed++;
+      }
+    });
+
+    if(!changed){ showToast("لا توجد سيارات تابعة لمكانك في هذه الخطوة"); return; }
+
+    base.status = calcOverall(base).percent === 100 ? "منفّذ" : "تحت الإجراء";
+    updateMoveRequestLocal(base);
+    await persistAll();
+    metrics(); render(); renderMoveTimeline(base);
+    showToast("تم استلام السيارة في موقعها الجديد (للسيارات التابعة لمكانك)");
+  }
+
+
+
+  
+  async function markMoveStep4(req){
+    const base = (moveRequests || []).find(r => r.id === req.id) || req;
+    ensureRowStates(base);
+
+    if(!(isSuperAdmin() || isRequestOwner(base))){
+      showToast("زر الإنهاء لمقدم الطلب فقط");
+      return;
+    }
+
+    const st3 = countDone(base,"carReceived");
+    if(st3.done !== st3.total){
+      showToast("لا يمكن الإنهاء قبل استلام كل السيارات");
+      return;
+    }
+
+    const ts = now();
+    (base.rowStates||[]).forEach(s=>{
+      if(!s.received) s.received = ts;
+      if(!s.sent) s.sent = ts;
+      if(!s.carReceived) s.carReceived = ts;
+      if(!s.finished) s.finished = ts;
+    });
+
+    base.status     = "منفّذ";
+    base.executedAt = ts;
+
+    applyMoveToStock(base.rows || []);
+    updateMoveRequestLocal(base);
+    await persistAll();
+    metrics(); render(); renderMoveTimeline(base);
+    showToast("تم الانتهاء من طلب النقل وتحديث المخزون");
+  }
+
 
   
   
@@ -1768,7 +1999,28 @@
       notesEl.value = req.adminNotes || "";
     }
 
-    renderShootTimeline(req);
+    
+    // صلاحيات الأزرار داخل المودال (تصوير)
+    const b1 = document.getElementById("btnShootStep1");
+    const b2 = document.getElementById("btnShootStep2");
+    const b3 = document.getElementById("btnShootStep3");
+    const b4 = document.getElementById("btnShootStep4");
+
+    ensureRowStates(req);
+    const rows = Array.isArray(req.rows)?req.rows:[];
+    const can1 = rows.some((row)=> canActOnRow("shoot",row,"received"));
+    const can3 = rows.some((row)=> canActOnRow("shoot",row,"carReceived"));
+    if(b1) b1.disabled = !can1;
+    if(b3) b3.disabled = !can3;
+    if(b2) b2.disabled = !isSuperAdmin();
+
+    const isFinisher = isSuperAdmin() || isRequestOwner(req);
+    if(b4){
+      b4.style.display = isFinisher ? "inline-flex" : "none";
+      const st3 = countDone(req,"carReceived");
+      b4.disabled = !(st3.total>0 && st3.done===st3.total);
+    }
+renderShootTimeline(req);
     backdrop.classList.add("show");
   }
 
@@ -1817,7 +2069,28 @@
       statusBox.textContent = lines.join(" | ");
     }
 
-    renderMoveTimeline(req);
+    
+    // صلاحيات الأزرار داخل المودال (نقل)
+    const b1 = document.getElementById("btnMoveStep1");
+    const b2 = document.getElementById("btnMoveStep2");
+    const b3 = document.getElementById("btnMoveStep3");
+    const b4 = document.getElementById("btnMoveStep4");
+
+    ensureRowStates(req);
+    const rows = Array.isArray(req.rows)?req.rows:[];
+    const can1 = rows.some((row)=> canActOnRow("move",row,"received"));
+    const can3 = rows.some((row)=> canActOnRow("move",row,"carReceived"));
+    if(b1) b1.disabled = !can1;
+    if(b3) b3.disabled = !can3;
+    if(b2) b2.disabled = !isSuperAdmin();
+
+    const isFinisher = isSuperAdmin() || isRequestOwner(req);
+    if(b4){
+      b4.style.display = isFinisher ? "inline-flex" : "none";
+      const st3 = countDone(req,"carReceived");
+      b4.disabled = !(st3.total>0 && st3.done===st3.total);
+    }
+renderMoveTimeline(req);
     backdrop.classList.add("show");
   }
 
@@ -1916,7 +2189,7 @@
     document.getElementById("app").style.display      = "block";
   }
 
-  onAuthStateChanged(auth, async (user)=>{
+  onAuthStateChanged(auth, async (user)=>{ __authResolved = true;
     if(!user){
       $("#userLabel").textContent = "غير مسجل";
       $("#btnSignOut").style.display = "none";
