@@ -252,6 +252,7 @@ body{
     </div>
     <div class="card-bd">
       <div class="alert" id="loginMsg" style="display:none"></div>
+<div class="small" id="authHint" style="margin-top:10px;color:var(--muted)">لو مكتوب "غير مسجل" افتح الصفحة من نفس الدومين اللي بتسجّل دخول عليه في باقي الـ Workspace (نفس Origin).</div>
       <div class="small" style="margin-top:8px" id="loginNote">يفتح فقط من خلال https أو localhost (مش file://).</div>
     </div>
   </div>
@@ -470,6 +471,27 @@ try{ firebase.initializeApp(firebaseConfig); }catch(e){}
 
 const auth = firebase.auth();
 const db   = firebase.firestore();
+
+// ---- Diagnostics (prevents stuck "جارٍ الاتصال…") ----
+(function(){
+  try{
+    if(!firebase.apps || !firebase.apps.length){
+      console.error("Firebase app not initialized. Check firebaseConfig.");
+      const s = document.getElementById('authState');
+      if(s) s.textContent = "خطأ إعدادات Firebase";
+    }
+  }catch(e){
+    console.error("Firebase init check failed:", e);
+  }
+
+  // fallback timer: if auth state didn't resolve, show not signed in
+  setTimeout(()=>{
+    const s = document.getElementById('authState');
+    if(s && (s.textContent||"").includes("جار")){
+      s.textContent = "غير مسجل";
+    }
+  }, 1800);
+})();
 
 // refs
 const authState = document.getElementById('authState');
@@ -1264,6 +1286,7 @@ async function loadUserProfile(u){
 }
 
 auth.onAuthStateChanged(async (u)=>{
+  // resolved auth state
   currentUser = u || null;
 
   if(!u){
