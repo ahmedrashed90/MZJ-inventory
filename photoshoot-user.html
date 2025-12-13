@@ -251,11 +251,6 @@ body{
       </div>
     </div>
     <div class="card-bd">
-      <div class="row" id="loginInputsRow">
-        <input class="input" id="loginEmail" type="email" placeholder="البريد الإلكتروني" autocomplete="email">
-        <input class="input" id="loginPass" type="password" placeholder="كلمة المرور" autocomplete="current-password">
-        <button class="btn primary" id="btnLogin"><i class="fa-solid fa-right-to-bracket"></i>تسجيل الدخول</button>
-      </div>
       <div class="alert" id="loginMsg" style="display:none"></div>
       <div class="small" style="margin-top:8px" id="loginNote">يفتح فقط من خلال https أو localhost (مش file://).</div>
     </div>
@@ -463,11 +458,12 @@ body{
    CONFIG (إلزامي)
 ======================= */
 const firebaseConfig = {
-  // الصق config هنا (نفس مشروع mzj-agenda)
-  // apiKey: "...",
-  // authDomain: "...",
-  // projectId: "mzj-agenda",
-  // ...
+apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
+    authDomain: "mzj-agenda.firebaseapp.com",
+    projectId: "mzj-agenda",
+    storageBucket: "mzj-agenda.firebasestorage.app",
+    messagingSenderId: "834700407721",
+    appId: "1:834700407721:web:75c17665d4f032fd65cab8"
 };
 
 try{ firebase.initializeApp(firebaseConfig); }catch(e){}
