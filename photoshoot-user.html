@@ -213,13 +213,31 @@ body{
 <!-- TOP BAR -->
 <div class="dashboard-topbar">
   <div class="dashboard-tabs">
-    <div class="dashboard-tab active" data-page="orders">إدارة الطلبات</div>
+    <div class="dashboard-tab active" data-page="dashboard">الداش بورد</div>
+    <div class="dashboard-tab" data-page="orders">إدارة الطلبات</div>
+    <div class="dashboard-tab" data-page="transport">نقل السيارات</div>
     <div class="dashboard-tab" data-page="cars">كل السيارات</div>
     <div class="dashboard-tab" data-page="activity">سجل النشاط</div>
   </div>
 </div>
 
 <div class="container">
+
+  <!-- DASHBOARD PAGE (Placeholder) -->
+  <div class="card" id="page-dashboard" style="display:none">
+    <div class="card-hd"><h2>لوحة المؤشرات</h2><span class="small">Placeholder — سيتم ربطها لاحقًا</span></div>
+    <div class="card-bd">
+      <div class="alert">هنا هنضيف مؤشرات الطلبات / الأداء بعد ما نثبت صفحة إدارة الطلبات.</div>
+    </div>
+  </div>
+
+  <!-- TRANSPORT PAGE (Placeholder) -->
+  <div class="card" id="page-transport" style="display:none; margin-top:14px">
+    <div class="card-hd"><h2>نقل السيارات</h2><span class="small">Placeholder — سيتم ربطها لاحقًا</span></div>
+    <div class="card-bd">
+      <div class="alert">الصفحة دي هتبقى فلترة لطلبات النقل فقط + إجراءاتها.</div>
+    </div>
+  </div>
 
   <!-- LOGIN CARD -->
   <div class="card" id="loginCard">
@@ -233,13 +251,13 @@ body{
       </div>
     </div>
     <div class="card-bd">
-      <div class="row">
+      <div class="row" id="loginInputsRow">
         <input class="input" id="loginEmail" type="email" placeholder="البريد الإلكتروني" autocomplete="email">
         <input class="input" id="loginPass" type="password" placeholder="كلمة المرور" autocomplete="current-password">
         <button class="btn primary" id="btnLogin"><i class="fa-solid fa-right-to-bracket"></i>تسجيل الدخول</button>
       </div>
       <div class="alert" id="loginMsg" style="display:none"></div>
-      <div class="small" style="margin-top:8px">يفتح فقط من خلال https أو localhost (مش file://).</div>
+      <div class="small" style="margin-top:8px" id="loginNote">يفتح فقط من خلال https أو localhost (مش file://).</div>
     </div>
   </div>
 
@@ -445,12 +463,7 @@ body{
    CONFIG (إلزامي)
 ======================= */
 const firebaseConfig = {
-     apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
-    authDomain: "mzj-agenda.firebaseapp.com",
-    projectId: "mzj-agenda",
-    storageBucket: "mzj-agenda.firebasestorage.app",
-    messagingSenderId: "834700407721",
-    appId: "1:834700407721:web:75c17665d4f032fd65cab8" // الصق config هنا (نفس مشروع mzj-agenda)
+  // الصق config هنا (نفس مشروع mzj-agenda)
   // apiKey: "...",
   // authDomain: "...",
   // projectId: "mzj-agenda",
@@ -589,9 +602,13 @@ function showPage(page){
   // top tabs
   document.querySelectorAll('.dashboard-tab').forEach(t=>t.classList.remove('active'));
   document.querySelector('.dashboard-tab[data-page="'+page+'"]')?.classList.add('active');
-  pageOrders.style.display = (page==='orders') ? 'block' : 'none';
-  pageCars.style.display = (page==='cars') ? 'block' : 'none';
-  pageActivity.style.display = (page==='activity') ? 'block' : 'none';
+  const pageDashboard = document.getElementById('page-dashboard');
+  const pageTransport = document.getElementById('page-transport');
+  pageDashboard.style.display = (page==='dashboard') ? 'block' : 'none';
+  pageOrders.style.display    = (page==='orders') ? 'block' : 'none';
+  pageTransport.style.display = (page==='transport') ? 'block' : 'none';
+  pageCars.style.display      = (page==='cars') ? 'block' : 'none';
+  pageActivity.style.display  = (page==='activity') ? 'block' : 'none';
 }
 
 document.querySelectorAll('.dashboard-tab').forEach(tab=>{
@@ -1257,10 +1274,18 @@ auth.onAuthStateChanged(async (u)=>{
     userProfile=null;
     btnLogout.style.display='none';
     setProfileBadges();
+    const loginInputsRow = document.getElementById('loginInputsRow');
+    const loginNote = document.getElementById('loginNote');
+    if(loginInputsRow) loginInputsRow.style.display='flex';
+    if(loginNote) loginNote.style.display='block';
     pageOrders.style.display='none';
     pageCars.style.display='none';
     pageActivity.style.display='none';
-    showPage('orders');
+    const pageDashboard = document.getElementById('page-dashboard');
+    const pageTransport = document.getElementById('page-transport');
+    if(pageDashboard) pageDashboard.style.display='none';
+    if(pageTransport) pageTransport.style.display='none';
+    showPage('dashboard');
     if(unsubRequests){unsubRequests();unsubRequests=null;}
     if(unsubActivity){unsubActivity();unsubActivity=null;}
     if(unsubState){unsubState();unsubState=null;}
@@ -1271,8 +1296,12 @@ auth.onAuthStateChanged(async (u)=>{
   userProfile = await loadUserProfile(u);
   setProfileBadges();
 
-  // Show main pages
+  // Logged-in UI
   loginCard.style.display='block';
+  const loginInputsRow = document.getElementById('loginInputsRow');
+  const loginNote = document.getElementById('loginNote');
+  if(loginInputsRow) loginInputsRow.style.display='none';
+  if(loginNote) loginNote.style.display='none';
   pageOrders.style.display='block';
   showPage('orders');
   showInner('create');
@@ -1286,4 +1315,3 @@ auth.onAuthStateChanged(async (u)=>{
 
 </body>
 </html>
-
