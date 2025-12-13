@@ -6,6 +6,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -342,7 +343,28 @@ body{opacity:0}
         </table>
       </div>
 
-      <!-- مربع تفاصيل طلب التصوير -->
+      
+      <!-- جدول طلبات المبيعات (ERP + تتبع) -->
+      <div id="tableSalesWrap" class="table-wrap" style="display:none">
+        <table id="modalTableSales">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>رقم الطلب</th>
+              <th>اسم العميل</th>
+              <th>رقم الجوال</th>
+              <th>الفرع</th>
+              <th>رقم الهيكل VIN</th>
+              <th>تاريخ التسليم</th>
+              <th>آخر مرحلة</th>
+              <th>الحالة</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+<!-- مربع تفاصيل طلب التصوير -->
       <div id="shootDetailsBox" class="card" style="margin-top:10px;display:none">
         <h4 style="margin:0 0 8px;color:var(--brown)">
           تفاصيل الطلب رقم <span id="shootDetailsId"></span>
@@ -498,7 +520,12 @@ function liftNoFlash(){
   // حالة تسجيل الدخول في مشروع التتبع
   let trackingUser = null;
 
-  // سياق الموافقات (مباع تحت التسليم)
+  
+  // قائمة الطلبات (للمودال)
+  let salesOrders = [];
+  let filteredSalesOrders = [];
+  let currentSalesFilter = 'total';
+// سياق الموافقات (مباع تحت التسليم)
   let approvalContext = null;
 
   // طلبات نقل السيارات (إلى مباع تم التسليم + تحتاج موافقة مالية وإدارية)
@@ -535,8 +562,10 @@ function liftNoFlash(){
         const role = await fetchUserRole(user);
         currentUserRole = role || null;
 
-        if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
-          window.location.href = 'unauthorized.html';
+        // لو تعذّر جلب الدور أو لم يكن ضمن القائمة، لا نعمل Redirect (عشان الصفحة تفتح دائمًا)
+        // ونكتفي بعرض الصفحة للمستخدم المسجّل دخول.
+        // ملاحظة: التحكم النهائي بالصلاحيات يجب أن يكون عبر Firestore Rules.
+        if(!user){
           return;
         }
 
@@ -615,11 +644,6 @@ $('#btnLogin').addEventListener('click', async ()=>{
   /* ===== Data ===== */
   // تحميل ملخص طلبات المبيعات من مشروع التتبع (ERP + Tracking)
   async function fetchSalesSummary(){
-    // لو المستخدم غير مسجّل دخول في مشروع التتبع نعيد قيم صفرية
-    if(!trackingAuth.currentUser){
-      salesSummary = { total: 0, notStarted: 0, inProgress: 0, completed: 0 };
-      return;
-    }
     try{
       let total = 0, notStarted = 0, inProgress = 0, completed = 0;
 
@@ -628,43 +652,114 @@ $('#btnLogin').addEventListener('click', async ()=>{
 
       if(snap.empty){
         salesSummary = { total: 0, notStarted: 0, inProgress: 0, completed: 0 };
+        salesOrders = [];
+        filteredSalesOrders = [];
         return;
       }
 
       total = snap.size;
       const docs = snap.docs;
 
-      await Promise.all(docs.map(async (docSnap)=>{
+      const getField = (obj, keys) => {
+        for(const k of keys){
+          if(obj && obj[k] != null && String(obj[k]).trim() !== '') return obj[k];
+        }
+        return '';
+      };
+
+      const stageLabel = (n)=> `المرحلة ${n}`;
+
+      const results = await Promise.all(docs.map(async (docSnap)=>{
         const d = docSnap.data() || {};
-        const orderNo = d.orderNo || d.OrderNo || docSnap.id;
+
+        const orderNo = getField(d, ['orderNo','OrderNo','order_no','name']) || docSnap.id;
+        const customerName = getField(d, ['CustomerName','customerName','customer_name','customer','nameCustomer']);
+        const phone = getField(d, ['Phone','phone','mobile','Mobile','customerPhone','CustomerPhone']);
+        const branch = getField(d, ['Branch','branch','BranchName','branchName']);
+        const vin = getField(d, ['VIN','vin','chassis','Chassis','vehicleVin']);
+        const deliveryDate = getField(d, ['DeliveryDate','deliveryDate','delivery_date','expectedDelivery','ExpectedDeliveryDate']);
 
         let doneCount = 0;
+        let lastStage = 0;
+
+        // قراءة التتبع من orders/{orderNo}_1 (لو موجود)
         try{
-          const tSnap = await getDoc(doc(trackingDb, TRACK_COLLECTION, orderNo + "_1"));
+          const tSnap = await getDoc(doc(trackingDb, TRACK_COLLECTION, String(orderNo) + "_1"));
           if(tSnap.exists()){
             const tData = tSnap.data() || {};
             const stagesObj = tData.stages || {};
-            doneCount = Object.keys(stagesObj).filter(k=> stagesObj[k]).length;
+            const keys = Object.keys(stagesObj);
+
+            // عدد المراحل المكتملة
+            doneCount = keys.filter(k=> !!stagesObj[k]).length;
+
+            // آخر مرحلة مكتملة
+            const numericKeys = keys
+              .map(k=> Number(String(k).replace(/[^\d]/g,'')))
+              .filter(n=> !Number.isNaN(n) && n>0)
+              .sort((a,b)=>a-b);
+
+            if(numericKeys.length){
+              for(const n of numericKeys){
+                const v = stagesObj[String(n)] ?? stagesObj[n];
+                if(v) lastStage = n;
+              }
+            }else{
+              lastStage = doneCount;
+            }
           }
         }catch(err){
-          console.error('tracking read error', err);
+          // تجاهل
         }
 
-        if(doneCount === 0){
-          notStarted++;
-        }else if(doneCount >= STAGES_COUNT){
-          completed++;
-        }else{
-          inProgress++;
-        }
+        let status = 'تحت المتابعة';
+        if(doneCount === 0) status = 'لم تبدأ';
+        else if(doneCount >= STAGES_COUNT) status = 'مكتملة';
+
+        return {
+          _id: docSnap.id,
+          orderNo: String(orderNo),
+          customerName: String(customerName||''),
+          phone: String(phone||''),
+          branch: String(branch||''),
+          vin: String(vin||''),
+          deliveryDate: String(deliveryDate||''),
+          doneCount,
+          lastStage,
+          lastStageLabel: lastStage ? (lastStage + ' — ' + stageLabel(lastStage)) : '—',
+          status
+        };
       }));
 
+      results.forEach(o=>{
+        if(o.doneCount === 0) notStarted++;
+        else if(o.doneCount >= STAGES_COUNT) completed++;
+        else inProgress++;
+      });
+
+      const parseDate = (v)=>{
+        if(!v) return 0;
+        if(typeof v === 'number') return v;
+        const s = String(v).trim();
+        const t = Date.parse(s);
+        if(!Number.isNaN(t)) return t;
+        return 0;
+      };
+
+      salesOrders = results.slice().sort((a,b)=>{
+        const ta = parseDate(a.deliveryDate);
+        const tb = parseDate(b.deliveryDate);
+        if(tb !== ta) return tb - ta;
+        return (b.orderNo||'').localeCompare(a.orderNo||'');
+      });
+
       salesSummary = { total, notStarted, inProgress, completed };
+      filteredSalesOrders = salesOrders.slice();
     }catch(err){
       console.error('fetchSalesSummary error', err);
-      if(!salesSummary){
-        salesSummary = { total: 0, notStarted: 0, inProgress: 0, completed: 0 };
-      }
+      salesSummary = salesSummary || { total: 0, notStarted: 0, inProgress: 0, completed: 0 };
+      salesOrders = salesOrders || [];
+      filteredSalesOrders = filteredSalesOrders || [];
     }
   }
 
@@ -965,6 +1060,20 @@ function renderShootCard(gridEl){
       });
     });
 
+    // الضغط على الكارت يفتح إجمالي الطلبات
+    card.addEventListener('click', (ev)=>{
+      if(ev.target.closest('.sales-metric')) return;
+      openSalesModal('total');
+    });
+    // الضغط على أي رقم يفتح مودال بفلتر
+    card.querySelectorAll('.sales-metric').forEach(el=>{
+      el.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const f = el.getAttribute('data-sfilter') || 'total';
+        openSalesModal(f);
+      });
+    });
+
     gridEl.appendChild(card);
   }
 
@@ -1053,11 +1162,71 @@ function renderShootCard(gridEl){
       </div>
     `;
     card.addEventListener('click', ()=> openTransfersModal());
+    // الضغط على الكارت يفتح إجمالي الطلبات
+    card.addEventListener('click', (ev)=>{
+      if(ev.target.closest('.sales-metric')) return;
+      openSalesModal('total');
+    });
+    // الضغط على أي رقم يفتح مودال بفلتر
+    card.querySelectorAll('.sales-metric').forEach(el=>{
+      el.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const f = el.getAttribute('data-sfilter') || 'total';
+        openSalesModal(f);
+      });
+    });
+
     gridEl.appendChild(card);
   }
 
 /* ===== Render ===== */
   // بطاقة ملخص طلبات المبيعات من نظام التتبع / ERP
+
+  /* ===== Sales Orders Modal ===== */
+  function applySalesFilter(filterKey){
+    currentSalesMode = filterKey || 'total';
+    currentSales = Array.isArray(salesOrders) ? salesOrders.slice() : [];
+    if(currentSalesMode === 'notStarted'){
+      filteredSales = currentSales.filter(o=> o.doneCount === 0);
+    }else if(currentSalesMode === 'inProgress'){
+      filteredSales = currentSales.filter(o=> o.doneCount > 0 && o.doneCount < STAGES_COUNT);
+    }else if(currentSalesMode === 'completed'){
+      filteredSales = currentSales.filter(o=> o.doneCount >= STAGES_COUNT);
+    }else{
+      filteredSales = currentSales.slice();
+    }
+  }
+
+  function openSalesModal(filterKey='total'){
+    applySalesFilter(filterKey);
+    const title =
+      filterKey==='notStarted' ? 'طلبات المبيعات — لم تبدأ' :
+      filterKey==='inProgress' ? 'طلبات المبيعات — تحت المتابعة' :
+      filterKey==='completed' ? 'طلبات المبيعات — مكتملة' :
+      'طلبات المبيعات — إجمالي الطلبات';
+    openModal('sales', title);
+  }
+
+  function renderSalesTable(){
+    modalTableSalesBody.innerHTML = '';
+    (filteredSales||[]).forEach((o,idx)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${idx+1}</td>
+        <td>${o.orderNo||''}</td>
+        <td>${o.customerName||''}</td>
+        <td>${o.phone||''}</td>
+        <td>${o.branch||''}</td>
+        <td>${o.vin||''}</td>
+        <td>${o.deliveryDate||''}</td>
+        <td>${o.lastStageLabel||'—'}</td>
+        <td><span class="tag">${o.status||''}</span></td>
+      `;
+      modalTableSalesBody.appendChild(tr);
+    });
+    modalCount.textContent = `عدد طلبات المبيعات الظاهرة: ${(filteredSales||[]).length.toLocaleString('ar-SA')} من ${(currentSales||[]).length.toLocaleString('ar-SA')}`;
+  }
+
   function renderSalesSummaryCard(gridEl){
     const s = salesSummary || { total: 0, notStarted: 0, inProgress: 0, completed: 0 };
     const card = document.createElement('div');
@@ -1070,19 +1239,19 @@ function renderShootCard(gridEl){
             طلبات المبيعات (ERP + تتبع)
           </h3>
           <div class="sub-metrics">
-            <span class="metric">
+            <span class="metric sales-metric" data-sfilter="total" style="cursor:pointer">
               <i class="fa-solid fa-list-ol"></i>
               إجمالي الطلبات: <b>${s.total.toLocaleString('ar-SA')}</b>
             </span>
-            <span class="metric">
+            <span class="metric sales-metric" data-sfilter="notStarted" style="cursor:pointer">
               <i class="fa-solid fa-circle-dot"></i>
               لم تبدأ: <b>${s.notStarted.toLocaleString('ar-SA')}</b>
             </span>
-            <span class="metric">
+            <span class="metric sales-metric" data-sfilter="inProgress" style="cursor:pointer">
               <i class="fa-solid fa-spinner"></i>
               تحت المتابعة: <b>${s.inProgress.toLocaleString('ar-SA')}</b>
             </span>
-            <span class="metric">
+            <span class="metric sales-metric" data-sfilter="completed" style="cursor:pointer">
               <i class="fa-solid fa-circle-check"></i>
               مكتملة: <b>${s.completed.toLocaleString('ar-SA')}</b>
             </span>
@@ -1093,6 +1262,20 @@ function renderShootCard(gridEl){
         </div>
       </div>
     `;
+    // الضغط على الكارت يفتح إجمالي الطلبات
+    card.addEventListener('click', (ev)=>{
+      if(ev.target.closest('.sales-metric')) return;
+      openSalesModal('total');
+    });
+    // الضغط على أي رقم يفتح مودال بفلتر
+    card.querySelectorAll('.sales-metric').forEach(el=>{
+      el.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        const f = el.getAttribute('data-sfilter') || 'total';
+        openSalesModal(f);
+      });
+    });
+
     gridEl.appendChild(card);
   }
 
@@ -1177,12 +1360,14 @@ function renderShootCard(gridEl){
   const tableShortWrap= $('#tableShortWrap');
   const tableShootWrap= $('#tableShootWrap');
   const tableTransfersWrap = $('#tableTransfersWrap');
+  const tableSalesWrap = $('#tableSalesWrap');
 
   const modalTableRowsHead = $('#rowsHeadTr');
   const modalTableRowsBody  = document.querySelector('#modalTableRows tbody');
   const modalTableShortBody = document.querySelector('#modalTableShort tbody');
   const modalTableShootBody = document.querySelector('#modalTableShoot tbody');
   const modalTableTransfersBody = document.querySelector('#modalTableTransfers tbody');
+  const modalTableSalesBody = document.querySelector('#modalTableSales tbody');
   const modalCount = $('#modalCount');
 
   const shortTabs = $('#shortTabs');
@@ -1202,6 +1387,7 @@ function renderShootCard(gridEl){
   let currentRows = []; let filteredRows = [];
   let shortDataByKey = new Map(); let shortActiveKey = 'ALL'; let shortFiltered = [];
   let currentShoot = []; let filteredShoot = []; let currentShootFilter = 'ALL';
+  let currentSales = []; let filteredSales = []; let currentSalesMode = 'total';
 
   function openModal(mode, title){
     currentMode = mode;
@@ -1218,6 +1404,7 @@ function renderShootCard(gridEl){
       tableShortWrap.style.display='none';
       tableShootWrap.style.display='none';
       tableTransfersWrap.style.display='none';
+    tableSalesWrap.style.display='none';
     }else if(mode==='shortagesBranches'){
       shortTabs.style.display='flex';
       tableRowsWrap.style.display='none';
@@ -1425,6 +1612,7 @@ function renderShootCard(gridEl){
     else if(currentMode==='shortagesBranches'){ renderShortTable(); }
     else if(currentMode==='shoot'){ renderShootTable(); }
     else if(currentMode==='transfers'){ renderTransfersTable(); }
+    else if(currentMode==='sales'){ renderSalesTable(); }
   }
 
   // فتح سيارات الجهة
@@ -1826,6 +2014,22 @@ try{
           return hay.includes(q);
         })
         .filter(r=> matchesShootFilter(r, currentShootFilter));
+    }else if(currentMode==='sales'){
+      if(!q){ filteredSales = currentSales.slice(); return renderModal(); }
+      filteredSales = currentSales.filter(o=>{
+        const hay=[o.orderNo,o.customerName,o.phone,o.branch,o.vin,o.deliveryDate,o.lastStageLabel,o.status].join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+    }else if(currentMode==='sales'){
+      const header=["#","رقم الطلب","اسم العميل","رقم الجوال","الفرع","VIN","تاريخ التسليم","آخر مرحلة","الحالة"];
+      const data=[header];
+      (filteredSales||[]).forEach((o,idx)=>{
+        data.push([idx+1,o.orderNo,o.customerName,o.phone,o.branch,o.vin,o.deliveryDate,o.lastStageLabel,o.status]);
+      });
+      const ws=XLSX.utils.aoa_to_sheet(data);
+      ws['!cols']=[{wch:6},{wch:18},{wch:22},{wch:14},{wch:18},{wch:18},{wch:18},{wch:18},{wch:12}];
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Sales Orders");
+      XLSX.writeFile(wb,"mzj-sales-orders.xlsx");
     }else if(currentMode==='transfers'){
       if(!q){
         filteredTransfers = transferRequests.slice();
@@ -1875,6 +2079,22 @@ try{
       ws['!cols']=[{wch:8},{wch:18},{wch:14},{wch:10},{wch:12},{wch:18},{wch:14},{wch:22}];
       const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Shoot Requests");
       XLSX.writeFile(wb, `mzj-photoshoot-requests-${(currentShootFilter||'ALL')}.xlsx`);
+    }else if(currentMode==='sales'){
+      if(!q){ filteredSales = currentSales.slice(); return renderModal(); }
+      filteredSales = currentSales.filter(o=>{
+        const hay=[o.orderNo,o.customerName,o.phone,o.branch,o.vin,o.deliveryDate,o.lastStageLabel,o.status].join(' ').toLowerCase();
+        return hay.includes(q);
+      });
+    }else if(currentMode==='sales'){
+      const header=["#","رقم الطلب","اسم العميل","رقم الجوال","الفرع","VIN","تاريخ التسليم","آخر مرحلة","الحالة"];
+      const data=[header];
+      (filteredSales||[]).forEach((o,idx)=>{
+        data.push([idx+1,o.orderNo,o.customerName,o.phone,o.branch,o.vin,o.deliveryDate,o.lastStageLabel,o.status]);
+      });
+      const ws=XLSX.utils.aoa_to_sheet(data);
+      ws['!cols']=[{wch:6},{wch:18},{wch:22},{wch:14},{wch:18},{wch:18},{wch:18},{wch:18},{wch:12}];
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Sales Orders");
+      XLSX.writeFile(wb,"mzj-sales-orders.xlsx");
     }else if(currentMode==='transfers'){
       const header=["رقم الطلب","التاريخ","رقم الهيكل","من مكان","إلى مكان","ملاحظات","الموافقة الإدارية","الموافقة المالية","الحالة","تمت الموافقة في"];
       const data=[header];
@@ -1908,7 +2128,6 @@ try{
 </script>
 </body>
 </html>
-
 
 
 
