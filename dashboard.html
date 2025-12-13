@@ -312,6 +312,7 @@ body{opacity:0}
               <th>مقدّم</th>
               <th>عدد الهياكل</th>
               <th>الحالة</th>
+              <th>التتبع</th>
               <th>استلام إداري</th>
               <th>تجهيز</th>
               <th>ملاحظات الإدارة</th>
@@ -1211,20 +1212,31 @@ function renderShootCard(gridEl){
     modalTableSalesBody.innerHTML = '';
     (filteredSales||[]).forEach((o,idx)=>{
       const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${idx+1}</td>
-        <td>${o.orderNo||''}</td>
-        <td>${o.customerName||''}</td>
-        <td>${o.phone||''}</td>
-        <td>${o.branch||''}</td>
-        <td>${o.vin||''}</td>
-        <td>${o.deliveryDate||''}</td>
-        <td>${o.lastStageLabel||'—'}</td>
-        <td><span class="tag">${o.status||''}</span></td>
-      `;
+
+      const statusTxt = (o.status||'').trim();
+      const statusClass =
+        statusTxt.includes('لم تبدأ') ? 'status-not-started' :
+        statusTxt.includes('مكتملة') ? 'status-completed' :
+        'status-in-progress';
+
+      const vinVal = (o.vin||'').trim();
+      const trackURL = vinVal ? ('https://mzj-tracking.vercel.app/Test-Track.html?vin=' + encodeURIComponent(vinVal)) : '';
+
+      tr.innerHTML =
+        '<td>'+(idx+1)+'</td>' +
+        '<td>'+(o.orderNo||'')+'</td>' +
+        '<td>'+(o.customerName||'')+'</td>' +
+        '<td>'+(o.phone||'')+'</td>' +
+        '<td>'+(o.branch||'')+'</td>' +
+        '<td>'+(vinVal||'')+'</td>' +
+        '<td>'+(o.deliveryDate||'')+'</td>' +
+        '<td>'+(o.lastStageLabel||'—')+'</td>' +
+        '<td><span class="tag '+statusClass+'">'+statusTxt+'</span></td>' +
+        '<td>' + (trackURL ? '<a class="btn-track" href="'+trackURL+'" target="_blank" rel="noopener">فتح التتبع</a>' : '<span class="muted">—</span>') + '</td>';
+
       modalTableSalesBody.appendChild(tr);
     });
-    modalCount.textContent = `عدد طلبات المبيعات الظاهرة: ${(filteredSales||[]).length.toLocaleString('ar-SA')} من ${(currentSales||[]).length.toLocaleString('ar-SA')}`;
+    modalCount.textContent = 'عدد طلبات المبيعات الظاهرة: ' + (filteredSales||[]).length.toLocaleString('ar-SA') + ' من ' + (currentSales||[]).length.toLocaleString('ar-SA');
   }
 
   function renderSalesSummaryCard(gridEl){
