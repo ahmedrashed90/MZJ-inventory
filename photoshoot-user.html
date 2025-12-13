@@ -967,6 +967,16 @@ const ROLE_PAGES = {
   const $$ = s => Array.from(document.querySelectorAll(s));
   const pad = n => n<10 ? "0"+n : ""+n;
 
+  // تنبيه لو الصفحة اتفتحت كـ file:// (ممكن يمنع Firebase/Modules)
+  if (location.protocol === "file:") {
+    try{
+      const warn = document.createElement("div");
+      warn.style.cssText = "max-width:1200px;margin:10px auto 0;padding:10px 14px;border:1px solid #f59e0b;background:#fff7ed;border-radius:12px;color:#92400e;font-weight:700";
+      warn.textContent = "⚠️ افتح الصفحة عبر http(s) (مثلاً localhost) وليس file:// لأن ده قد يمنع تسجيل الدخول.";
+      document.body.prepend(warn);
+    }catch(e){}
+  }
+
   function now(){
     const d=new Date();
     return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+
@@ -2394,8 +2404,25 @@ function openReqModal(req){
         await signInWithEmailAndPassword(auth,email,pass);
         showToast("تم تسجيل الدخول");
       }catch(err){
-        console.error(err);
-        alert("بيانات الدخول غير صحيحة");
+        console.error("LOGIN_ERROR", err);
+        const code = err?.code || "";
+        const msg  = err?.message || "";
+        // رسائل أوضح بدل "بيانات الدخول غير صحيحة"
+        if(code === "auth/unauthorized-domain"){
+          alert(
+            "❌ الدومين غير مُصرّح به في Firebase Auth.\n\n" +
+            "الحل:\n" +
+            "1) Firebase Console → Authentication → Settings → Authorized domains\n" +
+            "2) أضف: localhost + الدومين اللي فاتح عليه الصفحة (Vercel/موقعك)\n\n" +
+            "الكود: " + code
+          );
+        }else if(code){
+          alert("❌ تعذّر تسجيل الدخول.\n\nالكود: " + code + "\n" + msg);
+        }else{
+          alert("❌ تعذّر تسجيل الدخول.\n\n" + msg);
+        }
+        showToast("فشل تسجيل الدخول: " + (code || "unknown"));
+        setStatus("err","فشل تسجيل الدخول");
       }finally{
         btn.disabled = false;
       }
