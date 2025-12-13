@@ -854,7 +854,43 @@
 
 
   // الصفحات المسموح بها حسب كل دور
-  const ROLE_PAGES = {
+  
+  // ===== Fallback: ربط الإيميلات بالأماكن (لو بيانات المستخدم ناقصة في Firestore) =====
+  const EMAIL_FALLBACK = {
+    "aldynmtwlys@gmail.com": {
+      role: "اداري",
+      locations: ["الصالة الاساسية",
+        "فرع 1 الصالة : المخزون المتاح","فرع 1 الصالة : سيارات بها ملاحظات","فرع 1 الصالة : مباع تحت التسليم","فرع 1 الصالة : مباع تم التسليم"
+      ]
+    },
+    "alaasamak100@gmail.com": {
+      role: "اداري",
+      locations: ["صالة القادسية",
+        "فرع 3 القادسية : المخزون المتاح","فرع 3 القادسية : سيارات بها ملاحظات","فرع 3 القادسية : مباع تحت التسليم","فرع 3 القادسية : مباع تم التسليم"
+      ]
+    },
+    "kamelashraf948@gmail.com": {
+      role: "اداري",
+      locations: ["معرض الملتقى",
+        "فرع 2 الملتقى : المخزون المتاح","فرع 2 الملتقى : سيارات بها ملاحظات","فرع 2 الملتقى : مباع تحت التسليم","فرع 2 الملتقى : مباع تم التسليم"
+      ]
+    },
+    "mohammed.ezat1989@gmail.com": {
+      role: "اداري",
+      locations: ["الاستديو","المستودع",
+        "المستودع : المخزون المتاح","المستودع : سيارات بها ملاحظات","المستودع : مباع تحت التسليم","المستودع : مباع تم التسليم"
+      ]
+    }
+  };
+
+  // كلمات مفتاحية تساعدنا نطابق أماكن المخزون التفصيلية مع المكان الرئيسي
+  const LOCATION_ALIASES = {
+    "الصالة الاساسية": ["فرع 1 الصالة","الصالة"],
+    "صالة القادسية": ["فرع 3 القادسية","القادسية"],
+    "معرض الملتقى": ["فرع 2 الملتقى","الملتقى"],
+    "الاستديو": ["المستودع","الاستديو"]
+  };
+const ROLE_PAGES = {
     [ROLE_ADMIN]: 'ALL', // الإدارة تشوف كل الصفحات
     // الإداري: يشوف فقط الداشبورد + نقل السيارات + إدارة الطلبات + كل السيارات
     [ROLE_IDARI]: ['dashboard.html','vt.html','photoshoot-user.html','cars.html']
@@ -871,7 +907,26 @@
   function userMatchesPlace(place){
     if(!place) return false;
     if(!Array.isArray(currentUserLocations)) return false;
-    return currentUserLocations.includes(place);
+
+    const p = String(place).trim();
+    const pLow = p.toLowerCase();
+
+    // 1) Exact match
+    if(currentUserLocations.some(x => String(x).trim() === p)) return true;
+
+    // 2) Contains match (تفيد مع: "فرع 1 الصالة : المخزون المتاح")
+    if(currentUserLocations.some(x => {
+      const xl = String(x).trim().toLowerCase();
+      return xl && (pLow.includes(xl) || xl.includes(pLow));
+    })) return true;
+
+    // 3) Alias match
+    for(const base of currentUserLocations){
+      const baseTrim = String(base).trim();
+      const aliases = LOCATION_ALIASES[baseTrim] || [];
+      if(aliases.some(a => pLow.includes(String(a).toLowerCase()))) return true;
+    }
+    return false;
   }
   function isRequestOwner(req){
     if(currentUserUid && req.createdByUid){
@@ -992,13 +1047,29 @@
   function canActOnRow(kind, row, stage){
     if(isSuperAdmin()) return true;
 
-    // Step2 (sent) admin only
-    if(stage==="sent") return false;
+    // Step4 (finished) يتحكم فيه مقدم الطلب (أو الإدارة) عبر canFinishRequest
+    if(stage==="finished") return false;
 
-    // Step4 (finished) owner only (and admin already handled)
-    if(stage==="finished"){
-      return false;
+    // received: based on current location / fromLocation
+    if(stage==="received"){
+      const place = (kind==="move") ? (row.fromLocation||"") : (row.location||"");
+      return userMatchesPlace(place);
     }
+
+    // sent: مسؤول المكان الحالي (تسليم من المصدر) + الإدارة
+    if(stage==="sent"){
+      const place = (kind==="move") ? (row.fromLocation||"") : (row.location||"");
+      return userMatchesPlace(place);
+    }
+
+    // carReceived: based on destination (shootPlace/toLocation)
+    if(stage==="carReceived"){
+      const place = (kind==="move") ? (row.toLocation||"") : (row.shootPlace||row.place||"");
+      return userMatchesPlace(place);
+    }
+
+    return false;
+  }
 
     // received: based on current location / fromLocation
     if(stage==="received"){
@@ -1651,25 +1722,24 @@ window.__shootEditMode = false;
   }
 
   async function markShootStep2(req){
-    if(!isSuperAdmin()){
-      showToast("غير مسموح: خطوة الإرسال للإدارة فقط");
-      return;
-    }
     const base = (shootRequests || []).find(r => r.id === req.id) || req;
     ensureRowStates(base);
+    let changed = 0;
     const ts = now();
-    base.rowStates.forEach(s=>{
-      s.received ||= ts;
-      s.sent     ||= ts;
+    base.rowStates.forEach((s,idx)=>{
+      const row = (base.rows||[])[idx] || {};
+      if(!canActOnRow('shoot', row, 'sent')) return;
+      if(!s.received){ s.received = ts; changed++; }
+      if(!s.sent){ s.sent = ts; changed++; }
     });
 
     // تحديث أماكن السيارات في المخزون (نفس منطقك القديم)
-    moveCarsToShootPlace(base.rows || []);
+    moveCarsToShootPlace((base.rows||[]).filter((r,idx)=>canActOnRow('shoot', r, 'sent')));
 
     base.status = deriveStatus(base,"shoot");
     updateShootRequestLocal(base);
     await persistAll();
-    metrics(); render(); renderShootTimeline(base);
+    metrics(); render(); renderShootTimeline(base); if(isModalOpen('reqModalBackdrop')) openReqModal(base);
     showToast("تم ارسال السيارات للتصوير (للجميع)");
   }
 
@@ -1748,22 +1818,21 @@ window.__shootEditMode = false;
   }
 
   async function markMoveStep2(req){
-    if(!isSuperAdmin()){
-      showToast("غير مسموح: خطوة الإرسال للإدارة فقط");
-      return;
-    }
     const base = (moveRequests || []).find(r => r.id === req.id) || req;
     ensureRowStates(base);
+    let changed = 0;
     const ts = now();
-    base.rowStates.forEach(s=>{
-      s.received ||= ts;
-      s.sent     ||= ts;
+    base.rowStates.forEach((s,idx)=>{
+      const row = (base.rows||[])[idx] || {};
+      if(!canActOnRow('move', row, 'sent')) return;
+      if(!s.received){ s.received = ts; changed++; }
+      if(!s.sent){ s.sent = ts; changed++; }
     });
 
     base.status = deriveStatus(base,"move");
     updateMoveRequestLocal(base);
     await persistAll();
-    metrics(); render(); renderMoveTimeline(base);
+    metrics(); render(); renderMoveTimeline(base); if(isModalOpen('moveModalBackdrop')) openMoveModal(base);
     showToast("تم ارسال السيارات (للجميع)");
   }
 
@@ -2222,6 +2291,19 @@ function openReqModal(req){
       }
     }catch(e){
       console.error("fetch role error", e);
+    }
+    // fallback by email (لو Firestore ناقص)
+    const em = (currentUserEmail||"").toLowerCase().trim();
+    const fb = EMAIL_FALLBACK[em];
+    if(fb){
+      if(!currentUserRole) currentUserRole = fb.role || currentUserRole;
+      if(!Array.isArray(currentUserLocations) || currentUserLocations.length===0){
+        currentUserLocations = Array.isArray(fb.locations) ? fb.locations.slice() : [];
+      }else{
+        // merge without duplicates
+        const set = new Set(currentUserLocations.map(x=>String(x).trim()));
+        (fb.locations||[]).forEach(x=>{ const k=String(x).trim(); if(k && !set.has(k)){ set.add(k); currentUserLocations.push(k);} });
+      }
     }
     return currentUserRole;
   }
