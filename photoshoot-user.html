@@ -254,8 +254,10 @@ body{
       <h2>تسجيل الدخول</h2>
       <div class="row">
         <span class="badge" id="authState">جارٍ الاتصال…</span>
+        <span class="badge" id="projBadge">—</span>
         <span class="badge" id="roleBadge">—</span>
         <span class="badge" id="locBadge">—</span>
+        <button class="btn" id="btnShowLogin" style="display:none"><i class="fa-solid fa-key"></i>تسجيل الدخول</button>
         <button class="btn" id="btnLogout" style="display:none"><i class="fa-solid fa-right-from-bracket"></i>تسجيل خروج</button>
       </div>
     </div>
@@ -481,6 +483,8 @@ try{ firebase.initializeApp(firebaseConfig); }catch(e){}
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
+try{ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL); }catch(e){ console.warn('setPersistence failed', e); }
+
 // ---- Diagnostics (prevents stuck "جارٍ الاتصال…") ----
 (function(){
   try{
@@ -504,9 +508,11 @@ const db   = firebase.firestore();
 
 // refs
 const authState = document.getElementById('authState');
+const projBadge = document.getElementById('projBadge');
 const roleBadge = document.getElementById('roleBadge');
 const locBadge  = document.getElementById('locBadge');
 const btnLogout = document.getElementById('btnLogout');
+const btnShowLogin = document.getElementById('btnShowLogin');
 
 const loginMsg  = document.getElementById('loginMsg');
 const loginCard = document.getElementById('loginCard');
@@ -621,6 +627,11 @@ function rowDestPlace(r){
 
 function setProfileBadges(){
   authState.textContent = currentUser ? "مسجل ✅" : "غير مسجل";
+  try{
+    const pid = (firebase.apps && firebase.apps.length) ? (firebase.apps[0].options.projectId||"—") : "—";
+    if(projBadge) projBadge.textContent = "Project: " + pid;
+  }catch(e){ if(projBadge) projBadge.textContent="Project: —"; }
+
   roleBadge.textContent = userProfile ? ("الدور: " + (myRole()||"—")) : "—";
   locBadge.textContent  = userProfile ? ("الأماكن: " + (myLocations().length||0)) : "—";
 
@@ -1300,6 +1311,17 @@ document.getElementById('btnLogin').addEventListener('click', async ()=>{
   }
 });
 btnLogout.addEventListener('click', async ()=>{ await auth.signOut(); });
+if(btnShowLogin){
+  btnShowLogin.addEventListener('click', ()=>{
+    const row = document.getElementById('loginInputsRow');
+    const note = document.getElementById('loginNote');
+    if(row) row.style.display = 'flex';
+    if(note) note.style.display = 'block';
+    const msg = document.getElementById('loginMsg');
+    if(msg){ msg.style.display='block'; msg.className='alert'; msg.textContent='لو أنت فعلًا مسجل في صفحات تانية ونفس الدومين، يبقى غالبًا الصفحات التانية على Firebase Project مختلف. قارن Project ID فوق.'; }
+  });
+}
+
 
 async function loadUserProfile(u){
   try{
@@ -1319,6 +1341,7 @@ auth.onAuthStateChanged(async (u)=>{
   if(!u){
     userProfile=null;
     btnLogout.style.display='none';
+    if(btnShowLogin) btnShowLogin.style.display='inline-flex';
     setProfileBadges();
     const loginInputsRow = document.getElementById('loginInputsRow');
     const loginNote = document.getElementById('loginNote');
@@ -1339,6 +1362,7 @@ auth.onAuthStateChanged(async (u)=>{
   }
 
   btnLogout.style.display='inline-flex';
+  if(btnShowLogin) btnShowLogin.style.display='none';
   userProfile = await loadUserProfile(u);
   setProfileBadges();
 
