@@ -1,7 +1,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -2254,6 +2253,15 @@ function openReqModal(req){
       const snap = await getDoc(doc(db,"user", user.uid));
       if(snap.exists()){
         const data = snap.data() || {};
+      if(__firstStateLoad){
+        __firstStateLoad = false;
+        showApp();
+        // تطبيق صلاحيات التابات حسب الدور + فتح إدارة الطلبات افتراضي
+        applyTabsVisibility(role);
+        buildFormRows();
+        try{ showPage("orders"); }catch(e){}
+        setStatus("ok","متصل — تم تحميل البيانات");
+      }
         currentUserRole = data.role || null;
         const loc = data.locations;
         if(Array.isArray(loc)){
@@ -2313,15 +2321,31 @@ function openReqModal(req){
       window.location.href = "unauthorized.html";
       return;
     }
-    setStatus("ok","متصل بحساب الإدارة");
-    showApp();
-    // تطبيق صلاحيات التابات حسب الدور
-    applyTabsVisibility(role);
-    buildFormRows();
+
+    // ✅ Page Guard (يحمي من فتح صفحة غير مسموحة للدور)
+    const currentPage = (location.pathname.split('/').pop() || 'dashboard.html').split('?')[0];
+    const allowed = ROLE_PAGES[role];
+    if(allowed !== 'ALL' && Array.isArray(allowed) && !allowed.includes(currentPage)){
+      window.location.href = allowed[0] || 'dashboard.html';
+      return;
+    }
+
+    setStatus("ok","جارٍ تحميل البيانات…");
+    // ملاحظة: إظهار التطبيق بعد أول Snapshot لضمان عدم ظهور صفحة فاضية
 
     // ✅ تحميل حالة النظام (المخزون + الطلبات) من STATE_REF
+    let __firstStateLoad = true;
     onSnapshot(STATE_REF, (snap) => {
       const data = snap.data() || {};
+      if(__firstStateLoad){
+        __firstStateLoad = false;
+        showApp();
+        // تطبيق صلاحيات التابات حسب الدور + فتح إدارة الطلبات افتراضي
+        applyTabsVisibility(role);
+        buildFormRows();
+        try{ showPage("orders"); }catch(e){}
+        setStatus("ok","متصل — تم تحميل البيانات");
+      }
       shootRequests = Array.isArray(data.shootRequests) ? data.shootRequests : [];
       moveRequests  = Array.isArray(data.moveRequests)  ? data.moveRequests  : [];
 
