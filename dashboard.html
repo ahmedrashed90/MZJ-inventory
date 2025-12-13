@@ -1391,40 +1391,39 @@ function renderShootCard(gridEl){
 
   function openModal(mode, title){
     currentMode = mode;
+
+    // عنوان المودال
     modalTitle.textContent = title || (
       mode==='rows' ? 'السيارات' :
       mode==='shoot' ? 'طلبات التصوير' :
       mode==='transfers' ? 'طلبات نقل السيارات' :
+      mode==='sales' ? 'طلبات المبيعات (ERP + تتبع)' :
       'النواقص — الفروع'
     );
 
-    if(mode==='rows'){
-      shortTabs.style.display='none';
-      tableRowsWrap.style.display='block';
-      tableShortWrap.style.display='none';
-      tableShootWrap.style.display='none';
-      tableTransfersWrap.style.display='none';
+    // اخفاء كل الأقسام أولاً
+    shortTabs.style.display='none';
+    tableRowsWrap.style.display='none';
+    tableShortWrap.style.display='none';
+    tableShootWrap.style.display='none';
+    tableTransfersWrap.style.display='none';
     tableSalesWrap.style.display='none';
+
+    // إظهار القسم المطلوب
+    if(mode==='rows'){
+      tableRowsWrap.style.display='block';
     }else if(mode==='shortagesBranches'){
       shortTabs.style.display='flex';
-      tableRowsWrap.style.display='none';
       tableShortWrap.style.display='block';
-      tableShootWrap.style.display='none';
-      tableTransfersWrap.style.display='none';
     }else if(mode==='shoot'){
-      shortTabs.style.display='none';
-      tableRowsWrap.style.display='none';
-      tableShortWrap.style.display='none';
       tableShootWrap.style.display='block';
-      tableTransfersWrap.style.display='none';
     }else if(mode==='transfers'){
-      shortTabs.style.display='none';
-      tableRowsWrap.style.display='none';
-      tableShortWrap.style.display='none';
-      tableShootWrap.style.display='none';
       tableTransfersWrap.style.display='block';
+    }else if(mode==='sales'){
+      tableSalesWrap.style.display='block';
     }
 
+    // Reset
     modalSearch.value='';
     if(mode!=='shoot' && shootDetailsBox){
       shootDetailsBox.style.display='none';
@@ -1433,6 +1432,7 @@ function renderShootCard(gridEl){
       approvalBox.style.display='none';
       approvalContext = null;
     }
+
     renderModal();
     backdrop.style.display='flex';
   }
