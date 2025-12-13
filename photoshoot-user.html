@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -2286,50 +2287,48 @@ function openReqModal(req){
       const snap = await getDoc(doc(db,"user", user.uid));
       if(snap.exists()){
         const data = snap.data() || {};
-      if(__firstStateLoad){
-        __firstStateLoad = false;
-        showApp();
-        // تطبيق صلاحيات التابات حسب الدور + فتح إدارة الطلبات افتراضي
-        applyTabsVisibility(role);
-        buildFormRows();
-        try{ showPage("orders"); }catch(e){}
-        setStatus("ok","متصل — تم تحميل البيانات");
-      }
-        currentUserRole = data.role || null;
+        // Normalize role values to our constants
+        const rawRole = (data.role || "").toString().trim();
+        const norm = normalizeRole(rawRole);
+        currentUserRole = norm;
+        // locations can be array or string
         const loc = data.locations;
         if(Array.isArray(loc)){
-          currentUserLocations = loc;
+          currentUserLocations = loc.filter(Boolean).map(x=>String(x).trim()).filter(Boolean);
         }else if(typeof loc === "string" && loc.trim()){
           currentUserLocations = [loc.trim()];
         }else{
           currentUserLocations = [];
         }
-        if(data.email){
-          currentUserEmail = data.email;
-        }
+        if(data.email) currentUserEmail = data.email;
         return currentUserRole;
       }
     }catch(e){
-      console.error("fetch role error", e);
+      console.error("fetchUserRole failed:", e);
     }
-    // fallback by email (لو Firestore ناقص)
-    const em = (currentUserEmail||"").toLowerCase().trim();
-    const fb = EMAIL_FALLBACK[em];
-    if(fb){
-      if(!currentUserRole) currentUserRole = fb.role || currentUserRole;
-      if(!Array.isArray(currentUserLocations) || currentUserLocations.length===0){
-        currentUserLocations = Array.isArray(fb.locations) ? fb.locations.slice() : [];
-      }else{
-        // merge without duplicates
-        const set = new Set(currentUserLocations.map(x=>String(x).trim()));
-        (fb.locations||[]).forEach(x=>{ const k=String(x).trim(); if(k && !set.has(k)){ set.add(k); currentUserLocations.push(k);} });
-      }
-    }
+    // fallback to email map if exists
+    const fallback = normalizeRole(EMAIL_FALLBACK_ROLES?.[currentUserEmail] || "");
+    currentUserRole = fallback || null;
+    currentUserLocations = (EMAIL_FALLBACK_LOCATIONS?.[currentUserEmail] || []).slice();
     return currentUserRole;
   }
 
+  function normalizeRole(roleStr){
+    const r = (roleStr||"").toString().trim().toLowerCase();
+    if(!r) return null;
+    // admin aliases
+    if(r === "admin") return ROLE_ADMIN;
+    if(r === "الادارة" || r === "الإدارة") return ROLE_ADMIN;
+    if(r.includes("ادارة") || r.includes("إدارة")) return ROLE_ADMIN;
+    // idari aliases
+    if(r === "idari") return ROLE_IDARI;
+    if(r === "اداري" || r === "إداري") return ROLE_IDARI;
+    if(r.includes("اداري") || r.includes("إداري")) return ROLE_IDARI;
+    // fallback raw
+    return roleStr;
+  }
 
-  function showAuthGate(){
+function showAuthGate(){
     document.getElementById("authGate").style.display = "block";
     document.getElementById("app").style.display      = "none";
   }
@@ -2349,7 +2348,7 @@ function openReqModal(req){
     $("#btnSignOut").style.display = "inline-flex";
 
     const role = await fetchUserRole(user);
-    if(!role || !PAGE_ALLOWED_ROLES.includes(role)){
+    if(!role || (!PAGE_ALLOWED_ROLES.includes(role) && role!==ROLE_ADMIN)){
       // تحويل مباشر لصفحة عدم الصلاحية
       window.location.href = "unauthorized.html";
       return;
@@ -2423,3 +2422,4 @@ function openReqModal(req){
 </script>
 </body>
 </html>
+
