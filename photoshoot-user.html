@@ -660,7 +660,7 @@
         <div id="reqModalTitle" class="modal-title">تفاصيل طلب التصوير</div>
         <div id="reqModalSub" class="muted" style="font-size:11px;margin-top:2px"></div>
       </div>
-      <button id="btnEditReq" class="btn ghost btn-mini" style="margin-left:8px;display:none"><i class="fa-solid fa-pen"></i> تعديل الطلب</button>
+      <button id="btnEditReq" class="btn ghost btn-mini" style="display:none;margin-inline-start:8px"><i class="fa-solid fa-pen"></i> تعديل الطلب</button>
       <button class="modal-close" data-close-req-modal><i class="fa-solid fa-xmark"></i></button>
     </div>
 
@@ -1055,7 +1055,7 @@ function canFinishRequest(req){
 
   window._viewMode   = "manage";
   window._kindFilter = "";
-
+window.__shootEditMode = false;
   function toDateOnly(s){
     if(!s) return null;
     const d = s.slice(0,10);
@@ -1828,25 +1828,107 @@ function canFinishRequest(req){
 let currentShootReqId = null;
   let currentMoveReqId  = null;
 
-  function openReqModal(req){
-    currentShootReqId = req.id;
-    const backdrop = document.getElementById("reqModalBackdrop");
-    if (!backdrop) return;
-    const titleEl  = document.getElementById("reqModalTitle");
-    const subEl    = document.getElementById("reqModalSub");
-    const rowsBody = document.getElementById("reqModalRows");
-    const statusBox= document.getElementById("reqModalStatusBox");
-    const recvBox  = document.getElementById("reqModalReceiveInfo");
-    const prepBox  = document.getElementById("reqModalPrepInfo");
-    const notesEl  = document.getElementById("adminNotes");
+  
+function openReqModal(req){
+  currentShootReqId = req.id;
 
-    if (titleEl) titleEl.textContent = "تفاصيل طلب التصوير #" + (req.id || "-");
-    if (subEl) subEl.textContent = (req.createdAt || "") + " — " + (req.createdBy || "");
+  const backdrop = document.getElementById("reqModalBackdrop");
+  if (!backdrop) return;
 
+  // always use latest version from memory (snapshot might have updated)
+  const latest = (shootRequests||[]).find(r=>r.id===req.id) || req;
+
+  const titleEl  = document.getElementById("reqModalTitle");
+  const subEl    = document.getElementById("reqModalSub");
+  const rowsBody = document.getElementById("reqModalRows");
+  const statusBox= document.getElementById("reqModalStatusBox");
+  const recvBox  = document.getElementById("reqModalReceiveInfo");
+  const prepBox  = document.getElementById("reqModalPrepInfo");
+  const notesEl  = document.getElementById("adminNotes");
+  const btnEdit  = document.getElementById("btnEditReq");
+
+  if (titleEl) titleEl.textContent = "تفاصيل طلب التصوير #" + (latest.id || "-");
+  if (subEl)   subEl.textContent   = (latest.createdAt || "") + " — " + (latest.createdBy || "");
+
+  // eligibility: edit only before any action happened
+  const canEditUser = (isRequestOwner(latest) || isSuperAdmin());
+  const started     = requestStarted(latest);
+  if(btnEdit){
+    btnEdit.style.display = (canEditUser && !started) ? "inline-flex" : "none";
+    btnEdit.disabled = false;
+    btnEdit.innerHTML = window.__shootEditMode
+      ? '<i class="fa-solid fa-floppy-disk"></i> حفظ التعديل'
+      : '<i class="fa-solid fa-pen"></i> تعديل الطلب';
+
+    btnEdit.onclick = async ()=>{
+      // safety
+      const cur = (shootRequests||[]).find(r=>r.id===latest.id) || latest;
+      if(!(isRequestOwner(cur) || isSuperAdmin())) return;
+
+      // lock editing if any action happened
+      if(requestStarted(cur)){
+        showToast("لا يمكن تعديل الطلب بعد بدء أي إجراء");
+        return;
+      }
+
+      // save
+      if(window.__shootEditMode){
+        const rows = Array.isArray(cur.rows)?cur.rows:[];
+        document.querySelectorAll(".edit-shoot-place").forEach(sel=>{
+          const idx = Number(sel.getAttribute("data-idx")||"-1");
+          if(idx>=0 && rows[idx]) rows[idx].shootPlace = sel.value || "";
+        });
+        document.querySelectorAll(".edit-shoot-note").forEach(inp=>{
+          const idx = Number(inp.getAttribute("data-idx")||"-1");
+          if(idx>=0 && rows[idx]) rows[idx].note = inp.value || "";
+        });
+
+        cur.rows = rows;
+        updateShootRequestLocal(cur);
+        await persistAll();
+        await logActivity(
+          "تعديل طلب تصوير",
+          "تم تعديل أماكن/ملاحظات الطلب #" + (cur.id||"-"),
+          {requestId:cur.id, entityType:"photoshoot_request", role: currentUserRole||""}
+        );
+        window.__shootEditMode = false;
+        openReqModal(cur); // re-render modal
+        showToast("تم حفظ التعديل");
+      }else{
+        window.__shootEditMode = true;
+        openReqModal(cur); // re-render modal in edit mode
+        showToast("وضع التعديل مفعل");
+      }
+    };
+  }
+
+  // render rows
+  if(rowsBody){
     rowsBody.innerHTML = "";
-    const rows = Array.isArray(req.rows) ? req.rows : [];
+    const rows = Array.isArray(latest.rows) ? latest.rows : [];
     rows.forEach((row, idx) => {
       const tr = document.createElement("tr");
+      const shootPlace = row.shootPlace || row.place || "";
+      const noteVal = row.note || "";
+      const safeNote = (noteVal+"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+      let placeCell = shootPlace;
+      let noteCell  = safeNote;
+
+      if(window.__shootEditMode){
+        const opts = SHOOT_PLACES.filter(Boolean).map(p=>{
+          const sel = (shootPlace===p) ? "selected" : "";
+          const safeP = (p+"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+          return `<option value="${safeP}" ${sel}>${safeP}</option>`;
+        }).join("");
+        placeCell = `
+          <select class="small-input edit-shoot-place" data-idx="${idx}">
+            <option value="">— اختر —</option>
+            ${opts}
+          </select>`;
+        noteCell = `<input class="small-input edit-shoot-note" data-idx="${idx}" value="${safeNote}" placeholder="اختياري">`;
+      }
+
       tr.innerHTML = `
         <td class="center">${idx+1}</td>
         <td>${row.vin || ""}</td>
@@ -1856,95 +1938,30 @@ let currentShootReqId = null;
         <td>${row.intColor || ""}</td>
         <td>${row.modelYear || ""}</td>
         <td>${row.location || ""}</td>
-        <td>${
-          isEditShootMode
-            ? `<select class="small-input edit-shoot-place" data-idx="${idx}">
-                 <option value="">— اختر —</option>
-                 ${SHOOT_PLACES.filter(Boolean).map(p=>`<option ${((row.shootPlace||row.place||"")==p)?"selected":""}>${p}</option>`).join("")}
-               </select>`
-            : (row.shootPlace || row.place || "")
-        }</td>
-        <td>${
-          isEditShootMode
-            ? `<input class="small-input edit-shoot-note" data-idx="${idx}" value="${(row.note||"").replace(/"/g,'&quot;')}">`
-            : (row.note || "")
-        }</td>
+        <td>${placeCell}</td>
+        <td>${noteCell}</td>
       `;
       rowsBody.appendChild(tr);
+
+      // usability: click place cell focuses select
+      if(window.__shootEditMode){
+        tr.addEventListener("click",(e)=>{
+          const sel = tr.querySelector(".edit-shoot-place");
+          if(sel) sel.focus();
+        });
+      }
     });
-
-    const admin = req.admin || {};
-    if (statusBox) {
-      statusBox.textContent = "الحالة الحالية: " + (req.status || "—");
-    }
-    const c1 = stageCount(req,"received");
-    const c2 = stageCount(req,"sent");
-    if (recvBox) recvBox.textContent = `استلام الطلب: ${pct(c1.done,c1.total)}% (${c1.done}/${c1.total})`;
-    if (prepBox) prepBox.textContent = `ارسال السيارة: ${pct(c2.done,c2.total)}% (${c2.done}/${c2.total})`;
-    if (notesEl) {
-      notesEl.value = req.adminNotes || "";
-    }
-
-    renderShootTimeline(req);
-
-    // زر الانتهاء: لمقدم الطلب + الإدارة فقط
-    const btnFinish = document.getElementById("btnShootStep4");
-    if(btnFinish){
-      btnFinish.style.display = (canFinishRequest(req) || isSuperAdmin()) ? "inline-flex" : "none";
-      btnFinish.disabled = !canFinishRequest(req) && !isSuperAdmin();
-    }
-
-        // زر تعديل الطلب: للمنشئ + الإدارة فقط (قبل بدء التنفيذ)
-    const btnEdit = document.getElementById("btnEditReq");
-    if(btnEdit){
-      const canEdit = (isRequestOwner(req) || isSuperAdmin());
-      const started = requestStarted(req);
-      btnEdit.style.display = canEdit ? "inline-flex" : "none";
-      btnEdit.disabled = started && !isEditShootMode;
-      btnEdit.innerHTML = isEditShootMode
-        ? '<i class="fa-solid fa-floppy-disk"></i> حفظ التعديل'
-        : '<i class="fa-solid fa-pen"></i> تعديل الطلب';
-
-      btnEdit.onclick = async ()=>{
-        if(!canEdit) return;
-
-        // منع التعديل بعد بدء التنفيذ (إلا لو الإدارة عايزة تجبر — ممكن نفعلها لاحقاً)
-        if(started && !isEditShootMode && !isSuperAdmin()){
-          showToast("لا يمكن تعديل الطلب بعد بدء التنفيذ");
-          return;
-        }
-
-        // حفظ
-        if(isEditShootMode){
-          const latest = (shootRequests||[]).find(r=>r.id===req.id) || req;
-          const rows = Array.isArray(latest.rows)?latest.rows:[];
-          document.querySelectorAll(".edit-shoot-place").forEach(sel=>{
-            const idx = Number(sel.getAttribute("data-idx")||"-1");
-            if(idx>=0 && rows[idx]) rows[idx].shootPlace = sel.value || "";
-          });
-          document.querySelectorAll(".edit-shoot-note").forEach(inp=>{
-            const idx = Number(inp.getAttribute("data-idx")||"-1");
-            if(idx>=0 && rows[idx]) rows[idx].note = inp.value || "";
-          });
-
-          latest.rows = rows;
-          updateShootRequestLocal(latest);
-          await logActivity("تعديل طلب تصوير","تعديل بيانات الطلب #"+(latest.id||""),{requestId:latest.id, entityType:"photoshoot_request", role: currentUserRole||""});
-          isEditShootMode = false;
-          await persistAll();
-          metrics(); render();
-          openReqModal(latest);
-          showToast("تم حفظ تعديل الطلب");
-        }else{
-          // دخول وضع التعديل
-          isEditShootMode = true;
-          openReqModal(req);
-        }
-      };
-    }
-
-    backdrop.classList.add("show");
   }
+
+  const admin = latest.admin || {};
+  if (statusBox) statusBox.textContent = "الحالة الحالية: " + (latest.status || "—");
+  if (recvBox)   recvBox.textContent   = admin.received ? ("تم استلام الطلب في: " + admin.received) : "لم يتم استلام الطلب بعد";
+  if (prepBox)   prepBox.textContent   = admin.prepared ? ("تم ارسال السيارة للتصوير في: " + admin.prepared) : "لم يتم ارسال السيارة بعد";
+  if (notesEl)   notesEl.value         = latest.adminNotes || "";
+
+  renderShootTimeline(latest);
+  backdrop.classList.add("show");
+}
 
   function openMoveModal(req){
     currentMoveReqId = req.id;
