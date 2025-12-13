@@ -1194,20 +1194,6 @@ function renderShootCard(gridEl){
       </div>
     `;
     card.addEventListener('click', ()=> openTransfersModal());
-    // الضغط على الكارت يفتح إجمالي الطلبات
-    card.addEventListener('click', (ev)=>{
-      if(ev.target.closest('.sales-metric')) return;
-      openSalesModal('total');
-    });
-    // الضغط على أي رقم يفتح مودال بفلتر
-    card.querySelectorAll('.sales-metric').forEach(el=>{
-      el.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        const f = el.getAttribute('data-sfilter') || 'total';
-        openSalesModal(f);
-      });
-    });
-
     gridEl.appendChild(card);
   }
 
@@ -1294,12 +1280,13 @@ function renderShootCard(gridEl){
         </div>
       </div>
     `;
-    // الضغط على الكارت يفتح إجمالي الطلبات
-    card.addEventListener('click', (ev)=>{
-      if(ev.target.closest('.sales-metric')) return;
-      openSalesModal('total');
-    });
-    // الضغط على أي رقم يفتح مودال بفلتر
+    // فتح مودال طلبات المبيعات عند الضغط على الأرقام
+    const totalBox = card.querySelector('.group-total');
+    if(totalBox){
+      totalBox.style.cursor = 'pointer';
+      totalBox.addEventListener('click', (e)=>{ e.stopPropagation(); openSalesModal('total'); });
+    }
+
     card.querySelectorAll('.sales-metric').forEach(el=>{
       el.addEventListener('click', (e)=>{
         e.stopPropagation();
@@ -1307,6 +1294,9 @@ function renderShootCard(gridEl){
         openSalesModal(f);
       });
     });
+
+    // الضغط على مساحة الكارت يفتح إجمالي الطلبات
+    card.addEventListener('click', ()=> openSalesModal('total'));
 
     gridEl.appendChild(card);
   }
@@ -1479,6 +1469,11 @@ function renderShootCard(gridEl){
     approvalContext = null;
   }
   btnCloseModal.addEventListener('click', closeModal);
+
+  // إغلاق المودال بزر ESC
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape') closeModal();
+  });
   backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) closeModal(); });
 
   /* ===== Rows table (cars) ===== */
@@ -2154,6 +2149,35 @@ try{
 
   /* ===== Events ===== */
   document.getElementById('shortagesCard').addEventListener('click', ()=> openShortagesModalBranches());
+
+
+  // ضمان عدم تداخل كروت (التصوير/النقل) و (الموافقات) مع كارت المبيعات
+  // نلتقط الضغط في مرحلة capture ونمنع أي handler غلط
+  document.addEventListener('click', (ev)=>{
+    const target = ev.target;
+    const shootCard = target.closest('#ordersAdminCard');
+    const transferCard = target.closest('#transferCard');
+
+    if(shootCard){
+      // اترك متريكس المبيعات فقط لو كانت موجودة داخل نفس الكارت (احتياط)
+      if(target.closest('.sales-metric')) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+      openShootModal('ALL');
+      return;
+    }
+
+    if(transferCard){
+      if(target.closest('.sales-metric')) return;
+      ev.preventDefault();
+      ev.stopPropagation();
+      if(ev.stopImmediatePropagation) ev.stopImmediatePropagation();
+      openTransfersModal('ALL');
+      return;
+    }
+  }, true);
+
 
   /* ===== Start ===== */
   setStatus('warn','جارِ الاتصال…');
