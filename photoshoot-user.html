@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>MZJ — إدارة الطلبات</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -14,11 +15,13 @@
       --cream:#fff8ef;
       --text:#1f2937;
       --muted:#6b7280;
+      --line:rgba(232,214,200,.75);
       --ok:#16a34a;
       --warn:#f59e0b;
       --bad:#ef4444;
-      --radius:14px;
       --shadow:0 16px 40px rgba(0,0,0,.08);
+      --r14:14px;
+      --r18:18px;
     }
     *{box-sizing:border-box}
     body{
@@ -27,129 +30,128 @@
       background:var(--cream);
       color:var(--text);
     }
-
-    /* Topbar */
     .topbar{
+      position:sticky; top:0; z-index:30;
       background:#fff;
-      border-bottom:1px solid var(--beige);
-      padding:12px 18px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      position:sticky;
-      top:0;
-      z-index:20;
+      border-bottom:1px solid var(--line);
+      padding:12px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
     }
-    .brand{
-      display:flex; align-items:center; gap:12px;
-    }
+    .brand{display:flex; align-items:center; gap:12px}
     .logo{
-      width:44px;height:44px;border-radius:14px;
-      background:var(--brown);
-      display:grid;place-items:center;
-      color:#fff;font-weight:800;
+      width:44px; height:44px; border-radius:14px;
+      background:var(--brown); color:#fff;
+      display:grid; place-items:center;
+      font-weight:900; letter-spacing:.5px;
     }
-    .brand h1{margin:0;font-size:16px}
+    .brand h1{margin:0;font-size:15px}
     .brand p{margin:2px 0 0;font-size:12px;color:var(--muted)}
     .tabs{
-      display:flex;gap:10px;align-items:center;flex-wrap:wrap;
-      justify-content:center;
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:center;
     }
     .tab{
-      padding:10px 16px;border-radius:999px;
-      border:1px solid var(--beige);
-      background:#fff;color:var(--brown);
-      font-weight:700;font-size:13px;
+      padding:10px 16px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--brown);
+      font-weight:900;
+      font-size:13px;
       cursor:pointer;
-      transition:.2s ease;
+      transition:.15s ease;
       user-select:none;
+      white-space:nowrap;
     }
-    .tab.active{background:var(--brown);color:#fff;border-color:var(--brown)}
-    .pillbar{
-      display:flex;gap:8px;align-items:center;flex-wrap:wrap;
-      justify-content:flex-start;
+    .tab:hover{background:#faf2ec}
+    .tab.active{
+      background:var(--brown); color:#fff; border-color:var(--brown);
+    }
+    .statusbar{
+      display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-start;
     }
     .pill{
-      padding:8px 12px;border-radius:999px;border:1px solid var(--beige);
-      background:#fff;font-size:12px;color:var(--muted);
-      display:flex;gap:8px;align-items:center;
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:#fff;
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
     }
     .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
     .dot.ok{background:var(--ok)}
     .dot.warn{background:var(--warn)}
     .dot.bad{background:var(--bad)}
-
-    /* Layout */
-    .wrap{max-width:1180px;margin:18px auto;padding:0 14px}
+    .wrap{max-width:1240px;margin:18px auto;padding:0 14px}
     .card{
-      background:#fff;border:1px solid rgba(232,214,200,.9);
-      border-radius:var(--radius);
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:var(--r14);
       box-shadow:var(--shadow);
       overflow:hidden;
     }
     .card-h{
       padding:14px 16px;
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
       border-bottom:1px solid rgba(232,214,200,.65);
       background:linear-gradient(180deg,#fff, #fffaf6);
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      flex-wrap:wrap;
     }
     .card-h h2{margin:0;font-size:16px}
-    .card-h .sub{font-size:12px;color:var(--muted)}
+    .card-h .sub{margin-top:4px;font-size:12px;color:var(--muted)}
     .card-b{padding:14px 16px}
-
-    .row{
-      display:flex;gap:10px;flex-wrap:wrap;align-items:center;
-    }
-    .grow{flex:1}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .btn{
-      border:1px solid var(--beige);
+      border:1px solid var(--line);
       background:#fff;
       color:var(--brown);
       border-radius:12px;
       padding:10px 14px;
-      font-weight:800;
+      font-weight:900;
       cursor:pointer;
-      transition:.2s;
-      display:inline-flex;align-items:center;gap:8px;
+      display:inline-flex; align-items:center; gap:8px;
+      transition:.15s ease;
+      user-select:none;
     }
     .btn:hover{background:#faf2ec}
-    .btn.primary{
-      background:var(--brown);color:#fff;border-color:var(--brown);
-    }
+    .btn.primary{background:var(--brown);color:#fff;border-color:var(--brown)}
     .btn.primary:hover{filter:brightness(1.05)}
-    .btn.danger{
-      background:#fff;color:var(--bad);border-color:#fecaca;
-    }
-    .btn.success{
-      background:var(--ok);color:#fff;border-color:var(--ok);
-    }
-    .btn.muted{
-      background:#f8fafc;color:#111;border-color:#e5e7eb;
-    }
+    .btn.success{background:var(--ok);color:#fff;border-color:var(--ok)}
+    .btn.danger{background:#fff;color:var(--bad);border-color:#fecaca}
+    .btn.muted{background:#f8fafc;color:#111;border-color:#e5e7eb}
     .btn:disabled{opacity:.55;cursor:not-allowed}
-
-    .input, .select{
+    .input,.select,.textarea{
       width:100%;
       padding:10px 12px;
       border:1px solid #e5e7eb;
       border-radius:12px;
+      background:#fff;
       outline:none;
       font-size:13px;
-      background:#fff;
+      font-family:inherit;
     }
-    .input:focus,.select:focus{border-color:#d9b9a4;box-shadow:0 0 0 3px rgba(232,214,200,.45)}
-    .help{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.5}
-
-    /* Table */
-    .table-wrap{overflow:auto;border:1px solid rgba(232,214,200,.65);border-radius:12px}
-    table{width:100%;border-collapse:separate;border-spacing:0;min-width:980px}
+    .textarea{min-height:84px;resize:vertical}
+    .input:focus,.select:focus,.textarea:focus{
+      border-color:#d9b9a4;
+      box-shadow:0 0 0 3px rgba(232,214,200,.45);
+    }
+    .help{font-size:12px;color:var(--muted);line-height:1.55}
+    .table-wrap{
+      overflow:auto;
+      border:1px solid rgba(232,214,200,.65);
+      border-radius:12px;
+    }
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:1150px}
     thead th{
-      position:sticky;top:0;background:#fffaf6;
+      position:sticky; top:0; z-index:2;
+      background:#fffaf6;
       border-bottom:1px solid rgba(232,214,200,.65);
-      padding:12px 10px;font-size:12px;color:#4b5563;
+      padding:12px 10px;
+      font-size:12px;
+      color:#4b5563;
       text-align:center;
-      z-index:2;
+      white-space:nowrap;
     }
     tbody td{
       border-bottom:1px solid #f1f5f9;
@@ -160,43 +162,58 @@
     }
     tbody tr:hover td{background:#fffdfb}
     .td-left{text-align:right}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
     .badge{
-      display:inline-flex;align-items:center;gap:6px;
-      padding:6px 10px;border-radius:999px;
-      font-size:12px;font-weight:800;
+      display:inline-flex; align-items:center; gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
       border:1px solid rgba(232,214,200,.75);
       background:#fff;
       color:var(--brown);
+      font-size:12px;
+      font-weight:900;
       white-space:nowrap;
     }
-    .badge.move{background:#fff; border-color:#d9b9a4}
-    .badge.shoot{background:#fff; border-color:#d9b9a4}
-    .small{font-size:12px;color:var(--muted)}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
-
-    /* Progress */
-    .pwrap{display:flex;flex-direction:column;gap:8px}
-    .pbar{
-      height:10px;background:#f1f5f9;border-radius:999px;
-      overflow:hidden;border:1px solid #e5e7eb;
+    .pillStage{
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:92px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid #e5e7eb;
+      background:#fff;
+      font-size:12px;
+      font-weight:900;
+      color:#111;
+      white-space:nowrap;
     }
-    .pbar > div{
+    .pillStage.s0{border-color:#e5e7eb;color:#6b7280}
+    .pillStage.s1{border-color:#fde68a;color:#92400e;background:#fffbeb}
+    .pillStage.s2{border-color:#fdba74;color:#9a3412;background:#fff7ed}
+    .pillStage.s3{border-color:#bbf7d0;color:#166534;background:#f0fdf4}
+    .pillStage.s4{border-color:#86efac;color:#14532d;background:#ecfdf5}
+    .pwrap{display:flex;flex-direction:column;gap:8px}
+    .pmeta{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px;flex-wrap:wrap}
+    .pbar{
+      height:10px;background:#f1f5f9;border-radius:999px;overflow:hidden;
+      border:1px solid #e5e7eb;
+    }
+    .pbar>div{
       height:100%;width:0%;
       background:linear-gradient(90deg,var(--brown),#6b3d36);
-      transition:width .2s ease;
+      transition:width .15s ease;
     }
-    .pmeta{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px}
 
     /* Modal */
-    .modal-backdrop{
-      position:fixed;inset:0;background:rgba(0,0,0,.35);
+    .backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.38);
       display:none;align-items:center;justify-content:center;
-      padding:16px;z-index:50;
+      padding:16px;z-index:60;
     }
     .modal{
-      width:min(980px, 100%);
-      max-height:90vh;
-      background:#fff;border-radius:18px;
+      width:min(1050px, 100%);
+      max-height:92vh;
+      background:#fff;
+      border-radius:var(--r18);
       box-shadow:0 30px 80px rgba(0,0,0,.25);
       overflow:hidden;
       display:flex;flex-direction:column;
@@ -204,20 +221,24 @@
     .modal-h{
       padding:14px 16px;
       border-bottom:1px solid rgba(232,214,200,.7);
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
       background:linear-gradient(180deg,#fff, #fffaf6);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
     }
-    .modal-h .title{font-weight:900}
+    .modal-h .title{font-weight:1000}
     .modal-h .meta{font-size:12px;color:var(--muted)}
     .modal-b{padding:14px 16px;overflow:auto}
     .modal-f{
-      padding:12px 16px;border-top:1px solid rgba(232,214,200,.7);
-      display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+      padding:12px 16px;
+      border-top:1px solid rgba(232,214,200,.7);
+      display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;
       background:#fff;
     }
-    .actionbar{
-      display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .noteBox{
+      width:min(380px, 100%);
+      display:flex;flex-direction:column;gap:8px;
     }
+    .hint{font-size:12px;color:var(--muted);line-height:1.55}
 
     .toast{
       position:fixed;left:16px;bottom:16px;
@@ -229,151 +250,185 @@
       font-size:13px;line-height:1.5;
     }
     .toast.show{display:block}
-    .toast .t-title{font-weight:900;margin-bottom:4px}
+    .toast .t-title{font-weight:1000;margin-bottom:4px}
     .toast .t-sub{opacity:.9}
 
-    @media (max-width:720px){
-      table{min-width:860px}
-      .tab{padding:9px 12px}
+    @media (max-width:760px){
+      table{min-width:1050px}
       .brand h1{font-size:14px}
+      .tab{padding:9px 12px}
     }
   </style>
 </head>
 
 <body>
-
   <div class="topbar">
     <div class="brand">
       <div class="logo">MZJ</div>
       <div>
         <h1>محمد بن ذعار العجمي للسيارات</h1>
-        <p>Workspace — إدارة الطلبات</p>
+        <p>طلبات نقل / تصوير — Workspace</p>
       </div>
     </div>
 
     <div class="tabs">
-      <div id="tabCreate" class="tab active">طلب جديد</div>
-      <div id="tabManage" class="tab">إدارة الطلبات</div>
+      <div class="tab active" id="tabManage">إدارة الطلبات</div>
+      <div class="tab" id="tabCreate">إنشاء طلب</div>
+      <div class="tab" id="tabDone">الطلبات المكتملة</div>
     </div>
 
-    <div class="pillbar">
+    <div class="statusbar">
       <div class="pill"><span class="dot warn" id="connDot"></span><span id="connTxt">جارٍ الاتصال…</span></div>
       <div class="pill"><span>الدور:</span><strong id="roleTxt">—</strong></div>
-      <div class="pill"><span>الأماكن:</span><strong id="locTxt">—</strong></div>
-      <div class="pill"><span>Project:</span><strong id="projTxt">—</strong></div>
+      <div class="pill"><span>المكان:</span><strong id="myLocTxt">—</strong></div>
     </div>
   </div>
 
   <div class="wrap">
-    <!-- CREATE -->
-    <div id="viewCreate" class="card">
-      <div class="card-h">
-        <div>
-          <h2>إنشاء طلب سريع</h2>
-          <div class="sub">اكتب VIN واضغط Enter — البيانات تظهر تلقائيًا</div>
-        </div>
-        <div class="row">
-          <button id="btnClearDraft" class="btn muted">تفريغ</button>
-          <button id="btnSubmitDraft" class="btn primary">إرسال الطلب</button>
-        </div>
-      </div>
-
-      <div class="card-b">
-        <div class="row" style="gap:12px">
-          <div style="min-width:260px">
-            <input id="vinQuick" class="input mono" placeholder="اكتب رقم الهيكل VIN ثم Enter" />
-            <div class="help">
-              • يمنع إنشاء طلب لهيكل خارج أماكن المستخدم (إلا Admin).<br>
-              • تقدر تضيف أكثر من VIN في نفس الطلب.
-            </div>
-          </div>
-
-          <div class="grow">
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th style="width:54px">#</th>
-                    <th style="width:150px">نوع الطلب</th>
-                    <th style="width:140px">VIN</th>
-                    <th>السيارة</th>
-                    <th>البيان</th>
-                    <th style="width:220px">من</th>
-                    <th style="width:220px">إلى / مكان التصوير</th>
-                    <th style="width:120px">حذف</th>
-                  </tr>
-                </thead>
-                <tbody id="draftTbody">
-                  <!-- rows -->
-                </tbody>
-              </table>
-            </div>
-            <div class="help">
-              المصدر الأساسي للمكان: <span class="mono">inventory/{VIN}</span> — داخل الطلب نخزن: <span class="mono">vins: [{vin, fromLocation, toLocation, kind}]</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- MANAGE -->
-    <div id="viewManage" class="card" style="display:none;margin-top:16px">
+    <section class="card" id="viewManage">
       <div class="card-h">
         <div>
           <h2>إدارة الطلبات</h2>
-          <div class="sub">تحديث لحظي — بدون Refresh</div>
+          <div class="sub">الأحدث أول — تحديث لحظي</div>
         </div>
         <div class="row">
-          <select id="filterKind" class="select" style="width:220px">
+          <select class="select" id="filterKind" style="width:210px">
             <option value="all">الكل</option>
-            <option value="move">طلبات نقل</option>
-            <option value="shoot">طلبات تصوير</option>
+            <option value="move">طلب نقل</option>
+            <option value="shoot">طلب تصوير</option>
           </select>
-          <input id="searchTxt" class="input" style="width:260px" placeholder="بحث برقم الطلب أو VIN" />
-          <button id="btnReload" class="btn">تحديث</button>
+          <input class="input" id="searchBox" style="width:260px" placeholder="بحث برقم الطلب أو VIN"/>
+          <button class="btn" id="btnReload">تحديث</button>
         </div>
       </div>
-
       <div class="card-b">
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th style="width:90px">رقم</th>
-                <th style="width:120px">نوع</th>
+                <th style="width:120px">رقم الطلب</th>
+                <th style="width:130px">النوع</th>
                 <th>VINs</th>
-                <th style="width:160px">المنشئ</th>
-                <th style="width:160px">التاريخ</th>
-                <th style="width:220px">التقدم</th>
+                <th style="width:170px">مقدم الطلب</th>
+                <th style="width:170px">التاريخ</th>
+                <th style="width:230px">Progress</th>
                 <th style="width:140px">فتح</th>
               </tr>
             </thead>
-            <tbody id="reqTbody">
-              <tr><td colspan="7" class="small">جارٍ التحميل…</td></tr>
+            <tbody id="manageTbody">
+              <tr><td colspan="7" class="help">جارٍ التحميل…</td></tr>
             </tbody>
           </table>
         </div>
       </div>
-    </div>
+    </section>
+
+    <!-- CREATE -->
+    <section class="card" id="viewCreate" style="display:none;margin-top:16px">
+      <div class="card-h">
+        <div>
+          <h2>إنشاء طلب</h2>
+          <div class="sub">الحد الأقصى 8 أرقام هياكل — كتابة VIN تعبّي البيانات تلقائيًا</div>
+        </div>
+        <div class="row">
+          <select class="select" id="createKind" style="width:220px">
+            <option value="move">طلب نقل</option>
+            <option value="shoot">طلب تصوير</option>
+          </select>
+          <button class="btn muted" id="btnClearDraft">تفريغ</button>
+          <button class="btn primary" id="btnSubmitDraft">إرسال الطلب</button>
+        </div>
+      </div>
+
+      <div class="card-b">
+        <div class="help" style="margin-bottom:10px">
+          • اكتب VIN في أي صف — يتم سحب بيانات السيارة من <span class="mono">inventory/{VIN}</span>.<br/>
+          • مكان التصوير/النقل: قائمة ثابتة (معرض الملتقى / الاستديو / الصالة الأساسية / صالة القادسية).<br/>
+          • لا يمكن إنشاء طلب لهيكل خارج مكان المستخدم (إلا Admin).
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:54px">#</th>
+                <th style="width:160px">رقم الهيكل VIN</th>
+                <th>السيارة</th>
+                <th>البيان</th>
+                <th style="width:120px">الخارجي</th>
+                <th style="width:120px">الداخلي</th>
+                <th style="width:90px">الموديل</th>
+                <th style="width:210px">مكان السيارة</th>
+                <th style="width:210px" id="toColTitle">مكان النقل</th>
+                <th style="width:170px">ملاحظة</th>
+                <th style="width:90px">حذف</th>
+              </tr>
+            </thead>
+            <tbody id="draftTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- DONE -->
+    <section class="card" id="viewDone" style="display:none;margin-top:16px">
+      <div class="card-h">
+        <div>
+          <h2>الطلبات المكتملة</h2>
+          <div class="sub">تُعرض تلقائيًا بعد اكتمال كل VIN</div>
+        </div>
+        <div class="row">
+          <select class="select" id="filterDoneKind" style="width:210px">
+            <option value="all">الكل</option>
+            <option value="move">طلب نقل</option>
+            <option value="shoot">طلب تصوير</option>
+          </select>
+          <input class="input" id="searchDoneBox" style="width:260px" placeholder="بحث برقم الطلب أو VIN"/>
+          <button class="btn" id="btnReloadDone">تحديث</button>
+        </div>
+      </div>
+      <div class="card-b">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:120px">رقم الطلب</th>
+                <th style="width:130px">النوع</th>
+                <th>VINs</th>
+                <th style="width:170px">مقدم الطلب</th>
+                <th style="width:170px">تاريخ الإكمال</th>
+                <th style="width:140px">فتح</th>
+              </tr>
+            </thead>
+            <tbody id="doneTbody">
+              <tr><td colspan="6" class="help">جارٍ التحميل…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
 
   </div>
 
   <!-- MODAL -->
-  <div id="modalBackdrop" class="modal-backdrop" aria-hidden="true">
+  <div class="backdrop" id="modalBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true">
       <div class="modal-h">
         <div>
           <div class="title" id="mTitle">تفاصيل الطلب</div>
           <div class="meta" id="mMeta">—</div>
         </div>
-        <button id="mClose" class="btn">إغلاق</button>
+        <div class="row">
+          <button class="btn" id="mClose">إغلاق</button>
+        </div>
       </div>
 
       <div class="modal-b">
         <div class="pwrap">
           <div class="pmeta">
             <div><strong>Progress عام</strong> — <span id="mProgTxt">0%</span></div>
-            <div class="small" id="mProgNote">—</div>
+            <div class="help" id="mProgHint">—</div>
           </div>
           <div class="pbar"><div id="mProgBar"></div></div>
         </div>
@@ -381,16 +436,16 @@
         <div style="height:12px"></div>
 
         <div class="table-wrap">
-          <table style="min-width:920px">
+          <table style="min-width:1020px">
             <thead>
               <tr>
                 <th style="width:54px">#</th>
-                <th style="width:140px">VIN</th>
+                <th style="width:150px">VIN</th>
                 <th>السيارة</th>
-                <th style="width:240px">من</th>
-                <th style="width:240px">إلى / تصوير</th>
-                <th style="width:120px">المرحلة</th>
-                <th style="width:160px">آخر تحديث</th>
+                <th style="width:220px">مكان السيارة</th>
+                <th style="width:220px">الوجهة</th>
+                <th style="width:140px">المرحلة</th>
+                <th style="width:200px">ملاحظات المرحلة</th>
               </tr>
             </thead>
             <tbody id="mRows"></tbody>
@@ -407,27 +462,31 @@
             </div>
           </div>
           <div class="card-b">
-            <div id="mLog" class="small">—</div>
+            <div id="mLog" class="help">—</div>
           </div>
         </div>
       </div>
 
       <div class="modal-f">
-        <div class="actionbar">
-          <button id="btnEdit" class="btn">تعديل الطلب</button>
+        <div class="actions">
+          <button class="btn" id="btnEdit">تعديل الطلب</button>
 
-          <button id="btnStep1" class="btn">1 تم استلام الطلب</button>
-          <button id="btnStep2" class="btn">2 تم إرسال السيارة</button>
-          <button id="btnStep3" class="btn">3 تم استلام السيارة</button>
-
-          <button id="btnStep4" class="btn success">4 تم الانتهاء</button>
+          <button class="btn" id="btnStep1">1 تم استلام الطلب</button>
+          <button class="btn" id="btnStep2">2 تم إرسال السيارة</button>
+          <button class="btn" id="btnStep3">3 تم استلام السيارة</button>
+          <button class="btn success" id="btnStep4">4 تم الانتهاء</button>
         </div>
-        <div class="small" id="mPermHint">—</div>
+
+        <div class="noteBox">
+          <div class="hint"><strong>ملاحظة المرحلة</strong> (تُحفظ على كل VIN للمرحلة اللي هتنفّذها)</div>
+          <textarea class="textarea" id="stepNote" placeholder="اكتب ملاحظة (اختياري)"></textarea>
+          <div class="hint" id="permHint">—</div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div id="toast" class="toast">
+  <div class="toast" id="toast">
     <div class="t-title" id="toastTitle">—</div>
     <div class="t-sub" id="toastSub">—</div>
   </div>
@@ -438,9 +497,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
   <script>
-    /* =========================
-       CONFIG
-    ========================= */
+    /* =======================
+       Firebase Config
+    ======================= */
     const firebaseConfig = {
       apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
       authDomain: "mzj-agenda.firebaseapp.com",
@@ -449,815 +508,844 @@
       messagingSenderId: "834700407721",
       appId: "1:834700407721:web:75c17665d4f032fd65cab8"
     };
-
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
     const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp;
 
-    // Optional: persistence
+    // Persist auth session
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
-    /* =========================
-       DOM
-    ========================= */
-    const el = (id)=>document.getElementById(id);
-
-    const viewCreate = el("viewCreate");
-    const viewManage = el("viewManage");
-    const tabCreate = el("tabCreate");
-    const tabManage = el("tabManage");
-
-    const connDot = el("connDot");
-    const connTxt = el("connTxt");
-    const roleTxt = el("roleTxt");
-    const locTxt = el("locTxt");
-    const projTxt = el("projTxt");
-
-    const vinQuick = el("vinQuick");
-    const draftTbody = el("draftTbody");
-    const btnClearDraft = el("btnClearDraft");
-    const btnSubmitDraft = el("btnSubmitDraft");
-
-    const filterKind = el("filterKind");
-    const searchTxt = el("searchTxt");
-    const btnReload = el("btnReload");
-    const reqTbody = el("reqTbody");
-
-    const modalBackdrop = el("modalBackdrop");
-    const mClose = el("mClose");
-    const mTitle = el("mTitle");
-    const mMeta = el("mMeta");
-    const mRows = el("mRows");
-    const mLog = el("mLog");
-    const mProgBar = el("mProgBar");
-    const mProgTxt = el("mProgTxt");
-    const mProgNote = el("mProgNote");
-    const mPermHint = el("mPermHint");
-
-    const btnEdit = el("btnEdit");
-    const btnStep1 = el("btnStep1");
-    const btnStep2 = el("btnStep2");
-    const btnStep3 = el("btnStep3");
-    const btnStep4 = el("btnStep4");
-
-    const toast = el("toast");
-    const toastTitle = el("toastTitle");
-    const toastSub = el("toastSub");
-
-    projTxt.textContent = firebaseConfig.projectId || "—";
-
-    /* =========================
-       STATE
-    ========================= */
-    let currentUser = null;
-    let userProfile = null;
-    let isAdmin = false;
-    let userLocations = [];
-
-    // draft rows
-    let draftRows = []; // [{vin, kind, fromLocation, toLocation, carName, statement, ok, error}]
-
-    // requests live
-    let unsubRequests = null;
-    let unsubModal = null;
-    let currentModalReqId = null;
-    let currentModalReq = null;
-
-    /* =========================
-       UI helpers
-    ========================= */
-    function showToast(title, sub){
-      toastTitle.textContent = title;
-      toastSub.textContent = sub || "";
-      toast.classList.add("show");
-      setTimeout(()=>toast.classList.remove("show"), 2600);
-    }
-
-    function fmtDate(ts){
+    /* =======================
+       DOM helpers
+    ======================= */
+    const $ = (id)=>document.getElementById(id);
+    const toastEl = $("toast");
+    const toastTitle = $("toastTitle");
+    const toastSub = $("toastSub");
+    const showToast = (t,s="")=>{
+      toastTitle.textContent=t; toastSub.textContent=s;
+      toastEl.classList.add("show");
+      setTimeout(()=>toastEl.classList.remove("show"), 2600);
+    };
+    const escapeHtml = (s)=> (s??"").toString()
+      .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;").replaceAll("'","&#039;");
+    const fmtDate = (ts)=>{
       try{
         if(!ts) return "—";
         const d = ts.toDate ? ts.toDate() : new Date(ts);
         return d.toLocaleString("ar-SA");
-      }catch{ return "—"; }
+      }catch{return "—";}
+    };
+
+    /* =======================
+       Tabs
+    ======================= */
+    const tabManage = $("tabManage");
+    const tabCreate = $("tabCreate");
+    const tabDone = $("tabDone");
+    const viewManage = $("viewManage");
+    const viewCreate = $("viewCreate");
+    const viewDone = $("viewDone");
+
+    function setTab(which){
+      tabManage.classList.toggle("active", which==="manage");
+      tabCreate.classList.toggle("active", which==="create");
+      tabDone.classList.toggle("active", which==="done");
+      viewManage.style.display = which==="manage" ? "" : "none";
+      viewCreate.style.display = which==="create" ? "" : "none";
+      viewDone.style.display = which==="done" ? "" : "none";
     }
+    tabManage.addEventListener("click", ()=>setTab("manage"));
+    tabCreate.addEventListener("click", ()=>setTab("create"));
+    tabDone.addEventListener("click", ()=>setTab("done"));
 
-    function safeStr(x){ return (x ?? "").toString(); }
+    // Default: open manage
+    setTab("manage");
 
-    function openTab(which){
-      const isCreate = which==="create";
-      tabCreate.classList.toggle("active", isCreate);
-      tabManage.classList.toggle("active", !isCreate);
-      viewCreate.style.display = isCreate ? "" : "none";
-      viewManage.style.display = isCreate ? "none" : "";
-      if(!isCreate) startRequestsListener();
-    }
+    /* =======================
+       User & permissions
+    ======================= */
+    const connDot = $("connDot");
+    const connTxt = $("connTxt");
+    const roleTxt = $("roleTxt");
+    const myLocTxt = $("myLocTxt");
 
-    tabCreate.addEventListener("click", ()=>openTab("create"));
-    tabManage.addEventListener("click", ()=>openTab("manage"));
-
-    /* =========================
-       PROFILE LOADER (GLOBAL)
-       - supports user/{uid} OR query by email in 'user'
-    ========================= */
-    async function loadUserProfile(user){
-      const email = (user?.email || "").toLowerCase().trim();
-      const uid = user?.uid || "";
-
-      // 1) user/{uid}
-      if(uid){
-        const s1 = await db.collection("user").doc(uid).get().catch(()=>null);
-        if(s1 && s1.exists) return {id:s1.id, ...s1.data()};
-        const s2 = await db.collection("users").doc(uid).get().catch(()=>null);
-        if(s2 && s2.exists) return {id:s2.id, ...s2.data()};
-      }
-
-      // 2) query by email
-      if(email){
-        const q1 = await db.collection("user").where("email","==",email).limit(1).get().catch(()=>null);
-        if(q1 && !q1.empty){ const d=q1.docs[0]; return {id:d.id, ...d.data()}; }
-        const q2 = await db.collection("users").where("email","==",email).limit(1).get().catch(()=>null);
-        if(q2 && !q2.empty){ const d=q2.docs[0]; return {id:d.id, ...d.data()}; }
-      }
-
-      return null;
-    }
-
-    function setConn(status, txt){
+    function setConn(state, txt){
       connDot.classList.remove("ok","warn","bad");
-      connDot.classList.add(status);
+      connDot.classList.add(state);
       connTxt.textContent = txt;
     }
 
-    /* =========================
-       AUTH
-    ========================= */
-    auth.onAuthStateChanged(async (u)=>{
-      currentUser = u || null;
-      if(!currentUser){
-        setConn("bad","غير مسجل");
-        roleTxt.textContent="—";
-        locTxt.textContent="—";
-        showToast("غير مسجل", "افتح الصفحة من نفس الدومين اللي بتسجّل عليه دخول.");
-        return;
+    // Fallback mapping (in case user profile collection not ready)
+    const ADMIN_EMAILS = new Set([
+      "mr_ahmed_rashed@outlook.sa",
+      "mr_ahmed_rashed@outlook.com",
+      "ahmedrashed90@gmail.com"
+    ]);
+    const STAFF_MAP = {
+      "aldynmtwlys@gmail.com": { role:"اداري", location:"الصالة الاساسية" },
+      "alaasamak100@gmail.com": { role:"اداري", location:"صالة القادسية" },
+      "kamelashraf948@gmail.com": { role:"اداري", location:"معرض الملتقى" },
+      "mohammed.ezat1989@gmail.com": { role:"اداري", location:"الاستديو" }
+    };
+
+    const LOCATIONS = ["معرض الملتقى","الاستديو","الصالة الاساسية","صالة القادسية"];
+
+    let currentUser = null;
+    let userProfile = null;
+    let isAdmin = false;
+    let myLocation = "";
+
+    async function loadUserProfile(user){
+      // Try Firestore: users/{uid} OR user/{uid} OR query by email.
+      const email = (user?.email||"").toLowerCase().trim();
+      const uid = user?.uid || "";
+      const tryDoc = async (col, id)=>{
+        try{
+          const s = await db.collection(col).doc(id).get();
+          if(s.exists) return {id:s.id, ...s.data()};
+        }catch(e){}
+        return null;
+      };
+      const tryEmailQuery = async (col)=>{
+        try{
+          const q = await db.collection(col).where("email","==",email).limit(1).get();
+          if(!q.empty){ const d=q.docs[0]; return {id:d.id, ...d.data()}; }
+        }catch(e){}
+        return null;
+      };
+
+      let p = null;
+      if(uid) p = await tryDoc("users", uid) || await tryDoc("user", uid);
+      if(!p && email) p = await tryEmailQuery("users") || await tryEmailQuery("user");
+
+      // Fallback by mapping
+      if(!p){
+        if(ADMIN_EMAILS.has(email)){
+          p = { role:"admin", location:"", locations: LOCATIONS };
+        } else if(STAFF_MAP[email]){
+          p = { role:"اداري", location: STAFF_MAP[email].location, locations:[STAFF_MAP[email].location] };
+        } else {
+          // default minimal (no permissions)
+          p = { role:"اداري", location:"", locations:[] };
+        }
       }
-
-      setConn("warn","جارٍ تحميل البروفايل…");
-      userProfile = await loadUserProfile(currentUser);
-
-      if(!userProfile){
-        // fallback minimal as admin if your rules allow
-        userProfile = { role:"admin", locations:[] };
-      }
-
-      const role = (userProfile.role || "").toString().trim();
-      userLocations = Array.isArray(userProfile.locations) ? userProfile.locations : [];
-
-      // Admin detection:
-      // - role === "admin" OR email includes 'admin' OR specific list
-      const email = (currentUser.email || "").toLowerCase();
-      const adminEmails = [
-        "mr.ahmed_rashed@outlook.sa",
-        "mr_ahmed_rashed@outlook.sa"
-      ];
-      isAdmin = role === "admin" || adminEmails.includes(email);
-
-      roleTxt.textContent = role || (isAdmin ? "admin" : "—");
-      locTxt.textContent = isAdmin ? "كل الأماكن" : (userLocations.length ? (userLocations.length + " مكان") : "0");
-
-      setConn("ok","مسجل");
-      // default to manage if you want:
-      openTab("create");
-    });
-
-    /* =========================
-       LOCATION permission helpers
-    ========================= */
-    function canTouchLocation(locationName){
-      if(isAdmin) return true;
-      if(!locationName) return false;
-      return userLocations.includes(locationName);
+      return p;
     }
 
-    // For a request: if user can act on any VIN line whose from/to matches his locations.
-    function canActOnReq(req){
+    function canTouchLocation(loc){
       if(isAdmin) return true;
-      if(!req || !Array.isArray(req.vins)) return false;
-      // allow if any line belongs to his scope
-      return req.vins.some(v => canTouchLocation(v.fromLocation) || canTouchLocation(v.toLocation));
+      if(!loc) return false;
+      return loc === myLocation;
     }
 
-    // For step:
-    // step1 "استلام الطلب": مسؤول عن "toLocation" (الجهة المستلمة) + admin
-    // step2 "ارسال السيارة": مسؤول عن "fromLocation" (الجهة المرسلة) + admin
-    // step3 "استلام السيارة": مسؤول عن "toLocation" + admin
-    // step4 "انهاء": منشئ الطلب فقط (أو admin)
+    function isCreator(req){
+      const my = (currentUser?.email||"").toLowerCase();
+      const cr = (req?.createdByEmail||"").toLowerCase();
+      return !!my && !!cr && my===cr;
+    }
+
+    // Step permissions:
+    // step1 + step2 => مسؤول عن مكان السيارة (fromLocation)
+    // step3 => مسؤول عن الوجهة (toLocation)
+    // step4 => مقدم الطلب (creator) فقط (Admin مسموح)
     function canDoStep(req, step){
       if(!req) return false;
       if(isAdmin) return true;
-
-      const myEmail = (currentUser?.email || "").toLowerCase();
-      const createdByEmail = (req.createdByEmail || "").toLowerCase();
-
-      if(step === 4){
-        return myEmail && createdByEmail && myEmail === createdByEmail;
+      if(step===4) return isCreator(req);
+      const vins = Array.isArray(req.vins) ? req.vins : [];
+      if(step===1 || step===2){
+        return vins.some(v => canTouchLocation(v.fromLocation));
       }
-
-      const lines = Array.isArray(req.vins) ? req.vins : [];
-      if(step === 1 || step === 3){
-        return lines.some(l => canTouchLocation(l.toLocation));
-      }
-      if(step === 2){
-        return lines.some(l => canTouchLocation(l.fromLocation));
+      if(step===3){
+        return vins.some(v => canTouchLocation(v.toLocation));
       }
       return false;
     }
 
-    /* =========================
-       Draft UI (Create)
-    ========================= */
+    function isPristine(req){
+      const per = req?.progress?.perVin || {};
+      return Object.values(per).every(x => (x||0)===0);
+    }
+
+    /* =======================
+       Create (draft) table
+    ======================= */
+    const createKind = $("createKind");
+    const toColTitle = $("toColTitle");
+    const draftTbody = $("draftTbody");
+    const btnClearDraft = $("btnClearDraft");
+    const btnSubmitDraft = $("btnSubmitDraft");
+
+    function makeEmptyRow(i){
+      return {
+        idx:i,
+        vin:"",
+        car:"—",
+        statement:"—",
+        ext:"—",
+        int:"—",
+        model:"—",
+        fromLocation:"—",
+        toLocation:"",
+        note:"",
+        ok:false,
+        err:""
+      };
+    }
+
+    let draftRows = Array.from({length:8}, (_,i)=>makeEmptyRow(i+1));
+
+    function updateToTitle(){
+      const k = createKind.value;
+      toColTitle.textContent = k==="shoot" ? "مكان التصوير" : "مكان النقل";
+    }
+    updateToTitle();
+    createKind.addEventListener("change", ()=>{
+      updateToTitle();
+      renderDraft();
+    });
+
+    function validateRow(r){
+      r.err = "";
+      r.ok = false;
+      if(!r.vin) { r.err=""; return; }
+      if(r.fromLocation === "—" || !r.fromLocation){ r.err="VIN غير محمّل"; return; }
+      if(!r.toLocation) { r.err = (createKind.value==="shoot" ? "اختر مكان التصوير" : "اختر مكان النقل"); return; }
+      if(createKind.value==="move" && r.toLocation === r.fromLocation){ r.err="لا يمكن النقل لنفس المكان"; return; }
+      r.ok = true;
+    }
+
     function renderDraft(){
-      if(!draftRows.length){
-        draftTbody.innerHTML = `
-          <tr>
-            <td colspan="8" class="small">اكتب VIN واضغط Enter لإضافة سطر.</td>
-          </tr>
-        `;
-        return;
-      }
-
-      draftTbody.innerHTML = draftRows.map((r, idx)=>{
-        const err = r.error ? `<div class="small" style="color:var(--bad);margin-top:6px">${r.error}</div>` : "";
-        const okBadge = r.ok ? `<div class="small" style="color:var(--ok);margin-top:6px">جاهز</div>` : "";
-        const car = safeStr(r.carName) || "—";
-        const st = safeStr(r.statement) || "—";
-        const from = safeStr(r.fromLocation) || "—";
-        const to = safeStr(r.toLocation) || "—";
-
+      draftRows.forEach(validateRow);
+      draftTbody.innerHTML = draftRows.map((r, i)=>{
+        const k = createKind.value;
+        const selectOptions = LOCATIONS.map(loc=>`<option value="${escapeHtml(loc)}" ${loc===r.toLocation?"selected":""}>${escapeHtml(loc)}</option>`).join("");
+        const err = r.err ? `<div class="help" style="color:var(--bad);margin-top:6px">${escapeHtml(r.err)}</div>` : (r.ok ? `<div class="help" style="color:var(--ok);margin-top:6px">جاهز</div>` : "");
         return `
           <tr>
-            <td>${idx+1}</td>
+            <td>${i+1}</td>
             <td>
-              <select class="select" data-k="kind" data-i="${idx}">
-                <option value="move" ${r.kind==="move"?"selected":""}>نقل</option>
-                <option value="shoot" ${r.kind==="shoot"?"selected":""}>تصوير</option>
+              <input class="input mono" data-k="vin" data-i="${i}" placeholder="VIN"
+                     value="${escapeHtml(r.vin)}"/>
+              ${err}
+            </td>
+            <td class="td-left">${escapeHtml(r.car || "—")}</td>
+            <td class="td-left">${escapeHtml(r.statement || "—")}</td>
+            <td>${escapeHtml(r.ext || "—")}</td>
+            <td>${escapeHtml(r.int || "—")}</td>
+            <td class="mono">${escapeHtml(r.model || "—")}</td>
+            <td><span class="badge">${escapeHtml(r.fromLocation || "—")}</span></td>
+            <td>
+              <select class="select" data-k="to" data-i="${i}">
+                <option value="">${k==="shoot"?"اختر مكان التصوير":"اختر مكان النقل"}</option>
+                ${selectOptions}
               </select>
             </td>
-            <td class="mono">${safeStr(r.vin)}</td>
-            <td class="td-left">${car}</td>
-            <td class="td-left">${st}</td>
-            <td class="td-left"><span class="badge">${from}</span></td>
             <td>
-              <select class="select" data-k="to" data-i="${idx}">
-                ${buildToOptions(r).map(o=>`<option value="${escapeHtml(o)}" ${o===r.toLocation?"selected":""}>${escapeHtml(o)}</option>`).join("")}
-              </select>
-              ${err || okBadge}
+              <input class="input" data-k="note" data-i="${i}" placeholder="اختياري" value="${escapeHtml(r.note||"")}"/>
             </td>
             <td>
-              <button class="btn danger" data-k="del" data-i="${idx}">حذف</button>
+              <button class="btn danger" data-k="del" data-i="${i}">حذف</button>
             </td>
           </tr>
         `;
       }).join("");
     }
 
-    function escapeHtml(s){
-      return (s||"").toString()
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
+    async function fetchInventory(vin){
+      const s = await db.collection("inventory").doc(vin).get();
+      if(!s.exists) return null;
+      return s.data() || {};
     }
 
-    function buildToOptions(row){
-      // You told: places fixed (list in user.locations and general locations list)
-      // We'll offer userLocations + known hubs. Admin can see all.
-      const base = [
-        "الاستديو",
-        "الصالة الاساسية",
-        "صالة القادسية",
-        "معرض الملتقى",
-        "المستودع : المخزون المتاح",
-        "المستودع : سيارات بها ملاحظات",
-        "المستودع : مباع تحت التسليم",
-        "المستودع : مباع تم التسليم",
-        "فرع 1 الصالة : المخزون المتاح",
-        "فرع 1 الصالة : سيارات بها ملاحظات",
-        "فرع 1 الصالة : مباع تحت التسليم",
-        "فرع 1 الصالة : مباع تم التسليم",
-        "فرع 2 الملتقى : المخزون المتاح",
-        "فرع 2 الملتقى : سيارات بها ملاحظات",
-        "فرع 2 الملتقى : مباع تحت التسليم",
-        "فرع 2 الملتقى : مباع تم التسليم",
-        "فرع 3 القادسية : المخزون المتاح",
-        "فرع 3 القادسية : سيارات بها ملاحظات",
-        "فرع 3 القادسية : مباع تحت التسليم",
-        "فرع 3 القادسية : مباع تم التسليم"
-      ];
-
-      const opts = new Set(base);
-
-      // include user's locations first
-      if(Array.isArray(userLocations)) userLocations.forEach(l=>opts.add(l));
-
-      // for move: prefer branch buckets; for shoot: prefer "الاستديو"
-      const arr = Array.from(opts).filter(Boolean);
-
-      // Put row.fromLocation as first hint
-      const ordered = [];
-      if(row.kind==="shoot"){
-        if(arr.includes("الاستديو")) ordered.push("الاستديو");
-      }
-      if(row.fromLocation && arr.includes(row.fromLocation)) ordered.push(row.fromLocation);
-
-      // rest
-      arr.forEach(x=>{ if(!ordered.includes(x)) ordered.push(x); });
-
-      return ordered;
+    function mapInventory(inv){
+      return {
+        car: inv.car || inv.carName || inv.name || inv.title || inv.modelName || inv.makeModel || "—",
+        statement: inv.statement || inv.trim || inv.variant || inv.desc || "—",
+        ext: inv.ext || inv.extColor || inv.exterior || inv.exteriorColor || "—",
+        int: inv.int || inv.intColor || inv.interior || inv.interiorColor || "—",
+        model: (inv.model || inv.year || inv.modelYear || "").toString() || "—",
+        location: inv.location || inv.place || inv.branch || inv.currentLocation || "—"
+      };
     }
 
-    async function addVinToDraft(vin){
-      vin = (vin||"").toString().trim();
+    async function loadVinIntoRow(i){
+      const r = draftRows[i];
+      const vin = (r.vin||"").trim();
       if(!vin) return;
 
-      // prevent duplicates in draft
-      if(draftRows.some(r => r.vin === vin)){
-        showToast("موجود بالفعل", `VIN ${vin} موجود داخل الطلب.`);
-        return;
-      }
+      Object.assign(r, {car:"—",statement:"—",ext:"—",int:"—",model:"—",fromLocation:"—"});
+      renderDraft();
 
-      // fetch inventory/{vin}
-      const invSnap = await db.collection("inventory").doc(vin).get().catch(()=>null);
-
-      if(!invSnap || !invSnap.exists){
-        draftRows.unshift({vin, kind:"move", ok:false, error:"VIN غير موجود في inventory"});
-        renderDraft();
-        return;
-      }
-
-      const inv = invSnap.data() || {};
-      const fromLocation = inv.location || inv.place || inv.branch || "";
-      const carName = inv.car || inv.model || inv.name || inv.vehicle || "";
-      const statement = inv.statement || inv.trim || inv.variant || "";
-
-      // Gate: can't create for outside user locations unless admin
-      if(!canTouchLocation(fromLocation)){
-        if(!isAdmin){
-          showToast("ممنوع", `VIN خارج أماكن المستخدم: ${fromLocation || "—"}`);
+      try{
+        const inv = await fetchInventory(vin);
+        if(!inv){
+          r.err = "VIN غير موجود في inventory";
+          r.ok = false;
+          renderDraft();
           return;
         }
+        const m = mapInventory(inv);
+        r.car = m.car; r.statement = m.statement; r.ext = m.ext; r.int = m.int; r.model = m.model;
+        r.fromLocation = m.location || "—";
+
+        if(!isAdmin){
+          if(!canTouchLocation(r.fromLocation)){
+            r.err = "ممنوع إنشاء طلب لهيكل خارج مكان المستخدم";
+            r.ok = false;
+            renderDraft();
+            return;
+          }
+        }
+
+        if(!r.toLocation){
+          if(createKind.value==="shoot"){
+            r.toLocation = "الاستديو";
+          } else {
+            r.toLocation = LOCATIONS.find(x=>x!==r.fromLocation) || "";
+          }
+        }
+
+        validateRow(r);
+        renderDraft();
+      }catch(err){
+        console.error(err);
+        r.err = "خطأ أثناء جلب بيانات VIN";
+        r.ok = false;
+        renderDraft();
       }
-
-      const row = {
-        vin,
-        kind:"move",
-        fromLocation: fromLocation || "—",
-        toLocation: "", // required
-        carName,
-        statement,
-        ok:false,
-        error:"اختر (إلى / مكان التصوير)"
-      };
-
-      // default toLocation:
-      if(row.kind==="shoot"){
-        row.toLocation = "الاستديو";
-      }else{
-        // default: pick first allowed (not same maybe)
-        const opts = buildToOptions(row);
-        row.toLocation = opts.find(o=>o && o !== row.fromLocation) || (opts[0]||"");
-      }
-
-      validateDraftRow(row);
-
-      draftRows.push(row);
-      renderDraft();
     }
 
-    function validateDraftRow(r){
-      r.error = "";
-      if(!r.toLocation) r.error = "اختر (إلى / مكان التصوير)";
-      if(r.kind==="shoot" && !r.toLocation) r.error = "اختر مكان التصوير";
-      // For move: allow different location
-      if(r.kind==="move" && r.toLocation && r.fromLocation && r.toLocation === r.fromLocation){
-        r.error = "لا يمكن النقل لنفس المكان";
-      }
-      // Gate toLocation? (you can allow to choose any; actions will enforce)
-      r.ok = !r.error;
-    }
-
-    vinQuick.addEventListener("keydown", async (e)=>{
-      if(e.key === "Enter"){
+    draftTbody.addEventListener("keydown", (e)=>{
+      const t = e.target;
+      if(!(t instanceof HTMLElement)) return;
+      if(t.getAttribute("data-k")==="vin" && e.key==="Enter"){
         e.preventDefault();
-        const v = vinQuick.value;
-        vinQuick.value = "";
-        await addVinToDraft(v);
+        const i = Number(t.getAttribute("data-i"));
+        loadVinIntoRow(i);
+        setTimeout(()=>{
+          const next = draftTbody.querySelector(`input[data-k="vin"][data-i="${Math.min(i+1,7)}"]`);
+          next?.focus?.();
+        }, 60);
       }
+    });
+
+    draftTbody.addEventListener("blur", (e)=>{
+      const t = e.target;
+      if(!(t instanceof HTMLElement)) return;
+      if(t.getAttribute("data-k")==="vin"){
+        const i = Number(t.getAttribute("data-i"));
+        const v = (t.value||"").trim();
+        if(v && v !== (draftRows[i].vin||"").trim()){
+          draftRows[i].vin = v;
+          loadVinIntoRow(i);
+        } else if(v){
+          loadVinIntoRow(i);
+        }
+      }
+    }, true);
+
+    draftTbody.addEventListener("input", (e)=>{
+      const t = e.target;
+      if(!(t instanceof HTMLElement)) return;
+      const k = t.getAttribute("data-k");
+      const i = Number(t.getAttribute("data-i"));
+      if(Number.isNaN(i) || !draftRows[i]) return;
+      if(k==="vin") draftRows[i].vin = (t.value||"").trim();
+      if(k==="note") draftRows[i].note = (t.value||"");
     });
 
     draftTbody.addEventListener("change", (e)=>{
       const t = e.target;
-      const idx = Number(t.getAttribute("data-i"));
-      const key = t.getAttribute("data-k");
-      if(Number.isNaN(idx) || !draftRows[idx]) return;
-
-      if(key === "kind"){
-        draftRows[idx].kind = t.value;
-        // for shoot, suggest studio
-        if(draftRows[idx].kind==="shoot" && !draftRows[idx].toLocation){
-          draftRows[idx].toLocation = "الاستديو";
-        }
+      if(!(t instanceof HTMLElement)) return;
+      const k = t.getAttribute("data-k");
+      const i = Number(t.getAttribute("data-i"));
+      if(Number.isNaN(i) || !draftRows[i]) return;
+      if(k==="to"){
+        draftRows[i].toLocation = (t.value||"");
+        validateRow(draftRows[i]);
+        renderDraft();
       }
-      if(key === "to"){
-        draftRows[idx].toLocation = t.value;
-      }
-      validateDraftRow(draftRows[idx]);
-      renderDraft();
     });
 
     draftTbody.addEventListener("click", (e)=>{
-      const t = e.target;
-      const idx = Number(t.getAttribute("data-i"));
-      const key = t.getAttribute("data-k");
-      if(key === "del" && !Number.isNaN(idx)){
-        draftRows.splice(idx,1);
+      const btn = (e.target instanceof HTMLElement) ? e.target.closest("button[data-k]") : null;
+      if(!btn) return;
+      const k = btn.getAttribute("data-k");
+      const i = Number(btn.getAttribute("data-i"));
+      if(k==="del" && !Number.isNaN(i)){
+        draftRows[i] = makeEmptyRow(i+1);
         renderDraft();
       }
     });
 
     btnClearDraft.addEventListener("click", ()=>{
-      draftRows = [];
+      draftRows = Array.from({length:8}, (_,i)=>makeEmptyRow(i+1));
       renderDraft();
-      showToast("تم", "تفريغ الطلب.");
+      showToast("تم", "تم تفريغ نموذج إنشاء الطلب.");
     });
 
+    async function addLog(action, details, requestId){
+      try{
+        await db.collection("mzj_activity_log").add({
+          action: action || "",
+          details: details || "",
+          requestId: requestId || "",
+          ts: serverTimestamp(),
+          user: userProfile?.name || currentUser?.displayName || "",
+          email: currentUser?.email || ""
+        });
+      }catch(e){}
+    }
+
     btnSubmitDraft.addEventListener("click", async ()=>{
-      if(!currentUser){
-        showToast("غير مسجل", "سجل دخول أولاً");
-        return;
-      }
-      if(!draftRows.length){
-        showToast("فارغ", "أضف VIN واحد على الأقل.");
-        return;
-      }
+      if(!currentUser){ showToast("غير مسجل","سجل دخول أولاً"); return; }
 
-      // validate all
-      draftRows.forEach(validateDraftRow);
-      const bad = draftRows.find(r=>!r.ok);
-      if(bad){
-        renderDraft();
-        showToast("غير مكتمل", "راجع السطور التي بها خطأ.");
-        return;
-      }
+      const rows = draftRows.filter(r => (r.vin||"").trim());
+      if(rows.length===0){ showToast("فارغ","اكتب VIN واحد على الأقل"); return; }
 
-      // Split by kind: if mixed move & shoot -> create 2 requests (as you requested previously)
-      const groups = { move:[], shoot:[] };
-      draftRows.forEach(r=>groups[r.kind].push(r));
+      rows.forEach(validateRow);
+      const bad = rows.find(r=>!r.ok);
+      if(bad){ renderDraft(); showToast("غير مكتمل","راجع الصفوف التي بها أخطاء"); return; }
 
-      const createdIds = [];
-      for(const kind of ["move","shoot"]){
-        if(!groups[kind].length) continue;
+      const kind = createKind.value;
 
-        const vins = groups[kind].map(r=>({
-          vin: r.vin,
-          kind,
-          fromLocation: r.fromLocation || "",
-          toLocation: r.toLocation || ""
-        }));
+      const vins = rows.map(r=>({
+        vin: (r.vin||"").trim(),
+        car: r.car || "",
+        statement: r.statement || "",
+        ext: r.ext || "",
+        int: r.int || "",
+        model: r.model || "",
+        fromLocation: r.fromLocation || "",
+        toLocation: r.toLocation || "",
+        note: r.note || "",
+        stage: 0,
+        stageNotes: { "1":"", "2":"", "3":"", "4":"" },
+        stageBy: { "1":"", "2":"", "3":"", "4":"" },
+        stageAt: { "1":null, "2":null, "3":null, "4":null }
+      }));
 
-        // canEdit true initially
-        const payload = {
-          kind,
-          vins,
-          canEdit: true,
-          createdAt: serverTimestamp(),
-          createdByUid: currentUser.uid || "",
-          createdByEmail: (currentUser.email || ""),
-          createdByName: (userProfile?.name || currentUser.displayName || ""),
-          // progress structure:
-          progress: {
-            // per vin step: 0..4
-            perVin: vins.reduce((acc,v)=>{ acc[v.vin]=0; return acc; }, {}),
-            doneCount: 0,
-            totalCount: vins.length,
-            percent: 0
-          },
-          // steps log
-          steps: {
-            step1: {done:false, at:null, by:""},
-            step2: {done:false, at:null, by:""},
-            step3: {done:false, at:null, by:""},
-            step4: {done:false, at:null, by:""}
-          }
-        };
+      const perVin = {};
+      vins.forEach(v=> perVin[v.vin]=0);
 
+      const payload = {
+        kind,
+        status: "open",
+        createdAt: serverTimestamp(),
+        createdByEmail: currentUser.email || "",
+        createdByName: userProfile?.name || currentUser.displayName || "",
+        createdByLocation: myLocation || "",
+        canEdit: true,
+        vins,
+        progress: { perVin, percent: 0 }
+      };
+
+      btnSubmitDraft.disabled = true;
+      btnSubmitDraft.textContent = "جارٍ الإرسال…";
+
+      try{
         const ref = await db.collection("requests").add(payload);
-        createdIds.push(ref.id);
+        await addLog("إنشاء طلب", `تم إنشاء الطلب (${kind==="move"?"نقل":"تصوير"})`, ref.id);
 
-        await writeLog("إنشاء طلب", `تم إنشاء طلب (${kind}) رقم ${ref.id}`, ref.id);
+        showToast("تم","تم إنشاء الطلب بنجاح");
+        draftRows = Array.from({length:8}, (_,i)=>makeEmptyRow(i+1));
+        renderDraft();
+        setTab("manage");
+      }catch(err){
+        console.error(err);
+        showToast("خطأ","تعذر إنشاء الطلب");
+      }finally{
+        btnSubmitDraft.disabled = false;
+        btnSubmitDraft.textContent = "إرسال الطلب";
       }
-
-      showToast("تم الإرسال", `تم إنشاء ${createdIds.length} طلب.`);
-      draftRows = [];
-      renderDraft();
-      openTab("manage");
     });
 
     renderDraft();
 
-    /* =========================
-       Requests LIST (Manage) — LIVE
-    ========================= */
-    function startRequestsListener(){
-      if(unsubRequests) return;
+    /* =======================
+       Manage & Done lists (live)
+    ======================= */
+    const manageTbody = $("manageTbody");
+    const doneTbody = $("doneTbody");
+    const filterKind = $("filterKind");
+    const filterDoneKind = $("filterDoneKind");
+    const searchBox = $("searchBox");
+    const searchDoneBox = $("searchDoneBox");
+    const btnReload = $("btnReload");
+    const btnReloadDone = $("btnReloadDone");
 
-      const run = ()=>{
-        if(unsubRequests){ unsubRequests(); unsubRequests=null; }
-        reqTbody.innerHTML = `<tr><td colspan="7" class="small">جارٍ التحميل…</td></tr>`;
+    let unsubOpen = null;
+    let unsubDone = null;
 
-        // base query
-        let q = db.collection("requests").orderBy("createdAt","desc");
+    function stageName(stage){
+      if(stage>=4) return "مكتمل";
+      if(stage===3) return "تم استلام السيارة";
+      if(stage===2) return "تم إرسال السيارة";
+      if(stage===1) return "تم استلام الطلب";
+      return "لم يبدأ";
+    }
+    function stagePill(stage){
+      const cls = "s"+Math.max(0, Math.min(4, stage||0));
+      return `<span class="pillStage ${cls}">${escapeHtml(stageName(stage||0))}</span>`;
+    }
+    function computePercent(req){
+      try{
+        const per = req?.progress?.perVin || {};
+        const vins = Array.isArray(req.vins) ? req.vins : [];
+        const total = vins.length || 1;
+        let sum = 0;
+        vins.forEach(v=>{
+          const s = per[v.vin] ?? v.stage ?? 0;
+          sum += (s/4)*100;
+        });
+        return Math.round(sum/total);
+      }catch{return 0;}
+    }
+    async function maybeMoveToDone(reqId, req){
+      const per = req?.progress?.perVin || {};
+      const vins = req?.vins || [];
+      if(!vins.length) return;
+      const done = vins.every(v => (per[v.vin] ?? v.stage ?? 0) >= 4);
+      if(done && req.status !== "completed"){
+        await db.collection("requests").doc(reqId).set({
+          status:"completed",
+          completedAt: serverTimestamp()
+        }, {merge:true});
+        await addLog("إكمال طلب", "تم تحويل الطلب إلى مكتمل", reqId);
+      }
+    }
 
-        // NOTE: we filter client-side by kind/search/location for performance and simplicity
-        unsubRequests = q.onSnapshot((snap)=>{
-          const rows = [];
-          snap.forEach(doc=>{
-            const r = doc.data()||{};
-            r._id = doc.id;
+    function renderOpenList(items){
+      if(!items.length){
+        manageTbody.innerHTML = `<tr><td colspan="7" class="help">لا توجد طلبات.</td></tr>`;
+        return;
+      }
+      manageTbody.innerHTML = items.map(req=>{
+        const id = req._id;
+        const kindBadge = `<span class="badge">${req.kind==="move"?"طلب نقل":"طلب تصوير"}</span>`;
+        const vins = (req.vins||[]).map(v=>v.vin).join(", ");
+        const percent = computePercent(req);
+        return `
+          <tr>
+            <td class="mono">${escapeHtml(id)}</td>
+            <td>${kindBadge}</td>
+            <td class="td-left mono">${escapeHtml(vins||"—")}</td>
+            <td class="td-left">${escapeHtml(req.createdByName||req.createdByEmail||"—")}</td>
+            <td class="help">${escapeHtml(fmtDate(req.createdAt))}</td>
+            <td>
+              <div class="pbar"><div style="width:${percent}%"></div></div>
+              <div class="help">${percent}%</div>
+            </td>
+            <td><button class="btn primary" data-open="${escapeHtml(id)}">فتح</button></td>
+          </tr>
+        `;
+      }).join("");
+    }
 
-            // kind filter
-            const fk = filterKind.value;
-            if(fk !== "all" && r.kind !== fk) return;
+    function renderDoneList(items){
+      if(!items.length){
+        doneTbody.innerHTML = `<tr><td colspan="6" class="help">لا توجد طلبات مكتملة.</td></tr>`;
+        return;
+      }
+      doneTbody.innerHTML = items.map(req=>{
+        const id = req._id;
+        const kindBadge = `<span class="badge">${req.kind==="move"?"طلب نقل":"طلب تصوير"}</span>`;
+        const vins = (req.vins||[]).map(v=>v.vin).join(", ");
+        return `
+          <tr>
+            <td class="mono">${escapeHtml(id)}</td>
+            <td>${kindBadge}</td>
+            <td class="td-left mono">${escapeHtml(vins||"—")}</td>
+            <td class="td-left">${escapeHtml(req.createdByName||req.createdByEmail||"—")}</td>
+            <td class="help">${escapeHtml(fmtDate(req.completedAt || req.updatedAt || req.createdAt))}</td>
+            <td><button class="btn primary" data-open-done="${escapeHtml(id)}">فتح</button></td>
+          </tr>
+        `;
+      }).join("");
+    }
 
-            // search filter
-            const s = (searchTxt.value||"").trim().toLowerCase();
-            if(s){
-              const inId = r._id.toString().includes(s);
-              const inVin = (r.vins||[]).some(v => (v.vin||"").toLowerCase().includes(s));
-              if(!inId && !inVin) return;
-            }
+    function startOpenListener(){
+      if(unsubOpen) return;
+      const q = db.collection("requests").orderBy("createdAt","desc");
+      unsubOpen = q.onSnapshot(async (snap)=>{
+        const fk = filterKind.value;
+        const s = (searchBox.value||"").trim().toLowerCase();
+        const items = [];
+        for(const d of snap.docs){
+          const req = d.data()||{};
+          req._id = d.id;
 
-            // permission filter: admin sees all, non-admin sees requests that touch his locations
-            if(!isAdmin){
-              const ok = canActOnReq(r);
-              if(!ok) return;
-            }
+          if(req.status === "completed") continue;
+          if(fk!=="all" && req.kind!==fk) continue;
 
-            rows.push(r);
-          });
-
-          if(!rows.length){
-            reqTbody.innerHTML = `<tr><td colspan="7" class="small">لا توجد طلبات.</td></tr>`;
-            return;
+          if(!isAdmin){
+            const vins = Array.isArray(req.vins) ? req.vins : [];
+            const ok = vins.some(v => canTouchLocation(v.fromLocation) || canTouchLocation(v.toLocation));
+            if(!ok) continue;
           }
 
-          reqTbody.innerHTML = rows.map((r)=>{
-            const id = r._id;
-            const badge = `<span class="badge ${r.kind}">${r.kind==="move"?"نقل":"تصوير"}</span>`;
-            const vins = (r.vins||[]).map(v=>v.vin).join(", ");
-            const creator = escapeHtml(r.createdByName || r.createdByEmail || "—");
-            const dt = fmtDate(r.createdAt);
-            const percent = computeReqPercent(r);
+          if(s){
+            const inId = req._id.toLowerCase().includes(s);
+            const inVin = (req.vins||[]).some(v => (v.vin||"").toLowerCase().includes(s));
+            if(!inId && !inVin) continue;
+          }
 
-            return `
-              <tr>
-                <td class="mono">${escapeHtml(id)}</td>
-                <td>${badge}</td>
-                <td class="td-left mono">${escapeHtml(vins || "—")}</td>
-                <td class="td-left">${creator}</td>
-                <td class="small">${escapeHtml(dt)}</td>
-                <td>
-                  <div class="pbar"><div style="width:${percent}%"></div></div>
-                  <div class="small">${percent}%</div>
-                </td>
-                <td><button class="btn primary" data-open="${escapeHtml(id)}">فتح</button></td>
-              </tr>
-            `;
-          }).join("");
-        }, (err)=>{
-          console.error(err);
-          reqTbody.innerHTML = `<tr><td colspan="7" class="small" style="color:var(--bad)">خطأ في تحميل الطلبات</td></tr>`;
-        });
-      };
-
-      run();
-      btnReload.onclick = run;
-      filterKind.onchange = run;
-      searchTxt.oninput = ()=>{ if(unsubRequests){ /* let snapshot update */ } };
-
-      reqTbody.addEventListener("click", (e)=>{
-        const btn = e.target.closest("[data-open]");
-        if(!btn) return;
-        const id = btn.getAttribute("data-open");
-        openRequestModal(id);
+          items.push(req);
+          await maybeMoveToDone(req._id, req);
+        }
+        renderOpenList(items);
+      }, (err)=>{
+        console.error(err);
+        manageTbody.innerHTML = `<tr><td colspan="7" class="help" style="color:var(--bad)">خطأ في تحميل الطلبات</td></tr>`;
       });
     }
 
-    function computeReqPercent(r){
-      try{
-        const perVin = r?.progress?.perVin || {};
-        const vins = r?.vins || [];
-        const total = vins.length || 1;
-        let sum=0;
-        vins.forEach(v=>{
-          const st = perVin[v.vin] ?? 0; // 0..4
-          sum += (st/4)*100;
+    function startDoneListener(){
+      if(unsubDone) return;
+      const q = db.collection("requests").orderBy("createdAt","desc");
+      unsubDone = q.onSnapshot((snap)=>{
+        const fk = filterDoneKind.value;
+        const s = (searchDoneBox.value||"").trim().toLowerCase();
+        const items = [];
+        snap.forEach(d=>{
+          const req = d.data()||{};
+          req._id = d.id;
+          if(req.status !== "completed") return;
+          if(fk!=="all" && req.kind!==fk) return;
+
+          if(!isAdmin){
+            const vins = Array.isArray(req.vins) ? req.vins : [];
+            const ok = vins.some(v => canTouchLocation(v.fromLocation) || canTouchLocation(v.toLocation));
+            if(!ok) return;
+          }
+
+          if(s){
+            const inId = req._id.toLowerCase().includes(s);
+            const inVin = (req.vins||[]).some(v => (v.vin||"").toLowerCase().includes(s));
+            if(!inId && !inVin) return;
+          }
+          items.push(req);
         });
-        return Math.round(sum / total);
-      }catch{ return 0; }
+        renderDoneList(items);
+      }, (err)=>{
+        console.error(err);
+        doneTbody.innerHTML = `<tr><td colspan="6" class="help" style="color:var(--bad)">خطأ في تحميل الطلبات المكتملة</td></tr>`;
+      });
     }
 
-    /* =========================
-       MODAL — LIVE onSnapshot
-    ========================= */
+    btnReload.addEventListener("click", ()=>{
+      if(unsubOpen){ unsubOpen(); unsubOpen=null; }
+      startOpenListener();
+    });
+    filterKind.addEventListener("change", ()=>btnReload.click());
+
+    btnReloadDone.addEventListener("click", ()=>{
+      if(unsubDone){ unsubDone(); unsubDone=null; }
+      startDoneListener();
+    });
+    filterDoneKind.addEventListener("change", ()=>btnReloadDone.click());
+
+    /* =======================
+       Modal (live)
+    ======================= */
+    const modalBackdrop = $("modalBackdrop");
+    const mClose = $("mClose");
+    const mTitle = $("mTitle");
+    const mMeta = $("mMeta");
+    const mProgTxt = $("mProgTxt");
+    const mProgBar = $("mProgBar");
+    const mProgHint = $("mProgHint");
+    const mRows = $("mRows");
+    const mLog = $("mLog");
+    const stepNote = $("stepNote");
+    const permHint = $("permHint");
+
+    const btnEdit = $("btnEdit");
+    const btnStep1 = $("btnStep1");
+    const btnStep2 = $("btnStep2");
+    const btnStep3 = $("btnStep3");
+    const btnStep4 = $("btnStep4");
+
+    let modalReqId = null;
+    let modalReq = null;
+    let unsubModal = null;
+
+    function openModal(){ modalBackdrop.style.display="flex"; modalBackdrop.setAttribute("aria-hidden","false"); }
     function closeModal(){
-      modalBackdrop.style.display="none";
-      modalBackdrop.setAttribute("aria-hidden","true");
-      currentModalReqId = null;
-      currentModalReq = null;
+      modalBackdrop.style.display="none"; modalBackdrop.setAttribute("aria-hidden","true");
+      modalReqId=null; modalReq=null; stepNote.value="";
       if(unsubModal){ unsubModal(); unsubModal=null; }
     }
+    mClose.addEventListener("click", closeModal);
+    modalBackdrop.addEventListener("click", (e)=>{ if(e.target===modalBackdrop) closeModal(); });
+    window.addEventListener("keydown",(e)=>{ if(e.key==="Escape" && modalBackdrop.style.display==="flex") closeModal(); });
 
-    function openModal(){
-      modalBackdrop.style.display="flex";
-      modalBackdrop.setAttribute("aria-hidden","false");
+    async function loadLogForReq(reqId){
+      if(!isAdmin){ mLog.textContent="—"; return; }
+      try{
+        const snap = await db.collection("mzj_activity_log")
+          .where("requestId","==",reqId)
+          .orderBy("ts","desc")
+          .limit(15)
+          .get();
+        if(snap.empty){ mLog.textContent="لا يوجد سجل."; return; }
+        mLog.innerHTML = snap.docs.map(d=>{
+          const x = d.data()||{};
+          return `<div style="padding:8px 0;border-bottom:1px dashed #eee">
+            <div><strong>${escapeHtml(x.action||"—")}</strong> <span class="help">• ${escapeHtml(fmtDate(x.ts))}</span></div>
+            <div class="help">${escapeHtml(x.details||"")}</div>
+            <div class="help">${escapeHtml(x.user||x.email||"")}</div>
+          </div>`;
+        }).join("");
+      }catch(err){
+        console.error(err);
+        mLog.textContent="تعذر تحميل السجل.";
+      }
     }
 
-    mClose.addEventListener("click", closeModal);
-    modalBackdrop.addEventListener("click", (e)=>{
-      if(e.target === modalBackdrop) closeModal();
-    });
-    window.addEventListener("keydown", (e)=>{
-      if(e.key === "Escape" && modalBackdrop.style.display==="flex"){
-        closeModal();
+    function computePercentModal(req){
+      return computePercent(req);
+    }
+
+    function renderModal(req){
+      const percent = computePercentModal(req);
+      mProgTxt.textContent = percent + "%";
+      mProgBar.style.width = percent + "%";
+
+      const vins = Array.isArray(req.vins) ? req.vins : [];
+      const per = req?.progress?.perVin || {};
+      const doneCount = vins.filter(v => (per[v.vin] ?? v.stage ?? 0) >= 4).length;
+      mProgHint.textContent = `مكتمل: ${doneCount} / ${vins.length} — النوع: ${req.kind==="move"?"نقل":"تصوير"}`;
+
+      mRows.innerHTML = vins.map((v, idx)=>{
+        const st = per[v.vin] ?? v.stage ?? 0;
+        const note = v.stageNotes?.[String(st)] || "";
+        return `
+          <tr>
+            <td>${idx+1}</td>
+            <td class="mono">${escapeHtml(v.vin||"")}</td>
+            <td class="td-left">${escapeHtml(v.car||"—")}</td>
+            <td><span class="badge">${escapeHtml(v.fromLocation||"—")}</span></td>
+            <td><span class="badge">${escapeHtml(v.toLocation||"—")}</span></td>
+            <td>${stagePill(st)}</td>
+            <td class="td-left">${escapeHtml(note||"—")}</td>
+          </tr>
+        `;
+      }).join("") || `<tr><td colspan="7" class="help">لا توجد بيانات</td></tr>`;
+
+      const can1 = canDoStep(req,1);
+      const can2 = canDoStep(req,2);
+      const can3 = canDoStep(req,3);
+      const can4 = canDoStep(req,4);
+
+      btnStep1.disabled = !can1;
+      btnStep2.disabled = !can2;
+      btnStep3.disabled = !can3;
+      btnStep4.disabled = !can4;
+
+      const showEdit = !!req.canEdit && isPristine(req) && (isAdmin || isCreator(req));
+      btnEdit.style.display = showEdit ? "" : "none";
+
+      permHint.textContent = isAdmin
+        ? "Admin: تقدر تنفّذ أي إجراء."
+        : `صلاحياتك على أساس المكان (${myLocation||"—"}). تم الانتهاء: لمقدم الطلب فقط.`;
+    }
+
+    async function openRequest(reqId){
+      modalReqId = reqId;
+      openModal();
+
+      if(unsubModal){ unsubModal(); unsubModal=null; }
+
+      unsubModal = db.collection("requests").doc(reqId).onSnapshot(async (snap)=>{
+        if(!snap.exists){
+          mTitle.textContent = "الطلب غير موجود";
+          mMeta.textContent = reqId;
+          return;
+        }
+        const req = snap.data()||{};
+        modalReq = req;
+
+        mTitle.textContent = `تفاصيل الطلب #${reqId}`;
+        mMeta.textContent = `مقدم الطلب: ${(req.createdByName||req.createdByEmail||"—")} • ${fmtDate(req.createdAt)}`;
+
+        renderModal(req);
+        await loadLogForReq(reqId);
+        await maybeMoveToDone(reqId, req);
+      }, (err)=>{
+        console.error(err);
+        showToast("خطأ","تعذر تحميل تفاصيل الطلب");
+      });
+    }
+
+    document.addEventListener("click", (e)=>{
+      const btnOpen = (e.target instanceof HTMLElement) ? e.target.closest("button[data-open]") : null;
+      const btnOpenDone = (e.target instanceof HTMLElement) ? e.target.closest("button[data-open-done]") : null;
+      if(btnOpen){
+        openRequest(btnOpen.getAttribute("data-open"));
+      } else if(btnOpenDone){
+        openRequest(btnOpenDone.getAttribute("data-open-done"));
       }
     });
 
-    async function openRequestModal(id){
-      currentModalReqId = id;
-      openModal();
-
-      // detach old
-      if(unsubModal){ unsubModal(); unsubModal=null; }
-
-      // live doc listener
-      unsubModal = db.collection("requests").doc(id).onSnapshot(async (snap)=>{
-        if(!snap.exists){
-          mTitle.textContent = "الطلب غير موجود";
-          mMeta.textContent = id;
-          return;
-        }
-        const r = snap.data()||{};
-        currentModalReq = r;
-
-        const kindLabel = r.kind==="move" ? "نقل" : "تصوير";
-        mTitle.textContent = `تفاصيل الطلب #${id} — ${kindLabel}`;
-        mMeta.textContent = `المنشئ: ${(r.createdByName || r.createdByEmail || "—")} • ${fmtDate(r.createdAt)}`;
-
-        // progress
-        const percent = computeReqPercent(r);
-        mProgBar.style.width = percent + "%";
-        mProgTxt.textContent = percent + "%";
-        const done = Object.values(r?.progress?.perVin || {}).filter(x=>x>=4).length;
-        const total = (r.vins||[]).length || 0;
-        mProgNote.textContent = `مكتمل: ${done} / ${total}`;
-
-        // rows
-        const perVin = r?.progress?.perVin || {};
-        const rows = (r.vins||[]).map((v, idx)=>{
-          const st = perVin[v.vin] ?? 0;
-          const stageTxt = stageName(st);
-          const last = stageLast(r, v.vin);
-          return `
-            <tr>
-              <td>${idx+1}</td>
-              <td class="mono">${escapeHtml(v.vin)}</td>
-              <td class="td-left">${escapeHtml(v.carName || "—")}</td>
-              <td class="td-left"><span class="badge">${escapeHtml(v.fromLocation||"—")}</span></td>
-              <td class="td-left"><span class="badge">${escapeHtml(v.toLocation||"—")}</span></td>
-              <td>${escapeHtml(stageTxt)}</td>
-              <td class="small">${escapeHtml(last || "—")}</td>
-            </tr>
-          `;
-        }).join("");
-
-        mRows.innerHTML = rows || `<tr><td colspan="7" class="small">لا توجد بيانات</td></tr>`;
-
-        // buttons permission
-        const canAny = canActOnReq(r);
-        const can1 = canDoStep(r,1);
-        const can2 = canDoStep(r,2);
-        const can3 = canDoStep(r,3);
-        const can4 = canDoStep(r,4);
-
-        btnStep1.disabled = !can1;
-        btnStep2.disabled = !can2;
-        btnStep3.disabled = !can3;
-        btnStep4.disabled = !can4;
-
-        // edit allowed only if canEdit true AND no steps done anywhere
-        const canEdit = !!r.canEdit && isRequestPristine(r) && (isAdmin || isCreator(r));
-        btnEdit.style.display = canEdit ? "" : "none";
-
-        mPermHint.textContent = isAdmin
-          ? "Admin: تقدر تعمل كل الإجراءات."
-          : "الإجراءات تظهر حسب مكانك + (تم الانتهاء) لمنشئ الطلب فقط.";
-
-        // log (admin only)
-        if(isAdmin){
-          await loadLogForReq(id);
-        }else{
-          mLog.textContent = "—";
-        }
-
-      }, (err)=>{
-        console.error(err);
-        showToast("خطأ", "تعذر تحميل تفاصيل الطلب");
-      });
-    }
-
-    function stageName(st){
-      if(st>=4) return "مكتمل";
-      if(st===3) return "تم استلام السيارة";
-      if(st===2) return "تم إرسال السيارة";
-      if(st===1) return "تم استلام الطلب";
-      return "لم يبدأ";
-    }
-
-    function stageLast(r, vin){
-      // show last action timestamp from activity log later (optional), for now use steps ts if exist
-      // We'll check steps fields if stored perVin meta; else return createdAt.
-      return fmtDate(r.updatedAt || r.createdAt);
-    }
-
-    function isCreator(r){
-      const my = (currentUser?.email || "").toLowerCase();
-      const cr = (r?.createdByEmail || "").toLowerCase();
-      return !!my && !!cr && my === cr;
-    }
-
-    function isRequestPristine(r){
-      // if any perVin stage >0 => not pristine
-      const per = r?.progress?.perVin || {};
-      return Object.values(per).every(x => (x||0) === 0);
-    }
-
-    /* =========================
-       MODAL ACTIONS
-    ========================= */
     async function applyStep(step){
-      const id = currentModalReqId;
-      const r = currentModalReq;
-      if(!id || !r) return;
+      if(!modalReqId || !modalReq) return;
+      const reqId = modalReqId;
+      const req = modalReq;
 
-      // permission check
-      if(!canDoStep(r, step)){
-        showToast("لا توجد صلاحية", "الإجراء غير مسموح حسب مكانك/صلاحياتك.");
+      if(!canDoStep(req, step)){
+        showToast("لا توجد صلاحية","الإجراء غير مسموح حسب مكانك/صلاحياتك");
         return;
       }
 
-      // compute which VINs this user can advance for this step:
-      // step1/3 => toLocation owner, step2 => fromLocation owner, step4 => creator/admin and completes all remaining
-      const perVin = {...(r.progress?.perVin || {})};
-      const vins = (r.vins||[]);
+      const note = (stepNote.value||"").trim();
+      const vins = Array.isArray(req.vins) ? req.vins : [];
+      const per = {...(req.progress?.perVin || {})};
 
-      const advanceVin = (vin, newStage)=>{ perVin[vin] = Math.max(perVin[vin]||0, newStage); };
+      const actor = userProfile?.name || currentUser?.displayName || currentUser?.email || "";
 
-      if(step === 4){
-        // creator finishes all vins to stage 4
-        vins.forEach(v=>advanceVin(v.vin, 4));
-      } else if(step === 1){
-        vins.forEach(v=>{
-          if(isAdmin || canTouchLocation(v.toLocation)){
-            if((perVin[v.vin]||0) < 1) advanceVin(v.vin, 1);
-          }
-        });
-      } else if(step === 2){
-        vins.forEach(v=>{
-          if(isAdmin || canTouchLocation(v.fromLocation)){
-            if((perVin[v.vin]||0) < 2) advanceVin(v.vin, 2);
-          }
-        });
-      } else if(step === 3){
-        vins.forEach(v=>{
-          if(isAdmin || canTouchLocation(v.toLocation)){
-            if((perVin[v.vin]||0) < 3) advanceVin(v.vin, 3);
-          }
-        });
-      }
-
-      // after any action => canEdit false
-      const updates = {
-        "progress.perVin": perVin,
-        canEdit: false,
-        updatedAt: serverTimestamp()
+      const affect = (v)=>{
+        if(isAdmin) return true;
+        if(step===1 || step===2) return canTouchLocation(v.fromLocation);
+        if(step===3) return canTouchLocation(v.toLocation);
+        if(step===4) return isCreator(req);
+        return false;
       };
 
-      await db.collection("requests").doc(id).set(updates, {merge:true});
-      await writeLog(`تنفيذ خطوة ${step}`, `تم تنفيذ خطوة ${step} على الطلب #${id}`, id);
+      const newStage = step;
+      const updatesVins = vins.map(v=>{
+        if(!affect(v)) return v;
+        const cur = per[v.vin] ?? v.stage ?? 0;
+        if(cur >= newStage) return v;
+        per[v.vin] = newStage;
+        v.stage = newStage;
+        v.stageNotes = v.stageNotes || {"1":"","2":"","3":"","4":""};
+        v.stageBy = v.stageBy || {"1":"","2":"","3":"","4":""};
+        v.stageAt = v.stageAt || {"1":null,"2":null,"3":null,"4":null};
+        if(note) v.stageNotes[String(newStage)] = note;
+        v.stageBy[String(newStage)] = actor;
+        v.stageAt[String(newStage)] = new Date().toISOString();
+        return v;
+      });
+
+      const percent = Math.round(Object.values(per).reduce((acc,s)=>acc + (s/4)*100, 0) / (Object.keys(per).length || 1));
+
+      await db.collection("requests").doc(reqId).set({
+        "vins": updatesVins,
+        "progress.perVin": per,
+        "progress.percent": percent,
+        "updatedAt": serverTimestamp(),
+        "canEdit": false
+      }, {merge:true});
+
+      await addLog(`تنفيذ خطوة ${step}`, `تم تنفيذ خطوة ${step} على الطلب`, reqId);
 
       showToast("تم", `تم تنفيذ الإجراء (${step})`);
+      stepNote.value = "";
     }
 
     btnStep1.addEventListener("click", ()=>applyStep(1));
@@ -1266,81 +1354,66 @@
     btnStep4.addEventListener("click", ()=>applyStep(4));
 
     btnEdit.addEventListener("click", async ()=>{
-      const id = currentModalReqId;
-      const r = currentModalReq;
-      if(!id || !r) return;
+      if(!modalReqId || !modalReq) return;
+      const req = modalReq;
 
-      if(!(!!r.canEdit && isRequestPristine(r) && (isAdmin || isCreator(r)))){
-        showToast("غير مسموح", "لا يمكن تعديل طلب تم عليه أي إجراء.");
+      if(!(req.canEdit && isPristine(req) && (isAdmin || isCreator(req)))){
+        showToast("غير مسموح","لا يمكن تعديل طلب تم عليه أي إجراء");
         return;
       }
 
-      // Simple edit UX: copy request vins to draft and go to create tab
-      draftRows = (r.vins||[]).map(v=>({
-        vin: v.vin,
-        kind: r.kind || v.kind || "move",
-        fromLocation: v.fromLocation || "",
-        toLocation: v.toLocation || "",
-        carName: v.carName || "",
-        statement: v.statement || "",
-        ok:true,
-        error:""
-      }));
-      draftRows.forEach(validateDraftRow);
+      createKind.value = req.kind || "move";
+      updateToTitle();
+
+      draftRows = Array.from({length:8}, (_,i)=>makeEmptyRow(i+1));
+      const vins = Array.isArray(req.vins)?req.vins:[];
+      vins.slice(0,8).forEach((v, idx)=>{
+        draftRows[idx].vin = v.vin || "";
+        draftRows[idx].car = v.car || "—";
+        draftRows[idx].statement = v.statement || "—";
+        draftRows[idx].ext = v.ext || "—";
+        draftRows[idx].int = v.int || "—";
+        draftRows[idx].model = v.model || "—";
+        draftRows[idx].fromLocation = v.fromLocation || "—";
+        draftRows[idx].toLocation = v.toLocation || "";
+        draftRows[idx].note = v.note || "";
+      });
       renderDraft();
+
+      setTab("create");
       closeModal();
-      openTab("create");
-      showToast("تعديل", "تم تحميل بيانات الطلب للتعديل.");
+
+      showToast("تعديل","تم تحميل الطلب للتعديل.");
     });
 
-    /* =========================
-       LOG
-    ========================= */
-    async function writeLog(action, details, requestId){
-      try{
-        const payload = {
-          action: action || "",
-          details: details || "",
-          requestId: requestId || "",
-          ts: serverTimestamp(),
-          date: new Date().toISOString().slice(0,10),
-          user: userProfile?.name || currentUser?.displayName || "",
-          email: currentUser?.email || ""
-        };
-        await db.collection("mzj_activity_log").add(payload);
-      }catch(err){
-        console.warn("log failed", err);
+    /* =======================
+       Auth bootstrap
+    ======================= */
+    auth.onAuthStateChanged(async (u)=>{
+      currentUser = u || null;
+      if(!currentUser){
+        setConn("bad","غير مسجل");
+        roleTxt.textContent="—";
+        myLocTxt.textContent="—";
+        return;
       }
-    }
 
-    async function loadLogForReq(requestId){
-      try{
-        // last 15 log entries for this request
-        const snap = await db.collection("mzj_activity_log")
-          .where("requestId","==", requestId)
-          .orderBy("ts","desc")
-          .limit(15)
-          .get();
+      setConn("warn","تحميل البروفايل…");
+      userProfile = await loadUserProfile(currentUser);
 
-        if(snap.empty){
-          mLog.textContent = "لا يوجد سجل.";
-          return;
-        }
+      const email = (currentUser.email||"").toLowerCase().trim();
+      isAdmin = (userProfile?.role === "admin") || ADMIN_EMAILS.has(email);
+      myLocation = isAdmin ? "" : (userProfile?.location || (userProfile?.locations?.[0]||""));
 
-        mLog.innerHTML = snap.docs.map(d=>{
-          const x = d.data()||{};
-          const when = fmtDate(x.ts);
-          return `<div style="padding:8px 0;border-bottom:1px dashed #eee">
-            <div><strong>${escapeHtml(x.action||"—")}</strong> <span class="small">• ${escapeHtml(when)}</span></div>
-            <div class="small">${escapeHtml(x.details||"")}</div>
-            <div class="small">${escapeHtml(x.user||x.email||"")}</div>
-          </div>`;
-        }).join("");
-      }catch(err){
-        console.error(err);
-        mLog.textContent = "تعذر تحميل السجل.";
-      }
-    }
+      roleTxt.textContent = isAdmin ? "admin" : (userProfile?.role || "اداري");
+      myLocTxt.textContent = isAdmin ? "كل الأماكن" : (myLocation || "غير محدد");
+
+      setConn("ok","مسجل");
+
+      startOpenListener();
+      startDoneListener();
+    });
+
   </script>
 </body>
 </html>
