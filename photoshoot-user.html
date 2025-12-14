@@ -543,7 +543,11 @@
     const fmt = (v)=> (v==null || v==="") ? "—" : String(v);
     const nowISO = ()=> new Date().toISOString();
     const safeLower = (s)=> String(s||"").trim().toLowerCase();
-    const isAdmin = ()=> userProfile && (userProfile.role === "الادارة" || userProfile.role === "admin" || userProfile.role === "Admin");
+    const isAdmin = () => {
+      const r = (userProfile?.role || "").toString().trim();
+      const rNorm = r.replace(/\s+/g, " ");
+      return ["admin","Admin","الادارة","الإدارة","ادارة","إدارة","الاداره","الإداره"].includes(rNorm);
+    };
     const canTouchLocation = (loc)=> isAdmin() || (userProfile?.locations || []).includes(loc);
 
     function setConnected(ok, text){
