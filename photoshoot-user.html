@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -69,7 +70,18 @@
     .statusbar{
       display:flex; gap:8px; flex-wrap:wrap; align-items:center; justify-content:flex-start;
     }
-    .pill{
+    
+
+    .tabsbar{
+      margin-top:24px;
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:var(--r14);
+      box-shadow:var(--shadow);
+      padding:10px;
+    }
+    .tabsbar .tabs{justify-content:flex-start}
+.pill{
       display:inline-flex; align-items:center; gap:8px;
       padding:8px 12px;
       border-radius:999px;
@@ -272,7 +284,15 @@
     </div>
 
     <div class="tabs">
-      <div class="tab active" id="tabManage">إدارة الطلبات</div>
+      
+<a class="tab" href="admin.html">الإدارة</a>
+<a class="tab" href="inventory.html">المخزون</a>
+<a class="tab" href="dashboard.html">الداش بورد</a>
+<a class="tab" href="vt.html">نقل السيارات</a>
+<a class="tab active" href="photoshoot-user.html">إدارة الطلبات</a>
+<a class="tab" href="cars.html">كل السيارات</a>
+<a class="tab" href="Activity.html">سجل النشاط</a>
+</div>
       <div class="tab" id="tabCreate">إنشاء طلب</div>
       <div class="tab" id="tabDone">الطلبات المكتملة</div>
     </div>
@@ -285,7 +305,15 @@
   </div>
 
   <div class="wrap">
-    <!-- MANAGE -->
+    
+<div class="tabsbar">
+  <div class="tabs">
+    <div class="tab active" id="tabManage">إدارة الطلبات</div>
+    <div class="tab" id="tabCreate">إنشاء طلب</div>
+    <div class="tab" id="tabDone">الطلبات المكتملة</div>
+  </div>
+</div>
+<!-- MANAGE -->
     <section class="card" id="viewManage">
       <div class="card-h">
         <div>
@@ -595,51 +623,86 @@
 
     let currentUser = null;
     let userProfile = null;
+    
     let isAdmin = false;
-    let myLocation = "";
+    let myLocations = [];
+    let myPrimaryLocation = "";
+
+    function normalizeBaseLocation(s){
+      const t = (s||"").toString().trim();
+      if(!t) return "";
+      if(t.includes("القادسية")) return "صالة القادسية";
+      if(t.includes("الملتقى")) return "معرض الملتقى";
+      if(t.includes("الصالة")) return "الصالة الاساسية";
+      if(t.includes("المستودع") || t.includes("الاستديو")) return "الاستديو";
+      if(LOCATIONS.includes(t)) return t;
+      return t;
+    }
+
+    function extractUserBases(arr){
+      const bases = new Set();
+      (arr||[]).forEach(x=>{
+        const b = normalizeBaseLocation(x);
+        if(LOCATIONS.includes(b)) bases.add(b);
+      });
+      return Array.from(bases);
+    }
 
     async function loadUserProfile(user){
-      // Try Firestore: users/{uid} OR user/{uid} OR query by email.
       const email = (user?.email||"").toLowerCase().trim();
-      const uid = user?.uid || "";
-      const tryDoc = async (col, id)=>{
+      if(!email) return { ok:false };
+
+      const tryInCollection = async (colName, fieldName) => {
         try{
-          const s = await db.collection(col).doc(id).get();
-          if(s.exists) return {id:s.id, ...s.data()};
-        }catch(e){}
-        return null;
-      };
-      const tryEmailQuery = async (col)=>{
-        try{
-          const q = await db.collection(col).where("email","==",email).limit(1).get();
-          if(!q.empty){ const d=q.docs[0]; return {id:d.id, ...d.data()}; }
+          const snap = await db.collection(colName).where(fieldName,"==",email).limit(1).get();
+          if(!snap.empty) return snap.docs[0].data();
         }catch(e){}
         return null;
       };
 
-      let p = null;
-      if(uid) p = await tryDoc("users", uid) || await tryDoc("user", uid);
-      if(!p && email) p = await tryEmailQuery("users") || await tryEmailQuery("user");
+      let profile =
+        await tryInCollection("user","email") ||
+        await tryInCollection("user","Email") ||
+        await tryInCollection("users","email") ||
+        await tryInCollection("users","Email");
 
-      // Fallback by mapping
-      if(!p){
-        if(ADMIN_EMAILS.has(email)){
-          p = { role:"admin", location:"", locations: LOCATIONS };
-        } else if(STAFF_MAP[email]){
-          p = { role:"اداري", location: STAFF_MAP[email].location, locations:[STAFF_MAP[email].location] };
-        } else {
-          // default minimal (no permissions)
-          p = { role:"اداري", location:"", locations:[] };
-        }
+      if(!profile) return { ok:false };
+
+      const roleRaw = (profile.role || profile.Role || "").toString().trim();
+      const nameRaw = (profile.name || profile.Name || profile.displayName || "").toString().trim();
+      const locArr  = profile.locations || profile.Locations || [];
+      const single  = profile.location || profile.Location || "";
+
+      const roleNorm = roleRaw || "—";
+      const roleLower = roleRaw.toLowerCase();
+
+      isAdmin = roleLower.includes("admin") || roleRaw.includes("ادارة") || roleRaw.includes("الإدارة") || roleRaw === "الادارة" || roleRaw === "الإدارة";
+      myLocations = extractUserBases(Array.isArray(locArr) ? locArr : []);
+      if(myLocations.length === 0 && single){
+        const b = normalizeBaseLocation(single);
+        if(LOCATIONS.includes(b)) myLocations = [b];
       }
-      return p;
+      if(isAdmin && myLocations.length === 0){
+        myLocations = [...LOCATIONS];
+      }
+      myPrimaryLocation = myLocations[0] || "";
+
+      const locLabel = isAdmin ? "كل الفروع" : (myLocations.join("، ") || "—");
+
+      const roleEl = document.getElementById("myRole");
+      const locEl  = document.getElementById("myLoc");
+      if(roleEl) roleEl.textContent = roleNorm;
+      if(locEl) locEl.textContent  = locLabel;
+
+      return { ok:true, role: roleNorm, name: nameRaw, locations: myLocations, isAdmin };
     }
 
     function canTouchLocation(loc){
       if(isAdmin) return true;
-      if(!loc) return false;
-      return loc === myLocation;
+      const base = normalizeBaseLocation(loc);
+      return !!base && myLocations.includes(base);
     }
+
 
     function isCreator(req){
       const my = (currentUser?.email||"").toLowerCase();
@@ -755,21 +818,40 @@
       }).join("");
     }
 
-    async function fetchInventory(vin){
-      const s = await db.collection("inventory").doc(vin).get();
-      if(!s.exists) return null;
-      return s.data() || {};
+    
+    async function fetchCarByVin(vinRaw){
+      const vin = normalizeVin(vinRaw);
+      if(!vin) return null;
+
+      const col = db.collection("cars");
+
+      // Primary: vin field
+      let q = await col.where("vin","==",vin).limit(1).get();
+      if(!q.empty) return q.docs[0].data() || {};
+
+      // Fallbacks (some docs might use VIN / Vin)
+      q = await col.where("VIN","==",vin).limit(1).get();
+      if(!q.empty) return q.docs[0].data() || {};
+
+      q = await col.where("Vin","==",vin).limit(1).get();
+      if(!q.empty) return q.docs[0].data() || {};
+
+      return null;
     }
 
-    function mapInventory(inv){
+
+    function mapCar(inv){
       return {
-        car: inv.car || inv.carName || inv.name || inv.title || inv.modelName || inv.makeModel || "—",
-        statement: inv.statement || inv.trim || inv.variant || inv.desc || "—",
-        ext: inv.ext || inv.extColor || inv.exterior || inv.exteriorColor || "—",
-        int: inv.int || inv.intColor || inv.interior || inv.interiorColor || "—",
-        model: (inv.model || inv.year || inv.modelYear || "").toString() || "—",
-        location: inv.location || inv.place || inv.branch || inv.currentLocation || "—"
+        car: inv.car || inv.carName || inv.name || inv.title || inv["السيارة"] || "—",
+        statement: inv.variant || inv.statement || inv.trim || inv.desc || inv["البيان"] || "—",
+        ext: inv.extColor || inv.ext || inv.exteriorColor || inv.exterior || inv["الخارجي"] || "—",
+        int: inv.intColor || inv.int || inv.interiorColor || inv.interior || inv["الداخلي"] || "—",
+        model: (inv.modelYear || inv.year || inv.model || inv.modelYearStr || inv["الموديل"] || "").toString() || "—",
+        location: inv.location || inv.branch || inv.place || inv.currentLocation || inv["مكان السيارة"] || "—"
       };
+    }
+
+;
     }
 
     async function loadVinIntoRow(i){
@@ -781,14 +863,14 @@
       renderDraft();
 
       try{
-        const inv = await fetchInventory(vin);
+        const inv = await fetchCarByVin(vin);
         if(!inv){
           r.err = "VIN غير موجود في inventory";
           r.ok = false;
           renderDraft();
           return;
         }
-        const m = mapInventory(inv);
+        const m = mapCar(inv);
         r.car = m.car; r.statement = m.statement; r.ext = m.ext; r.int = m.int; r.model = m.model;
         r.fromLocation = m.location || "—";
 
@@ -938,7 +1020,7 @@
         createdAt: serverTimestamp(),
         createdByEmail: currentUser.email || "",
         createdByName: userProfile?.name || currentUser.displayName || "",
-        createdByLocation: myLocation || "",
+        createdByLocation: myPrimaryLocation || "",
         canEdit: true,
         vins,
         progress: { perVin, percent: 0 }
@@ -1252,7 +1334,7 @@
 
       permHint.textContent = isAdmin
         ? "Admin: تقدر تنفّذ أي إجراء."
-        : `صلاحياتك على أساس المكان (${myLocation||"—"}). تم الانتهاء: لمقدم الطلب فقط.`;
+        : `صلاحياتك على أساس المكان (${(myLocations&&myLocations.length)?myLocations.join('، '):'—'}). تم الانتهاء: لمقدم الطلب فقط.`;
     }
 
     async function openRequest(reqId){
@@ -1389,29 +1471,43 @@
     /* =======================
        Auth bootstrap
     ======================= */
-    auth.onAuthStateChanged(async (u)=>{
-      currentUser = u || null;
-      if(!currentUser){
-        setConn("bad","غير مسجل");
-        roleTxt.textContent="—";
-        myLocTxt.textContent="—";
-        return;
+    auth.
+    onAuthStateChanged(auth, async (user) => {
+      try{
+        if(!user){
+          setConn("غير مسجل","danger");
+          const roleEl=document.getElementById("myRole"); if(roleEl) roleEl.textContent="—";
+          const locEl=document.getElementById("myLoc");  if(locEl) locEl.textContent="—";
+          return;
+        }
+
+        const em = (user.email||"").toLowerCase().trim();
+
+        // Load profile (sets isAdmin + myLocations)
+        const prof = await loadUserProfile(user);
+
+        // Admin email bypass (always)
+        if(ADMIN_EMAILS.includes(em)){
+          isAdmin = true;
+          if(!myLocations || myLocations.length===0) myLocations = [...LOCATIONS];
+          myPrimaryLocation = myLocations[0] || "";
+          const roleEl=document.getElementById("myRole"); if(roleEl) roleEl.textContent="الادارة";
+          const locEl=document.getElementById("myLoc");  if(locEl) locEl.textContent="كل الفروع";
+        }
+
+        if(!prof?.ok && !isAdmin){
+          setConn("لا يوجد صلاحية","danger");
+          return;
+        }
+
+        setConn("متصل","ok");
+
+        // Start realtime listeners
+        startRequestsListener();
+      }catch(err){
+        console.error(err);
+        setConn("خطأ اتصال","danger");
       }
-
-      setConn("warn","تحميل البروفايل…");
-      userProfile = await loadUserProfile(currentUser);
-
-      const email = (currentUser.email||"").toLowerCase().trim();
-      isAdmin = (userProfile?.role === "admin") || ADMIN_EMAILS.has(email);
-      myLocation = isAdmin ? "" : (userProfile?.location || (userProfile?.locations?.[0]||""));
-
-      roleTxt.textContent = isAdmin ? "admin" : (userProfile?.role || "اداري");
-      myLocTxt.textContent = isAdmin ? "كل الأماكن" : (myLocation || "غير محدد");
-
-      setConn("ok","مسجل");
-
-      startOpenListener();
-      startDoneListener();
     });
 
   </script>
