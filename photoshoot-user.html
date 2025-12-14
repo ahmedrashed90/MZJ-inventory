@@ -529,6 +529,12 @@
     const act4 = document.getElementById('act4');
 
     // ====== State ======
+    const ADMIN_EMAILS = new Set([
+      "coo@mzjcars.com",
+      "mr.ahmed_rashed@outlook.sa",
+      "ahmedrashed90@gmail.com",
+      "Mohammed.ezat1989@gmail.com".toLowerCase(), // safeguard if someone marks as admin later
+    ]);
     let currentUser = null;
     let userProfile = null; // {role, locations[], Name, Email}
     let unsubscribeOrders = null;
@@ -546,7 +552,7 @@
     const isAdmin = () => {
       const r = (userProfile?.role || "").toString().trim();
       const rNorm = r.replace(/\s+/g, " ");
-      return ["admin","Admin","الادارة","الإدارة","ادارة","إدارة","الاداره","الإداره"].includes(rNorm);
+      return ADMIN_EMAILS.has((currentUser?.email || "").toLowerCase()) || ["admin","Admin","الادارة","الإدارة","ادارة","إدارة","الاداره","الإداره"].includes(rNorm);
     };
     const canTouchLocation = (loc)=> isAdmin() || (userProfile?.locations || []).includes(loc);
 
