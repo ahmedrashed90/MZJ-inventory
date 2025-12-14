@@ -1,2420 +1,853 @@
 
-
-
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>MZJ إدارة الطلبات</title>
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet"/>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
-  <meta name="color-scheme" content="light"/>
-  <style>
-    :root{
-      --brown:#3e2420; --beige:#bc8f74; --cream:#fff8ef; --card:#ffffff; --line:#e7e5e4;
-      --text:#1f2937; --muted:#6b7280; --ok:#16a34a; --danger:#ef4444; --info:#0ea5e9;
-      --radius:12px; --shadow:0 10px 26px rgba(0,0,0,.06); --table-head:#fafafa;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background:var(--cream);
-      color:var(--text);
-      font-family:"Tajawal",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-      line-height:1.7;
-    }
-    a{text-decoration:none;color:var(--brown)}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MZJ Workspace — الطلبات</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brown:#3e2420;
+  --beige:#bc8f74;
+  --cream:#fff8ef;
 
-    /* Header */
-    .top{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);z-index:10}
-    .top .inner{
-      max-width:1200px;margin:0 auto;
-      display:flex;align-items:center;justify-content:space-between;
-      padding:10px 16px;
-    }
-    .top-left{display:flex;align-items:center;gap:10px}
-    .logo{
-      width:36px;height:36px;border-radius:50%;
-      display:flex;align-items:center;justify-content:center;
-      background:radial-gradient(circle at 30% 20%,#f97316,#3e2723);
-      box-shadow:0 0 0 4px rgba(188,143,116,.3);
-      color:#fff;
-    }
-    .logo i{font-size:18px}
-    .brand-title{font-weight:800;font-size:16px;margin:0;color:var(--brown)}
-    .brand-sub{margin:0;font-size:12px;color:var(--muted)}
-    .top-right{display:flex;align-items:center;gap:10px}
-    .chip{
-      font-size:11px;
-      padding:3px 8px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:#fdfaf5;
-      display:inline-flex;align-items:center;gap:6px;
-    }
-    .chip i{font-size:11px;color:var(--brown)}
-    .user-info{font-size:13px;color:var(--muted)}
-    .btn{
-      border-radius:999px;
-      border:1px solid transparent;
-      background:var(--brown);
-      color:#fff;
-      font-family:inherit;
-      font-size:13px;
-      padding:6px 12px;
-      display:inline-flex;align-items:center;gap:6px;
-      cursor:pointer;
-      box-shadow:0 6px 18px rgba(62,36,32,.22);
-    }
-    .btn.ghost{
-      background:transparent;
-      color:var(--brown);
-      border-color:var(--line);
-      box-shadow:none;
-    }
-    .btn.secondary{
-      background:#fdf7f2;
-      color:var(--brown);
-      border-color:var(--beige);
-      box-shadow:none;
-    }
-    .btn.beige{
-      background:var(--beige);
-      color:#fff;
-      border-color:var(--beige);
-    }
-    .btn.primary{
-      background:var(--brown);
-      color:#fff;
-      border-color:var(--brown);
-    }
-    .btn:disabled{
-      opacity:.7;
-      cursor:default;
-      box-shadow:none;
-    }
-    .btn-mini{font-size:11px;padding:4px 8px;box-shadow:none}
-    .btn i{font-size:12px}
+  --text:#111827;
+  --muted:#6b7280;
+  --line:rgba(62,36,32,.12);
 
-    /* Tabs Bar */
-    .tabs{
-      max-width:1200px;margin:0 auto;
-      display:flex;align-items:center;gap:8px;
-      padding:0 16px 10px;
-      border-bottom:1px solid var(--line);
-      background:#fff;
-    }
-    .tabs a{
-      font-size:13px;
-      padding:4px 10px 7px;
-      border-radius:999px;
-      border:1px solid transparent;
-      color:var(--muted);
-    }
-    .tabs a.active{
-      background:#f2ebe3;
-      border-color:var(--beige);
-      color:var(--brown);
-      font-weight:700;
-    }
+  --ok:#16a34a;
+  --warn:#f59e0b;
+  --err:#ef4444;
 
-    /* Layout */
-    .wrap{
-      max-width:1200px;
-      margin:18px auto 40px;
-      padding:0 16px 40px;
-      display:flex;
-      flex-direction:column;
-      gap:16px;
-      align-items:stretch;
-    }
-    @media (max-width:960px){
-      .wrap{padding:0 10px 32px;}
-    }
+  --r12:12px;
+  --r16:16px;
+  --r20:20px;
 
-    /* Cards */
-    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;}
-    .card{
-      background:var(--card);
-      border-radius:var(--radius);
-      border:1px solid var(--line);
-      box-shadow:var(--shadow);
-    }
-    .card .inner{padding:14px}
-    .card-title{
-      display:flex;align-items:center;justify-content:space-between;
-      gap:6px;
-    }
-    .card-title strong{font-size:13px;color:var(--brown)}
-    .card-title span{font-size:11px;color:var(--muted)}
-    .stat-main{
-      display:flex;align-items:baseline;gap:6px;
-      margin-top:8px;
-    }
-    .stat-main .num{font-size:20px;font-weight:800;color:var(--brown)}
-    .stat-main .label{font-size:12px;color:var(--muted)}
-    .stat-sub{margin-top:4px;font-size:11px;color:var(--muted)}
+  --shadow1:0 10px 35px rgba(15, 23, 42, .10);
+  --shadow2:0 25px 70px rgba(15, 23, 42, .16);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family:"Tajawal",system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  color:var(--text);
+  background:
+    radial-gradient(1200px 500px at 20% -10%, rgba(188,143,116,.18), transparent 60%),
+    radial-gradient(900px 500px at 80% 0%, rgba(62,36,32,.14), transparent 60%),
+    linear-gradient(180deg,#fff8ef,#fff3e9 40%, #fff8ef);
+}
+a{color:inherit;text-decoration:none}
+button,input,select{font-family:inherit}
 
-    /* Status legend */
-    .legend{
-      display:flex;flex-wrap:wrap;gap:6px;
-      margin-top:10px;font-size:11px;color:var(--muted);
-    }
-    .pill{
-      display:inline-flex;align-items:center;gap:5px;
-      padding:3px 8px;
-      border-radius:999px;
-      border:1px dashed var(--line);
-      background:#fdfaf5;
-    }
-    .pill-dot{
-      width:8px;height:8px;border-radius:50%;
-    }
-    .pill-dot.prog{background:#fbbf24}
-    .pill-dot.done{background:#22c55e}
-    .pill-dot.draft{background:#9ca3af}
+/* Topbar */
+.topbar{
+  position:sticky;top:0;z-index:50;
+  backdrop-filter: blur(12px) saturate(140%);
+  background: rgba(255,255,255,.76);
+  border-bottom:1px solid var(--line);
+}
+.topbar-inner{
+  max-width:1280px;margin:0 auto;
+  padding:14px 18px;
+  display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;
+}
+.brand{display:flex;gap:10px;align-items:center;min-width:260px}
+.brandMark{
+  width:44px;height:44px;border-radius:16px;
+  background: linear-gradient(145deg, var(--brown), #241110);
+  box-shadow: 0 14px 28px rgba(62,36,32,.22);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:900;letter-spacing:.5px;
+}
+.brandText{display:flex;flex-direction:column;gap:2px}
+.brandText b{font-size:15px;color:var(--brown);line-height:1}
+.brandText small{font-size:12px;color:var(--muted);line-height:1.1}
 
-    /* Panels */
-    .panel{
-      background:var(--card);
-      border-radius:var(--radius);
-      border:1px solid var(--line);
-      box-shadow:var(--shadow);
-    }
-    .panel .head{
-      padding:10px 14px;
-      border-bottom:1px solid var(--line);
-      display:flex;align-items:center;justify-content:space-between;
-      gap:8px;
-    }
-    .panel .head strong{font-size:14px;color:var(--brown)}
-    .panel .head .muted{font-size:11px;color:var(--muted)}
-    .panel .body{padding:12px 14px 14px}
+/* Primary Tabs (Orders / New Request) */
+.primaryTabs{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.pTab{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.92);
+  color:var(--brown);
+  font-weight:900;
+  padding:10px 16px;
+  border-radius:999px;
+  cursor:pointer;
+  transition:.18s ease;
+}
+.pTab:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(15,23,42,.08)}
+.pTab.active{background:var(--brown);border-color:var(--brown);color:#fff}
 
-    .muted{color:var(--muted)}
+/* Chips */
+.chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{
+  display:inline-flex;gap:8px;align-items:center;
+  padding:8px 10px;border-radius:999px;
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.92);
+  font-size:12px;font-weight:900;color:var(--brown);
+}
+.dot{width:8px;height:8px;border-radius:999px;background:var(--beige)}
+.chip.ok{border-color:rgba(22,163,74,.25);background:rgba(240,253,244,.9);color:#14532d}
+.chip.err{border-color:rgba(239,68,68,.25);background:rgba(254,242,242,.9);color:#7f1d1d}
 
-    /* Filters */
-    .filters{
-      display:flex;align-items:flex-end;justify-content:space-between;
-      gap:10px;flex-wrap:wrap;margin-bottom:10px;
-    }
-    .filters-left,.filters-right{
-      display:flex;align-items:flex-end;gap:8px;
-      flex-wrap:wrap;
-    }
-    label{font-size:12px;color:var(--muted);display:block;margin-bottom:2px}
-    input,select,textarea{
-      font-family:inherit;
-      font-size:13px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      padding:5px 10px;
-      background:#fff;
-      color:var(--text);
-    }
-    textarea{
-      border-radius:10px;
-      min-height:80px;
-      resize:vertical;
-    }
-    input[type="date"]{padding-inline-start:10px;padding-inline-end:10px}
-    input[type="search"]{min-width:200px}
+/* Buttons/Inputs */
+.btn{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.95);
+  color:var(--brown);
+  padding:10px 12px;
+  border-radius:12px;
+  font-weight:900;
+  cursor:pointer;
+  display:inline-flex;gap:8px;align-items:center;
+  transition:.18s ease;
+}
+.btn:hover{transform:translateY(-1px);box-shadow:0 14px 30px rgba(15,23,42,.10)}
+.btn.primary{background:var(--brown);border-color:var(--brown);color:#fff}
+.btn.danger{background:rgba(254,242,242,.95);border-color:rgba(239,68,68,.25);color:#7f1d1d}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
 
-    /* Table */
-    .table-wrap{border-radius:10px;border:1px solid var(--line);overflow:hidden;background:#fff;}
-    table{border-collapse:collapse;width:100%;table-layout:fixed;font-size:13px;}
-    thead{background:var(--table-head);}
-    th,td{padding:4px 6px;border-bottom:1px solid #f3f0eb;text-align:right;vertical-align:middle;}
-    th{font-weight:700;font-size:11px;color:#4b5563}
-    tbody tr:nth-child(even){background:#fdfaf8}
-    tbody tr:hover{background:#f3eee7;cursor:pointer}
-    .center{text-align:center}
-    .badge{
-      display:inline-flex;align-items:center;justify-content:center;
-      font-size:11px;border-radius:999px;padding:2px 8px;
-    }
-    .badge.draft{background:#f3f4f6;color:#4b5563}
-    .badge.prog{background:#fef3c7;color:#92400e}
-    .badge.done{background:#dcfce7;color:#166534}
-    .badge.move{background:#e0f2fe;color:#075985}
-    .badge.shoot{background:#fae8ff;color:#86198f}
+.input, select{
+  border:1px solid rgba(62,36,32,.14);
+  background:rgba(255,255,255,.95);
+  border-radius:14px;
+  padding:11px 12px;
+  outline:none;
+  min-width:220px;
+  font-weight:800;
+}
+.input:focus, select:focus{
+  border-color:rgba(188,143,116,.9);
+  box-shadow:0 0 0 5px rgba(188,143,116,.18);
+}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+.small{font-size:12px;color:var(--muted)}
 
-    .actions{display:flex;flex-wrap:wrap;gap:4px;}
-    .actions .btn-mini{border-radius:8px;font-size:10px;padding:3px 7px}
+/* Layout */
+.wrap{max-width:1280px;margin:0 auto;padding:18px}
+.card{
+  background:rgba(255,255,255,.92);
+  border:1px solid var(--line);
+  border-radius:20px;
+  box-shadow:var(--shadow1);
+  overflow:hidden;
+}
+.cardHd{
+  padding:16px 16px;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  border-bottom:1px solid rgba(62,36,32,.08);
+  background:
+    radial-gradient(800px 220px at 20% -30%, rgba(188,143,116,.20), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,250,246,.92));
+}
+.title{display:flex;flex-direction:column;gap:4px}
+.title h2{margin:0;font-size:16px;color:var(--brown);letter-spacing:.2px}
+.title small{color:var(--muted);font-size:12px}
+.cardBd{padding:16px}
 
-    /* Status dot in header */
-    .status{
-      display:flex;align-items:center;gap:6px;
-      font-size:11px;color:var(--muted);
-    }
-    .dot{
-      width:9px;height:9px;border-radius:50%;
-      background:#d1d5db;
-    }
-    .dot.ok{background:#22c55e}
-    .dot.err{background:#ef4444}
+/* Table */
+.tableWrap{
+  border:1px solid rgba(62,36,32,.10);
+  border-radius:16px;
+  overflow:hidden;
+  background:rgba(255,255,255,.95);
+}
+table{width:100%;border-collapse:separate;border-spacing:0;min-width:980px}
+th,td{padding:12px 12px;border-bottom:1px solid rgba(62,36,32,.08);font-size:13px;vertical-align:top}
+th{
+  background:rgba(255,248,239,.92);
+  color:var(--brown);
+  font-weight:900;
+  position:sticky;top:0;z-index:1;
+}
+tbody tr:hover td{background:rgba(255,253,251,.92)}
+.pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:999px;
+  border:1px solid transparent;
+  font-size:12px;font-weight:900;
+}
+.pill.ok{background:rgba(236,253,245,.92);color:#065f46;border-color:rgba(167,243,208,.75)}
+.pill.warn{background:rgba(255,251,235,.92);color:#92400e;border-color:rgba(253,230,138,.85)}
+.progress{height:10px;background:rgba(62,36,32,.12);border-radius:999px;overflow:hidden}
+.progress > div{height:100%;background:var(--brown);width:0%;transition:width .12s linear}
 
-    /* Modal */
-    .modal-backdrop{
-      position:fixed;inset:0;
-      background:rgba(15,23,42,.4);
-      display:none;align-items:center;justify-content:center;
-      z-index:50;
-    }
-    .modal-backdrop.show{display:flex}
-    .modal{
-      background:#fff;
-      border-radius:16px;
-      box-shadow:0 22px 60px rgba(0,0,0,.3);
-      max-width:960px;
-      width:100%;
-      max-height:84vh;
-      display:flex;flex-direction:column;
-      overflow:hidden;
-    }
-    .modal-header{
-      padding:10px 16px;
-      border-bottom:1px solid var(--line);
-      display:flex;align-items:center;justify-content:space-between;gap:8px;
-    }
-    .modal-title{font-size:14px;font-weight:700;color:var(--brown)}
-    .modal-body{
-      padding:10px 16px 12px;
-      overflow:auto;
-    }
-    .modal-footer{
-      padding:10px 16px 14px;
-      border-top:1px solid var(--line);
-      display:grid;
-      grid-template-columns:repeat(6, minmax(0, 1fr));
-      gap:8px;
-      align-items:stretch;
-    }
-    .modal-footer .btn{
-      width:100%;
-      justify-content:center;
-      border-radius:12px;
-      padding:10px 8px;
-      font-size:12px;
-      box-shadow:none;
-    }
-    .modal-footer .step-num{margin-left:6px}
-    @media (max-width:820px){
-      .modal-footer{grid-template-columns:repeat(3, minmax(0, 1fr));}
-    }
-    @media (max-width:520px){
-      .modal-footer{grid-template-columns:repeat(2, minmax(0, 1fr));}
-    }
-    .modal-close{
-      border:none;background:transparent;cursor:pointer;
-      color:var(--muted);
-    }
+/* New Request */
+.twoCol{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:980px){.twoCol{grid-template-columns:1fr}}
+.box{
+  border:1px solid rgba(62,36,32,.10);
+  border-radius:18px;
+  background:rgba(255,255,255,.92);
+  padding:14px;
+}
+.box b{color:var(--brown)}
+.vinRow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.vinList{display:flex;gap:10px;flex-direction:column;margin-top:12px}
+.vinItem{
+  border:1px solid rgba(62,36,32,.10);
+  background:rgba(255,253,251,.92);
+  border-radius:16px;
+  padding:12px;
+  display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;
+}
+.vinItem .left{display:flex;flex-direction:column;gap:4px}
+.vinItem .left .vin{font-weight:900;color:var(--brown)}
+.vinItem .left .loc{font-size:12px;color:var(--muted)}
+.vinItem .meta{font-size:12px;color:var(--muted);white-space:pre-line}
+.vinItem .actions{display:flex;gap:8px;align-items:center}
 
-    .section-title{
-      font-size:13px;font-weight:700;color:var(--brown);
-      margin-bottom:4px;
-    }
-    .subhint{
-      font-size:11px;color:var(--muted);margin-bottom:6px;
-    }
-    .stack{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-    .note-box{
-      background:#f9fafb;
-      border-radius:10px;
-      border:1px dashed var(--line);
-      padding:6px 8px;
-      font-size:11px;
-    }
-    .note-box strong{color:var(--brown)}
+/* Modal */
+.backdrop{
+  position:fixed;inset:0;z-index:1000;
+  background:rgba(15,23,42,.55);
+  display:none;align-items:center;justify-content:center;
+  padding:16px;
+}
+.backdrop.show{display:flex}
+.modal{
+  width:100%;
+  max-width:1040px;
+  border-radius:24px;
+  overflow:hidden;
+  background:rgba(255,255,255,.94);
+  border:1px solid rgba(255,255,255,.28);
+  box-shadow:var(--shadow2);
+}
+.modalHd{
+  padding:16px 18px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+  border-bottom:1px solid rgba(62,36,32,.10);
+  background:
+    radial-gradient(900px 260px at 20% -40%, rgba(188,143,116,.25), transparent 60%),
+    linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,248,239,.92));
+}
+.modalHd h3{margin:0;color:var(--brown);font-size:16px;font-weight:900}
+.modalBd{padding:18px}
+.grid2{display:grid;grid-template-columns:1.05fr .95fr;gap:14px}
+@media(max-width:980px){.grid2{grid-template-columns:1fr}}
+.pre{
+  margin-top:10px;
+  padding:12px;
+  border-radius:18px;
+  border:1px dashed rgba(188,143,116,.50);
+  background:rgba(255,253,251,.92);
+  font-size:12px;
+  line-height:1.8;
+  white-space:pre-line;
+}
+.stageBtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 
-    .toast{
-      position:fixed;
-      left:50%;
-      bottom:20px;
-      transform:translateX(-50%);
-      background:#111827;
-      color:#f9fafb;
-      padding:6px 12px;
-      border-radius:999px;
-      font-size:12px;
-      display:none;
-      z-index:60;
-      box-shadow:0 12px 30px rgba(0,0,0,.4);
-    }
+/* Toast */
+.toast{
+  position:fixed;left:18px;bottom:18px;z-index:2000;
+  background:#111827;color:#fff;
+  padding:10px 12px;border-radius:14px;
+  opacity:0;transform:translateY(10px);
+  transition:.2s;
+}
+.toast.show{opacity:1;transform:none}
+.hidden{display:none!important}
 
-    /* inner tabs */
-    .inner-tabs{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin-bottom:12px;
-    }
-    .inner-tab{
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:#fff;
-      padding:6px 12px;
-      font-size:13px;
-      font-weight:700;
-      cursor:pointer;
-    }
-    .inner-tab.active{
-      background:var(--brown);
-      color:#fff;
-      border-color:var(--brown);
-    }
-    .tab-pane{display:none}
-    .tab-pane.active{display:block}
+/* Create modal table inputs */
+.cellInput, .cellSelect{
+  width:100%;
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:999px;
+  padding:10px 12px;
+  font-family:inherit;
+  font-size:13px;
+  outline:none;
+}
+.cellInput:focus, .cellSelect:focus{
+  border-color:#dcc3b2;
+  box-shadow:0 0 0 4px rgba(220,195,178,.35);
+}
+.cellMuted{ color:var(--muted); font-size:12px; }
+.btnX{
+  width:36px;height:36px;border-radius:999px;border:1px solid var(--line);
+  background:#fff; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
+}
+.btnX:hover{ background:#f6eee7; }
+.pill{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#fff;
+  font-size:12px; white-space:nowrap;
+}
+.pill.bad{ border-color:#f3c0c0; background:#fff7f7; color:#7a1f1f;}
+.pill.ok{ border-color:#cfead6; background:#f3fbf6; color:#14532d;}
 
-    .small-input{
-      height:32px;
-      padding:6px 9px;
-      border-radius:10px;
-      font-size:13px;
-    }
-
-    /* ===== Process Timeline ===== */
-    .process-timeline{
-      padding:8px 16px 10px;
-      border-bottom:1px solid var(--line);
-      background:#fff8ef;
-    }
-    .process-timeline-title{
-      font-size:12px;
-      font-weight:700;
-      color:var(--brown);
-      margin-bottom:2px;
-      text-align:right;
-    }
-    .process-timeline-sub{
-      font-size:11px;
-      color:var(--muted);
-      margin-bottom:6px;
-      text-align:right;
-    }
-    .pt-track{
-      display:flex;
-      justify-content:space-between;
-      gap:8px;
-      position:relative;
-      padding:4px 2px 0;
-    }
-    .pt-track::before{
-      content:"";
-      position:absolute;
-      inset-inline:14px;
-      top:17px;
-      height:2px;
-      background:#e5e7eb;
-      z-index:0;
-    }
-    .pt-step{
-      position:relative;
-      flex:1;
-      text-align:center;
-      padding-inline:4px;
-    }
-    .pt-circle{
-      width:26px;
-      height:26px;
-      margin:0 auto 4px;
-      border-radius:999px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      border:2px solid #d1d5db;
-      background:#fff;
-      font-size:11px;
-      font-weight:700;
-      color:#6b7280;
-      position:relative;
-      z-index:1;
-    }
-    .pt-label{
-      font-size:11px;
-      font-weight:700;
-      color:var(--brown);
-      white-space:nowrap;
-    }
-    .pt-desc{
-      font-size:10px;
-      color:var(--muted);
-      margin-top:2px;
-      min-height:12px;
-    }
-    .pt-step.done .pt-circle{
-      border-color:var(--ok);
-      background:#dcfce7;
-      color:#166534;
-    }
-    .pt-step.active .pt-circle{
-      border-color:var(--beige);
-      background:#fef3c7;
-      color:#92400e;
-    }
-    .pt-step.upcoming .pt-circle{
-      opacity:0.6;
-    }
-    .pt-step.done ~ .pt-step .pt-circle{
-      /* keep upcoming style */
-    }
-
-    @media (max-width:720px){
-      .pt-label{font-size:10px}
-      .pt-desc{display:none}
-    }
-
-  
-    .step-num {
-      background: #3e2420;
-      color: #fff;
-      font-size: 10px;
-      font-weight: 700;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-left: 4px;
-    }
-
-  </style>
+</style>
 </head>
+
 <body>
-<div class="top">
-  <div class="inner">
-    <div class="top-left">
-      <div class="logo"><i class="fa-solid fa-star"></i></div>
-      <div>
-        <p class="brand-title">MZJ إدارة طلبات التصوير والنقل</p>
-        <p class="brand-sub">مسار واحد لمتابعة جميع الطلبات من الإنشاء حتى التنفيذ</p>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <div class="brandMark">MZJ</div>
+      <div class="brandText">
+        <b>محمد بن ذعار العجمي للسيارات</b>
+        <small>Workspace • إدارة الطلبات</small>
       </div>
     </div>
-    <div class="top-right">
-      <span class="chip">
-        <i class="fa-solid fa-circle-nodes"></i>
-        <span class="status">
-          <span id="connDot" class="dot"></span>
-          <span id="connText">جارٍ الاتصال…</span>
-        </span>
-      </span>
-      <span class="user-info" id="userLabel">غير مسجل</span>
-      <button class="btn ghost btn-mini" id="btnSignOut" style="display:none">
-        <i class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل خروج
-      </button>
+
+    <div class="chips">
+      <span class="chip" id="authBadge"><span class="dot"></span>جارٍ الاتصال…</span>
+      <span class="chip" id="roleBadge">الدور: —</span>
+      <span class="chip" id="locBadge">الأماكن: —</span>
+      <span class="chip" id="projBadge">Project: —</span>
+      <button class="btn danger" id="btnSignOut" style="display:none">تسجيل خروج</button>
     </div>
   </div>
 </div>
 
-<div class="tabs">
-  <a class="tab" href="admin.html">الإدارة</a>
-  <a class="tab" href="inventory.html">المخزون</a>
-  <a class="tab" href="dashboard.html">الداش بورد</a>
-  <a class="tab" href="vt.html">نقل السيارات</a>
-  <a class="tab active" href="photoshoot-user.html">إدارة الطلبات</a>
-  <a class="tab" href="cars.html">كل السيارات</a>
-  <a class="tab" href="Activity.html">سجل النشاط</a>
-</div>
+<div class="wrap">
 
-<main class="wrap">
-  <section class="cards">
-</section>
-
-  <!-- بوابة الدخول -->
-  <section id="authGate" class="panel" style="display:none">
-    <div class="head">
-      <strong>تسجيل الدخول لإدارة الطلبات</strong>
-      <div class="muted">مطلوب صلاحية للوصول لطلبات التصوير والنقل</div>
-    </div>
-    <div class="body">
-      <p class="muted" style="margin-top:0;margin-bottom:8px">
-        أدخل البريد الإلكتروني وكلمة المرور المستخدمة في لوحة الإدارة.
-      </p>
-      <form id="loginForm">
-        <div style="display:flex;flex-direction:column;gap:8px;max-width:320px">
-          <div>
-            <label for="email">البريد الإلكتروني</label>
-            <input id="email" type="email" required autocomplete="username">
-          </div>
-          <div>
-            <label for="password">كلمة المرور</label>
-            <input id="password" type="password" required autocomplete="current-password">
-          </div>
-          <button id="btnSignIn" class="btn" type="submit">
-            <i class="fa-solid fa-right-to-bracket"></i>
-            تسجيل الدخول
-          </button>
+  <!-- ORDERS TAB -->
+  <section id="ordersTab">
+    <div class="card">
+      <div class="cardHd">
+        <div class="title">
+          <h2>إدارة الطلبات</h2>
+          <small>بحث VIN • فتح المودال للتنفيذ — تحديث لحظي بدون Refresh</small>
         </div>
-      </form>
+        <div class="controls">
+          <select id="filterKind">
+            <option value="all">الكل</option>
+            <option value="move">نقل</option>
+            <option value="shoot">تصوير</option>
+          </select>
+          <input class="input mono" id="searchVin" placeholder="بحث برقم الهيكل VIN" />
+          <button class="btn" id="btnOpenCreate">طلب جديد</button>
+          <button class="btn primary" id="btnRefresh">تحديث</button>
+        </div>
+      </div>
+
+      <div class="cardBd">
+        <div class="tableWrap">
+          <div style="overflow:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th>رقم</th>
+                  <th>نوع</th>
+                  <th>VINs</th>
+                  <th>من</th>
+                  <th>إلى</th>
+                  <th>المنشئ</th>
+                  <th>التقدم</th>
+                  <th>فتح</th>
+                </tr>
+              </thead>
+              <tbody id="reqTbody">
+                <tr><td colspan="8" class="small">جارٍ التحميل…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="small" style="margin-top:10px">
+          هيكل VIN داخل الطلب: <b class="mono">vins: [{vin, fromLocation}]</b> — المصدر الأساسي للمكان: <b class="mono">inventory/{VIN}</b>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- التطبيق -->
-  <section id="app" class="panel" style="display:none">
-    <div class="head">
-      <strong>الطلبات (تصوير + نقل)</strong>
-      <div class="muted"><span id="countShown">0</span> من <span id="countTotal">0</span></div>
-    </div>
-    <div class="body">
+  </div>
 
-      <div class="inner-tabs">
-        <button type="button" class="inner-tab active" data-tab="tab-create" data-mode="create">إنشاء طلب</button>
-        <button type="button" class="inner-tab" data-tab="tab-manage" data-mode="manage">إدارة الطلبات</button>
-        <button type="button" class="inner-tab" data-tab="tab-manage" data-mode="completed">الطلبات المكتملة</button>
+
+
+<!-- Create Request Modal (Table-style) -->
+<div class="backdrop" id="createBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" style="max-width:1200px">
+    <div class="modalHd">
+      <h3>إنشاء طلب سريع</h3>
+      <div class="controls">
+        <button class="btn" id="btnCloseCreate">إغلاق</button>
       </div>
-
-      <!-- إنشاء طلب -->
-      <div id="tab-create" class="tab-pane active">
-        <div class="card">
-          <div class="inner">
-            <div style="margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap">
-              <div style="flex:1;min-width:220px">
-                <label for="reqBy">مقدّم الطلب</label>
-                <input id="reqBy" class="small-input" readonly title="يتم تحديده تلقائيًا من المستخدم الحالي">
-              </div>
-            </div>
-
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th class="center">#</th>
-                    <th>نوع الطلب</th>
-                    <th>رقم الهيكل (VIN)</th>
-                    <th>السيارة</th>
-                    <th>البيان</th>
-                    <th>الخارجي</th>
-                    <th>الداخلي</th>
-                    <th>الموديل</th>
-                    <th>مكان السيارة</th>
-                    <th id="placeHeader">مكان التصوير / النقل</th>
-                    <th>ملاحظة</th>
-                    <th class="center">حذف</th>
-                  </tr>
-                </thead>
-                <tbody id="reqRows"></tbody>
-              </table>
-            </div>
-
-            <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px">              <button type="button" class="btn beige" id="btnSubmit"><i class="fa-solid fa-paper-plane"></i> إرسال الطلب</button>
-              <button type="button" class="btn ghost" id="btnClear"><i class="fa-solid fa-rotate-right"></i> تفريغ</button>
-            </div>
-
-            <p class="muted" style="margin-top:8px;font-size:12px">
-              اختر <b>نوع الطلب</b> لكل صف (تصوير أو نقل)، اكتب رقم الهيكل، وسيتم جلب بيانات السيارة تلقائيًا من المخزون إن توفرت.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- إدارة / مكتملة -->
-      <div id="tab-manage" class="tab-pane">
-        <div class="filters">
-          <div class="filters-left">
-            <div>
-              <label>من تاريخ</label>
-              <input id="date_from" type="date">
-            </div>
-            <div>
-              <label>إلى تاريخ</label>
-              <input id="date_to" type="date">
-            </div>
-            <div>
-              <label>الحالة</label>
-              <select id="f_status">
-                <option value="">كل الحالات</option>
-                                <option>تحت الإجراء</option>
-                <option>تم التجهيز</option>
-                <option>قيد المراجعة</option>
-                <option>تم</option>
-                <option>منفّذ</option>
-              </select>
-            </div>
-            <div>
-              <label>بحث</label>
-              <input id="q" type="search" placeholder="بحث: نوع الطلب / VIN / المكان / المنشئ / ملاحظة">
-            </div>
-            <button id="f_reset" class="btn ghost"><i class="fa-solid fa-rotate-right"></i> إعادة التصفية</button>
-          </div>
-          <div class="filters-right">
-            <button type="button" id="kind_all"   class="btn secondary btn-mini filter-kind active-kind">كل الأنواع</button>
-            <button type="button" id="kind_shoot" class="btn secondary btn-mini filter-kind">طلبات التصوير</button>
-            <button type="button" id="kind_move"  class="btn secondary btn-mini filter-kind">طلبات النقل</button>
-          </div>
-        </div>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th class="center">#</th>
-                <th style="min-width:80px">الطلب</th>
-                <th style="min-width:110px">نوع الطلب</th>
-                <th style="min-width:110px">المنشئ</th>
-                <th style="min-width:90px">الحالة</th>
-                <th style="min-width:130px">تاريخ الإنشاء</th>
-                <th style="min-width:160px">المكان / من → إلى</th>
-                <th style="min-width:160px">استلام / موافقات</th>
-              </tr>
-            </thead>
-            <tbody id="reqTable"></tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-  </section>
-</main>
-
-<!-- Modal: تفاصيل طلب التصوير -->
-<div id="reqModalBackdrop" class="modal-backdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="reqModalTitle">
-    <div class="modal-header">
-      <div>
-        <div id="reqModalTitle" class="modal-title">تفاصيل طلب التصوير</div>
-        <div id="reqModalSub" class="muted" style="font-size:11px;margin-top:2px"></div>
-      </div>
-<button class="modal-close" data-close-req-modal><i class="fa-solid fa-xmark"></i></button>
     </div>
 
-    <div class="process-timeline" id="reqTimelineBox">
-      <div class="process-timeline-title">مسار تنفيذ الطلب</div>
-      <div class="process-timeline-sub">من استلام الطلب حتى الانتهاء.</div>
-      <div class="pt-track" id="reqTimelineTrack"></div>
-    </div>
+    <div class="modalBd">
+      <div class="small" style="margin-bottom:10px">
+        اكتب رقم الهيكل فقط — سيتم سحب البيانات تلقائياً من <span class="mono">inventory/{VIN}</span>.
+        الطلب يدعم أكثر من رقم هيكل. يمكنك اختيار <b>نوع الطلب</b> لكل سطر (نقل / تصوير).
+      </div>
 
-    <div class="modal-body">
-      <div class="section-title">تفاصيل السيارات داخل طلب التصوير</div>
-      <div class="subhint">مراجعة رقم الهيكل، نوع السيارة، اللون، والموقع الحالي.</div>
-      <div class="table-wrap" style="margin-top:6px;max-height:260px">
-        <table>
+      <div class="tableWrap" style="border:1px solid var(--line); border-radius:14px; overflow:auto;">
+        <table class="table" id="createTable" style="min-width:1080px">
           <thead>
             <tr>
-              <th class="center">#</th>
-              <th>VIN</th>
+              <th style="width:52px">#</th>
+              <th style="width:150px">نوع الطلب</th>
+              <th style="width:160px">رقم الهيكل (VIN)</th>
               <th>السيارة</th>
-              <th>البيان</th>
-              <th>اللون الخارجي</th>
-              <th>اللون الداخلي</th>
-              <th>الموديل</th>
-              <th>الموقع الحالي</th>
-              <th>مكان التصوير</th>
-              <th>ملاحظة</th>
+              <th style="width:160px">البيان</th>
+              <th style="width:110px">الخارجي</th>
+              <th style="width:110px">الداخلي</th>
+              <th style="width:90px">الموديل</th>
+              <th style="width:210px">مكان السيارة</th>
+              <th style="width:210px">مكان التصوير / النقل</th>
+              <th style="width:170px">ملاحظة</th>
+              <th style="width:70px">حذف</th>
             </tr>
           </thead>
-          <tbody id="reqModalRows"></tbody>
+          <tbody id="createTbody"></tbody>
         </table>
       </div>
 
-      <div class="stack">
-        <div class="section-title" style="margin-top:10px">ملاحظات وإجراءات الإدارة</div>
-        <div class="subhint">متابعة استلام الطلب وتحرك السيارات للتصوير.</div>
-        <div class="note-box" id="reqModalStatusBox"></div>
-        <div class="note-box" id="reqModalReceiveInfo"></div>
-        <div class="note-box" id="reqModalPrepInfo"></div>
-        <div>
-          <label for="adminNotes">ملاحظات إضافية</label>
-          <textarea id="adminNotes" placeholder="اكتب أي ملاحظات عن الطلب أو السيارات بداخله (اختياري)"></textarea>
-        </div>
+      <div class="row" style="margin-top:14px; justify-content:flex-end; gap:10px">
+        <button class="btn" id="btnClearDraft">تفريغ</button>
+        <button class="btn primary" id="btnSubmitDraft">إرسال الطلب</button>
       </div>
-    </div>
-    
-<div class="modal-footer mzj-modal-footer">
-      <button class="btn ghost" data-close-req-modal><i class="fa-solid fa-xmark"></i> إغلاق</button>
 
-      <button id="btnEditReq" class="btn secondary" type="button">
-        <i class="fa-solid fa-pen-to-square"></i> تعديل الطلب
-      </button>
-
-      <button id="btnShootStep1" class="btn secondary" type="button">
-        <span class="step-num">1</span> <i class="fa-regular fa-clipboard-check"></i> تم استلام الطلب
-      </button>
-
-      <button id="btnShootStep2" class="btn secondary" type="button">
-        <span class="step-num">2</span> <i class="fa-solid fa-truck"></i> تم ارسال السيارة
-      </button>
-
-      <button id="btnShootStep3" class="btn secondary" type="button">
-        <span class="step-num">3</span> <i class="fa-solid fa-car-side"></i> تم استلام السيارة
-      </button>
-
-      <button id="btnShootStep4" class="btn secondary" type="button">
-        <span class="step-num">4</span> <i class="fa-solid fa-flag-checkered"></i> تم الانتهاء
-      </button>
+      <div class="small" id="createHint" style="margin-top:10px; color:var(--muted)">
+        ملاحظة: لو كتبت VIN خارج أماكن المستخدم، سيتم منعه تلقائياً (إلا Admin).
+      </div>
     </div>
   </div>
 </div>
 
-<!-- Modal: تفاصيل طلب النقل -->
 
-<div id="moveModalBackdrop" class="modal-backdrop">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="moveModalTitle">
-    <div class="modal-header">
-      <div>
-        <div id="moveModalTitle" class="modal-title">تفاصيل طلب النقل</div>
-        <div id="moveModalSub" class="muted" style="font-size:11px;margin-top:2px"></div>
-      </div>
-<button class="modal-close" data-close-move-modal><i class="fa-solid fa-xmark"></i></button>
-    </div>
-
-    <div class="process-timeline" id="moveTimelineBox">
-      <div class="process-timeline-title">مسار تنفيذ الطلب</div>
-      <div class="process-timeline-sub">من استلام الطلب حتى إتمام حركة النقل.</div>
-      <div class="pt-track" id="moveTimelineTrack"></div>
-    </div>
-
-    <div class="modal-body">
-      <div class="section-title">السيارات داخل طلب النقل</div>
-      <div class="subhint">مراجعة رقم الهيكل، المكان قبل وبعد النقل.</div>
-      <div class="table-wrap" style="margin-top:6px;max-height:260px">
-        <table>
-          <thead>
-            <tr>
-              <th class="center">#</th>
-              <th>VIN</th>
-              <th>السيارة</th>
-              <th>البيان</th>
-              <th>اللون الخارجي</th>
-              <th>اللون الداخلي</th>
-              <th>الموديل</th>
-              <th>من</th>
-              <th>إلى</th>
-              <th>ملاحظة</th>
-            </tr>
-          </thead>
-          <tbody id="moveModalRows"></tbody>
-        </table>
-      </div>
-
-      <div class="stack">
-        <div class="section-title" style="margin-top:10px">حالة التنفيذ</div>
-        <div class="note-box" id="moveModalStatusBox"></div>
+<!-- Modal -->
+<div class="backdrop" id="modalBackdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modalHd">
+      <h3 id="modalTitle">تفاصيل الطلب</h3>
+      <div class="controls">
+        <button class="btn" id="btnCloseModal">إغلاق</button>
       </div>
     </div>
-    
-<div class="modal-footer mzj-modal-footer">
-      <button class="btn ghost" data-close-move-modal><i class="fa-solid fa-xmark"></i> إغلاق</button>
+    <div class="modalBd">
+      <div class="grid2">
+        <div class="box">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+            <div>
+              <b>التقدم العام</b>
+              <div class="small" id="modalMeta">—</div>
+            </div>
+            <div style="min-width:240px">
+              <div class="progress"><div id="modalProgressBar"></div></div>
+              <div class="small" id="modalProgressText" style="margin-top:6px">0%</div>
+            </div>
+          </div>
+          <div class="pre" id="modalStages">—</div>
+        </div>
 
-      <button id="btnEditMove" class="btn secondary" type="button">
-        <i class="fa-solid fa-pen-to-square"></i> تعديل الطلب
-      </button>
+        <div class="box">
+          <div>
+            <b>إجراءات</b>
+            <div class="small">الأزرار حسب الأماكن + Admin • تم الانتهاء = منشئ الطلب</div>
+          </div>
 
-      <button id="btnMoveStep1" class="btn secondary" type="button">
-        <span class="step-num">1</span> <i class="fa-regular fa-clipboard-check"></i> تم استلام الطلب
-      </button>
+          <div class="stageBtns">
+            <button class="btn" id="btnStageReceived">1) تم استلام الطلب</button>
+            <button class="btn" id="btnStageSent">2) تم إرسال السيارة</button>
+            <button class="btn" id="btnStageArrived">3) تم استلام السيارة</button>
+            <button class="btn primary" id="btnStageFinished">4) تم الانتهاء</button>
+          </div>
 
-      <button id="btnMoveStep2" class="btn secondary" type="button">
-        <span class="step-num">2</span> <i class="fa-solid fa-truck"></i> تم ارسال السيارة
-      </button>
-
-      <button id="btnMoveStep3" class="btn secondary" type="button">
-        <span class="step-num">3</span> <i class="fa-solid fa-car-side"></i> تم استلام السيارة
-      </button>
-
-      <button id="btnMoveStep4" class="btn secondary" type="button">
-        <span class="step-num">4</span> <i class="fa-solid fa-flag-checkered"></i> تم الانتهاء
-      </button>
+          <div class="pre" id="permHint" style="margin-top:12px">—</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
-<div id="toast"
- class="toast"></div>
+<div class="toast" id="toast"></div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import {
-    getFirestore, doc, getDoc, setDoc, onSnapshot,
-    collection, addDoc, serverTimestamp
-  } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, orderBy, limit, onSnapshot, where, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
-    authDomain: "mzj-agenda.firebaseapp.com",
-    projectId: "mzj-agenda",
-    storageBucket: "mzj-agenda.firebasestorage.app",
-    messagingSenderId: "834700407721",
-    appId: "1:834700407721:web:75c17665d4f032fd65cab8"
+/** Firebase Config */
+const firebaseConfig = {
+  apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
+  authDomain: "mzj-agenda.firebaseapp.com",
+  projectId: "mzj-agenda",
+  storageBucket: "mzj-agenda.firebasestorage.app",
+  messagingSenderId: "834700407721",
+  appId: "1:834700407721:web:75c17665d4f032fd65cab8"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+try{ await setPersistence(auth, browserLocalPersistence); }catch(e){}
+
+const el=(id)=>document.getElementById(id);
+const authBadge=el("authBadge");
+const roleBadge=el("roleBadge");
+const locBadge=el("locBadge");
+const projBadge=el("projBadge");
+const btnSignOut=el("btnSignOut");
+
+projBadge.textContent = "Project: " + (firebaseConfig.projectId || "—");
+
+let currentUser=null;
+let userProfile=null;
+let requestsUnsub=null;
+let modalUnsub=null;
+let activeReqId=null;
+
+/** Draft 
+/* =========================
+   CREATE REQUEST (TABLE)
+========================= */
+const createBackdrop = el("createBackdrop");
+const btnOpenCreate  = el("btnOpenCreate");
+const btnCloseCreate = el("btnCloseCreate");
+const createTbody    = el("createTbody");
+const btnClearDraft  = el("btnClearDraft");
+const btnSubmitDraft = el("btnSubmitDraft");
+
+let draftRows = [];
+
+function makeEmptyRow(){
+  return {
+    type: "shoot",   // shoot | move
+    vin: "",
+    carName: "",
+    trim: "",
+    ext: "",
+    int: "",
+    model: "",
+    fromLocation: "",
+    targetLocation: "",
+    note: "",
+    status: "idle", // idle | loading | ok | blocked | notfound
+    msg: ""
   };
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db   = getFirestore(app);
-
-  const STATE_REF   = doc(db, "mzj_admin_state", "v1");
-  const ACTIVITY_CL = collection(db, "mzj_activity_log");
-
-  const ROLE_ADMIN = "الادارة";
-  const ROLE_IDARI = "اداري";
-  const PAGE_ALLOWED_ROLES = [ROLE_ADMIN, ROLE_IDARI];
-
-
-  // الصفحات المسموح بها حسب كل دور
-  
-  // ===== Fallback: ربط الإيميلات بالأماكن (لو بيانات المستخدم ناقصة في Firestore) =====
-  const EMAIL_FALLBACK = {
-    "aldynmtwlys@gmail.com": {
-      role: "اداري",
-      locations: ["الصالة الاساسية",
-        "فرع 1 الصالة : المخزون المتاح","فرع 1 الصالة : سيارات بها ملاحظات","فرع 1 الصالة : مباع تحت التسليم","فرع 1 الصالة : مباع تم التسليم"
-      ]
-    },
-    "alaasamak100@gmail.com": {
-      role: "اداري",
-      locations: ["صالة القادسية",
-        "فرع 3 القادسية : المخزون المتاح","فرع 3 القادسية : سيارات بها ملاحظات","فرع 3 القادسية : مباع تحت التسليم","فرع 3 القادسية : مباع تم التسليم"
-      ]
-    },
-    "kamelashraf948@gmail.com": {
-      role: "اداري",
-      locations: ["معرض الملتقى",
-        "فرع 2 الملتقى : المخزون المتاح","فرع 2 الملتقى : سيارات بها ملاحظات","فرع 2 الملتقى : مباع تحت التسليم","فرع 2 الملتقى : مباع تم التسليم"
-      ]
-    },
-    "mohammed.ezat1989@gmail.com": {
-      role: "اداري",
-      locations: ["الاستديو","المستودع",
-        "المستودع : المخزون المتاح","المستودع : سيارات بها ملاحظات","المستودع : مباع تحت التسليم","المستودع : مباع تم التسليم"
-      ]
-    }
-  };
-
-  // كلمات مفتاحية تساعدنا نطابق أماكن المخزون التفصيلية مع المكان الرئيسي
-  const LOCATION_ALIASES = {
-    "الصالة الاساسية": ["فرع 1 الصالة","الصالة"],
-    "صالة القادسية": ["فرع 3 القادسية","القادسية"],
-    "معرض الملتقى": ["فرع 2 الملتقى","الملتقى"],
-    "الاستديو": ["المستودع","الاستديو"]
-  };
-const ROLE_PAGES = {
-    [ROLE_ADMIN]: 'ALL', // الإدارة تشوف كل الصفحات
-    // الإداري: يشوف فقط الداشبورد + نقل السيارات + إدارة الطلبات + كل السيارات
-    [ROLE_IDARI]: ['dashboard.html','vt.html','photoshoot-user.html','cars.html']
-  };
-
-  let currentUserRole = null;
-  let currentUserLocations = [];
-  let currentUserUid = null;
-  let currentUserEmail = "";
-
-  function isSuperAdmin(){
-    return currentUserRole === ROLE_ADMIN;
+}
+function ensureRows(n=8){
+  if(draftRows.length===0){
+    for(let i=0;i<n;i++) draftRows.push(makeEmptyRow());
   }
-  function userMatchesPlace(place){
-    if(!place) return false;
-    if(!Array.isArray(currentUserLocations)) return false;
-
-    const p = String(place).trim();
-    const pLow = p.toLowerCase();
-
-    // 1) Exact match
-    if(currentUserLocations.some(x => String(x).trim() === p)) return true;
-
-    // 2) Contains match (تفيد مع: "فرع 1 الصالة : المخزون المتاح")
-    if(currentUserLocations.some(x => {
-      const xl = String(x).trim().toLowerCase();
-      return xl && (pLow.includes(xl) || xl.includes(pLow));
-    })) return true;
-
-    // 3) Alias match
-    for(const base of currentUserLocations){
-      const baseTrim = String(base).trim();
-      const aliases = LOCATION_ALIASES[baseTrim] || [];
-      if(aliases.some(a => pLow.includes(String(a).toLowerCase()))) return true;
-    }
-
-
-  function canCreateMoveFromLocation(fromLoc){
-    if(isSuperAdmin()) return true;
-    return userMatchesPlace(fromLoc||"");
-  }
-    return false;
-  }
-  function isRequestOwner(req){
-    if(currentUserUid && req.createdByUid){
-      return currentUserUid === req.createdByUid;
-    }
-    if(currentUserEmail && req.createdByEmail){
-      return currentUserEmail === req.createdByEmail;
-    }
-    return false;
-  }
-
-  const SHOOT_PLACES = [
-    "",
-    "الاستديو",
-    "الصالة الاساسية",
-    "صالة القادسية",
-    "معرض الملتقى"
-  ];
-
-  const $  = s => document.querySelector(s);
-  const $$ = s => Array.from(document.querySelectorAll(s));
-  const pad = n => n<10 ? "0"+n : ""+n;
-
-  function now(){
-    const d=new Date();
-    return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+
-           " "+pad(d.getHours())+":"+pad(d.getMinutes())+":"+pad(d.getSeconds());
-  }
-  function showToast(msg){
-    const t = $("#toast");
-    if(!t) return;
-    t.textContent = msg;
-    t.style.display = "block";
-    setTimeout(()=>{t.style.display="none";}, 1800);
-  }
-
-  // إظهار أو إخفاء التابات حسب صلاحية الدور
-  function applyTabsVisibility(role){
-    const tabs = document.querySelectorAll('.tab');
-    tabs.forEach(tab=>{
-      const href = tab.getAttribute('href') || '';
-      const page = (href.split('/').pop() || '').split('?')[0];
-      if(!page) return;
-      const perm = ROLE_PAGES[role];
-      if(!perm){
-        tab.style.display = 'none';
-        return;
-      }
-      if(perm === 'ALL') return; // الإدارة تشوف كل حاجة
-      if(!perm.includes(page)){
-        tab.style.display = 'none';
-      }
-    });
-  }
-
-  function setStatus(mode,txt){
-    const dot=$("#connDot");
-    const txtEl=$("#connText");
-    if(!dot || !txtEl) return;
-    dot.className="dot"+(mode==="ok"?" ok":mode==="err"?" err":"");
-    txtEl.textContent = txt;
-  }
-  function normalizeVin(v){
-    if(!v) return "";
-    const ar={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
-    return v.toString().replace(/[٠-٩]/g,d=>ar[d]).toUpperCase().replace(/[\s\-\._]/g,"").trim();
-  }
-  // ===== Per-VIN progress (rowStates) =====
-  const STAGES = ["received","sent","carReceived","finished"];
-
-  function ensureRowStates(req){
-    const rows = Array.isArray(req.rows)?req.rows:[];
-    // migrate from old admin fields (backward compat)
-    if(!Array.isArray(req.rowStates) || req.rowStates.length !== rows.length){
-      req.rowStates = rows.map(()=>({received:null,sent:null,carReceived:null,finished:null}));
-    }else{
-      req.rowStates = req.rowStates.map(s=>({
-        received: s?.received || null,
-        sent: s?.sent || null,
-        carReceived: s?.carReceived || null,
-        finished: s?.finished || null,
-      }));
-    }
-    // old request-level fields migration (if exist)
-    const a = req.admin || {};
-    if(a.received && req.rowStates.some(x=>!x.received)) req.rowStates.forEach(x=> x.received ||= a.received);
-    if((a.sent||a.prepared) && req.rowStates.some(x=>!x.sent)) req.rowStates.forEach(x=> x.sent ||= (a.sent||a.prepared));
-    if(a.carReceived && req.rowStates.some(x=>!x.carReceived)) req.rowStates.forEach(x=> x.carReceived ||= a.carReceived);
-    if((a.finished||req.executedAt) && req.rowStates.some(x=>!x.finished)) req.rowStates.forEach(x=> x.finished ||= (a.finished||req.executedAt));
-    return req.rowStates;
-  }
-
-  function stageCount(req, stage){
-    ensureRowStates(req);
-    const rs = req.rowStates || [];
-    const done = rs.filter(x=>!!x[stage]).length;
-    return {done,total:rs.length};
-  }
-  function pct(done,total){
-    if(!total) return 0;
-    return Math.round((done/total)*100);
-  }
-  function overallProgress(req){
-    ensureRowStates(req);
-    const rs = req.rowStates || [];
-    const total = rs.length * STAGES.length;
-    const done  = rs.reduce((acc,x)=> acc + STAGES.reduce((a,s)=> a + (x[s]?1:0),0), 0);
-    return {done,total,percent: total?Math.round((done/total)*100):0};
-  }
-
-  function deriveStatus(req, kind){
-    const ov = overallProgress(req).percent;
-    if(ov<=0) return "لم يبدأ";
-    if(ov>=100) return (kind==="move") ? "منفّذ" : "تم";
-    return "تحت المتابعة";
-  }
-
-  function canActOnRow(kind, row, stage){
-    
-    // ✅ ADMIN BYPASS
-    if (isSuperAdmin && isSuperAdmin()) return true;
-if(isSuperAdmin()) return true;
-
-    // Step4 (finished) يتحكم فيه مقدم الطلب (أو الإدارة) عبر canFinishRequest
-    if(stage==="finished") return false;
-
-    // received: مسؤول الوجهة (toLocation / shootPlace)
-    if(stage==="received"){
-      const place = (kind==="move") ? (row.toLocation||"") : (row.shootPlace||row.place||"");
-      return userMatchesPlace(place);
-    }
-
-    // sent: مسؤول المصدر (fromLocation / location)
-    if(stage==="sent"){
-      const place = (kind==="move") ? (row.fromLocation||"") : (row.location||"");
-      return userMatchesPlace(place);
-    }
-
-    // carReceived: مسؤول الوجهة (toLocation / shootPlace)
-    if(stage==="carReceived"){
-      const place = (kind==="move") ? (row.toLocation||"") : (row.shootPlace||row.place||"");
-      return userMatchesPlace(place);
-    }
-return false;
-  }
-
-  function requestStarted(req){
-    ensureRowStates(req);
-    const rs = req.rowStates || [];
-    return rs.some(r=> r.received || r.sent || r.carReceived || r.finished);
-  }
-
-function canFinishRequest(req){
-    // admin can always finish (but button shown also for owner)
-    if(isSuperAdmin()) return true;
-    if(!isRequestOwner(req)) return false;
-
-    // only allow finish after all cars received
-    const c = stageCount(req,"carReceived");
-    return c.total>0 && c.done===c.total;
-  }
-
-
-
-
-  let shootRequests = [];
-  let moveRequests  = [];
-  let stock = [];
-  let moves = [];
-
-  function displayNameFor(user){
-    if(!user) return "مسؤول";
-    if(user.displayName && user.displayName.trim()) return user.displayName.trim();
-    const e = (user.email||"").toLowerCase();
-    const local = e.split("@")[0]||"";
-    return local.replace(/[._-]+/g," ").replace(/\b\w/g,c=>c.toUpperCase());
-  }
-
-  async function logActivity(actionType, details, extra={}){
-    try{
-      const user = auth.currentUser;
-      const email = user?.email || "";
-      const name  = displayNameFor(user);
-      await addDoc(ACTIVITY_CL,{
-        userEmail: email,
-        userName : name,
-        role     : extra.role || "",
-        action   : actionType,
-        entityType: extra.entityType || "request",
-        entityId : extra.requestId != null ? String(extra.requestId) : "",
-        details  : details || "",
-        createdAt: now(),
-        createdAtTs: serverTimestamp(),
-        userAgent: navigator.userAgent || ""
-      });
-    }catch(e){
-      console.error("logActivity error", e);
-    }
-  }
-
-  async function persistAll(){
-    await setDoc(
-      STATE_REF,
-      { shootRequests, moveRequests, stock, moves, updatedAt: now() },
-      { merge:true }
-    );
-  }
-
-  function metrics(){
-    const allCount = shootRequests.length + moveRequests.length;
-
-    const progStatuses = new Set(["لم يبدأ","تحت المتابعة","تحت الإجراء"]);
-    const doneStatuses = new Set(["تم","منفّذ","مكتملة"]);
-
-    const progCount =
-      shootRequests.filter(x=> !doneStatuses.has(x.status||"")).length +
-      moveRequests .filter(x=> !doneStatuses.has(x.status||"")).length;
-
-    const doneCount =
-      shootRequests.filter(x=> doneStatuses.has(x.status||"")).length +
-      moveRequests .filter(x=> doneStatuses.has(x.status||"")).length;
-
-    $("#stat_all").textContent   = allCount;
-    $("#stat_prog").textContent  = progCount;
-    $("#stat_done").textContent  = doneCount;
-  }
-
-
-  function requestedPlaceOf(req){
-    if(req.kind === "move") return "";
-    const rows = Array.isArray(req.rows)?req.rows:[];
-    if(!rows.length) return "";
-    return rows[0].shootPlace || rows[0].place || "";
-  }
-
-  window._viewMode   = "manage";
-  window._kindFilter = "";
-window.__shootEditMode = false;
-  function toDateOnly(s){
-    if(!s) return null;
-    const d = s.slice(0,10);
-    const [y,m,dd] = d.split("-").map(n=>parseInt(n,10));
-    if(!y||!m||!dd) return null;
-    return new Date(y,m-1,dd);
-  }
-  function inRange(createdAt, from, to){
-    if(!from && !to) return true;
-    const d = toDateOnly(createdAt); if(!d) return false;
-    if(from && d < from) return false;
-    if(to   && d > to)   return false;
-    return true;
-  }
-
-  function applyFiltersAndSort(){
-    const q = ($("#q").value||"").trim().toLowerCase();
-    const s = $("#f_status").value||"";
-    const fromVal = $("#date_from").value||"";
-    const toVal   = $("#date_to").value||"";
-    const fromD = fromVal ? new Date(fromVal+"T00:00:00") : null;
-    const toD   = toVal   ? new Date(toVal+"T23:59:59") : null;
-
-    let list = [
-      ...shootRequests.map(r=>({kind:"shoot", data:r})),
-      ...moveRequests .map(r=>({kind:"move",  data:r}))
-    ];
-
-    if(s){
-      list = list.filter(x=> (x.data.status||"")===s);
-    }
-    if(fromD || toD){
-      list = list.filter(x=> inRange(x.data.createdAt||"", fromD, toD));
-    }
-    if(q){
-      list = list.filter(x=>{
-        const txt = JSON.stringify(x.data).toLowerCase();
-        return txt.includes(q);
-      });
-    }
-
-    const kindFilter = window._kindFilter || "";
-    if(kindFilter==="shoot") list = list.filter(x=>x.kind==="shoot");
-    if(kindFilter==="move")  list = list.filter(x=>x.kind==="move");
-
-    const viewMode = window._viewMode || "manage";
-    if(viewMode === "manage"){
-      list = list.filter(x=> !["تم","منفّذ"].includes(x.data.status||""));
-    }else if(viewMode === "completed"){
-      list = list.filter(x=> ["تم","منفّذ"].includes(x.data.status||""));
-    }
-
-    list.sort((a,b)=>{
-      const da = a.data.createdAt||"";
-      const db = b.data.createdAt||"";
-      if(da===db) return 0;
-      return da>db ? -1 : 1;
-    });
-
-    return list;
-  }
-
-  function render(){
-    const list = applyFiltersAndSort();
-    $("#countTotal").textContent = shootRequests.length + moveRequests.length;
-    $("#countShown").textContent = list.length;
-
-    const tbody = $("#reqTable");
-    tbody.innerHTML = "";
-
-    list.forEach((x,idx)=>{
-      const r = x.data;
-      const tr = document.createElement("tr");
-
-      const status = deriveStatus(r, x.kind);
-      let badgeClass = "badge draft";
-      if(["تحت الإجراء","تم التجهيز","قيد المراجعة"].includes(status)) badgeClass = "badge prog";
-      if(["تم","منفّذ"].includes(status)) badgeClass = "badge done";
-
-      const isMove = x.kind === "move";
-      const kindLabel = isMove ? "طلب نقل سيارات" : "طلب تصوير";
-      const kindBadge = isMove ? "badge move" : "badge shoot";
-
-      let placeCell = "";
-      if(isMove){
-        const rows = Array.isArray(r.rows)?r.rows:[];
-        if(rows.length){
-          const sample = rows[0];
-          placeCell = (sample.fromLocation||"") + " → " + (sample.toLocation||"");
-        }
-      }else{
-        placeCell = requestedPlaceOf(r) || "";
-      }
-
-      let approvalsText = "";
-      // progress preview inside table
-      const c1 = stageCount(r,"received");
-      const c2 = stageCount(r,"sent");
-      const c3 = stageCount(r,"carReceived");
-      const c4 = stageCount(r,"finished");
-      approvalsText = [
-        `استلام الطلب: ${pct(c1.done,c1.total)}% (${c1.done}/${c1.total})`,
-        `ارسال السيارة: ${pct(c2.done,c2.total)}% (${c2.done}/${c2.total})`,
-        `استلام السيارة: ${pct(c3.done,c3.total)}% (${c3.done}/${c3.total})`,
-        `الانتهاء: ${pct(c4.done,c4.total)}% (${c4.done}/${c4.total})`,
-      ].join("\n");
-
-      tr.innerHTML = `
-        <td class="center">${idx+1}</td>
-        <td>#${r.id||"-"}</td>
-        <td><span class="${kindBadge}">${kindLabel}</span></td>
-        <td>${r.createdBy||""}</td>
-        <td><span class="${badgeClass}">${status||"—"}</span></td>
-        <td>${r.createdAt||""}</td>
-        <td>${placeCell}</td>
-        <td style="white-space:pre-line">${approvalsText}</td>
-      `;
-
-      tr.addEventListener("click",()=>{
-        if(isMove) openMoveModal(r); else openReqModal(r);
-      });
-
-      tbody.appendChild(tr);
-    });
-  }
-
-  /* ==== إنشاء الطلب من النموذج ==== */
-  const reqRowsBody   = document.getElementById("reqRows");
-  const placeHeaderEl = document.getElementById("placeHeader");
-
-  function buildFormRows(){
-    if(!reqRowsBody) return;
-    reqRowsBody.innerHTML = "";
-    for(let i=0;i<8;i++){
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="center">${i+1}</td>
-        <td>
-          <select class="small-input req-kind">
-            <option value="shoot" selected>طلب تصوير</option>
-            <option value="move">طلب نقل</option>
-          </select>
-        </td>
-        <td><input class="small-input mono req-vin" placeholder="VIN"></td>
-        <td><input class="small-input req-car" readonly placeholder="—"></td>
-        <td><input class="small-input req-variant" readonly placeholder="—"></td>
-        <td><input class="small-input req-ext" readonly placeholder="—"></td>
-        <td><input class="small-input req-int" readonly placeholder="—"></td>
-        <td class="center"><input class="small-input center req-year" readonly placeholder="—"></td>
-        <td><input class="small-input req-location" readonly placeholder="—"></td>
-        <td>
-          <select class="small-input req-place">
-            <option value="">— اختر —</option>
-            ${SHOOT_PLACES.map(p=> p ? `<option>${p}</option>` : "").join("")}
-          </select>
-        </td>
-        <td><input class="small-input req-note" placeholder="اختياري"></td>
-        <td class="center">
-          <button type="button" class="btn ghost btn-mini req-row-clear"><i class="fa-solid fa-xmark"></i></button>
-        </td>
-      `;
-      reqRowsBody.appendChild(tr);
-    }
-
-    const u = auth.currentUser;
-    const rb = document.getElementById("reqBy");
-    if(rb){
-      rb.value = (u && (u.displayName || u.email)) || "";
-      rb.readOnly = true;
-    }
-    updatePlaceHeader();
-  }
-
-  function updatePlaceHeader(){
-    if(!placeHeaderEl || !reqRowsBody) return;
-    const anyMove = Array.from(reqRowsBody.querySelectorAll(".req-kind"))
-      .some(sel => sel.value === "move");
-    placeHeaderEl.textContent = anyMove ? "مكان النقل" : "مكان التصوير";
-  }
-
-  if(reqRowsBody){
-    reqRowsBody.addEventListener("change",(e)=>{
-      if(e.target.classList && e.target.classList.contains("req-kind")){
-        updatePlaceHeader();
-      }
-    });
-
-    reqRowsBody.addEventListener("click",(e)=>{
-      const btn = e.target.closest(".req-row-clear");
-      if(!btn) return;
-      const tr = btn.closest("tr");
-      if(!tr) return;
-      tr.querySelectorAll("input,select").forEach(el=>{
-        if(el.classList.contains("req-kind")) el.value="shoot";
-        else el.value="";
-      });
-      updatePlaceHeader();
-    });
-
-    reqRowsBody.addEventListener("blur",(e)=>{
-      const vinInput = e.target.closest(".req-vin");
-      if(!vinInput) return;
-      const norm = normalizeVin(vinInput.value);
-      vinInput.value = norm;
-      if(!norm) return;
-      const rec = stock.find(r=> normalizeVin(r.vin)===norm);
-      const tr = vinInput.closest("tr");
-      if(rec){
-        tr.querySelector(".req-car").value      = rec.car || "";
-        tr.querySelector(".req-variant").value  = rec.variant || "";
-        tr.querySelector(".req-ext").value      = rec.extColor || "";
-        tr.querySelector(".req-int").value      = rec.intColor || "";
-        tr.querySelector(".req-year").value     = rec.modelYear || "";
-        tr.querySelector(".req-location").value = rec.location || "";
-        showToast("تم جلب بيانات السيارة");
-      }else{
-        tr.querySelector(".req-car").value      = "";
-        tr.querySelector(".req-variant").value  = "";
-        tr.querySelector(".req-ext").value      = "";
-        tr.querySelector(".req-int").value      = "";
-        tr.querySelector(".req-year").value     = "";
-        tr.querySelector(".req-location").value = "";
-        showToast("لا يوجد هيكل مطابق");
-      }
-    }, true);
-  }
-
-  function collectFormRows(){
-    const shootRows = [];
-    const moveRows  = [];
-    if(!reqRowsBody) return {shootRows,moveRows};
-
-    reqRowsBody.querySelectorAll("tr").forEach(tr=>{
-      const vin = normalizeVin(tr.querySelector(".req-vin")?.value || "");
-      if(!vin) return;
-      const kind      = tr.querySelector(".req-kind")?.value || "shoot";
-      const car       = tr.querySelector(".req-car")?.value || "";
-      const variant   = tr.querySelector(".req-variant")?.value || "";
-      const extColor  = tr.querySelector(".req-ext")?.value || "";
-      const intColor  = tr.querySelector(".req-int")?.value || "";
-      const modelYear = tr.querySelector(".req-year")?.value || "";
-      const location  = tr.querySelector(".req-location")?.value || "";
-      const place     = tr.querySelector(".req-place")?.value || "";
-      const note      = tr.querySelector(".req-note")?.value || "";
-
-      if(kind === "move"){
-        // ✅ منع إنشاء طلب نقل لسيارات خارج أماكن المستخدم (إلا الإدارة)
-        if(!canCreateMoveFromLocation(location)){
-          showToast("لا يمكنك إنشاء طلب نقل لهذا الهيكل لأنه ليس ضمن أماكنك الحالية", true);
-          tr.classList.add('row-error');
-          setTimeout(()=>tr.classList.remove('row-error'), 2000);
-          return;
-        }
-
-        moveRows.push({
-          vin,car,variant,extColor,intColor,modelYear,
-          fromLocation: location,
-          toLocation  : place,
-          note
-        });
-      }else{
-        shootRows.push({
-          vin,car,variant,extColor,intColor,modelYear,
-          location,
-          shootPlace: place,
-          note
-        });
-      }
-    });
-
-    return {shootRows,moveRows};
-  }
-
-  async function saveNewRequest(){
-    const rb = document.getElementById("reqBy");
-    const user = auth.currentUser;
-    const createdBy =
-      (rb && rb.value && rb.value.trim()) ||
-      (user && (user.displayName || user.email)) ||
-      "غير محدد";
-
-    const createdByUid   = user ? user.uid : null;
-    const createdByEmail = user ? (user.email || "") : "";
-
-    const {shootRows,moveRows} = collectFormRows();
-    if(!shootRows.length && !moveRows.length){
-      showToast("أدخل هيكل واحد على الأقل");
-      return;
-    }
-
-    if(shootRows.length){
-      const nextId = shootRequests.length
-        ? Math.max(...shootRequests.map(r=> Number(r.id)||0))+1
-        : 1;
-
-      const req = {
-        id: nextId,
-        createdAt: now(),
-        createdBy,
-        createdByUid,
-        createdByEmail,
-        rows: shootRows,
-        status: "تحت الإجراء",
-        rowStates: shootRows.map(()=>({received:null,sent:null,carReceived:null,finished:null})),
-        adminNotes: ""
-      };
-      shootRequests.push(req);
-
-      await logActivity(
-        "إرسال طلب تصوير",
-        "عدد الهياكل: "+shootRows.length+" | الطلب #"+nextId,
-        {requestId:nextId, entityType:"photoshoot_request"}
-      );
-    }
-
-    if(moveRows.length){
-      const nextMoveId = moveRequests.length
-        ? Math.max(...moveRequests.map(r=> Number(r.id)||0))+1
-        : 1;
-
-      const mr = {
-        id: nextMoveId,
-        type:"VIN_MOVE",
-        createdAt: now(),
-        createdBy,
-        createdByUid,
-        createdByEmail,
-        rows: moveRows,
-        status: "تحت الإجراء",
-        executedAt: null,
-        rowStates: moveRows.map(()=>({received:null,sent:null,carReceived:null,finished:null})),
-        adminNotes: ""
-      };
-      moveRequests.push(mr);
-
-      await logActivity(
-        "إرسال طلب نقل سيارات",
-        "عدد السيارات في الطلب: "+moveRows.length+" | الطلب #"+nextMoveId,
-        {requestId:nextMoveId, entityType:"move_request"}
-      );
-    }
-
-    await persistAll();
-    metrics();
-    render();
-    buildFormRows();
-    showToast("تم إرسال الطلب");
-  }
-
-
-    if(btnSubmit) btnSubmit.addEventListener("click", ()=> saveNewRequest());
-  if(btnClear)  btnClear .addEventListener("click", ()=> buildFormRows());
-
-  /* ==== inner tabs ==== */
-  const innerTabsEls = Array.from(document.querySelectorAll(".inner-tab"));
-  const tabPanesEls  = Array.from(document.querySelectorAll(".tab-pane"));
-  innerTabsEls.forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      innerTabsEls.forEach(b=>b.classList.remove("active"));
-      btn.classList.add("active");
-
-      const targetId = btn.getAttribute("data-tab");
-      tabPanesEls.forEach(p=>{
-        if(p.id === targetId) p.classList.add("active");
-        else p.classList.remove("active");
-      });
-
-      const mode = btn.getAttribute("data-mode") || "manage";
-      if(targetId === "tab-manage"){
-        window._viewMode = mode;
-        render();
-      }
-    });
-  });
-
-  /* ==== kind filters ==== */
-  function applyKindButtons(active){
-    $$(".filter-kind").forEach(b=>b.classList.remove("active-kind"));
-    if(active) active.classList.add("active-kind");
-  }
-  const btnKindAll  = document.getElementById("kind_all");
-  const btnKindShoot= document.getElementById("kind_shoot");
-  const btnKindMove = document.getElementById("kind_move");
-
-  if(btnKindAll) btnKindAll.addEventListener("click", ()=>{
-    window._kindFilter = "";
-    applyKindButtons(btnKindAll);
-    render();
-  });
-  if(btnKindShoot) btnKindShoot.addEventListener("click", ()=>{
-    window._kindFilter = "shoot";
-    applyKindButtons(btnKindShoot);
-    render();
-  });
-  if(btnKindMove) btnKindMove.addEventListener("click", ()=>{
-    window._kindFilter = "move";
-    applyKindButtons(btnKindMove);
-    render();
-  });
-
-  if($("#f_reset")){
-    $("#f_reset").addEventListener("click",()=>{
-      $("#date_from").value = "";
-      $("#date_to").value   = "";
-      $("#f_status").value  = "";
-      $("#q").value         = "";
-      window._kindFilter    = "";
-      applyKindButtons(btnKindAll);
-      render();
-    });
-  }
-  ["date_from","date_to","f_status","q"].forEach(id=>{
-    const el = document.getElementById(id);
-    if(el) el.addEventListener("input",()=>render());
-  });
-
-  /* ===== Process Timeline helpers ===== */
-  function renderTimelineSteps(steps, trackId){
-    const track = document.getElementById(trackId);
-    if(!track) return;
-    let firstActive = false;
-    const html = steps.map((s,idx)=>{
-      let state="";
-      if(s.done) state="done";
-      else if(!firstActive){state="active"; firstActive=true;}
-      else state="upcoming";
-      return `
-        <div class="pt-step ${state}">
-          <div class="pt-circle">${idx+1}</div>
-          <div class="pt-label">${s.label}</div>
-          <div class="pt-desc">${s.desc||""}</div>
-        </div>
-      `;
-    }).join("");
-    track.innerHTML = html;
-  }
-
-  function renderShootTimeline(req){
-    ensureRowStates(req);
-    const ov = overallProgress(req);
-    const c1 = stageCount(req,"received");
-    const c2 = stageCount(req,"sent");
-    const c3 = stageCount(req,"carReceived");
-    const c4 = stageCount(req,"finished");
-
-    const box = document.getElementById("reqTimelineBox");
-    if(box){
-      let bar = box.querySelector(".overall-bar");
-      if(!bar){
-        const div = document.createElement("div");
-        div.className = "overall-bar";
-        div.style.marginTop = "8px";
-        div.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);margin-bottom:4px">
-            <span>نسبة إنجاز الطلب</span>
-            <span><b style="color:var(--brown)">${ov.percent}%</b> (${ov.done}/${ov.total})</span>
-          </div>
-          <div style="height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden">
-            <div class="overall-fill" style="height:100%;width:${ov.percent}%;background:var(--beige)"></div>
-          </div>
-        `;
-        box.appendChild(div);
-      }else{
-        bar.querySelector("span b").textContent = ov.percent+"%";
-        bar.querySelector("span").innerHTML = `<b style="color:var(--brown)">${ov.percent}%</b> (${ov.done}/${ov.total})`;
-        bar.querySelector(".overall-fill").style.width = ov.percent+"%";
-      }
-    }
-
-    const steps = [
-      { label:"تم استلام الطلب", desc:`${pct(c1.done,c1.total)}% (${c1.done}/${c1.total})`, done: c1.total>0 && c1.done===c1.total },
-      { label:"تم ارسال السيارة", desc:`${pct(c2.done,c2.total)}% (${c2.done}/${c2.total})`, done: c2.total>0 && c2.done===c2.total },
-      { label:"تم استلام السيارة", desc:`${pct(c3.done,c3.total)}% (${c3.done}/${c3.total})`, done: c3.total>0 && c3.done===c3.total },
-      { label:"تم الانتهاء", desc:`${pct(c4.done,c4.total)}% (${c4.done}/${c4.total})`, done: c4.total>0 && c4.done===c4.total },
-    ];
-    renderTimelineSteps(steps,"reqTimelineTrack");
-  }
-
-
-  function renderMoveTimeline(moveReq){
-    ensureRowStates(moveReq);
-    const ov = overallProgress(moveReq);
-    const c1 = stageCount(moveReq,"received");
-    const c2 = stageCount(moveReq,"sent");
-    const c3 = stageCount(moveReq,"carReceived");
-    const c4 = stageCount(moveReq,"finished");
-
-    const box = document.getElementById("moveTimelineBox");
-    if(box){
-      let bar = box.querySelector(".overall-bar");
-      if(!bar){
-        const div = document.createElement("div");
-        div.className = "overall-bar";
-        div.style.marginTop = "8px";
-        div.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);margin-bottom:4px">
-            <span>نسبة إنجاز الطلب</span>
-            <span><b style="color:var(--brown)">${ov.percent}%</b> (${ov.done}/${ov.total})</span>
-          </div>
-          <div style="height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden">
-            <div class="overall-fill" style="height:100%;width:${ov.percent}%;background:var(--beige)"></div>
-          </div>
-        `;
-        box.appendChild(div);
-      }else{
-        bar.querySelector("span b").textContent = ov.percent+"%";
-        bar.querySelector("span").innerHTML = `<b style="color:var(--brown)">${ov.percent}%</b> (${ov.done}/${ov.total})`;
-        bar.querySelector(".overall-fill").style.width = ov.percent+"%";
-      }
-    }
-
-    const steps = [
-      { label:"تم استلام الطلب", desc:`${pct(c1.done,c1.total)}% (${c1.done}/${c1.total})`, done: c1.total>0 && c1.done===c1.total },
-      { label:"تم ارسال السيارة", desc:`${pct(c2.done,c2.total)}% (${c2.done}/${c2.total})`, done: c2.total>0 && c2.done===c2.total },
-      { label:"تم استلام السيارة", desc:`${pct(c3.done,c3.total)}% (${c3.done}/${c3.total})`, done: c3.total>0 && c3.done===c3.total },
-      { label:"تم الانتهاء", desc:`${pct(c4.done,c4.total)}% (${c4.done}/${c4.total})`, done: c4.total>0 && c4.done===c4.total },
-    ];
-    renderTimelineSteps(steps,"moveTimelineTrack");
-  }
-
-
-  /* ==== تصوير: إجراءات ==== */
-  function updateShootRequestLocal(updated){
-    shootRequests = shootRequests.map(r=> r.id===updated.id ? updated : r);
-  }
-
-  async function markShootStep1(req){
-    const base = (shootRequests || []).find(r => r.id === req.id) || req;
-    ensureRowStates(base);
-    const rows = Array.isArray(base.rows)?base.rows:[];
-    const ts = now();
-    let changed = 0;
-
-    rows.forEach((row,idx)=>{
-      if(!canActOnRow("shoot", row, "received")) return;
-      if(!base.rowStates[idx].received){
-        base.rowStates[idx].received = ts;
-        changed++;
-      }
-    });
-
-    if(!changed){ showToast("لا توجد سيارات تابعة لمكانك في هذه الخطوة"); return; }
-
-    base.status = deriveStatus(base,"shoot");
-    updateShootRequestLocal(base);
-    await persistAll();
-    metrics(); render(); renderShootTimeline(base);
-    showToast("تم استلام الطلب (للسيارات التابعة لمكانك)");
-  }
-
-  async function markShootStep2(req){
-    const base = (shootRequests || []).find(r => r.id === req.id) || req;
-    ensureRowStates(base);
-    let changed = 0;
-    const ts = now();
-    base.rowStates.forEach((s,idx)=>{
-      const row = (base.rows||[])[idx] || {};
-      if(!canActOnRow('shoot', row, 'sent')) return;
-      if(!s.received){ s.received = ts; changed++; }
-      if(!s.sent){ s.sent = ts; changed++; }
-    });
-
-    // تحديث أماكن السيارات في المخزون (نفس منطقك القديم)
-    moveCarsToShootPlace((base.rows||[]).filter((r,idx)=>canActOnRow('shoot', r, 'sent')));
-
-    base.status = deriveStatus(base,"shoot");
-    updateShootRequestLocal(base);
-    await persistAll();
-    metrics(); render(); renderShootTimeline(base); if(isModalOpen('reqModalBackdrop')) openReqModal(base);
-    showToast("تم ارسال السيارات للتصوير (للجميع)");
-  }
-
-  async function markShootStep3(req){
-    const base = (shootRequests || []).find(r => r.id === req.id) || req;
-    ensureRowStates(base);
-    const rows = Array.isArray(base.rows)?base.rows:[];
-    const ts = now();
-    let changed = 0;
-
-    rows.forEach((row,idx)=>{
-      if(!canActOnRow("shoot", row, "carReceived")) return;
-      // لو الإدارة أو المسؤول: نضمن received+sent قبل carReceived
-      base.rowStates[idx].received ||= ts;
-      base.rowStates[idx].sent     ||= ts;
-      if(!base.rowStates[idx].carReceived){
-        base.rowStates[idx].carReceived = ts;
-        changed++;
-      }
-    });
-
-    if(!changed){ showToast("لا توجد سيارات تابعة لمكانك في هذه الخطوة"); return; }
-
-    base.status = deriveStatus(base,"shoot");
-    updateShootRequestLocal(base);
-    await persistAll();
-    metrics(); render(); renderShootTimeline(base);
-    showToast("تم استلام السيارة (للسيارات التابعة لمكانك)");
-  }
-
-  async function markShootStep4(req){
-    const base = (shootRequests || []).find(r => r.id === req.id) || req;
-    if(!canFinishRequest(base)){
-      showToast("غير مسموح أو لم تكتمل مرحلة استلام السيارة لكل الهياكل");
-      return;
-    }
-    ensureRowStates(base);
-    const ts = now();
-
-    base.rowStates.forEach(s=>{
-      s.received    ||= ts;
-      s.sent        ||= ts;
-      s.carReceived ||= ts;
-      s.finished    ||= ts;
-    });
-
-    base.status = "تم";
-    updateShootRequestLocal(base);
-    await persistAll();
-    metrics(); render(); renderShootTimeline(base);
-    showToast("تم الانتهاء من الطلب");
-  }
-
-  async function markMoveStep1(req){
-    const base = (moveRequests || []).find(r => r.id === req.id) || req;
-    ensureRowStates(base);
-    const rows = Array.isArray(base.rows)?base.rows:[];
-    const ts = now();
-    let changed = 0;
-
-    rows.forEach((row,idx)=>{
-      if(!canActOnRow("move", row, "received")) return;
-      if(!base.rowStates[idx].received){
-        base.rowStates[idx].received = ts;
-        changed++;
-      }
-    });
-
-    if(!changed){ showToast("لا توجد سيارات تابعة لمكانك في هذه الخطوة"); return; }
-
-    base.status = deriveStatus(base,"move");
-    updateMoveRequestLocal(base);
-    await persistAll();
-    metrics(); render(); renderMoveTimeline(base);
-    showToast("تم استلام الطلب (للسيارات التابعة لمكانك)");
-  }
-
-  async function markMoveStep2(req){
-    const base = (moveRequests || []).find(r => r.id === req.id) || req;
-    ensureRowStates(base);
-    let changed = 0;
-    const ts = now();
-    base.rowStates.forEach((s,idx)=>{
-      const row = (base.rows||[])[idx] || {};
-      if(!canActOnRow('move', row, 'sent')) return;
-      if(!s.received){ s.received = ts; changed++; }
-      if(!s.sent){ s.sent = ts; changed++; }
-    });
-
-    base.status = deriveStatus(base,"move");
-    updateMoveRequestLocal(base);
-    await persistAll();
-    metrics(); render(); renderMoveTimeline(base); if(isModalOpen('moveModalBackdrop')) openMoveModal(base);
-    showToast("تم ارسال السيارات (للجميع)");
-  }
-
-  async function markMoveStep3(req){
-    const base = (moveRequests || []).find(r => r.id === req.id) || req;
-    ensureRowStates(base);
-    const rows = Array.isArray(base.rows)?base.rows:[];
-    const ts = now();
-    let changed = 0;
-
-    rows.forEach((row,idx)=>{
-      if(!canActOnRow("move", row, "carReceived")) return;
-      base.rowStates[idx].received ||= ts;
-      base.rowStates[idx].sent     ||= ts;
-      if(!base.rowStates[idx].carReceived){
-        base.rowStates[idx].carReceived = ts;
-        changed++;
-      }
-    });
-
-    if(!changed){ showToast("لا توجد سيارات تابعة لمكانك في هذه الخطوة"); return; }
-
-    base.status = deriveStatus(base,"move");
-    updateMoveRequestLocal(base);
-    await persistAll();
-    metrics(); render(); renderMoveTimeline(base);
-    showToast("تم استلام السيارة (للسيارات التابعة لمكانك)");
-  }
-
-  async function markMoveStep4(req){
-    const base = (moveRequests || []).find(r => r.id === req.id) || req;
-    if(!canFinishRequest(base)){
-      showToast("غير مسموح أو لم تكتمل مرحلة استلام السيارة لكل الهياكل");
-      return;
-    }
-    ensureRowStates(base);
-    const ts = now();
-
-    base.rowStates.forEach(s=>{
-      s.received    ||= ts;
-      s.sent        ||= ts;
-      s.carReceived ||= ts;
-      s.finished    ||= ts;
-    });
-
-    base.status     = "منفّذ";
-    base.executedAt = ts;
-
-    applyMoveToStock(base.rows || []);
-    updateMoveRequestLocal(base);
-    await persistAll();
-    metrics(); render(); renderMoveTimeline(base);
-    showToast("تم الانتهاء من الطلب وتحديث المخزون");
-  }
-
-
-  
-  
-  function updateMoveRequestLocal(updated){
-    moveRequests = (moveRequests || []).map(r => r.id === updated.id ? updated : r);
-  }
-
-  function moveCarsToShootPlace(rows){
-    if (!Array.isArray(rows) || !rows.length) return;
-    const newStock = (stock || []).map(rec => ({...rec}));
-    rows.forEach(row => {
-      const vin = normalizeVin(row.vin || "");
-      if (!vin) return;
-      const idx = newStock.findIndex(s => normalizeVin(s.vin) === vin);
-      if (idx === -1) return;
-      const place = row.shootPlace || row.place || "";
-      if (place) newStock[idx].location = place;
-    });
-    stock = newStock;
-  }
-
-  function applyMoveToStock(rows){
-    if (!Array.isArray(rows) || !rows.length) return;
-    const newStock = (stock || []).map(rec => ({...rec}));
-    rows.forEach(row => {
-      const vin = normalizeVin(row.vin || "");
-      if (!vin) return;
-      const idx = newStock.findIndex(s => normalizeVin(s.vin) === vin);
-      if (idx === -1) return;
-      const toLoc = row.toLocation || row.place || "";
-      if (toLoc) newStock[idx].location = toLoc;
-    });
-    stock = newStock;
-  }
-
-  
-  let isEditShootMode = false;
-  let isEditMoveMode  = false;
-
-  function isModalOpen(backdropId){
-    const el = document.getElementById(backdropId);
-    return !!(el && el.classList.contains("show"));
-  }
-
-  function refreshOpenModalIfAny(){
-    // لا نعمل refresh أثناء وضع التعديل حتى لا نفقد مدخلات المستخدم
-    if(isEditShootMode || isEditMoveMode) return;
-
-    if(currentShootReqId != null && isModalOpen("reqModalBackdrop")){
-      const latest = (shootRequests||[]).find(r=>r.id===currentShootReqId);
-      if(latest) openReqModal(latest);
-    }
-    if(currentMoveReqId != null && isModalOpen("moveModalBackdrop")){
-      const latest = (moveRequests||[]).find(r=>r.id===currentMoveReqId);
-      if(latest) openMoveModal(latest);
-    }
-  }
-
-let currentShootReqId = null;
-  let currentMoveReqId  = null;
-
-  
-
-
-  // Live listeners (for instant progress updates)
-  let moveLiveUnsubDoc = null;
-  let moveLiveUnsubRows = null;
-  let shootLiveUnsubDoc = null;
-  let shootLiveUnsubRows = null;
-
-  function stopMoveLive(){
-    try{ if(moveLiveUnsubDoc) moveLiveUnsubDoc(); }catch(e){}
-    try{ if(moveLiveUnsubRows) moveLiveUnsubRows(); }catch(e){}
-    moveLiveUnsubDoc = null; moveLiveUnsubRows = null;
-  }
-  function stopShootLive(){
-    try{ if(shootLiveUnsubDoc) shootLiveUnsubDoc(); }catch(e){}
-    try{ if(shootLiveUnsubRows) shootLiveUnsubRows(); }catch(e){}
-    shootLiveUnsubDoc = null; shootLiveUnsubRows = null;
-  }
-function openReqModal(req){
-  currentShootReqId = req.id;
-
-  const backdrop = document.getElementById("reqModalBackdrop");
-  if (!backdrop) return;
-
-  // always use latest version from memory (snapshot might have updated)
-  const latest = (shootRequests||[]).find(r=>r.id===req.id) || req;
-
-  const titleEl  = document.getElementById("reqModalTitle");
-  const subEl    = document.getElementById("reqModalSub");
-  const rowsBody = document.getElementById("reqModalRows");
-  const statusBox= document.getElementById("reqModalStatusBox");
-  const recvBox  = document.getElementById("reqModalReceiveInfo");
-  const prepBox  = document.getElementById("reqModalPrepInfo");
-  const notesEl  = document.getElementById("adminNotes");
-  const btnEdit  = document.getElementById("btnEditReq");
-
-  if (titleEl) titleEl.textContent = "تفاصيل طلب التصوير #" + (latest.id || "-");
-  if (subEl)   subEl.textContent   = (latest.createdAt || "") + " — " + (latest.createdBy || "");
-
-  // eligibility: edit only before any action happened
-  const canEditUser = (isRequestOwner(latest) || isSuperAdmin());
-  const started     = requestStarted(latest);
-  if(btnEdit){
-    btnEdit.style.display = (canEditUser && !started) ? "inline-flex" : "none";
-    btnEdit.disabled = false;
-    btnEdit.innerHTML = window.__shootEditMode
-      ? '<i class="fa-solid fa-floppy-disk"></i> حفظ التعديل'
-      : '<i class="fa-solid fa-pen"></i> تعديل الطلب';
-
-    btnEdit.onclick = async ()=>{
-      // safety
-      const cur = (shootRequests||[]).find(r=>r.id===latest.id) || latest;
-      if(!(isRequestOwner(cur) || isSuperAdmin())) return;
-
-      // lock editing if any action happened
-      if(requestStarted(cur)){
-        showToast("لا يمكن تعديل الطلب بعد بدء أي إجراء");
-        return;
-      }
-
-      // save
-      if(window.__shootEditMode){
-        const rows = Array.isArray(cur.rows)?cur.rows:[];
-        document.querySelectorAll(".edit-shoot-place").forEach(sel=>{
-          const idx = Number(sel.getAttribute("data-idx")||"-1");
-          if(idx>=0 && rows[idx]) rows[idx].shootPlace = sel.value || "";
-        });
-        document.querySelectorAll(".edit-shoot-note").forEach(inp=>{
-          const idx = Number(inp.getAttribute("data-idx")||"-1");
-          if(idx>=0 && rows[idx]) rows[idx].note = inp.value || "";
-        });
-
-        cur.rows = rows;
-        updateShootRequestLocal(cur);
-        await persistAll();
-        await logActivity(
-          "تعديل طلب تصوير",
-          "تم تعديل أماكن/ملاحظات الطلب #" + (cur.id||"-"),
-          {requestId:cur.id, entityType:"photoshoot_request", role: currentUserRole||""}
-        );
-        window.__shootEditMode = false;
-        openReqModal(cur); // re-render modal
-        showToast("تم حفظ التعديل");
-      }else{
-        window.__shootEditMode = true;
-        openReqModal(cur); // re-render modal in edit mode
-        showToast("وضع التعديل مفعل");
-      }
-    };
-  }
-
-  // render rows
-  if(rowsBody){
-    rowsBody.innerHTML = "";
-    const rows = Array.isArray(latest.rows) ? latest.rows : [];
-    rows.forEach((row, idx) => {
-      const tr = document.createElement("tr");
-      const shootPlace = row.shootPlace || row.place || "";
-      const noteVal = row.note || "";
-      const safeNote = (noteVal+"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-
-      let placeCell = shootPlace;
-      let noteCell  = safeNote;
-
-      if(window.__shootEditMode){
-        const opts = SHOOT_PLACES.filter(Boolean).map(p=>{
-          const sel = (shootPlace===p) ? "selected" : "";
-          const safeP = (p+"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-          return `<option value="${safeP}" ${sel}>${safeP}</option>`;
-        }).join("");
-        placeCell = `
-          <select class="small-input edit-shoot-place" data-idx="${idx}">
-            <option value="">— اختر —</option>
-            ${opts}
-          </select>`;
-        noteCell = `<input class="small-input edit-shoot-note" data-idx="${idx}" value="${safeNote}" placeholder="اختياري">`;
-      }
-
-      tr.innerHTML = `
-        <td class="center">${idx+1}</td>
-        <td>${row.vin || ""}</td>
-        <td>${row.car || ""}</td>
-        <td>${row.variant || ""}</td>
-        <td>${row.extColor || ""}</td>
-        <td>${row.intColor || ""}</td>
-        <td>${row.modelYear || ""}</td>
-        <td>${row.location || ""}</td>
-        <td>${placeCell}</td>
-        <td>${noteCell}</td>
-      `;
-      rowsBody.appendChild(tr);
-
-      // usability: click place cell focuses select
-      if(window.__shootEditMode){
-        tr.addEventListener("click",(e)=>{
-          const sel = tr.querySelector(".edit-shoot-place");
-          if(sel) sel.focus();
-        });
-      }
-    });
-  }
-
-  const admin = latest.admin || {};
-  if (statusBox) statusBox.textContent = "الحالة الحالية: " + (latest.status || "—");
-  if (recvBox)   recvBox.textContent   = admin.received ? ("تم استلام الطلب في: " + admin.received) : "لم يتم استلام الطلب بعد";
-  if (prepBox)   prepBox.textContent   = admin.prepared ? ("تم ارسال السيارة للتصوير في: " + admin.prepared) : "لم يتم ارسال السيارة بعد";
-  if (notesEl)   notesEl.value         = latest.adminNotes || "";
-
-  renderShootTimeline(latest);
-  backdrop.classList.add("show");
 }
 
-  function openMoveModal(req){
-    currentMoveReqId = req.id;
-    const backdrop = document.getElementById("moveModalBackdrop");
-    if (!backdrop) return;
-    backdrop.classList.add("show");
-    attachMoveLive(req.id);
-  }
-    
+function isAdmin(){
+  return normalizeRole(userProfile?.role||"") === "admin";
+}
 
-  (function bindModalEvents(){
-    const reqBackdrop  = document.getElementById("reqModalBackdrop");
-    const moveBackdrop = document.getElementById("moveModalBackdrop");
+function rowCanUseVin(r){
+  if(isAdmin()) return true;
+  const locs = (userProfile?.locations||[]);
+  return !!r.fromLocation && locs.includes(r.fromLocation);
+}
 
-    document.querySelectorAll("[data-close-req-modal]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        if (reqBackdrop) reqBackdrop.classList.remove("show");
+function renderCreateTable(){
+  ensureRows(8);
+  createTbody.innerHTML = "";
+  draftRows.forEach((r, idx)=>{
+    const tr = document.createElement("tr");
+    const statusPill = (() => {
+      if(r.status==="loading") return `<span class="pill">جارٍ التحميل…</span>`;
+      if(r.status==="ok") return `<span class="pill ok">جاهز</span>`;
+      if(r.status==="blocked") return `<span class="pill bad">غير مصرح</span>`;
+      if(r.status==="notfound") return `<span class="pill bad">غير موجود</span>`;
+      return `<span class="pill">—</span>`;
+    })();
+
+    tr.innerHTML = `
+      <td class="mono">${idx+1}</td>
+
+      <td>
+        <select class="cellSelect" data-k="type" data-i="${idx}">
+          <option value="shoot" ${r.type==="shoot"?"selected":""}>طلب تصوير</option>
+          <option value="move" ${r.type==="move"?"selected":""}>طلب نقل</option>
+        </select>
+      </td>
+
+      <td>
+        <input class="cellInput mono" data-k="vin" data-i="${idx}" placeholder="VIN" value="${escapeHtml(r.vin)}" />
+        <div class="cellMuted" style="margin-top:6px">${statusPill} ${r.msg?`<span class="cellMuted">${escapeHtml(r.msg)}</span>`:""}</div>
+      </td>
+
+      <td>${r.carName?escapeHtml(r.carName):"—"}</td>
+      <td>${r.trim?escapeHtml(r.trim):"—"}</td>
+      <td>${r.ext?escapeHtml(r.ext):"—"}</td>
+      <td>${r.int?escapeHtml(r.int):"—"}</td>
+      <td class="mono">${r.model?escapeHtml(r.model):"—"}</td>
+
+      <td>${r.fromLocation?escapeHtml(r.fromLocation):"—"}</td>
+
+      <td>
+        <input class="cellInput" data-k="targetLocation" data-i="${idx}"
+          placeholder="${r.type==='shoot'?'مكان التصوير (مثال: الاستديو)':'الوجهة (toLocation)'}"
+          value="${escapeHtml(r.targetLocation)}" />
+      </td>
+
+      <td>
+        <input class="cellInput" data-k="note" data-i="${idx}" placeholder="اختياري" value="${escapeHtml(r.note)}" />
+      </td>
+
+      <td style="text-align:center">
+        <button class="btnX" title="حذف السطر" data-k="del" data-i="${idx}">✕</button>
+      </td>
+    `;
+    createTbody.appendChild(tr);
+  });
+
+  // Delegate events
+  createTbody.querySelectorAll("[data-k]").forEach(elm=>{
+    const k = elm.getAttribute("data-k");
+    const i = +elm.getAttribute("data-i");
+    if(k==="del"){
+      elm.addEventListener("click", ()=>{
+        draftRows.splice(i,1);
+        if(draftRows.length<8) draftRows.push(makeEmptyRow());
+        renderCreateTable();
       });
-    });
-    document.querySelectorAll("[data-close-move-modal]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        if (moveBackdrop) moveBackdrop.classList.remove("show");
-        stopMoveLive();
-      });
-    });
-
-
-    
-  function renderMoveModalUI(reqDoc, rowsArr){
-    const titleEl  = document.getElementById("moveModalTitle");
-    const subEl    = document.getElementById("moveModalSub");
-    const rowsBody = document.getElementById("moveModalRows");
-    const statusBox= document.getElementById("moveModalStatusBox");
-
-    if (titleEl) titleEl.textContent = "تفاصيل طلب النقل #" + (reqDoc.id || "-");
-    if (subEl) subEl.textContent    = (reqDoc.createdAt || "") + " — " + (reqDoc.createdBy || "");
-
-    if(rowsBody){
-      rowsBody.innerHTML = "";
-      (rowsArr||[]).forEach((row, idx)=>{
-        const tr = document.createElement("tr");
-        const from = row.fromLocation || row.location || "";
-        const to   = row.toLocation || row.place || row.shootPlace || "";
-        tr.innerHTML = `
-          <td class="center">${idx+1}</td>
-          <td class="mono">${row.vin||""}</td>
-          <td>${row.car||""}</td>
-          <td class="muted">${from||"-"}</td>
-          <td class="muted">${to||"-"}</td>
-        `;
-        rowsBody.appendChild(tr);
-      });
+      return;
     }
-
-    // تحديث شريط التقدم + الحالة
-    const c1 = stageCount({rows:rowsArr},"received");
-    const c2 = stageCount({rows:rowsArr},"sent");
-    const c3 = stageCount({rows:rowsArr},"carReceived");
-    const c4 = stageCount({rows:rowsArr},"finished");
-    if(statusBox){
-      statusBox.textContent = [
-        `استلام الطلب: ${pct(c1.done,c1.total)}% (${c1.done}/${c1.total})`,
-        `ارسال السيارة: ${pct(c2.done,c2.total)}% (${c2.done}/${c2.total})`,
-        `استلام السيارة: ${pct(c3.done,c3.total)}% (${c3.done}/${c3.total})`,
-        `الانتهاء: ${pct(c4.done,c4.total)}% (${c4.done}/${c4.total})`,
-      ].join("\n");
-    }
-
-    // أزرار المراحل حسب مكان المستخدم (Admin يشوف كله) + زر الانتهاء لمنشئ الطلب أو Admin
-    const btnM1 = document.getElementById("btnMoveStep1");
-    const btnM2 = document.getElementById("btnMoveStep2");
-    const btnM3 = document.getElementById("btnMoveStep3");
-    const btnFinish = document.getElementById("btnMoveFinish");
-
-    const eligible1 = (rowsArr||[]).filter(r=>canActOnRow('move', r, 'received')).length;
-    const eligible2 = (rowsArr||[]).filter(r=>canActOnRow('move', r, 'sent')).length;
-    const eligible3 = (rowsArr||[]).filter(r=>canActOnRow('move', r, 'carReceived')).length;
-
-    if(btnM1){ btnM1.style.display = (isSuperAdmin() || eligible1>0) ? "inline-flex":"none"; }
-    if(btnM2){ btnM2.style.display = (isSuperAdmin() || eligible2>0) ? "inline-flex":"none"; }
-    if(btnM3){ btnM3.style.display = (isSuperAdmin() || eligible3>0) ? "inline-flex":"none"; }
-
-    if(btnFinish){
-      const canFinish = isSuperAdmin() || isCreator({createdByUid:reqDoc.createdByUid});
-      btnFinish.style.display = canFinish ? "inline-flex" : "none";
-    }
-  }
-
-  function attachMoveLive(reqId){
-    stopMoveLive();
-    if(!reqId) return;
-    const reqRef = db.collection("requests").doc(String(reqId));
-    // doc listener
-    moveLiveUnsubDoc = reqRef.onSnapshot((snap)=>{
-      if(!snap.exists) return;
-      const d = snap.data()||{};
-      d.id = snap.id;
-      window.__moveReqDoc = d;
-    }, (err)=>{
-      console.error("move doc snapshot error", err);
-    });
-
-    // rows listener
-    moveLiveUnsubRows = reqRef.collection("rows").onSnapshot((qs)=>{
-      const rowsArr = [];
-      qs.forEach(doc=>{
-        const r = doc.data()||{};
-        rowsArr.push(r);
-      });
-      const reqDoc = window.__moveReqDoc || {id:reqId};
-      renderMoveModalUI(reqDoc, rowsArr);
-    }, (err)=>{
-      console.error("move rows snapshot error", err);
-    });
-  }
-
-
-    // إغلاق المودال بزر ESC
-    document.addEventListener("keydown",(e)=>{
-      if(e.key !== "Escape") return;
-      if(reqBackdrop && reqBackdrop.classList.contains("show")){
-        reqBackdrop.classList.remove("show");
-        isEditShootMode = false;
-      }
-      if(moveBackdrop && moveBackdrop.classList.contains("show")){
-        moveBackdrop.classList.remove("show");
-        stopMoveLive();
-        isEditMoveMode = false;
-      }
-    });
-
-    const notesEl = document.getElementById("adminNotes");
-
-    const btnS1 = document.getElementById("btnShootStep1");
-    const btnS2 = document.getElementById("btnShootStep2");
-    const btnS3 = document.getElementById("btnShootStep3");
-    const btnS4 = document.getElementById("btnShootStep4");
-
-    function withCurrentShoot(fn){
-      if (currentShootReqId == null) return;
-      const idx = (shootRequests || []).findIndex(r => r.id === currentShootReqId);
-      if (idx === -1) return;
-      if (notesEl) {
-        shootRequests[idx].adminNotes = notesEl.value || "";
-      }
-      fn(shootRequests[idx]);
-    }
-
-    if (btnS1) btnS1.addEventListener("click", () => withCurrentShoot(markShootStep1));
-    if (btnS2) btnS2.addEventListener("click", () => withCurrentShoot(markShootStep2));
-    if (btnS3) btnS3.addEventListener("click", () => withCurrentShoot(markShootStep3));
-    if (btnS4) btnS4.addEventListener("click", () => withCurrentShoot(markShootStep4));
-
-    const btnM1 = document.getElementById("btnMoveStep1");
-    const btnM2 = document.getElementById("btnMoveStep2");
-    const btnM3 = document.getElementById("btnMoveStep3");
-    const btnM4 = document.getElementById("btnMoveStep4");
-
-    function withCurrentMove(fn){
-      if (currentMoveReqId == null) return;
-      const idx = (moveRequests || []).findIndex(r => r.id === currentMoveReqId);
-      if (idx === -1) return;
-      fn(moveRequests[idx]);
-    }
-
-    if (btnM1) btnM1.addEventListener("click", () => withCurrentMove(markMoveStep1));
-    if (btnM2) btnM2.addEventListener("click", () => withCurrentMove(markMoveStep2));
-    if (btnM3) btnM3.addEventListener("click", () => withCurrentMove(markMoveStep3));
-    if (btnM4) btnM4.addEventListener("click", () => withCurrentMove(markMoveStep4));
-  })();
-
-
-  async function fetchUserRole(user){
-    currentUserUid = user?.uid || null;
-    currentUserEmail = user?.email || "";
-    currentUserRole = null;
-    currentUserLocations = [];
-    try{
-      const snap = await getDoc(doc(db,"user", user.uid));
-      if(snap.exists()){
-        const data = snap.data() || {};
-        // Normalize role values to our constants
-        const rawRole = (data.role || "").toString().trim();
-        const norm = normalizeRole(rawRole);
-        currentUserRole = norm;
-        // locations can be array or string
-        const loc = data.locations;
-        if(Array.isArray(loc)){
-          currentUserLocations = loc.filter(Boolean).map(x=>String(x).trim()).filter(Boolean);
-        }else if(typeof loc === "string" && loc.trim()){
-          currentUserLocations = [loc.trim()];
-        }else{
-          currentUserLocations = [];
+    if(k==="vin"){
+      elm.addEventListener("keydown",(e)=>{
+        if(e.key==="Enter"){
+          e.preventDefault();
+          loadVinIntoRow(i);
+          setTimeout(()=>{
+            const next = createTbody.querySelector(`[data-k="vin"][data-i="${Math.min(i+1,draftRows.length-1)}"]`);
+            next?.focus?.();
+          }, 50);
         }
-        if(data.email) currentUserEmail = data.email;
-        return currentUserRole;
-      }
-    }catch(e){
-      console.error("fetchUserRole failed:", e);
-    }
-    // fallback to email map if exists
-    const fallback = normalizeRole(EMAIL_FALLBACK_ROLES?.[currentUserEmail] || "");
-    currentUserRole = fallback || null;
-    currentUserLocations = (EMAIL_FALLBACK_LOCATIONS?.[currentUserEmail] || []).slice();
-    return currentUserRole;
-  }
-
-  function normalizeRole(roleStr){
-    const r = (roleStr||"").toString().trim().toLowerCase();
-    if(!r) return null;
-    // admin aliases
-    if(r === "admin") return ROLE_ADMIN;
-    if(r === "الادارة" || r === "الإدارة") return ROLE_ADMIN;
-    if(r.includes("ادارة") || r.includes("إدارة")) return ROLE_ADMIN;
-    // idari aliases
-    if(r === "idari") return ROLE_IDARI;
-    if(r === "اداري" || r === "إداري") return ROLE_IDARI;
-    if(r.includes("اداري") || r.includes("إداري")) return ROLE_IDARI;
-    // fallback raw
-    return roleStr;
-  }
-
-function showAuthGate(){
-    document.getElementById("authGate").style.display = "block";
-    document.getElementById("app").style.display      = "none";
-  }
-  function showApp(){
-    document.getElementById("authGate").style.display = "none";
-    document.getElementById("app").style.display      = "block";
-  }
-
-  onAuthStateChanged(auth, async (user)=>{
-    if(!user){
-      $("#userLabel").textContent = "غير مسجل";
-      $("#btnSignOut").style.display = "none";
-      showAuthGate();
+      });
+      elm.addEventListener("blur", ()=>{
+        const v = (elm.value||"").trim();
+        if(v && v!==draftRows[i].vin){ draftRows[i].vin = v; loadVinIntoRow(i); }
+      });
+      elm.addEventListener("input", ()=>{
+        draftRows[i].vin = (elm.value||"").trim();
+      });
       return;
     }
-    $("#userLabel").textContent = user.email || "";
-    $("#btnSignOut").style.display = "inline-flex";
-
-    const role = await fetchUserRole(user);
-    if(!role || (!PAGE_ALLOWED_ROLES.includes(role) && role!==ROLE_ADMIN)){
-      // تحويل مباشر لصفحة عدم الصلاحية
-      window.location.href = "unauthorized.html";
+    if(k==="type"){
+      elm.addEventListener("change", ()=>{
+        draftRows[i].type = elm.value;
+        renderCreateTable();
+      });
       return;
     }
-
-    // ✅ Page Guard (يحمي من فتح صفحة غير مسموحة للدور)
-    const currentPage = (location.pathname.split('/').pop() || 'dashboard.html').split('?')[0];
-    const allowed = ROLE_PAGES[role];
-    if(allowed !== 'ALL' && Array.isArray(allowed) && !allowed.includes(currentPage)){
-      window.location.href = allowed[0] || 'dashboard.html';
-      return;
-    }
-
-    setStatus("ok","جارٍ تحميل البيانات…");
-    // ملاحظة: إظهار التطبيق بعد أول Snapshot لضمان عدم ظهور صفحة فاضية
-
-    // ✅ تحميل حالة النظام (المخزون + الطلبات) من STATE_REF
-    let __firstStateLoad = true;
-    onSnapshot(STATE_REF, (snap) => {
-      const data = snap.data() || {};
-      if(__firstStateLoad){
-        __firstStateLoad = false;
-        showApp();
-        // تطبيق صلاحيات التابات حسب الدور + فتح إدارة الطلبات افتراضي
-        applyTabsVisibility(role);
-        buildFormRows();
-        try{ showPage("orders"); }catch(e){}
-        setStatus("ok","متصل — تم تحميل البيانات");
-      }
-      shootRequests = Array.isArray(data.shootRequests) ? data.shootRequests : [];
-      moveRequests  = Array.isArray(data.moveRequests)  ? data.moveRequests  : [];
-
-      // derive statuses + ensure rowStates
-      shootRequests.forEach(r=>{ ensureRowStates(r); r.status = deriveStatus(r,'shoot'); });
-      moveRequests.forEach(r=>{ ensureRowStates(r); r.status = deriveStatus(r,'move'); });
-
-      stock         = Array.isArray(data.stock)         ? data.stock         : [];
-      moves         = Array.isArray(data.moves)         ? data.moves         : [];
-
-      metrics();
-      render();
-      refreshOpenModalIfAny();
-      const su = document.getElementById("stat_updated");
-      if (su) su.textContent = data.updatedAt || "—";
+    elm.addEventListener("input", ()=>{
+      draftRows[i][k] = elm.value;
     });
   });
+}
 
-  document.getElementById("btnSignOut")?.addEventListener("click",async ()=>{
-    await signOut(auth);
-  });
+async function loadVinIntoRow(i){
+  const r = draftRows[i];
+  const vin = (r.vin||"").trim();
+  if(!vin) return;
 
-  const loginForm = document.getElementById("loginForm");
-  if(loginForm){
-    loginForm.addEventListener("submit",async (e)=>{
-      e.preventDefault();
-      const email = document.getElementById("email").value.trim();
-      const pass  = document.getElementById("password").value;
-      const btn   = document.getElementById("btnSignIn");
-      try{
-        btn.disabled = true;
-        await signInWithEmailAndPassword(auth,email,pass);
-        showToast("تم تسجيل الدخول");
-      }catch(err){
-        console.error(err);
-        alert("بيانات الدخول غير صحيحة");
-      }finally{
-        btn.disabled = false;
-      }
-    });
+  r.status = "loading";
+  r.msg = "";
+  renderCreateTable();
+
+  try{
+    const invRef = doc(db, "inventory", vin);
+    const snap = await getDoc(invRef);
+    if(!snap.exists()){
+      r.status = "notfound";
+      r.msg = "VIN غير موجود في inventory";
+      renderCreateTable();
+      return;
+    }
+    const inv = snap.data() || {};
+    r.carName = inv.car || inv.carName || inv.makeModel || inv.name || inv.title || "";
+    r.trim = inv.trim || inv.variant || inv.statement || inv.desc || "";
+    r.ext = inv.extColor || inv.exterior || inv.exteriorColor || inv.colorExt || "";
+    r.int = inv.intColor || inv.interior || inv.interiorColor || inv.colorInt || "";
+    r.model = String(inv.model || inv.year || inv.modelYear || "");
+    r.fromLocation = inv.location || inv.branch || inv.place || "";
+
+    if(!rowCanUseVin(r)){
+      r.status = "blocked";
+      r.msg = "ممنوع إنشاء طلب لهيكل خارج أماكن المستخدم";
+      renderCreateTable();
+      return;
+    }
+
+    r.status = "ok";
+    r.msg = "";
+    renderCreateTable();
+
+    if(i===draftRows.length-1){
+      draftRows.push(makeEmptyRow());
+      renderCreateTable();
+    }
+  }catch(err){
+    r.status = "blocked";
+    r.msg = (err?.message||"خطأ").slice(0,120);
+    renderCreateTable();
   }
+}
+
+function getValidDraftRows(){
+  return draftRows
+    .map(r=>({ ...r, vin:(r.vin||"").trim(), targetLocation:(r.targetLocation||"").trim() }))
+    .filter(r=>r.vin);
+}
+
+function canSubmit(){
+  const rows = getValidDraftRows();
+  if(rows.length===0) return {ok:false, msg:"اكتب VIN واحد على الأقل."};
+
+  for(const r of rows){
+    if(r.status!=="ok") return {ok:false, msg:`VIN ${r.vin}: غير جاهز (تأكد أنه موجود ومصرح).`};
+    if(!r.targetLocation) return {ok:false, msg:`VIN ${r.vin}: اكتب ${r.type==="shoot"?"مكان التصوير":"الوجهة"}.`};
+  }
+  return {ok:true, msg:""};
+}
+
+function resetDraft(){
+  draftRows = [];
+  ensureRows(8);
+  renderCreateTable();
+}
+
+function openCreate(){
+  if(!currentUser){ toast("غير مسجل", true); return; }
+  createBackdrop.classList.add("show");
+  ensureRows(8);
+  renderCreateTable();
+  setTimeout(()=>{ 
+    const firstVin = createTbody.querySelector('[data-k="vin"][data-i="0"]');
+    firstVin?.focus?.();
+  }, 0);
+}
+function closeCreate(){ createBackdrop.classList.remove("show"); }
+
+btnOpenCreate?.addEventListener("click", openCreate);
+btnCloseCreate?.addEventListener("click", closeCreate);
+createBackdrop?.addEventListener("click",(e)=>{ if(e.target===createBackdrop) closeCreate(); });
+
+btnClearDraft?.addEventListener("click", ()=>{
+  resetDraft();
+  toast("تم تفريغ القائمة");
+});
+
+btnSubmitDraft?.addEventListener("click", async ()=>{
+  const chk = canSubmit();
+  if(!chk.ok){ toast(chk.msg, true); return; }
+
+  const rows = getValidDraftRows();
+  const groups = rows.reduce((acc,r)=>{ (acc[r.type] ||= []).push(r); return acc; }, {});
+  btnSubmitDraft.disabled = true;
+  btnSubmitDraft.textContent = "جارٍ الإرسال…";
+
+  try{
+    for(const [type, list] of Object.entries(groups)){
+      const reqId = await nextRequestId();
+      const reqDoc = doc(db, "requests", String(reqId));
+      const payloadRows = list.map(r=>({
+        vin: r.vin,
+        type: r.type,
+        car: r.carName || "",
+        trim: r.trim || "",
+        ext: r.ext || "",
+        int: r.int || "",
+        model: r.model || "",
+        fromLocation: r.fromLocation || "",
+        targetLocation: r.targetLocation || "",
+        note: r.note || "",
+        progress: { step1:false, step2:false, step3:false, step4:false },
+        ts: serverTimestamp()
+      }));
+      const kind = (type==="move") ? "move" : "shoot";
+
+      await setDoc(reqDoc, {
+        kind,
+        createdAt: nowIso(),
+        createdByUid: currentUser?.email || currentUser?.uid || "",
+        createdByEmail: currentUser?.email || "",
+        createdByName: userProfile?.name || "",
+        canEdit: true,
+        rows: payloadRows,
+        progress: { overall: 0, step1: 0, step2: 0, step3: 0, step4: 0 },
+        status: "open",
+      }, { merge:true });
+
+      await logActivity(`إنشاء طلب ${kind} #${reqId}`, `تم إنشاء الطلب رقم #${reqId} بعدد ${payloadRows.length} VIN`);
+    }
+
+    toast("تم إرسال الطلب ✅");
+    closeCreate();
+    resetDraft();
+    await refreshOrders();
+  }catch(err){
+    toast("فشل إرسال الطلب: " + (err?.message||"خطأ"), true);
+  }finally{
+    btnSubmitDraft.disabled = false;
+    btnSubmitDraft.textContent = "إرسال الطلب";
+  }
+});
+
+/* ESC closes whichever modal is open (create first, then details) */
+document.addEventListener("keydown",(e)=>{
+  if(e.key!=="Escape") return;
+  if(createBackdrop?.classList.contains("show")){ closeCreate(); return; }
+  if(el("modalBackdrop")?.classList.contains("show")){ closeModal(); return; }
+});
+
+
+cation).filter(Boolean),
+
+    createdByUid: currentUser.uid,
+    createdByName: currentUser.email || "",
+    createdAt: new Date().toISOString(),
+    updatedAt: serverTimestamp(),
+    canEdit:true,
+    stages:{received:{done:false},sent:{done:false},arrived:{done:false},finished:{done:false}},
+    progress:0
+  };
+
+  try{
+    await setDoc(doc(db,"requests",reqId), payload);
+    toast("تم إنشاء الطلب ✅");
+    closeCreate();
+    draftVins = [];
+    el("newTo").value="";
+    
+
+  }catch(e){
+    toast("فشل إنشاء الطلب: "+(e.message||e), true);
+  }
+});
+
+
+
+/* Boot */
+onAuthStateChanged(auth, async (u)=>{
+  currentUser = u || null;
+  if(!u){
+    userProfile=null;
+    setAuthUI();
+    el("reqTbody").innerHTML = `<tr><td colspan="8" class="small">سجّل دخول من صفحة الـ Workspace الأساسية ثم افتح هذه الصفحة على نفس الدومين.</td></tr>`;
+    return;
+  }
+  userProfile = await loadUserProfile(u);
+  setAuthUI();
+  watchRequests();
+});
+
+
+async function logActivity(action, details){
+  try{
+    const ref = doc(collection(db, "mzj_activity_log"));
+    await setDoc(ref, {
+      action: action || "",
+      details: details || "",
+      ts: serverTimestamp(),
+      date: new Date().toISOString().slice(0,10),
+      user: currentUserProfile?.name || currentUser?.email || ""
+    });
+  }catch(e){ /* ignore */ }
+}
+
 </script>
+
 </body>
 </html>
