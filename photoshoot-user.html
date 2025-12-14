@@ -1,853 +1,1346 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>MZJ Workspace — الطلبات</title>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-<style>
-:root{
-  --brown:#3e2420;
-  --beige:#bc8f74;
-  --cream:#fff8ef;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MZJ — إدارة الطلبات</title>
 
-  --text:#111827;
-  --muted:#6b7280;
-  --line:rgba(62,36,32,.12);
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
 
-  --ok:#16a34a;
-  --warn:#f59e0b;
-  --err:#ef4444;
+  <style>
+    :root{
+      --brown:#3e2420;
+      --beige:#e8d6c8;
+      --cream:#fff8ef;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --ok:#16a34a;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --radius:14px;
+      --shadow:0 16px 40px rgba(0,0,0,.08);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"Tajawal",system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:var(--cream);
+      color:var(--text);
+    }
 
-  --r12:12px;
-  --r16:16px;
-  --r20:20px;
+    /* Topbar */
+    .topbar{
+      background:#fff;
+      border-bottom:1px solid var(--beige);
+      padding:12px 18px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      position:sticky;
+      top:0;
+      z-index:20;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+    }
+    .logo{
+      width:44px;height:44px;border-radius:14px;
+      background:var(--brown);
+      display:grid;place-items:center;
+      color:#fff;font-weight:800;
+    }
+    .brand h1{margin:0;font-size:16px}
+    .brand p{margin:2px 0 0;font-size:12px;color:var(--muted)}
+    .tabs{
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+      justify-content:center;
+    }
+    .tab{
+      padding:10px 16px;border-radius:999px;
+      border:1px solid var(--beige);
+      background:#fff;color:var(--brown);
+      font-weight:700;font-size:13px;
+      cursor:pointer;
+      transition:.2s ease;
+      user-select:none;
+    }
+    .tab.active{background:var(--brown);color:#fff;border-color:var(--brown)}
+    .pillbar{
+      display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+      justify-content:flex-start;
+    }
+    .pill{
+      padding:8px 12px;border-radius:999px;border:1px solid var(--beige);
+      background:#fff;font-size:12px;color:var(--muted);
+      display:flex;gap:8px;align-items:center;
+    }
+    .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
+    .dot.ok{background:var(--ok)}
+    .dot.warn{background:var(--warn)}
+    .dot.bad{background:var(--bad)}
 
-  --shadow1:0 10px 35px rgba(15, 23, 42, .10);
-  --shadow2:0 25px 70px rgba(15, 23, 42, .16);
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  font-family:"Tajawal",system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  color:var(--text);
-  background:
-    radial-gradient(1200px 500px at 20% -10%, rgba(188,143,116,.18), transparent 60%),
-    radial-gradient(900px 500px at 80% 0%, rgba(62,36,32,.14), transparent 60%),
-    linear-gradient(180deg,#fff8ef,#fff3e9 40%, #fff8ef);
-}
-a{color:inherit;text-decoration:none}
-button,input,select{font-family:inherit}
+    /* Layout */
+    .wrap{max-width:1180px;margin:18px auto;padding:0 14px}
+    .card{
+      background:#fff;border:1px solid rgba(232,214,200,.9);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .card-h{
+      padding:14px 16px;
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      border-bottom:1px solid rgba(232,214,200,.65);
+      background:linear-gradient(180deg,#fff, #fffaf6);
+    }
+    .card-h h2{margin:0;font-size:16px}
+    .card-h .sub{font-size:12px;color:var(--muted)}
+    .card-b{padding:14px 16px}
 
-/* Topbar */
-.topbar{
-  position:sticky;top:0;z-index:50;
-  backdrop-filter: blur(12px) saturate(140%);
-  background: rgba(255,255,255,.76);
-  border-bottom:1px solid var(--line);
-}
-.topbar-inner{
-  max-width:1280px;margin:0 auto;
-  padding:14px 18px;
-  display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;
-}
-.brand{display:flex;gap:10px;align-items:center;min-width:260px}
-.brandMark{
-  width:44px;height:44px;border-radius:16px;
-  background: linear-gradient(145deg, var(--brown), #241110);
-  box-shadow: 0 14px 28px rgba(62,36,32,.22);
-  display:flex;align-items:center;justify-content:center;
-  color:#fff;font-weight:900;letter-spacing:.5px;
-}
-.brandText{display:flex;flex-direction:column;gap:2px}
-.brandText b{font-size:15px;color:var(--brown);line-height:1}
-.brandText small{font-size:12px;color:var(--muted);line-height:1.1}
+    .row{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+    }
+    .grow{flex:1}
+    .btn{
+      border:1px solid var(--beige);
+      background:#fff;
+      color:var(--brown);
+      border-radius:12px;
+      padding:10px 14px;
+      font-weight:800;
+      cursor:pointer;
+      transition:.2s;
+      display:inline-flex;align-items:center;gap:8px;
+    }
+    .btn:hover{background:#faf2ec}
+    .btn.primary{
+      background:var(--brown);color:#fff;border-color:var(--brown);
+    }
+    .btn.primary:hover{filter:brightness(1.05)}
+    .btn.danger{
+      background:#fff;color:var(--bad);border-color:#fecaca;
+    }
+    .btn.success{
+      background:var(--ok);color:#fff;border-color:var(--ok);
+    }
+    .btn.muted{
+      background:#f8fafc;color:#111;border-color:#e5e7eb;
+    }
+    .btn:disabled{opacity:.55;cursor:not-allowed}
 
-/* Primary Tabs (Orders / New Request) */
-.primaryTabs{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.pTab{
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.92);
-  color:var(--brown);
-  font-weight:900;
-  padding:10px 16px;
-  border-radius:999px;
-  cursor:pointer;
-  transition:.18s ease;
-}
-.pTab:hover{transform:translateY(-1px);box-shadow:0 12px 28px rgba(15,23,42,.08)}
-.pTab.active{background:var(--brown);border-color:var(--brown);color:#fff}
+    .input, .select{
+      width:100%;
+      padding:10px 12px;
+      border:1px solid #e5e7eb;
+      border-radius:12px;
+      outline:none;
+      font-size:13px;
+      background:#fff;
+    }
+    .input:focus,.select:focus{border-color:#d9b9a4;box-shadow:0 0 0 3px rgba(232,214,200,.45)}
+    .help{margin-top:8px;color:var(--muted);font-size:12px;line-height:1.5}
 
-/* Chips */
-.chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.chip{
-  display:inline-flex;gap:8px;align-items:center;
-  padding:8px 10px;border-radius:999px;
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.92);
-  font-size:12px;font-weight:900;color:var(--brown);
-}
-.dot{width:8px;height:8px;border-radius:999px;background:var(--beige)}
-.chip.ok{border-color:rgba(22,163,74,.25);background:rgba(240,253,244,.9);color:#14532d}
-.chip.err{border-color:rgba(239,68,68,.25);background:rgba(254,242,242,.9);color:#7f1d1d}
+    /* Table */
+    .table-wrap{overflow:auto;border:1px solid rgba(232,214,200,.65);border-radius:12px}
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:980px}
+    thead th{
+      position:sticky;top:0;background:#fffaf6;
+      border-bottom:1px solid rgba(232,214,200,.65);
+      padding:12px 10px;font-size:12px;color:#4b5563;
+      text-align:center;
+      z-index:2;
+    }
+    tbody td{
+      border-bottom:1px solid #f1f5f9;
+      padding:10px;
+      text-align:center;
+      vertical-align:middle;
+      font-size:13px;
+    }
+    tbody tr:hover td{background:#fffdfb}
+    .td-left{text-align:right}
+    .badge{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 10px;border-radius:999px;
+      font-size:12px;font-weight:800;
+      border:1px solid rgba(232,214,200,.75);
+      background:#fff;
+      color:var(--brown);
+      white-space:nowrap;
+    }
+    .badge.move{background:#fff; border-color:#d9b9a4}
+    .badge.shoot{background:#fff; border-color:#d9b9a4}
+    .small{font-size:12px;color:var(--muted)}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
 
-/* Buttons/Inputs */
-.btn{
-  border:1px solid var(--line);
-  background:rgba(255,255,255,.95);
-  color:var(--brown);
-  padding:10px 12px;
-  border-radius:12px;
-  font-weight:900;
-  cursor:pointer;
-  display:inline-flex;gap:8px;align-items:center;
-  transition:.18s ease;
-}
-.btn:hover{transform:translateY(-1px);box-shadow:0 14px 30px rgba(15,23,42,.10)}
-.btn.primary{background:var(--brown);border-color:var(--brown);color:#fff}
-.btn.danger{background:rgba(254,242,242,.95);border-color:rgba(239,68,68,.25);color:#7f1d1d}
-.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+    /* Progress */
+    .pwrap{display:flex;flex-direction:column;gap:8px}
+    .pbar{
+      height:10px;background:#f1f5f9;border-radius:999px;
+      overflow:hidden;border:1px solid #e5e7eb;
+    }
+    .pbar > div{
+      height:100%;width:0%;
+      background:linear-gradient(90deg,var(--brown),#6b3d36);
+      transition:width .2s ease;
+    }
+    .pmeta{display:flex;justify-content:space-between;gap:10px;color:var(--muted);font-size:12px}
 
-.input, select{
-  border:1px solid rgba(62,36,32,.14);
-  background:rgba(255,255,255,.95);
-  border-radius:14px;
-  padding:11px 12px;
-  outline:none;
-  min-width:220px;
-  font-weight:800;
-}
-.input:focus, select:focus{
-  border-color:rgba(188,143,116,.9);
-  box-shadow:0 0 0 5px rgba(188,143,116,.18);
-}
-.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
-.small{font-size:12px;color:var(--muted)}
+    /* Modal */
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.35);
+      display:none;align-items:center;justify-content:center;
+      padding:16px;z-index:50;
+    }
+    .modal{
+      width:min(980px, 100%);
+      max-height:90vh;
+      background:#fff;border-radius:18px;
+      box-shadow:0 30px 80px rgba(0,0,0,.25);
+      overflow:hidden;
+      display:flex;flex-direction:column;
+    }
+    .modal-h{
+      padding:14px 16px;
+      border-bottom:1px solid rgba(232,214,200,.7);
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      background:linear-gradient(180deg,#fff, #fffaf6);
+    }
+    .modal-h .title{font-weight:900}
+    .modal-h .meta{font-size:12px;color:var(--muted)}
+    .modal-b{padding:14px 16px;overflow:auto}
+    .modal-f{
+      padding:12px 16px;border-top:1px solid rgba(232,214,200,.7);
+      display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;
+      background:#fff;
+    }
+    .actionbar{
+      display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+    }
 
-/* Layout */
-.wrap{max-width:1280px;margin:0 auto;padding:18px}
-.card{
-  background:rgba(255,255,255,.92);
-  border:1px solid var(--line);
-  border-radius:20px;
-  box-shadow:var(--shadow1);
-  overflow:hidden;
-}
-.cardHd{
-  padding:16px 16px;
-  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  border-bottom:1px solid rgba(62,36,32,.08);
-  background:
-    radial-gradient(800px 220px at 20% -30%, rgba(188,143,116,.20), transparent 60%),
-    linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,250,246,.92));
-}
-.title{display:flex;flex-direction:column;gap:4px}
-.title h2{margin:0;font-size:16px;color:var(--brown);letter-spacing:.2px}
-.title small{color:var(--muted);font-size:12px}
-.cardBd{padding:16px}
+    .toast{
+      position:fixed;left:16px;bottom:16px;
+      background:#111827;color:#fff;
+      padding:12px 14px;border-radius:14px;
+      box-shadow:0 20px 50px rgba(0,0,0,.25);
+      display:none;z-index:99;
+      max-width:min(520px, 92vw);
+      font-size:13px;line-height:1.5;
+    }
+    .toast.show{display:block}
+    .toast .t-title{font-weight:900;margin-bottom:4px}
+    .toast .t-sub{opacity:.9}
 
-/* Table */
-.tableWrap{
-  border:1px solid rgba(62,36,32,.10);
-  border-radius:16px;
-  overflow:hidden;
-  background:rgba(255,255,255,.95);
-}
-table{width:100%;border-collapse:separate;border-spacing:0;min-width:980px}
-th,td{padding:12px 12px;border-bottom:1px solid rgba(62,36,32,.08);font-size:13px;vertical-align:top}
-th{
-  background:rgba(255,248,239,.92);
-  color:var(--brown);
-  font-weight:900;
-  position:sticky;top:0;z-index:1;
-}
-tbody tr:hover td{background:rgba(255,253,251,.92)}
-.pill{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:6px 10px;border-radius:999px;
-  border:1px solid transparent;
-  font-size:12px;font-weight:900;
-}
-.pill.ok{background:rgba(236,253,245,.92);color:#065f46;border-color:rgba(167,243,208,.75)}
-.pill.warn{background:rgba(255,251,235,.92);color:#92400e;border-color:rgba(253,230,138,.85)}
-.progress{height:10px;background:rgba(62,36,32,.12);border-radius:999px;overflow:hidden}
-.progress > div{height:100%;background:var(--brown);width:0%;transition:width .12s linear}
-
-/* New Request */
-.twoCol{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:980px){.twoCol{grid-template-columns:1fr}}
-.box{
-  border:1px solid rgba(62,36,32,.10);
-  border-radius:18px;
-  background:rgba(255,255,255,.92);
-  padding:14px;
-}
-.box b{color:var(--brown)}
-.vinRow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
-.vinList{display:flex;gap:10px;flex-direction:column;margin-top:12px}
-.vinItem{
-  border:1px solid rgba(62,36,32,.10);
-  background:rgba(255,253,251,.92);
-  border-radius:16px;
-  padding:12px;
-  display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;
-}
-.vinItem .left{display:flex;flex-direction:column;gap:4px}
-.vinItem .left .vin{font-weight:900;color:var(--brown)}
-.vinItem .left .loc{font-size:12px;color:var(--muted)}
-.vinItem .meta{font-size:12px;color:var(--muted);white-space:pre-line}
-.vinItem .actions{display:flex;gap:8px;align-items:center}
-
-/* Modal */
-.backdrop{
-  position:fixed;inset:0;z-index:1000;
-  background:rgba(15,23,42,.55);
-  display:none;align-items:center;justify-content:center;
-  padding:16px;
-}
-.backdrop.show{display:flex}
-.modal{
-  width:100%;
-  max-width:1040px;
-  border-radius:24px;
-  overflow:hidden;
-  background:rgba(255,255,255,.94);
-  border:1px solid rgba(255,255,255,.28);
-  box-shadow:var(--shadow2);
-}
-.modalHd{
-  padding:16px 18px;
-  display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
-  border-bottom:1px solid rgba(62,36,32,.10);
-  background:
-    radial-gradient(900px 260px at 20% -40%, rgba(188,143,116,.25), transparent 60%),
-    linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,248,239,.92));
-}
-.modalHd h3{margin:0;color:var(--brown);font-size:16px;font-weight:900}
-.modalBd{padding:18px}
-.grid2{display:grid;grid-template-columns:1.05fr .95fr;gap:14px}
-@media(max-width:980px){.grid2{grid-template-columns:1fr}}
-.pre{
-  margin-top:10px;
-  padding:12px;
-  border-radius:18px;
-  border:1px dashed rgba(188,143,116,.50);
-  background:rgba(255,253,251,.92);
-  font-size:12px;
-  line-height:1.8;
-  white-space:pre-line;
-}
-.stageBtns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-
-/* Toast */
-.toast{
-  position:fixed;left:18px;bottom:18px;z-index:2000;
-  background:#111827;color:#fff;
-  padding:10px 12px;border-radius:14px;
-  opacity:0;transform:translateY(10px);
-  transition:.2s;
-}
-.toast.show{opacity:1;transform:none}
-.hidden{display:none!important}
-
-/* Create modal table inputs */
-.cellInput, .cellSelect{
-  width:100%;
-  border:1px solid var(--line);
-  background:#fff;
-  border-radius:999px;
-  padding:10px 12px;
-  font-family:inherit;
-  font-size:13px;
-  outline:none;
-}
-.cellInput:focus, .cellSelect:focus{
-  border-color:#dcc3b2;
-  box-shadow:0 0 0 4px rgba(220,195,178,.35);
-}
-.cellMuted{ color:var(--muted); font-size:12px; }
-.btnX{
-  width:36px;height:36px;border-radius:999px;border:1px solid var(--line);
-  background:#fff; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
-}
-.btnX:hover{ background:#f6eee7; }
-.pill{
-  display:inline-flex; align-items:center; gap:6px;
-  padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#fff;
-  font-size:12px; white-space:nowrap;
-}
-.pill.bad{ border-color:#f3c0c0; background:#fff7f7; color:#7a1f1f;}
-.pill.ok{ border-color:#cfead6; background:#f3fbf6; color:#14532d;}
-
-</style>
+    @media (max-width:720px){
+      table{min-width:860px}
+      .tab{padding:9px 12px}
+      .brand h1{font-size:14px}
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="topbar">
-  <div class="topbar-inner">
+  <div class="topbar">
     <div class="brand">
-      <div class="brandMark">MZJ</div>
-      <div class="brandText">
-        <b>محمد بن ذعار العجمي للسيارات</b>
-        <small>Workspace • إدارة الطلبات</small>
+      <div class="logo">MZJ</div>
+      <div>
+        <h1>محمد بن ذعار العجمي للسيارات</h1>
+        <p>Workspace — إدارة الطلبات</p>
       </div>
     </div>
 
-    <div class="chips">
-      <span class="chip" id="authBadge"><span class="dot"></span>جارٍ الاتصال…</span>
-      <span class="chip" id="roleBadge">الدور: —</span>
-      <span class="chip" id="locBadge">الأماكن: —</span>
-      <span class="chip" id="projBadge">Project: —</span>
-      <button class="btn danger" id="btnSignOut" style="display:none">تسجيل خروج</button>
+    <div class="tabs">
+      <div id="tabCreate" class="tab active">طلب جديد</div>
+      <div id="tabManage" class="tab">إدارة الطلبات</div>
+    </div>
+
+    <div class="pillbar">
+      <div class="pill"><span class="dot warn" id="connDot"></span><span id="connTxt">جارٍ الاتصال…</span></div>
+      <div class="pill"><span>الدور:</span><strong id="roleTxt">—</strong></div>
+      <div class="pill"><span>الأماكن:</span><strong id="locTxt">—</strong></div>
+      <div class="pill"><span>Project:</span><strong id="projTxt">—</strong></div>
     </div>
   </div>
-</div>
 
-<div class="wrap">
+  <div class="wrap">
+    <!-- CREATE -->
+    <div id="viewCreate" class="card">
+      <div class="card-h">
+        <div>
+          <h2>إنشاء طلب سريع</h2>
+          <div class="sub">اكتب VIN واضغط Enter — البيانات تظهر تلقائيًا</div>
+        </div>
+        <div class="row">
+          <button id="btnClearDraft" class="btn muted">تفريغ</button>
+          <button id="btnSubmitDraft" class="btn primary">إرسال الطلب</button>
+        </div>
+      </div>
 
-  <!-- ORDERS TAB -->
-  <section id="ordersTab">
-    <div class="card">
-      <div class="cardHd">
-        <div class="title">
+      <div class="card-b">
+        <div class="row" style="gap:12px">
+          <div style="min-width:260px">
+            <input id="vinQuick" class="input mono" placeholder="اكتب رقم الهيكل VIN ثم Enter" />
+            <div class="help">
+              • يمنع إنشاء طلب لهيكل خارج أماكن المستخدم (إلا Admin).<br>
+              • تقدر تضيف أكثر من VIN في نفس الطلب.
+            </div>
+          </div>
+
+          <div class="grow">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width:54px">#</th>
+                    <th style="width:150px">نوع الطلب</th>
+                    <th style="width:140px">VIN</th>
+                    <th>السيارة</th>
+                    <th>البيان</th>
+                    <th style="width:220px">من</th>
+                    <th style="width:220px">إلى / مكان التصوير</th>
+                    <th style="width:120px">حذف</th>
+                  </tr>
+                </thead>
+                <tbody id="draftTbody">
+                  <!-- rows -->
+                </tbody>
+              </table>
+            </div>
+            <div class="help">
+              المصدر الأساسي للمكان: <span class="mono">inventory/{VIN}</span> — داخل الطلب نخزن: <span class="mono">vins: [{vin, fromLocation, toLocation, kind}]</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MANAGE -->
+    <div id="viewManage" class="card" style="display:none;margin-top:16px">
+      <div class="card-h">
+        <div>
           <h2>إدارة الطلبات</h2>
-          <small>بحث VIN • فتح المودال للتنفيذ — تحديث لحظي بدون Refresh</small>
+          <div class="sub">تحديث لحظي — بدون Refresh</div>
         </div>
-        <div class="controls">
-          <select id="filterKind">
+        <div class="row">
+          <select id="filterKind" class="select" style="width:220px">
             <option value="all">الكل</option>
-            <option value="move">نقل</option>
-            <option value="shoot">تصوير</option>
+            <option value="move">طلبات نقل</option>
+            <option value="shoot">طلبات تصوير</option>
           </select>
-          <input class="input mono" id="searchVin" placeholder="بحث برقم الهيكل VIN" />
-          <button class="btn" id="btnOpenCreate">طلب جديد</button>
-          <button class="btn primary" id="btnRefresh">تحديث</button>
+          <input id="searchTxt" class="input" style="width:260px" placeholder="بحث برقم الطلب أو VIN" />
+          <button id="btnReload" class="btn">تحديث</button>
         </div>
       </div>
 
-      <div class="cardBd">
-        <div class="tableWrap">
-          <div style="overflow:auto">
-            <table>
-              <thead>
-                <tr>
-                  <th>رقم</th>
-                  <th>نوع</th>
-                  <th>VINs</th>
-                  <th>من</th>
-                  <th>إلى</th>
-                  <th>المنشئ</th>
-                  <th>التقدم</th>
-                  <th>فتح</th>
-                </tr>
-              </thead>
-              <tbody id="reqTbody">
-                <tr><td colspan="8" class="small">جارٍ التحميل…</td></tr>
-              </tbody>
-            </table>
+      <div class="card-b">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:90px">رقم</th>
+                <th style="width:120px">نوع</th>
+                <th>VINs</th>
+                <th style="width:160px">المنشئ</th>
+                <th style="width:160px">التاريخ</th>
+                <th style="width:220px">التقدم</th>
+                <th style="width:140px">فتح</th>
+              </tr>
+            </thead>
+            <tbody id="reqTbody">
+              <tr><td colspan="7" class="small">جارٍ التحميل…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL -->
+  <div id="modalBackdrop" class="modal-backdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modal-h">
+        <div>
+          <div class="title" id="mTitle">تفاصيل الطلب</div>
+          <div class="meta" id="mMeta">—</div>
+        </div>
+        <button id="mClose" class="btn">إغلاق</button>
+      </div>
+
+      <div class="modal-b">
+        <div class="pwrap">
+          <div class="pmeta">
+            <div><strong>Progress عام</strong> — <span id="mProgTxt">0%</span></div>
+            <div class="small" id="mProgNote">—</div>
           </div>
+          <div class="pbar"><div id="mProgBar"></div></div>
         </div>
-        <div class="small" style="margin-top:10px">
-          هيكل VIN داخل الطلب: <b class="mono">vins: [{vin, fromLocation}]</b> — المصدر الأساسي للمكان: <b class="mono">inventory/{VIN}</b>
+
+        <div style="height:12px"></div>
+
+        <div class="table-wrap">
+          <table style="min-width:920px">
+            <thead>
+              <tr>
+                <th style="width:54px">#</th>
+                <th style="width:140px">VIN</th>
+                <th>السيارة</th>
+                <th style="width:240px">من</th>
+                <th style="width:240px">إلى / تصوير</th>
+                <th style="width:120px">المرحلة</th>
+                <th style="width:160px">آخر تحديث</th>
+              </tr>
+            </thead>
+            <tbody id="mRows"></tbody>
+          </table>
         </div>
-      </div>
-    </div>
-  </section>
 
-  </div>
+        <div style="height:14px"></div>
 
-
-
-<!-- Create Request Modal (Table-style) -->
-<div class="backdrop" id="createBackdrop" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" style="max-width:1200px">
-    <div class="modalHd">
-      <h3>إنشاء طلب سريع</h3>
-      <div class="controls">
-        <button class="btn" id="btnCloseCreate">إغلاق</button>
-      </div>
-    </div>
-
-    <div class="modalBd">
-      <div class="small" style="margin-bottom:10px">
-        اكتب رقم الهيكل فقط — سيتم سحب البيانات تلقائياً من <span class="mono">inventory/{VIN}</span>.
-        الطلب يدعم أكثر من رقم هيكل. يمكنك اختيار <b>نوع الطلب</b> لكل سطر (نقل / تصوير).
-      </div>
-
-      <div class="tableWrap" style="border:1px solid var(--line); border-radius:14px; overflow:auto;">
-        <table class="table" id="createTable" style="min-width:1080px">
-          <thead>
-            <tr>
-              <th style="width:52px">#</th>
-              <th style="width:150px">نوع الطلب</th>
-              <th style="width:160px">رقم الهيكل (VIN)</th>
-              <th>السيارة</th>
-              <th style="width:160px">البيان</th>
-              <th style="width:110px">الخارجي</th>
-              <th style="width:110px">الداخلي</th>
-              <th style="width:90px">الموديل</th>
-              <th style="width:210px">مكان السيارة</th>
-              <th style="width:210px">مكان التصوير / النقل</th>
-              <th style="width:170px">ملاحظة</th>
-              <th style="width:70px">حذف</th>
-            </tr>
-          </thead>
-          <tbody id="createTbody"></tbody>
-        </table>
-      </div>
-
-      <div class="row" style="margin-top:14px; justify-content:flex-end; gap:10px">
-        <button class="btn" id="btnClearDraft">تفريغ</button>
-        <button class="btn primary" id="btnSubmitDraft">إرسال الطلب</button>
-      </div>
-
-      <div class="small" id="createHint" style="margin-top:10px; color:var(--muted)">
-        ملاحظة: لو كتبت VIN خارج أماكن المستخدم، سيتم منعه تلقائياً (إلا Admin).
-      </div>
-    </div>
-  </div>
-</div>
-
-
-<!-- Modal -->
-<div class="backdrop" id="modalBackdrop" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true">
-    <div class="modalHd">
-      <h3 id="modalTitle">تفاصيل الطلب</h3>
-      <div class="controls">
-        <button class="btn" id="btnCloseModal">إغلاق</button>
-      </div>
-    </div>
-    <div class="modalBd">
-      <div class="grid2">
-        <div class="box">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div class="card" style="box-shadow:none;border-radius:14px;border:1px solid rgba(232,214,200,.7)">
+          <div class="card-h" style="border-bottom:1px solid rgba(232,214,200,.6)">
             <div>
-              <b>التقدم العام</b>
-              <div class="small" id="modalMeta">—</div>
-            </div>
-            <div style="min-width:240px">
-              <div class="progress"><div id="modalProgressBar"></div></div>
-              <div class="small" id="modalProgressText" style="margin-top:6px">0%</div>
+              <h2 style="margin:0;font-size:14px">Log</h2>
+              <div class="sub">يظهر للإدارة فقط</div>
             </div>
           </div>
-          <div class="pre" id="modalStages">—</div>
-        </div>
-
-        <div class="box">
-          <div>
-            <b>إجراءات</b>
-            <div class="small">الأزرار حسب الأماكن + Admin • تم الانتهاء = منشئ الطلب</div>
+          <div class="card-b">
+            <div id="mLog" class="small">—</div>
           </div>
-
-          <div class="stageBtns">
-            <button class="btn" id="btnStageReceived">1) تم استلام الطلب</button>
-            <button class="btn" id="btnStageSent">2) تم إرسال السيارة</button>
-            <button class="btn" id="btnStageArrived">3) تم استلام السيارة</button>
-            <button class="btn primary" id="btnStageFinished">4) تم الانتهاء</button>
-          </div>
-
-          <div class="pre" id="permHint" style="margin-top:12px">—</div>
         </div>
+      </div>
+
+      <div class="modal-f">
+        <div class="actionbar">
+          <button id="btnEdit" class="btn">تعديل الطلب</button>
+
+          <button id="btnStep1" class="btn">1 تم استلام الطلب</button>
+          <button id="btnStep2" class="btn">2 تم إرسال السيارة</button>
+          <button id="btnStep3" class="btn">3 تم استلام السيارة</button>
+
+          <button id="btnStep4" class="btn success">4 تم الانتهاء</button>
+        </div>
+        <div class="small" id="mPermHint">—</div>
       </div>
     </div>
   </div>
-</div>
 
-<div class="toast" id="toast"></div>
+  <div id="toast" class="toast">
+    <div class="t-title" id="toastTitle">—</div>
+    <div class="t-sub" id="toastSub">—</div>
+  </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, setPersistence, browserLocalPersistence, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp, collection, query, orderBy, limit, onSnapshot, where, getDocs } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  <!-- Firebase compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-/** Firebase Config */
-const firebaseConfig = {
-  apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
-  authDomain: "mzj-agenda.firebaseapp.com",
-  projectId: "mzj-agenda",
-  storageBucket: "mzj-agenda.firebasestorage.app",
-  messagingSenderId: "834700407721",
-  appId: "1:834700407721:web:75c17665d4f032fd65cab8"
-};
+  <script>
+    /* =========================
+       CONFIG
+    ========================= */
+    const firebaseConfig = {
+      apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
+      authDomain: "mzj-agenda.firebaseapp.com",
+      projectId: "mzj-agenda",
+      storageBucket: "mzj-agenda.firebasestorage.app",
+      messagingSenderId: "834700407721",
+      appId: "1:834700407721:web:75c17665d4f032fd65cab8"
+    };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-try{ await setPersistence(auth, browserLocalPersistence); }catch(e){}
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp;
 
-const el=(id)=>document.getElementById(id);
-const authBadge=el("authBadge");
-const roleBadge=el("roleBadge");
-const locBadge=el("locBadge");
-const projBadge=el("projBadge");
-const btnSignOut=el("btnSignOut");
+    // Optional: persistence
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
-projBadge.textContent = "Project: " + (firebaseConfig.projectId || "—");
+    /* =========================
+       DOM
+    ========================= */
+    const el = (id)=>document.getElementById(id);
 
-let currentUser=null;
-let userProfile=null;
-let requestsUnsub=null;
-let modalUnsub=null;
-let activeReqId=null;
+    const viewCreate = el("viewCreate");
+    const viewManage = el("viewManage");
+    const tabCreate = el("tabCreate");
+    const tabManage = el("tabManage");
 
-/** Draft 
-/* =========================
-   CREATE REQUEST (TABLE)
-========================= */
-const createBackdrop = el("createBackdrop");
-const btnOpenCreate  = el("btnOpenCreate");
-const btnCloseCreate = el("btnCloseCreate");
-const createTbody    = el("createTbody");
-const btnClearDraft  = el("btnClearDraft");
-const btnSubmitDraft = el("btnSubmitDraft");
+    const connDot = el("connDot");
+    const connTxt = el("connTxt");
+    const roleTxt = el("roleTxt");
+    const locTxt = el("locTxt");
+    const projTxt = el("projTxt");
 
-let draftRows = [];
+    const vinQuick = el("vinQuick");
+    const draftTbody = el("draftTbody");
+    const btnClearDraft = el("btnClearDraft");
+    const btnSubmitDraft = el("btnSubmitDraft");
 
-function makeEmptyRow(){
-  return {
-    type: "shoot",   // shoot | move
-    vin: "",
-    carName: "",
-    trim: "",
-    ext: "",
-    int: "",
-    model: "",
-    fromLocation: "",
-    targetLocation: "",
-    note: "",
-    status: "idle", // idle | loading | ok | blocked | notfound
-    msg: ""
-  };
-}
-function ensureRows(n=8){
-  if(draftRows.length===0){
-    for(let i=0;i<n;i++) draftRows.push(makeEmptyRow());
-  }
-}
+    const filterKind = el("filterKind");
+    const searchTxt = el("searchTxt");
+    const btnReload = el("btnReload");
+    const reqTbody = el("reqTbody");
 
-function isAdmin(){
-  return normalizeRole(userProfile?.role||"") === "admin";
-}
+    const modalBackdrop = el("modalBackdrop");
+    const mClose = el("mClose");
+    const mTitle = el("mTitle");
+    const mMeta = el("mMeta");
+    const mRows = el("mRows");
+    const mLog = el("mLog");
+    const mProgBar = el("mProgBar");
+    const mProgTxt = el("mProgTxt");
+    const mProgNote = el("mProgNote");
+    const mPermHint = el("mPermHint");
 
-function rowCanUseVin(r){
-  if(isAdmin()) return true;
-  const locs = (userProfile?.locations||[]);
-  return !!r.fromLocation && locs.includes(r.fromLocation);
-}
+    const btnEdit = el("btnEdit");
+    const btnStep1 = el("btnStep1");
+    const btnStep2 = el("btnStep2");
+    const btnStep3 = el("btnStep3");
+    const btnStep4 = el("btnStep4");
 
-function renderCreateTable(){
-  ensureRows(8);
-  createTbody.innerHTML = "";
-  draftRows.forEach((r, idx)=>{
-    const tr = document.createElement("tr");
-    const statusPill = (() => {
-      if(r.status==="loading") return `<span class="pill">جارٍ التحميل…</span>`;
-      if(r.status==="ok") return `<span class="pill ok">جاهز</span>`;
-      if(r.status==="blocked") return `<span class="pill bad">غير مصرح</span>`;
-      if(r.status==="notfound") return `<span class="pill bad">غير موجود</span>`;
-      return `<span class="pill">—</span>`;
-    })();
+    const toast = el("toast");
+    const toastTitle = el("toastTitle");
+    const toastSub = el("toastSub");
 
-    tr.innerHTML = `
-      <td class="mono">${idx+1}</td>
+    projTxt.textContent = firebaseConfig.projectId || "—";
 
-      <td>
-        <select class="cellSelect" data-k="type" data-i="${idx}">
-          <option value="shoot" ${r.type==="shoot"?"selected":""}>طلب تصوير</option>
-          <option value="move" ${r.type==="move"?"selected":""}>طلب نقل</option>
-        </select>
-      </td>
+    /* =========================
+       STATE
+    ========================= */
+    let currentUser = null;
+    let userProfile = null;
+    let isAdmin = false;
+    let userLocations = [];
 
-      <td>
-        <input class="cellInput mono" data-k="vin" data-i="${idx}" placeholder="VIN" value="${escapeHtml(r.vin)}" />
-        <div class="cellMuted" style="margin-top:6px">${statusPill} ${r.msg?`<span class="cellMuted">${escapeHtml(r.msg)}</span>`:""}</div>
-      </td>
+    // draft rows
+    let draftRows = []; // [{vin, kind, fromLocation, toLocation, carName, statement, ok, error}]
 
-      <td>${r.carName?escapeHtml(r.carName):"—"}</td>
-      <td>${r.trim?escapeHtml(r.trim):"—"}</td>
-      <td>${r.ext?escapeHtml(r.ext):"—"}</td>
-      <td>${r.int?escapeHtml(r.int):"—"}</td>
-      <td class="mono">${r.model?escapeHtml(r.model):"—"}</td>
+    // requests live
+    let unsubRequests = null;
+    let unsubModal = null;
+    let currentModalReqId = null;
+    let currentModalReq = null;
 
-      <td>${r.fromLocation?escapeHtml(r.fromLocation):"—"}</td>
-
-      <td>
-        <input class="cellInput" data-k="targetLocation" data-i="${idx}"
-          placeholder="${r.type==='shoot'?'مكان التصوير (مثال: الاستديو)':'الوجهة (toLocation)'}"
-          value="${escapeHtml(r.targetLocation)}" />
-      </td>
-
-      <td>
-        <input class="cellInput" data-k="note" data-i="${idx}" placeholder="اختياري" value="${escapeHtml(r.note)}" />
-      </td>
-
-      <td style="text-align:center">
-        <button class="btnX" title="حذف السطر" data-k="del" data-i="${idx}">✕</button>
-      </td>
-    `;
-    createTbody.appendChild(tr);
-  });
-
-  // Delegate events
-  createTbody.querySelectorAll("[data-k]").forEach(elm=>{
-    const k = elm.getAttribute("data-k");
-    const i = +elm.getAttribute("data-i");
-    if(k==="del"){
-      elm.addEventListener("click", ()=>{
-        draftRows.splice(i,1);
-        if(draftRows.length<8) draftRows.push(makeEmptyRow());
-        renderCreateTable();
-      });
-      return;
+    /* =========================
+       UI helpers
+    ========================= */
+    function showToast(title, sub){
+      toastTitle.textContent = title;
+      toastSub.textContent = sub || "";
+      toast.classList.add("show");
+      setTimeout(()=>toast.classList.remove("show"), 2600);
     }
-    if(k==="vin"){
-      elm.addEventListener("keydown",(e)=>{
-        if(e.key==="Enter"){
-          e.preventDefault();
-          loadVinIntoRow(i);
-          setTimeout(()=>{
-            const next = createTbody.querySelector(`[data-k="vin"][data-i="${Math.min(i+1,draftRows.length-1)}"]`);
-            next?.focus?.();
-          }, 50);
+
+    function fmtDate(ts){
+      try{
+        if(!ts) return "—";
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleString("ar-SA");
+      }catch{ return "—"; }
+    }
+
+    function safeStr(x){ return (x ?? "").toString(); }
+
+    function openTab(which){
+      const isCreate = which==="create";
+      tabCreate.classList.toggle("active", isCreate);
+      tabManage.classList.toggle("active", !isCreate);
+      viewCreate.style.display = isCreate ? "" : "none";
+      viewManage.style.display = isCreate ? "none" : "";
+      if(!isCreate) startRequestsListener();
+    }
+
+    tabCreate.addEventListener("click", ()=>openTab("create"));
+    tabManage.addEventListener("click", ()=>openTab("manage"));
+
+    /* =========================
+       PROFILE LOADER (GLOBAL)
+       - supports user/{uid} OR query by email in 'user'
+    ========================= */
+    async function loadUserProfile(user){
+      const email = (user?.email || "").toLowerCase().trim();
+      const uid = user?.uid || "";
+
+      // 1) user/{uid}
+      if(uid){
+        const s1 = await db.collection("user").doc(uid).get().catch(()=>null);
+        if(s1 && s1.exists) return {id:s1.id, ...s1.data()};
+        const s2 = await db.collection("users").doc(uid).get().catch(()=>null);
+        if(s2 && s2.exists) return {id:s2.id, ...s2.data()};
+      }
+
+      // 2) query by email
+      if(email){
+        const q1 = await db.collection("user").where("email","==",email).limit(1).get().catch(()=>null);
+        if(q1 && !q1.empty){ const d=q1.docs[0]; return {id:d.id, ...d.data()}; }
+        const q2 = await db.collection("users").where("email","==",email).limit(1).get().catch(()=>null);
+        if(q2 && !q2.empty){ const d=q2.docs[0]; return {id:d.id, ...d.data()}; }
+      }
+
+      return null;
+    }
+
+    function setConn(status, txt){
+      connDot.classList.remove("ok","warn","bad");
+      connDot.classList.add(status);
+      connTxt.textContent = txt;
+    }
+
+    /* =========================
+       AUTH
+    ========================= */
+    auth.onAuthStateChanged(async (u)=>{
+      currentUser = u || null;
+      if(!currentUser){
+        setConn("bad","غير مسجل");
+        roleTxt.textContent="—";
+        locTxt.textContent="—";
+        showToast("غير مسجل", "افتح الصفحة من نفس الدومين اللي بتسجّل عليه دخول.");
+        return;
+      }
+
+      setConn("warn","جارٍ تحميل البروفايل…");
+      userProfile = await loadUserProfile(currentUser);
+
+      if(!userProfile){
+        // fallback minimal as admin if your rules allow
+        userProfile = { role:"admin", locations:[] };
+      }
+
+      const role = (userProfile.role || "").toString().trim();
+      userLocations = Array.isArray(userProfile.locations) ? userProfile.locations : [];
+
+      // Admin detection:
+      // - role === "admin" OR email includes 'admin' OR specific list
+      const email = (currentUser.email || "").toLowerCase();
+      const adminEmails = [
+        "mr.ahmed_rashed@outlook.sa",
+        "mr_ahmed_rashed@outlook.sa"
+      ];
+      isAdmin = role === "admin" || adminEmails.includes(email);
+
+      roleTxt.textContent = role || (isAdmin ? "admin" : "—");
+      locTxt.textContent = isAdmin ? "كل الأماكن" : (userLocations.length ? (userLocations.length + " مكان") : "0");
+
+      setConn("ok","مسجل");
+      // default to manage if you want:
+      openTab("create");
+    });
+
+    /* =========================
+       LOCATION permission helpers
+    ========================= */
+    function canTouchLocation(locationName){
+      if(isAdmin) return true;
+      if(!locationName) return false;
+      return userLocations.includes(locationName);
+    }
+
+    // For a request: if user can act on any VIN line whose from/to matches his locations.
+    function canActOnReq(req){
+      if(isAdmin) return true;
+      if(!req || !Array.isArray(req.vins)) return false;
+      // allow if any line belongs to his scope
+      return req.vins.some(v => canTouchLocation(v.fromLocation) || canTouchLocation(v.toLocation));
+    }
+
+    // For step:
+    // step1 "استلام الطلب": مسؤول عن "toLocation" (الجهة المستلمة) + admin
+    // step2 "ارسال السيارة": مسؤول عن "fromLocation" (الجهة المرسلة) + admin
+    // step3 "استلام السيارة": مسؤول عن "toLocation" + admin
+    // step4 "انهاء": منشئ الطلب فقط (أو admin)
+    function canDoStep(req, step){
+      if(!req) return false;
+      if(isAdmin) return true;
+
+      const myEmail = (currentUser?.email || "").toLowerCase();
+      const createdByEmail = (req.createdByEmail || "").toLowerCase();
+
+      if(step === 4){
+        return myEmail && createdByEmail && myEmail === createdByEmail;
+      }
+
+      const lines = Array.isArray(req.vins) ? req.vins : [];
+      if(step === 1 || step === 3){
+        return lines.some(l => canTouchLocation(l.toLocation));
+      }
+      if(step === 2){
+        return lines.some(l => canTouchLocation(l.fromLocation));
+      }
+      return false;
+    }
+
+    /* =========================
+       Draft UI (Create)
+    ========================= */
+    function renderDraft(){
+      if(!draftRows.length){
+        draftTbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="small">اكتب VIN واضغط Enter لإضافة سطر.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      draftTbody.innerHTML = draftRows.map((r, idx)=>{
+        const err = r.error ? `<div class="small" style="color:var(--bad);margin-top:6px">${r.error}</div>` : "";
+        const okBadge = r.ok ? `<div class="small" style="color:var(--ok);margin-top:6px">جاهز</div>` : "";
+        const car = safeStr(r.carName) || "—";
+        const st = safeStr(r.statement) || "—";
+        const from = safeStr(r.fromLocation) || "—";
+        const to = safeStr(r.toLocation) || "—";
+
+        return `
+          <tr>
+            <td>${idx+1}</td>
+            <td>
+              <select class="select" data-k="kind" data-i="${idx}">
+                <option value="move" ${r.kind==="move"?"selected":""}>نقل</option>
+                <option value="shoot" ${r.kind==="shoot"?"selected":""}>تصوير</option>
+              </select>
+            </td>
+            <td class="mono">${safeStr(r.vin)}</td>
+            <td class="td-left">${car}</td>
+            <td class="td-left">${st}</td>
+            <td class="td-left"><span class="badge">${from}</span></td>
+            <td>
+              <select class="select" data-k="to" data-i="${idx}">
+                ${buildToOptions(r).map(o=>`<option value="${escapeHtml(o)}" ${o===r.toLocation?"selected":""}>${escapeHtml(o)}</option>`).join("")}
+              </select>
+              ${err || okBadge}
+            </td>
+            <td>
+              <button class="btn danger" data-k="del" data-i="${idx}">حذف</button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function escapeHtml(s){
+      return (s||"").toString()
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function buildToOptions(row){
+      // You told: places fixed (list in user.locations and general locations list)
+      // We'll offer userLocations + known hubs. Admin can see all.
+      const base = [
+        "الاستديو",
+        "الصالة الاساسية",
+        "صالة القادسية",
+        "معرض الملتقى",
+        "المستودع : المخزون المتاح",
+        "المستودع : سيارات بها ملاحظات",
+        "المستودع : مباع تحت التسليم",
+        "المستودع : مباع تم التسليم",
+        "فرع 1 الصالة : المخزون المتاح",
+        "فرع 1 الصالة : سيارات بها ملاحظات",
+        "فرع 1 الصالة : مباع تحت التسليم",
+        "فرع 1 الصالة : مباع تم التسليم",
+        "فرع 2 الملتقى : المخزون المتاح",
+        "فرع 2 الملتقى : سيارات بها ملاحظات",
+        "فرع 2 الملتقى : مباع تحت التسليم",
+        "فرع 2 الملتقى : مباع تم التسليم",
+        "فرع 3 القادسية : المخزون المتاح",
+        "فرع 3 القادسية : سيارات بها ملاحظات",
+        "فرع 3 القادسية : مباع تحت التسليم",
+        "فرع 3 القادسية : مباع تم التسليم"
+      ];
+
+      const opts = new Set(base);
+
+      // include user's locations first
+      if(Array.isArray(userLocations)) userLocations.forEach(l=>opts.add(l));
+
+      // for move: prefer branch buckets; for shoot: prefer "الاستديو"
+      const arr = Array.from(opts).filter(Boolean);
+
+      // Put row.fromLocation as first hint
+      const ordered = [];
+      if(row.kind==="shoot"){
+        if(arr.includes("الاستديو")) ordered.push("الاستديو");
+      }
+      if(row.fromLocation && arr.includes(row.fromLocation)) ordered.push(row.fromLocation);
+
+      // rest
+      arr.forEach(x=>{ if(!ordered.includes(x)) ordered.push(x); });
+
+      return ordered;
+    }
+
+    async function addVinToDraft(vin){
+      vin = (vin||"").toString().trim();
+      if(!vin) return;
+
+      // prevent duplicates in draft
+      if(draftRows.some(r => r.vin === vin)){
+        showToast("موجود بالفعل", `VIN ${vin} موجود داخل الطلب.`);
+        return;
+      }
+
+      // fetch inventory/{vin}
+      const invSnap = await db.collection("inventory").doc(vin).get().catch(()=>null);
+
+      if(!invSnap || !invSnap.exists){
+        draftRows.unshift({vin, kind:"move", ok:false, error:"VIN غير موجود في inventory"});
+        renderDraft();
+        return;
+      }
+
+      const inv = invSnap.data() || {};
+      const fromLocation = inv.location || inv.place || inv.branch || "";
+      const carName = inv.car || inv.model || inv.name || inv.vehicle || "";
+      const statement = inv.statement || inv.trim || inv.variant || "";
+
+      // Gate: can't create for outside user locations unless admin
+      if(!canTouchLocation(fromLocation)){
+        if(!isAdmin){
+          showToast("ممنوع", `VIN خارج أماكن المستخدم: ${fromLocation || "—"}`);
+          return;
         }
-      });
-      elm.addEventListener("blur", ()=>{
-        const v = (elm.value||"").trim();
-        if(v && v!==draftRows[i].vin){ draftRows[i].vin = v; loadVinIntoRow(i); }
-      });
-      elm.addEventListener("input", ()=>{
-        draftRows[i].vin = (elm.value||"").trim();
-      });
-      return;
+      }
+
+      const row = {
+        vin,
+        kind:"move",
+        fromLocation: fromLocation || "—",
+        toLocation: "", // required
+        carName,
+        statement,
+        ok:false,
+        error:"اختر (إلى / مكان التصوير)"
+      };
+
+      // default toLocation:
+      if(row.kind==="shoot"){
+        row.toLocation = "الاستديو";
+      }else{
+        // default: pick first allowed (not same maybe)
+        const opts = buildToOptions(row);
+        row.toLocation = opts.find(o=>o && o !== row.fromLocation) || (opts[0]||"");
+      }
+
+      validateDraftRow(row);
+
+      draftRows.push(row);
+      renderDraft();
     }
-    if(k==="type"){
-      elm.addEventListener("change", ()=>{
-        draftRows[i].type = elm.value;
-        renderCreateTable();
-      });
-      return;
+
+    function validateDraftRow(r){
+      r.error = "";
+      if(!r.toLocation) r.error = "اختر (إلى / مكان التصوير)";
+      if(r.kind==="shoot" && !r.toLocation) r.error = "اختر مكان التصوير";
+      // For move: allow different location
+      if(r.kind==="move" && r.toLocation && r.fromLocation && r.toLocation === r.fromLocation){
+        r.error = "لا يمكن النقل لنفس المكان";
+      }
+      // Gate toLocation? (you can allow to choose any; actions will enforce)
+      r.ok = !r.error;
     }
-    elm.addEventListener("input", ()=>{
-      draftRows[i][k] = elm.value;
+
+    vinQuick.addEventListener("keydown", async (e)=>{
+      if(e.key === "Enter"){
+        e.preventDefault();
+        const v = vinQuick.value;
+        vinQuick.value = "";
+        await addVinToDraft(v);
+      }
     });
-  });
-}
 
-async function loadVinIntoRow(i){
-  const r = draftRows[i];
-  const vin = (r.vin||"").trim();
-  if(!vin) return;
+    draftTbody.addEventListener("change", (e)=>{
+      const t = e.target;
+      const idx = Number(t.getAttribute("data-i"));
+      const key = t.getAttribute("data-k");
+      if(Number.isNaN(idx) || !draftRows[idx]) return;
 
-  r.status = "loading";
-  r.msg = "";
-  renderCreateTable();
+      if(key === "kind"){
+        draftRows[idx].kind = t.value;
+        // for shoot, suggest studio
+        if(draftRows[idx].kind==="shoot" && !draftRows[idx].toLocation){
+          draftRows[idx].toLocation = "الاستديو";
+        }
+      }
+      if(key === "to"){
+        draftRows[idx].toLocation = t.value;
+      }
+      validateDraftRow(draftRows[idx]);
+      renderDraft();
+    });
 
-  try{
-    const invRef = doc(db, "inventory", vin);
-    const snap = await getDoc(invRef);
-    if(!snap.exists()){
-      r.status = "notfound";
-      r.msg = "VIN غير موجود في inventory";
-      renderCreateTable();
-      return;
+    draftTbody.addEventListener("click", (e)=>{
+      const t = e.target;
+      const idx = Number(t.getAttribute("data-i"));
+      const key = t.getAttribute("data-k");
+      if(key === "del" && !Number.isNaN(idx)){
+        draftRows.splice(idx,1);
+        renderDraft();
+      }
+    });
+
+    btnClearDraft.addEventListener("click", ()=>{
+      draftRows = [];
+      renderDraft();
+      showToast("تم", "تفريغ الطلب.");
+    });
+
+    btnSubmitDraft.addEventListener("click", async ()=>{
+      if(!currentUser){
+        showToast("غير مسجل", "سجل دخول أولاً");
+        return;
+      }
+      if(!draftRows.length){
+        showToast("فارغ", "أضف VIN واحد على الأقل.");
+        return;
+      }
+
+      // validate all
+      draftRows.forEach(validateDraftRow);
+      const bad = draftRows.find(r=>!r.ok);
+      if(bad){
+        renderDraft();
+        showToast("غير مكتمل", "راجع السطور التي بها خطأ.");
+        return;
+      }
+
+      // Split by kind: if mixed move & shoot -> create 2 requests (as you requested previously)
+      const groups = { move:[], shoot:[] };
+      draftRows.forEach(r=>groups[r.kind].push(r));
+
+      const createdIds = [];
+      for(const kind of ["move","shoot"]){
+        if(!groups[kind].length) continue;
+
+        const vins = groups[kind].map(r=>({
+          vin: r.vin,
+          kind,
+          fromLocation: r.fromLocation || "",
+          toLocation: r.toLocation || ""
+        }));
+
+        // canEdit true initially
+        const payload = {
+          kind,
+          vins,
+          canEdit: true,
+          createdAt: serverTimestamp(),
+          createdByUid: currentUser.uid || "",
+          createdByEmail: (currentUser.email || ""),
+          createdByName: (userProfile?.name || currentUser.displayName || ""),
+          // progress structure:
+          progress: {
+            // per vin step: 0..4
+            perVin: vins.reduce((acc,v)=>{ acc[v.vin]=0; return acc; }, {}),
+            doneCount: 0,
+            totalCount: vins.length,
+            percent: 0
+          },
+          // steps log
+          steps: {
+            step1: {done:false, at:null, by:""},
+            step2: {done:false, at:null, by:""},
+            step3: {done:false, at:null, by:""},
+            step4: {done:false, at:null, by:""}
+          }
+        };
+
+        const ref = await db.collection("requests").add(payload);
+        createdIds.push(ref.id);
+
+        await writeLog("إنشاء طلب", `تم إنشاء طلب (${kind}) رقم ${ref.id}`, ref.id);
+      }
+
+      showToast("تم الإرسال", `تم إنشاء ${createdIds.length} طلب.`);
+      draftRows = [];
+      renderDraft();
+      openTab("manage");
+    });
+
+    renderDraft();
+
+    /* =========================
+       Requests LIST (Manage) — LIVE
+    ========================= */
+    function startRequestsListener(){
+      if(unsubRequests) return;
+
+      const run = ()=>{
+        if(unsubRequests){ unsubRequests(); unsubRequests=null; }
+        reqTbody.innerHTML = `<tr><td colspan="7" class="small">جارٍ التحميل…</td></tr>`;
+
+        // base query
+        let q = db.collection("requests").orderBy("createdAt","desc");
+
+        // NOTE: we filter client-side by kind/search/location for performance and simplicity
+        unsubRequests = q.onSnapshot((snap)=>{
+          const rows = [];
+          snap.forEach(doc=>{
+            const r = doc.data()||{};
+            r._id = doc.id;
+
+            // kind filter
+            const fk = filterKind.value;
+            if(fk !== "all" && r.kind !== fk) return;
+
+            // search filter
+            const s = (searchTxt.value||"").trim().toLowerCase();
+            if(s){
+              const inId = r._id.toString().includes(s);
+              const inVin = (r.vins||[]).some(v => (v.vin||"").toLowerCase().includes(s));
+              if(!inId && !inVin) return;
+            }
+
+            // permission filter: admin sees all, non-admin sees requests that touch his locations
+            if(!isAdmin){
+              const ok = canActOnReq(r);
+              if(!ok) return;
+            }
+
+            rows.push(r);
+          });
+
+          if(!rows.length){
+            reqTbody.innerHTML = `<tr><td colspan="7" class="small">لا توجد طلبات.</td></tr>`;
+            return;
+          }
+
+          reqTbody.innerHTML = rows.map((r)=>{
+            const id = r._id;
+            const badge = `<span class="badge ${r.kind}">${r.kind==="move"?"نقل":"تصوير"}</span>`;
+            const vins = (r.vins||[]).map(v=>v.vin).join(", ");
+            const creator = escapeHtml(r.createdByName || r.createdByEmail || "—");
+            const dt = fmtDate(r.createdAt);
+            const percent = computeReqPercent(r);
+
+            return `
+              <tr>
+                <td class="mono">${escapeHtml(id)}</td>
+                <td>${badge}</td>
+                <td class="td-left mono">${escapeHtml(vins || "—")}</td>
+                <td class="td-left">${creator}</td>
+                <td class="small">${escapeHtml(dt)}</td>
+                <td>
+                  <div class="pbar"><div style="width:${percent}%"></div></div>
+                  <div class="small">${percent}%</div>
+                </td>
+                <td><button class="btn primary" data-open="${escapeHtml(id)}">فتح</button></td>
+              </tr>
+            `;
+          }).join("");
+        }, (err)=>{
+          console.error(err);
+          reqTbody.innerHTML = `<tr><td colspan="7" class="small" style="color:var(--bad)">خطأ في تحميل الطلبات</td></tr>`;
+        });
+      };
+
+      run();
+      btnReload.onclick = run;
+      filterKind.onchange = run;
+      searchTxt.oninput = ()=>{ if(unsubRequests){ /* let snapshot update */ } };
+
+      reqTbody.addEventListener("click", (e)=>{
+        const btn = e.target.closest("[data-open]");
+        if(!btn) return;
+        const id = btn.getAttribute("data-open");
+        openRequestModal(id);
+      });
     }
-    const inv = snap.data() || {};
-    r.carName = inv.car || inv.carName || inv.makeModel || inv.name || inv.title || "";
-    r.trim = inv.trim || inv.variant || inv.statement || inv.desc || "";
-    r.ext = inv.extColor || inv.exterior || inv.exteriorColor || inv.colorExt || "";
-    r.int = inv.intColor || inv.interior || inv.interiorColor || inv.colorInt || "";
-    r.model = String(inv.model || inv.year || inv.modelYear || "");
-    r.fromLocation = inv.location || inv.branch || inv.place || "";
 
-    if(!rowCanUseVin(r)){
-      r.status = "blocked";
-      r.msg = "ممنوع إنشاء طلب لهيكل خارج أماكن المستخدم";
-      renderCreateTable();
-      return;
+    function computeReqPercent(r){
+      try{
+        const perVin = r?.progress?.perVin || {};
+        const vins = r?.vins || [];
+        const total = vins.length || 1;
+        let sum=0;
+        vins.forEach(v=>{
+          const st = perVin[v.vin] ?? 0; // 0..4
+          sum += (st/4)*100;
+        });
+        return Math.round(sum / total);
+      }catch{ return 0; }
     }
 
-    r.status = "ok";
-    r.msg = "";
-    renderCreateTable();
-
-    if(i===draftRows.length-1){
-      draftRows.push(makeEmptyRow());
-      renderCreateTable();
+    /* =========================
+       MODAL — LIVE onSnapshot
+    ========================= */
+    function closeModal(){
+      modalBackdrop.style.display="none";
+      modalBackdrop.setAttribute("aria-hidden","true");
+      currentModalReqId = null;
+      currentModalReq = null;
+      if(unsubModal){ unsubModal(); unsubModal=null; }
     }
-  }catch(err){
-    r.status = "blocked";
-    r.msg = (err?.message||"خطأ").slice(0,120);
-    renderCreateTable();
-  }
-}
 
-function getValidDraftRows(){
-  return draftRows
-    .map(r=>({ ...r, vin:(r.vin||"").trim(), targetLocation:(r.targetLocation||"").trim() }))
-    .filter(r=>r.vin);
-}
+    function openModal(){
+      modalBackdrop.style.display="flex";
+      modalBackdrop.setAttribute("aria-hidden","false");
+    }
 
-function canSubmit(){
-  const rows = getValidDraftRows();
-  if(rows.length===0) return {ok:false, msg:"اكتب VIN واحد على الأقل."};
+    mClose.addEventListener("click", closeModal);
+    modalBackdrop.addEventListener("click", (e)=>{
+      if(e.target === modalBackdrop) closeModal();
+    });
+    window.addEventListener("keydown", (e)=>{
+      if(e.key === "Escape" && modalBackdrop.style.display==="flex"){
+        closeModal();
+      }
+    });
 
-  for(const r of rows){
-    if(r.status!=="ok") return {ok:false, msg:`VIN ${r.vin}: غير جاهز (تأكد أنه موجود ومصرح).`};
-    if(!r.targetLocation) return {ok:false, msg:`VIN ${r.vin}: اكتب ${r.type==="shoot"?"مكان التصوير":"الوجهة"}.`};
-  }
-  return {ok:true, msg:""};
-}
+    async function openRequestModal(id){
+      currentModalReqId = id;
+      openModal();
 
-function resetDraft(){
-  draftRows = [];
-  ensureRows(8);
-  renderCreateTable();
-}
+      // detach old
+      if(unsubModal){ unsubModal(); unsubModal=null; }
 
-function openCreate(){
-  if(!currentUser){ toast("غير مسجل", true); return; }
-  createBackdrop.classList.add("show");
-  ensureRows(8);
-  renderCreateTable();
-  setTimeout(()=>{ 
-    const firstVin = createTbody.querySelector('[data-k="vin"][data-i="0"]');
-    firstVin?.focus?.();
-  }, 0);
-}
-function closeCreate(){ createBackdrop.classList.remove("show"); }
+      // live doc listener
+      unsubModal = db.collection("requests").doc(id).onSnapshot(async (snap)=>{
+        if(!snap.exists){
+          mTitle.textContent = "الطلب غير موجود";
+          mMeta.textContent = id;
+          return;
+        }
+        const r = snap.data()||{};
+        currentModalReq = r;
 
-btnOpenCreate?.addEventListener("click", openCreate);
-btnCloseCreate?.addEventListener("click", closeCreate);
-createBackdrop?.addEventListener("click",(e)=>{ if(e.target===createBackdrop) closeCreate(); });
+        const kindLabel = r.kind==="move" ? "نقل" : "تصوير";
+        mTitle.textContent = `تفاصيل الطلب #${id} — ${kindLabel}`;
+        mMeta.textContent = `المنشئ: ${(r.createdByName || r.createdByEmail || "—")} • ${fmtDate(r.createdAt)}`;
 
-btnClearDraft?.addEventListener("click", ()=>{
-  resetDraft();
-  toast("تم تفريغ القائمة");
-});
+        // progress
+        const percent = computeReqPercent(r);
+        mProgBar.style.width = percent + "%";
+        mProgTxt.textContent = percent + "%";
+        const done = Object.values(r?.progress?.perVin || {}).filter(x=>x>=4).length;
+        const total = (r.vins||[]).length || 0;
+        mProgNote.textContent = `مكتمل: ${done} / ${total}`;
 
-btnSubmitDraft?.addEventListener("click", async ()=>{
-  const chk = canSubmit();
-  if(!chk.ok){ toast(chk.msg, true); return; }
+        // rows
+        const perVin = r?.progress?.perVin || {};
+        const rows = (r.vins||[]).map((v, idx)=>{
+          const st = perVin[v.vin] ?? 0;
+          const stageTxt = stageName(st);
+          const last = stageLast(r, v.vin);
+          return `
+            <tr>
+              <td>${idx+1}</td>
+              <td class="mono">${escapeHtml(v.vin)}</td>
+              <td class="td-left">${escapeHtml(v.carName || "—")}</td>
+              <td class="td-left"><span class="badge">${escapeHtml(v.fromLocation||"—")}</span></td>
+              <td class="td-left"><span class="badge">${escapeHtml(v.toLocation||"—")}</span></td>
+              <td>${escapeHtml(stageTxt)}</td>
+              <td class="small">${escapeHtml(last || "—")}</td>
+            </tr>
+          `;
+        }).join("");
 
-  const rows = getValidDraftRows();
-  const groups = rows.reduce((acc,r)=>{ (acc[r.type] ||= []).push(r); return acc; }, {});
-  btnSubmitDraft.disabled = true;
-  btnSubmitDraft.textContent = "جارٍ الإرسال…";
+        mRows.innerHTML = rows || `<tr><td colspan="7" class="small">لا توجد بيانات</td></tr>`;
 
-  try{
-    for(const [type, list] of Object.entries(groups)){
-      const reqId = await nextRequestId();
-      const reqDoc = doc(db, "requests", String(reqId));
-      const payloadRows = list.map(r=>({
-        vin: r.vin,
-        type: r.type,
-        car: r.carName || "",
-        trim: r.trim || "",
-        ext: r.ext || "",
-        int: r.int || "",
-        model: r.model || "",
-        fromLocation: r.fromLocation || "",
-        targetLocation: r.targetLocation || "",
-        note: r.note || "",
-        progress: { step1:false, step2:false, step3:false, step4:false },
-        ts: serverTimestamp()
+        // buttons permission
+        const canAny = canActOnReq(r);
+        const can1 = canDoStep(r,1);
+        const can2 = canDoStep(r,2);
+        const can3 = canDoStep(r,3);
+        const can4 = canDoStep(r,4);
+
+        btnStep1.disabled = !can1;
+        btnStep2.disabled = !can2;
+        btnStep3.disabled = !can3;
+        btnStep4.disabled = !can4;
+
+        // edit allowed only if canEdit true AND no steps done anywhere
+        const canEdit = !!r.canEdit && isRequestPristine(r) && (isAdmin || isCreator(r));
+        btnEdit.style.display = canEdit ? "" : "none";
+
+        mPermHint.textContent = isAdmin
+          ? "Admin: تقدر تعمل كل الإجراءات."
+          : "الإجراءات تظهر حسب مكانك + (تم الانتهاء) لمنشئ الطلب فقط.";
+
+        // log (admin only)
+        if(isAdmin){
+          await loadLogForReq(id);
+        }else{
+          mLog.textContent = "—";
+        }
+
+      }, (err)=>{
+        console.error(err);
+        showToast("خطأ", "تعذر تحميل تفاصيل الطلب");
+      });
+    }
+
+    function stageName(st){
+      if(st>=4) return "مكتمل";
+      if(st===3) return "تم استلام السيارة";
+      if(st===2) return "تم إرسال السيارة";
+      if(st===1) return "تم استلام الطلب";
+      return "لم يبدأ";
+    }
+
+    function stageLast(r, vin){
+      // show last action timestamp from activity log later (optional), for now use steps ts if exist
+      // We'll check steps fields if stored perVin meta; else return createdAt.
+      return fmtDate(r.updatedAt || r.createdAt);
+    }
+
+    function isCreator(r){
+      const my = (currentUser?.email || "").toLowerCase();
+      const cr = (r?.createdByEmail || "").toLowerCase();
+      return !!my && !!cr && my === cr;
+    }
+
+    function isRequestPristine(r){
+      // if any perVin stage >0 => not pristine
+      const per = r?.progress?.perVin || {};
+      return Object.values(per).every(x => (x||0) === 0);
+    }
+
+    /* =========================
+       MODAL ACTIONS
+    ========================= */
+    async function applyStep(step){
+      const id = currentModalReqId;
+      const r = currentModalReq;
+      if(!id || !r) return;
+
+      // permission check
+      if(!canDoStep(r, step)){
+        showToast("لا توجد صلاحية", "الإجراء غير مسموح حسب مكانك/صلاحياتك.");
+        return;
+      }
+
+      // compute which VINs this user can advance for this step:
+      // step1/3 => toLocation owner, step2 => fromLocation owner, step4 => creator/admin and completes all remaining
+      const perVin = {...(r.progress?.perVin || {})};
+      const vins = (r.vins||[]);
+
+      const advanceVin = (vin, newStage)=>{ perVin[vin] = Math.max(perVin[vin]||0, newStage); };
+
+      if(step === 4){
+        // creator finishes all vins to stage 4
+        vins.forEach(v=>advanceVin(v.vin, 4));
+      } else if(step === 1){
+        vins.forEach(v=>{
+          if(isAdmin || canTouchLocation(v.toLocation)){
+            if((perVin[v.vin]||0) < 1) advanceVin(v.vin, 1);
+          }
+        });
+      } else if(step === 2){
+        vins.forEach(v=>{
+          if(isAdmin || canTouchLocation(v.fromLocation)){
+            if((perVin[v.vin]||0) < 2) advanceVin(v.vin, 2);
+          }
+        });
+      } else if(step === 3){
+        vins.forEach(v=>{
+          if(isAdmin || canTouchLocation(v.toLocation)){
+            if((perVin[v.vin]||0) < 3) advanceVin(v.vin, 3);
+          }
+        });
+      }
+
+      // after any action => canEdit false
+      const updates = {
+        "progress.perVin": perVin,
+        canEdit: false,
+        updatedAt: serverTimestamp()
+      };
+
+      await db.collection("requests").doc(id).set(updates, {merge:true});
+      await writeLog(`تنفيذ خطوة ${step}`, `تم تنفيذ خطوة ${step} على الطلب #${id}`, id);
+
+      showToast("تم", `تم تنفيذ الإجراء (${step})`);
+    }
+
+    btnStep1.addEventListener("click", ()=>applyStep(1));
+    btnStep2.addEventListener("click", ()=>applyStep(2));
+    btnStep3.addEventListener("click", ()=>applyStep(3));
+    btnStep4.addEventListener("click", ()=>applyStep(4));
+
+    btnEdit.addEventListener("click", async ()=>{
+      const id = currentModalReqId;
+      const r = currentModalReq;
+      if(!id || !r) return;
+
+      if(!(!!r.canEdit && isRequestPristine(r) && (isAdmin || isCreator(r)))){
+        showToast("غير مسموح", "لا يمكن تعديل طلب تم عليه أي إجراء.");
+        return;
+      }
+
+      // Simple edit UX: copy request vins to draft and go to create tab
+      draftRows = (r.vins||[]).map(v=>({
+        vin: v.vin,
+        kind: r.kind || v.kind || "move",
+        fromLocation: v.fromLocation || "",
+        toLocation: v.toLocation || "",
+        carName: v.carName || "",
+        statement: v.statement || "",
+        ok:true,
+        error:""
       }));
-      const kind = (type==="move") ? "move" : "shoot";
+      draftRows.forEach(validateDraftRow);
+      renderDraft();
+      closeModal();
+      openTab("create");
+      showToast("تعديل", "تم تحميل بيانات الطلب للتعديل.");
+    });
 
-      await setDoc(reqDoc, {
-        kind,
-        createdAt: nowIso(),
-        createdByUid: currentUser?.email || currentUser?.uid || "",
-        createdByEmail: currentUser?.email || "",
-        createdByName: userProfile?.name || "",
-        canEdit: true,
-        rows: payloadRows,
-        progress: { overall: 0, step1: 0, step2: 0, step3: 0, step4: 0 },
-        status: "open",
-      }, { merge:true });
-
-      await logActivity(`إنشاء طلب ${kind} #${reqId}`, `تم إنشاء الطلب رقم #${reqId} بعدد ${payloadRows.length} VIN`);
+    /* =========================
+       LOG
+    ========================= */
+    async function writeLog(action, details, requestId){
+      try{
+        const payload = {
+          action: action || "",
+          details: details || "",
+          requestId: requestId || "",
+          ts: serverTimestamp(),
+          date: new Date().toISOString().slice(0,10),
+          user: userProfile?.name || currentUser?.displayName || "",
+          email: currentUser?.email || ""
+        };
+        await db.collection("mzj_activity_log").add(payload);
+      }catch(err){
+        console.warn("log failed", err);
+      }
     }
 
-    toast("تم إرسال الطلب ✅");
-    closeCreate();
-    resetDraft();
-    await refreshOrders();
-  }catch(err){
-    toast("فشل إرسال الطلب: " + (err?.message||"خطأ"), true);
-  }finally{
-    btnSubmitDraft.disabled = false;
-    btnSubmitDraft.textContent = "إرسال الطلب";
-  }
-});
+    async function loadLogForReq(requestId){
+      try{
+        // last 15 log entries for this request
+        const snap = await db.collection("mzj_activity_log")
+          .where("requestId","==", requestId)
+          .orderBy("ts","desc")
+          .limit(15)
+          .get();
 
-/* ESC closes whichever modal is open (create first, then details) */
-document.addEventListener("keydown",(e)=>{
-  if(e.key!=="Escape") return;
-  if(createBackdrop?.classList.contains("show")){ closeCreate(); return; }
-  if(el("modalBackdrop")?.classList.contains("show")){ closeModal(); return; }
-});
+        if(snap.empty){
+          mLog.textContent = "لا يوجد سجل.";
+          return;
+        }
 
-
-cation).filter(Boolean),
-
-    createdByUid: currentUser.uid,
-    createdByName: currentUser.email || "",
-    createdAt: new Date().toISOString(),
-    updatedAt: serverTimestamp(),
-    canEdit:true,
-    stages:{received:{done:false},sent:{done:false},arrived:{done:false},finished:{done:false}},
-    progress:0
-  };
-
-  try{
-    await setDoc(doc(db,"requests",reqId), payload);
-    toast("تم إنشاء الطلب ✅");
-    closeCreate();
-    draftVins = [];
-    el("newTo").value="";
-    
-
-  }catch(e){
-    toast("فشل إنشاء الطلب: "+(e.message||e), true);
-  }
-});
-
-
-
-/* Boot */
-onAuthStateChanged(auth, async (u)=>{
-  currentUser = u || null;
-  if(!u){
-    userProfile=null;
-    setAuthUI();
-    el("reqTbody").innerHTML = `<tr><td colspan="8" class="small">سجّل دخول من صفحة الـ Workspace الأساسية ثم افتح هذه الصفحة على نفس الدومين.</td></tr>`;
-    return;
-  }
-  userProfile = await loadUserProfile(u);
-  setAuthUI();
-  watchRequests();
-});
-
-
-async function logActivity(action, details){
-  try{
-    const ref = doc(collection(db, "mzj_activity_log"));
-    await setDoc(ref, {
-      action: action || "",
-      details: details || "",
-      ts: serverTimestamp(),
-      date: new Date().toISOString().slice(0,10),
-      user: currentUserProfile?.name || currentUser?.email || ""
-    });
-  }catch(e){ /* ignore */ }
-}
-
-</script>
-
+        mLog.innerHTML = snap.docs.map(d=>{
+          const x = d.data()||{};
+          const when = fmtDate(x.ts);
+          return `<div style="padding:8px 0;border-bottom:1px dashed #eee">
+            <div><strong>${escapeHtml(x.action||"—")}</strong> <span class="small">• ${escapeHtml(when)}</span></div>
+            <div class="small">${escapeHtml(x.details||"")}</div>
+            <div class="small">${escapeHtml(x.user||x.email||"")}</div>
+          </div>`;
+        }).join("");
+      }catch(err){
+        console.error(err);
+        mLog.textContent = "تعذر تحميل السجل.";
+      }
+    }
+  </script>
 </body>
 </html>
