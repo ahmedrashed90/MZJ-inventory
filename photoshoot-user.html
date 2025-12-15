@@ -132,6 +132,14 @@ body{
   font-family:inherit;
 }
 .small-input{min-width:0;padding:8px 10px;border-radius:10px;font-size:13px}
+/* ===== Create table compact mode ===== */
+#inner-create .table th, #inner-create .table td{font-size:12px;padding:6px 8px}
+#inner-create .small-input{padding:6px 8px;font-size:12px;border-radius:8px}
+#inner-create .req-vin{width:120px}
+#inner-create .req-year{width:70px}
+#inner-create .req-ext,#inner-create .req-int{width:90px}
+#inner-create .req-location{width:160px}
+#inner-create .req-place{width:160px}
 .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
 .center{text-align:center}
 
@@ -264,7 +272,8 @@ body{
           <option value="shoot">تصوير فقط</option>
           <option value="move">نقل فقط</option>
         </select>
-        <button class="btn" id="btnFill8"><i class="fa-solid fa-rotate"></i>إعادة تجهيز 8 صفوف</button>
+        <button class="btn" id="btnAddRow"><i class="fa-solid fa-plus"></i>إضافة سيارة</button>
+        <button class="btn" id="btnResetRows"><i class="fa-solid fa-rotate"></i>إعادة ضبط الجدول</button>
         <span class="spacer"></span>
         <button class="btn primary" id="btnSubmit"><i class="fa-solid fa-paper-plane"></i>إنشاء الطلب</button>
       </div>
@@ -279,15 +288,15 @@ body{
             <tr>
               <th style="width:60px" class="center">#</th>
               <th style="width:120px">نوع</th>
-              <th style="width:140px">VIN</th>
+              <th style="width:120px">VIN</th>
               <th>السيارة</th>
               <th>الفئة</th>
-              <th style="width:110px">الخارجي</th>
-              <th style="width:110px">الداخلي</th>
+              <th style="width:80px">الخارجي</th>
+              <th style="width:80px">الداخلي</th>
               <th style="width:90px" class="center">الموديل</th>
-              <th style="width:190px">المكان</th>
-              <th style="width:190px" id="placeHeader">مكان التصوير</th>
-              <th style="width:180px">ملاحظة</th>
+              <th style="width:120px">المكان</th>
+              <th style="width:120px" id="placeHeader">مكان التصوير</th>
+              <th style="width:120px">ملاحظة</th>
               <th style="width:70px" class="center">مسح</th>
             </tr>
           </thead>
@@ -484,7 +493,8 @@ const innerDone   = document.getElementById('inner-done');
 const reqBy = document.getElementById('reqBy');
 const reqRowsBody = document.getElementById('reqRowsBody');
 const placeHeaderEl = document.getElementById('placeHeader');
-const btnFill8 = document.getElementById('btnFill8');
+const btnAddRow = document.getElementById('btnAddRow');
+const btnResetRows = document.getElementById('btnResetRows');
 const btnSubmit = document.getElementById('btnSubmit');
 const reqType = document.getElementById('reqType');
 
@@ -648,56 +658,88 @@ function updatePlaceHeader(){
    Create Request (8 rows)
 ======================= */
 const SHOOT_PLACES = ["الاستديو","الصالة الاساسية","صالة القادسية","معرض الملتقى"];
-function buildFormRows(){
-  reqRowsBody.innerHTML='';
-  for(let i=0;i<8;i++){
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="center">${i+1}</td>
-      <td>
-        <select class="small-input req-kind">
-          <option value="shoot" selected>طلب تصوير</option>
-          <option value="move">طلب نقل</option>
-        </select>
-      </td>
-      <td><input class="small-input mono req-vin" placeholder="VIN"></td>
-      <td><input class="small-input req-car" readonly placeholder="—"></td>
-      <td><input class="small-input req-variant" readonly placeholder="—"></td>
-      <td><input class="small-input req-ext" readonly placeholder="—"></td>
-      <td><input class="small-input req-int" readonly placeholder="—"></td>
-      <td class="center"><input class="small-input center req-year" readonly placeholder="—"></td>
-      <td><input class="small-input req-location" readonly placeholder="—"></td>
-      <td>
-        <select class="small-input req-place">
-          <option value="">— اختر —</option>
-          ${SHOOT_PLACES.map(p=> p ? `<option value="${p}">${p}</option>` : "").join("")}
-        </select>
-      </td>
-      <td><input class="small-input req-note" placeholder="اختياري"></td>
-      <td class="center"><button type="button" class="btn req-row-clear" title="مسح"><i class="fa-solid fa-xmark"></i></button></td>
-    `;
-    reqRowsBody.appendChild(tr);
-  }
+
+function renumberRows(){
+  Array.from(reqRowsBody.querySelectorAll('tr')).forEach((tr, idx)=>{
+    const c = tr.querySelector('td.center');
+    if(c) c.textContent = String(idx+1);
+  });
+}
+
+function addFormRow(prefill={}){
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="center">1</td>
+    <td>
+      <select class="small-input req-kind">
+        <option value="shoot" selected>طلب تصوير</option>
+        <option value="move">طلب نقل</option>
+      </select>
+    </td>
+    <td><input class="small-input mono req-vin req-vin" placeholder="VIN"></td>
+    <td><input class="small-input req-car" readonly placeholder="—"></td>
+    <td><input class="small-input req-variant" readonly placeholder="—"></td>
+    <td><input class="small-input req-ext req-ext" readonly placeholder="—"></td>
+    <td><input class="small-input req-int req-int" readonly placeholder="—"></td>
+    <td class="center"><input class="small-input center req-year req-year" readonly placeholder="—"></td>
+    <td><input class="small-input req-location req-location" readonly placeholder="—"></td>
+    <td>
+      <select class="small-input req-place req-place">
+        <option value="">— اختر —</option>
+        ${SHOOT_PLACES.map(p=> p ? `<option value="${p}">${p}</option>` : "").join("")}
+      </select>
+    </td>
+    <td><input class="small-input req-note" placeholder="اختياري"></td>
+    <td class="center">
+      <button type="button" class="btn danger req-row-remove" title="حذف الصف">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    </td>
+  `;
+  reqRowsBody.appendChild(tr);
+
+  // Prefill if provided
+  if(prefill.kind) tr.querySelector('.req-kind').value = prefill.kind;
+  if(prefill.vin) tr.querySelector('.req-vin').value = prefill.vin;
+  if(prefill.place) tr.querySelector('.req-place').value = prefill.place;
+  if(prefill.note) tr.querySelector('.req-note').value = prefill.note;
+
   reqBy.value = myName();
   updatePlaceHeader();
+  renumberRows();
 }
-btnFill8.addEventListener('click', buildFormRows);
 
+function buildFormRows(){
+  // default: 1 row only
+  reqRowsBody.innerHTML='';
+  addFormRow();
+}
+
+btnAddRow.addEventListener('click', ()=>addFormRow());
+btnResetRows.addEventListener('click', buildFormRows);
 reqRowsBody.addEventListener('change', (e)=>{
   if(e.target.closest('.req-kind')) updatePlaceHeader();
 });
 
-// Clear row
+// Remove row (or clear if it's the last row)
 reqRowsBody.addEventListener('click', (e)=>{
-  const btn = e.target.closest('.req-row-clear');
+  const btn = e.target.closest('.req-row-remove');
   if(!btn) return;
   const tr = btn.closest('tr');
-  tr.querySelectorAll('input,select').forEach(el=>{
-    if(el.classList.contains('req-kind')) el.value='shoot';
-    else if(el.classList.contains('req-place')) el.value='';
-    else el.value='';
-  });
+
+  // لو ده آخر صف: امسح البيانات بدل الحذف
+  const totalRows = reqRowsBody.querySelectorAll('tr').length;
+  if(totalRows<=1){
+    tr.querySelectorAll('input,select').forEach(el=>{
+      if(el.classList.contains('req-kind')) el.value='shoot';
+      else if(el.classList.contains('req-place')) el.value='';
+      else el.value='';
+    });
+  }else{
+    tr.remove();
+  }
   updatePlaceHeader();
+  renumberRows();
 });
 
 // Auto fill on blur of VIN (✅ requirement)
