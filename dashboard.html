@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -451,7 +452,7 @@ tr:hover{ filter: brightness(0.98); }
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, getDocs, limit, orderBy } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   /* ===== Firebase ===== */
   const firebaseConfig = {
@@ -562,6 +563,32 @@ function liftNoFlash(){
   let shootRequests=[];
   let moveRequests=[];
   let currentFilterKey = null;
+  // ✅ Live collection fallback: requests (لو صفحة إدارة الطلبات بتكتب هنا)
+  let unsubRequestsCol = null;
+  function subscribeRequestsCollection(){
+    if(unsubRequestsCol) return;
+    try{
+      const reqCol = collection(db, 'requests');
+      // نكتفي بآخر 500 (لو زادت لاحقًا نعمل Pagination)
+      const qReq = query(reqCol, limit(500));
+      unsubRequestsCol = onSnapshot(qReq, (snap)=>{
+        const all = snap.docs.map(d=>({ _docId: d.id, ...(d.data()||{}) }));
+        const shoots = all.filter(r => String(r.kind||r.type||'').toLowerCase() === 'shoot');
+        const movesArr = all.filter(r => String(r.kind||r.type||'').toLowerCase() === 'move');
+        // لا نكسر بيانات v1 لو الكولكشن فاضي
+        if(shoots.length || movesArr.length){
+          shootRequests = shoots;
+          moveRequests  = movesArr;
+        }
+        renderAll();
+      }, (err)=>{
+        console.warn('requests snapshot error', err);
+      });
+    }catch(err){
+      console.warn('subscribeRequestsCollection failed', err);
+    }
+  }
+
 
   // ملخص طلبات المبيعات من نظام التتبع / ERP
   let salesSummary = null;
@@ -631,6 +658,8 @@ function liftNoFlash(){
 
         await initData();
         subscribeLive();
+        // fallback listener لمزامنة الطلبات من collection requests
+        subscribeRequestsCollection();
       }catch(err){
         console.error(err);
         setStatus('err','خطأ في تحميل البيانات');
@@ -827,7 +856,9 @@ $('#btnLogin').addEventListener('click', async ()=>{
       }
       computeTransferRequests();
       renderAll();
-    }catch(e){
+      // مزامنة ملخص طلبات المبيعات (حتى لو مشروع التتبع مش مسجّل دخول)
+      try{ await fetchSalesSummary(); }catch(e){ console.warn('fetchSalesSummary init failed', e); }
+}catch(e){
       setStatus('warn','تعذّر تحميل البيانات');
     }
   }
@@ -897,6 +928,17 @@ $('#btnLogin').addEventListener('click', async ()=>{
       total += items.length;
     });
     return { total, summary };
+  }
+
+  async function refreshSalesSummary(){
+    try{
+      await fetchSalesSummary();
+      showToast('تمت المزامنة','ok');
+      renderAll();
+    }catch(e){
+      console.warn(e);
+      showToast('تعذّر تحديث بيانات المبيعات','err');
+    }
   }
 
   /* ===== Group counts ===== */
@@ -1291,8 +1333,11 @@ function renderShootCard(gridEl){
             </span>
           </div>
         </div>
-        <div class="group-total" title="إجمالي الطلبات">
-          ${s.total.toLocaleString('ar-SA')}
+        <div class="group-total" title="إجمالي الطلبات" style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div>${s.total.toLocaleString('ar-SA')}</div>
+          <button class="btn btn-ghost" id="btnSalesSync" type="button" style="padding:6px 10px;font-size:12px;border-radius:999px;">
+            <i class="fa-solid fa-rotate"></i> مزامنة
+          </button>
         </div>
       </div>
     `;
@@ -1301,6 +1346,14 @@ function renderShootCard(gridEl){
     if(totalBox){
       totalBox.style.cursor = 'pointer';
       totalBox.addEventListener('click', (e)=>{ e.stopPropagation(); openSalesModal('total'); });
+    }
+
+    const btnSalesSync = card.querySelector('#btnSalesSync');
+    if(btnSalesSync){
+      btnSalesSync.addEventListener('click', async (e)=>{
+        e.stopPropagation();
+        await refreshSalesSummary();
+      });
     }
 
     card.querySelectorAll('.sales-metric').forEach(el=>{
