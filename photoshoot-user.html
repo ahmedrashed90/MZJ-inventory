@@ -658,6 +658,10 @@ body{
 /* منع وميض تسجيل الدخول أثناء التحقق */
 body.auth-checking #loginCard{display:none !important;}
 
+
+/* إخفاء تبويبات الإدارة لغير الإدارة */
+body:not(.is-admin) .tab.admin-only{display:none !important;}
+
 </style>
 </head>
 
@@ -666,17 +670,18 @@ body.auth-checking #loginCard{display:none !important;}
 <!-- TOP BAR -->
 <div class="dashboard-topbar">
   <div class="dashboard-tabs">
-    <a class="tab" href="admin.html">الإدارة</a>
-    <a class="tab" href="inventory.html">المخزون</a>
-    <a class="tab" href="dashboard.html">الداش بورد</a>
-    <a class="tab" href="vt.html">نقل السيارات</a>
+    <a class="tab admin-only" href="admin.html">الإدارة</a>
+    <a class="tab admin-only" href="inventory.html">المخزون</a>
+    <a class="tab admin-only" href="dashboard.html">الداش بورد</a>
+    <a class="tab admin-only" href="vt.html">نقل السيارات</a>
     <a class="tab active" href="photoshoot-user.html">إدارة الطلبات</a>
-    <a class="tab" href="cars.html">كل السيارات</a>
-    <a class="tab" href="Activity.html">سجل النشاط</a>
+    <a class="tab admin-only" href="cars.html">كل السيارات</a>
+    <a class="tab admin-only" href="Activity.html">سجل النشاط</a>
   </div>
 </div>
 
 <div class="container">
+
 
 
   <!-- LOGIN CARD -->
@@ -1577,6 +1582,47 @@ async function applyStep(stepNo){
   );
 }
 
+
+async function updateStockLocationsAfterMoveFinish(rows){
+  // تحديث مكان السيارة الفعلي داخل stock (mzj_admin_state/v1) بعد إتمام طلب نقل
+  if(!rows || !rows.length) return;
+  const stateRef = db.collection("mzj_admin_state").doc("v1");
+
+  await db.runTransaction(async (tx)=>{
+    const snap = await tx.get(stateRef);
+    const data = snap.exists ? (snap.data()||{}) : {};
+    const arr = Array.isArray(data.stock) ? data.stock.slice() : [];
+
+    const byVin = new Map();
+    rows.forEach(r=>{
+      const v = normalizeVin(r.vin || r.__id || "");
+      if(!v) return;
+      // آخر مكان فعلي بعد النقل = الوجهة (toLocation) أو location
+      const newLoc = r.location || rowDestPlace(r) || r.toLocation || "";
+      if(newLoc) byVin.set(v, newLoc);
+    });
+
+    if(!byVin.size) return;
+
+    let changed = false;
+    for(let i=0;i<arr.length;i++){
+      const rec = arr[i] || {};
+      const v = normalizeVin(rec.vin || "");
+      if(!v) continue;
+      if(byVin.has(v)){
+        const newLoc = byVin.get(v);
+        if(rec.location !== newLoc){
+          arr[i] = { ...rec, location: newLoc };
+          changed = true;
+        }
+      }
+    }
+    if(changed){
+      tx.set(stateRef, { stock: arr }, { merge:true });
+    }
+  });
+}
+
 async function finishRequest(){
   const p = calcProgress(openRows, openRequestDoc);
   if(!(p.total>0 && p.s3===p.total)){
@@ -1600,6 +1646,11 @@ async function finishRequest(){
     status: "مكتملة",
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   }, { merge:true });
+
+  // لو طلب نقل: ثبت المكان الفعلي للسيارة داخل stock
+  if((openRequestDoc?.kind||'')==='move'){
+    try{ await updateStockLocationsAfterMoveFinish(openRows); }catch(e){ console.error(e); }
+  }
 
   await logAction("تم الانتهاء", `تم إنهاء الطلب #${openRequestId} بواسطة ${myName()}`);
 }
@@ -1847,6 +1898,8 @@ async function loadUserProfile(u){
 
 auth.onAuthStateChanged(async (u)=>{
   document.body.classList.remove('auth-checking');
+  document.body.classList.remove('is-admin');
+  document.body.classList.remove('not-admin');
 
   currentUser = u || null;
 
@@ -1855,6 +1908,8 @@ auth.onAuthStateChanged(async (u)=>{
     loginCard.style.display='block';
     btnLogout.style.display='none';
     setProfileBadges();
+
+  document.body.classList.add(isAdmin() ? 'is-admin' : 'not-admin');
     pageOrders.style.display='none';
     pageCars.style.display='none';
     pageActivity.style.display='none';
@@ -1868,6 +1923,8 @@ auth.onAuthStateChanged(async (u)=>{
   btnLogout.style.display='inline-flex';
   userProfile = await loadUserProfile(u);
   setProfileBadges();
+
+  document.body.classList.add(isAdmin() ? 'is-admin' : 'not-admin');
 
   // Show main pages
   // لا نعرض كارت تسجيل الدخول للمستخدم المسجل
