@@ -2106,98 +2106,6 @@ function openReqModal(req){
     });
   }
 
-      // save
-      if(window.__shootEditMode){
-        const rows = Array.isArray(cur.rows)?cur.rows:[];
-        document.querySelectorAll(".edit-shoot-place").forEach(sel=>{
-          const idx = Number(sel.getAttribute("data-idx")||"-1");
-          if(idx>=0 && rows[idx]) rows[idx].shootPlace = sel.value || "";
-        });
-        document.querySelectorAll(".edit-shoot-note").forEach(inp=>{
-          const idx = Number(inp.getAttribute("data-idx")||"-1");
-          if(idx>=0 && rows[idx]) rows[idx].note = inp.value || "";
-        });
-
-        cur.rows = rows;
-        updateShootRequestLocal(cur);
-        await persistAll();
-        await logActivity(
-          "تعديل طلب تصوير",
-          "تم تعديل أماكن/ملاحظات الطلب #" + (cur.id||"-"),
-          {requestId:cur.id, entityType:"photoshoot_request", role: currentUserRole||""}
-        );
-        window.__shootEditMode = false;
-        openReqModal(cur); // re-render modal
-        showToast("تم حفظ التعديل");
-      }else{
-        window.__shootEditMode = true;
-        openReqModal(cur); // re-render modal in edit mode
-        showToast("وضع التعديل مفعل");
-      
-    };
-  
-
-  // render rows
-  if(rowsBody){
-    rowsBody.innerHTML = "";
-    const rows = Array.isArray(latest.rows) ? latest.rows : [];
-    rows.forEach((row, idx) => {
-      const tr = document.createElement("tr");
-      const shootPlace = row.shootPlace || row.place || "";
-      const noteVal = row.note || "";
-      const safeNote = (noteVal+"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-
-      let placeCell = shootPlace;
-      let noteCell  = safeNote;
-
-      if(window.__shootEditMode){
-        const opts = SHOOT_PLACES.filter(Boolean).map(p=>{
-          const sel = (shootPlace===p) ? "selected" : "";
-          const safeP = (p+"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-          return `<option value="${safeP}" ${sel}>${safeP}</option>`;
-        }).join("");
-        placeCell = `
-          <select class="small-input edit-shoot-place" data-idx="${idx}">
-            <option value="">— اختر —</option>
-            ${opts}
-          </select>`;
-        noteCell = `<input class="small-input edit-shoot-note" data-idx="${idx}" value="${safeNote}" placeholder="اختياري">`;
-      }
-
-      tr.innerHTML = `
-        <td class="center">${idx+1}</td>
-        <td>${row.vin || ""}</td>
-        <td>${row.car || ""}</td>
-        <td>${row.variant || ""}</td>
-        <td>${row.extColor || ""}</td>
-        <td>${row.intColor || ""}</td>
-        <td>${row.modelYear || ""}</td>
-        <td>${row.location || ""}</td>
-        <td>${placeCell}</td>
-        <td>${noteCell}</td>
-      `;
-      rowsBody.appendChild(tr);
-
-      // usability: click place cell focuses select
-      if(window.__shootEditMode){
-        tr.addEventListener("click",(e)=>{
-          const sel = tr.querySelector(".edit-shoot-place");
-          if(sel) sel.focus();
-        });
-      }
-    });
-  }
-
-  const admin = latest.admin || {};
-  if (statusBox) statusBox.textContent = "الحالة الحالية: " + (latest.status || "—");
-  if (recvBox)   recvBox.textContent   = admin.received ? ("تم استلام الطلب في: " + admin.received) : "لم يتم استلام الطلب بعد";
-  if (prepBox)   prepBox.textContent   = admin.prepared ? ("تم ارسال السيارة للتصوير في: " + admin.prepared) : "لم يتم ارسال السيارة بعد";
-  if (notesEl)   notesEl.value         = latest.adminNotes || "";
-
-  renderShootTimeline(latest);
-  backdrop.classList.add("show");
-
-
   function openMoveModal(req){
     currentMoveReqId = req.id;
 
@@ -2263,330 +2171,35 @@ function openReqModal(req){
         });
       }
     });
-  };
-    
+  }
 
-    ensureRowStates(latest);
-    const c1 = stageCount(latest,"received");
-    const c2 = stageCount(latest,"sent");
-    const c3 = stageCount(latest,"carReceived");
-    const c4 = stageCount(latest,"finished");
-    if(statusBox){
-      statusBox.textContent = [
-        `استلام الطلب: ${pct(c1.done,c1.total)}% (${c1.done}/${c1.total})`,
-        `ارسال السيارة: ${pct(c2.done,c2.total)}% (${c2.done}/${c2.total})`,
-        `استلام السيارة: ${pct(c3.done,c3.total)}% (${c3.done}/${c3.total})`,
-        `الانتهاء: ${pct(c4.done,c4.total)}% (${c4.done}/${c4.total})`,
-      ].join("\n");
-      statusBox.style.whiteSpace = "pre-line";
-    }
-
-    renderMoveTimeline(latest);
-    backdrop.classList.add("show");
-  
-
-(function bindModalEvents(){
+  // ربط أحداث المودالات (إغلاق + ESC) — نسخة خفيفة وسريعة
+  (function bindModalEvents(){
     const reqBackdrop  = document.getElementById("reqModalBackdrop");
     const moveBackdrop = document.getElementById("moveModalBackdrop");
+    const newBackdrop  = document.getElementById("newReqBackdrop");
 
-    document.querySelectorAll("[data-close-req-modal]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        if (reqBackdrop) reqBackdrop.classList.remove("show");
-      });
+    document.querySelectorAll("[data-close-req-modal]").forEach(btn=>{
+      btn.addEventListener("click", ()=> reqBackdrop?.classList.remove("show"));
     });
-    document.querySelectorAll("[data-close-move-modal]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        if (moveBackdrop) moveBackdrop.classList.remove("show");
-
-      });
+    document.querySelectorAll("[data-close-move-modal]").forEach(btn=>{
+      btn.addEventListener("click", ()=> moveBackdrop?.classList.remove("show"));
     });
-
-
-    
-  function renderMoveModalUI(reqDoc, rowsArr){
-    const titleEl  = document.getElementById("moveModalTitle");
-    const subEl    = document.getElementById("moveModalSub");
-    const rowsBody = document.getElementById("moveModalRows");
-    const statusBox= document.getElementById("moveModalStatusBox");
-
-    if (titleEl) titleEl.textContent = "تفاصيل طلب النقل #" + (reqDoc.id || "-");
-    if (subEl) subEl.textContent    = (reqDoc.createdAt || "") + " — " + (reqDoc.createdBy || "");
-
-    if(rowsBody){
-      rowsBody.innerHTML = "";
-      (rowsArr||[]).forEach((row, idx)=>{
-        const tr = document.createElement("tr");
-        const from = row.fromLocation || row.location || "";
-        const to   = row.toLocation || row.place || row.shootPlace || "";
-        tr.innerHTML = `
-          <td class="center">${idx+1}</td>
-          <td class="mono">${row.vin||""}</td>
-          <td>${row.car||""}</td>
-          <td class="muted">${from||"-"}</td>
-          <td class="muted">${to||"-"}</td>
-        `;
-        rowsBody.appendChild(tr);
-      });
-    }
-
-    // تحديث شريط التقدم + الحالة
-    const c1 = stageCount({rows:rowsArr},"received");
-    const c2 = stageCount({rows:rowsArr},"sent");
-    const c3 = stageCount({rows:rowsArr},"carReceived");
-    const c4 = stageCount({rows:rowsArr},"finished");
-    if(statusBox){
-      statusBox.textContent = [
-        `استلام الطلب: ${pct(c1.done,c1.total)}% (${c1.done}/${c1.total})`,
-        `ارسال السيارة: ${pct(c2.done,c2.total)}% (${c2.done}/${c2.total})`,
-        `استلام السيارة: ${pct(c3.done,c3.total)}% (${c3.done}/${c3.total})`,
-        `الانتهاء: ${pct(c4.done,c4.total)}% (${c4.done}/${c4.total})`,
-      ].join("\n");
-    }
-
-    // أزرار المراحل حسب مكان المستخدم (Admin يشوف كله) + زر الانتهاء لمنشئ الطلب أو Admin
-    const btnM1 = document.getElementById("btnMoveStep1");
-    const btnM2 = document.getElementById("btnMoveStep2");
-    const btnM3 = document.getElementById("btnMoveStep3");
-    const btnFinish = document.getElementById("btnMoveFinish");
-
-    const eligible1 = (rowsArr||[]).filter(r=>canActOnRow('move', r, 'received')).length;
-    const eligible2 = (rowsArr||[]).filter(r=>canActOnRow('move', r, 'sent')).length;
-    const eligible3 = (rowsArr||[]).filter(r=>canActOnRow('move', r, 'carReceived')).length;
-
-    if(btnM1){ btnM1.style.display = (isSuperAdmin() || eligible1>0) ? "inline-flex":"none"; }
-    if(btnM2){ btnM2.style.display = (isSuperAdmin() || eligible2>0) ? "inline-flex":"none"; }
-    if(btnM3){ btnM3.style.display = (isSuperAdmin() || eligible3>0) ? "inline-flex":"none"; }
-
-    if(btnFinish){
-      const canFinish = isSuperAdmin() || isCreator({createdByUid:reqDoc.createdByUid});
-      btnFinish.style.display = canFinish ? "inline-flex" : "none";
-    }
-  }
-
-  function attachMoveLive(reqId){
-    stopMoveLive();
-    if(!reqId) return;
-    const reqRef = db.collection("requests").doc(String(reqId));
-    // doc listener
-    moveLiveUnsubDoc = reqRef.onSnapshot((snap)=>{
-      if(!snap.exists) return;
-      const d = snap.data()||{};
-      d.id = snap.id;
-      window.__moveReqDoc = d;
-    }, (err)=>{
-      console.error("move doc snapshot error", err);
+    document.querySelectorAll("[data-close-newreq-modal]").forEach(btn=>{
+      btn.addEventListener("click", ()=> newBackdrop?.classList.remove("show"));
     });
 
-    // rows listener
-    moveLiveUnsubRows = reqRef.collection("rows").onSnapshot((qs)=>{
-      const rowsArr = [];
-      qs.forEach(doc=>{
-        const r = doc.data()||{};
-        rowsArr.push(r);
-      });
-      const reqDoc = window.__moveReqDoc || {id:reqId};
-      renderMoveModalUI(reqDoc, rowsArr);
-    }, (err)=>{
-      console.error("move rows snapshot error", err);
-    });
-  }
+    reqBackdrop?.addEventListener("click", (e)=>{ if(e.target===reqBackdrop) reqBackdrop.classList.remove("show"); });
+    moveBackdrop?.addEventListener("click", (e)=>{ if(e.target===moveBackdrop) moveBackdrop.classList.remove("show"); });
+    newBackdrop?.addEventListener("click", (e)=>{ if(e.target===newBackdrop) newBackdrop.classList.remove("show"); });
 
-
-    // إغلاق المودال بزر ESC
-    document.addEventListener("keydown",(e)=>{
+    document.addEventListener("keydown", (e)=>{
       if(e.key !== "Escape") return;
-      if(reqBackdrop && reqBackdrop.classList.contains("show")){
-        reqBackdrop.classList.remove("show");
-        isEditShootMode = false;
-      }
-      if(moveBackdrop && moveBackdrop.classList.contains("show")){
-        moveBackdrop.classList.remove("show");
-
-        isEditMoveMode = false;
-      }
+      reqBackdrop?.classList.remove("show");
+      moveBackdrop?.classList.remove("show");
+      newBackdrop?.classList.remove("show");
     });
-
-    const notesEl = document.getElementById("adminNotes");
-
-    const btnS1 = document.getElementById("btnShootStep1");
-    const btnS2 = document.getElementById("btnShootStep2");
-    const btnS3 = document.getElementById("btnShootStep3");
-    const btnS4 = document.getElementById("btnShootStep4");
-
-    function withCurrentShoot(fn){
-      if (currentShootReqId == null) return;
-      const idx = (shootRequests || []).findIndex(r => r.id === currentShootReqId);
-      if (idx === -1) return;
-      if (notesEl) {
-        shootRequests[idx].adminNotes = notesEl.value || "";
-      }
-      fn(shootRequests[idx]);
-    }
-
-    if (btnS1) btnS1.addEventListener("click", () => withCurrentShoot(markShootStep1));
-    if (btnS2) btnS2.addEventListener("click", () => withCurrentShoot(markShootStep2));
-    if (btnS3) btnS3.addEventListener("click", () => withCurrentShoot(markShootStep3));
-    if (btnS4) btnS4.addEventListener("click", () => withCurrentShoot(markShootStep4));
-
-    const btnM1 = document.getElementById("btnMoveStep1");
-    const btnM2 = document.getElementById("btnMoveStep2");
-    const btnM3 = document.getElementById("btnMoveStep3");
-    const btnM4 = document.getElementById("btnMoveStep4");
-
-    function withCurrentMove(fn){
-      if (currentMoveReqId == null) return;
-      const idx = (moveRequests || []).findIndex(r => r.id === currentMoveReqId);
-      if (idx === -1) return;
-      fn(moveRequests[idx]);
-    }
-
-    if (btnM1) btnM1.addEventListener("click", () => withCurrentMove(markMoveStep1));
-    if (btnM2) btnM2.addEventListener("click", () => withCurrentMove(markMoveStep2));
-    if (btnM3) btnM3.addEventListener("click", () => withCurrentMove(markMoveStep3));
-    if (btnM4) btnM4.addEventListener("click", () => withCurrentMove(markMoveStep4));
   })();
-
-
-  async function fetchUserRole(user){
-    currentUserUid = user?.uid || null;
-    currentUserEmail = user?.email || "";
-    currentUserRole = null;
-    currentUserLocations = [];
-    try{
-      const snap = await getDoc(doc(db,"user", user.uid));
-      if(snap.exists()){
-        const data = snap.data() || {};
-        // Normalize role values to our constants
-        const rawRole = (data.role || "").toString().trim();
-        const norm = normalizeRole(rawRole);
-        currentUserRole = norm;
-        // locations can be array or string
-        const loc = data.locations;
-        if(Array.isArray(loc)){
-          currentUserLocations = loc.filter(Boolean).map(x=>String(x).trim()).filter(Boolean);
-        }else if(typeof loc === "string" && loc.trim()){
-          currentUserLocations = [loc.trim()];
-        }else{
-          currentUserLocations = [];
-        }
-        if(data.email) currentUserEmail = data.email;
-        return currentUserRole;
-      }
-    }catch(e){
-      console.error("fetchUserRole failed:", e);
-    }
-    // fallback to email map if exists
-    const fallback = normalizeRole(EMAIL_FALLBACK_ROLES?.[currentUserEmail] || "");
-    currentUserRole = fallback || null;
-    currentUserLocations = (EMAIL_FALLBACK_LOCATIONS?.[currentUserEmail] || []).slice();
-    return currentUserRole;
-  }
-
-  function normalizeRole(roleStr){
-    const r = (roleStr||"").toString().trim().toLowerCase();
-    if(!r) return null;
-    // admin aliases
-    if(r === "admin") return ROLE_ADMIN;
-    if(r === "الادارة" || r === "الإدارة") return ROLE_ADMIN;
-    if(r.includes("ادارة") || r.includes("إدارة")) return ROLE_ADMIN;
-    // idari aliases
-    if(r === "idari") return ROLE_IDARI;
-    if(r === "اداري" || r === "إداري") return ROLE_IDARI;
-    if(r.includes("اداري") || r.includes("إداري")) return ROLE_IDARI;
-    // fallback raw
-    return roleStr;
-  }
-
-function showAuthGate(){
-    document.getElementById("authGate").style.display = "block";
-    document.getElementById("app").style.display      = "none";
-  }
-  function showApp(){
-    document.getElementById("authGate").style.display = "none";
-    document.getElementById("app").style.display      = "block";
-  }
-
-  onAuthStateChanged(auth, async (user)=>{
-    if(!user){
-      $("#userLabel").textContent = "غير مسجل";
-      $("#btnSignOut").style.display = "none";
-      showAuthGate();
-      return;
-    }
-    $("#userLabel").textContent = user.email || "";
-    $("#btnSignOut").style.display = "inline-flex";
-
-    const role = await fetchUserRole(user);
-    if(!role || (!PAGE_ALLOWED_ROLES.includes(role) && role!==ROLE_ADMIN)){
-      // تحويل مباشر لصفحة عدم الصلاحية
-      window.location.href = "unauthorized.html";
-      return;
-    }
-
-    // ✅ Page Guard (يحمي من فتح صفحة غير مسموحة للدور)
-    const currentPage = (location.pathname.split('/').pop() || 'dashboard.html').split('?')[0];
-    const allowed = ROLE_PAGES[role];
-    if(allowed !== 'ALL' && Array.isArray(allowed) && !allowed.includes(currentPage)){
-      window.location.href = allowed[0] || 'dashboard.html';
-      return;
-    }
-
-    setStatus("ok","جارٍ تحميل البيانات…");
-    // ملاحظة: إظهار التطبيق بعد أول Snapshot لضمان عدم ظهور صفحة فاضية
-
-    // ✅ تحميل حالة النظام (المخزون + الطلبات) من STATE_REF
-    let __firstStateLoad = true;
-    onSnapshot(STATE_REF, (snap) => {
-      const data = snap.data() || {};
-      if(__firstStateLoad){
-        __firstStateLoad = false;
-        showApp();
-        // تطبيق صلاحيات التابات حسب الدور + فتح إدارة الطلبات افتراضي
-        applyTabsVisibility(role);
-        buildFormRows();
-        try{ showPage("orders"); }catch(e){}
-        setStatus("ok","متصل — تم تحميل البيانات");
-      }
-      shootRequests = Array.isArray(data.shootRequests) ? data.shootRequests : [];
-      moveRequests  = Array.isArray(data.moveRequests)  ? data.moveRequests  : [];
-
-      // derive statuses + ensure rowStates
-      shootRequests.forEach(r=>{ ensureRowStates(r); r.status = deriveStatus(r,'shoot'); });
-      moveRequests.forEach(r=>{ ensureRowStates(r); r.status = deriveStatus(r,'move'); });
-
-      stock         = Array.isArray(data.stock)         ? data.stock         : [];
-      moves         = Array.isArray(data.moves)         ? data.moves         : [];
-
-      metrics();
-      render();
-      refreshOpenModalIfAny();
-      const su = document.getElementById("stat_updated");
-      if (su) su.textContent = data.updatedAt || "—";
-    });
-  });
-
-  document.getElementById("btnSignOut")?.addEventListener("click",async ()=>{
-    await signOut(auth);
-  });
-
-  const loginForm = document.getElementById("loginForm");
-  if(loginForm){
-    loginForm.addEventListener("submit",async (e)=>{
-      e.preventDefault();
-      const email = document.getElementById("email").value.trim();
-      const pass  = document.getElementById("password").value;
-      const btn   = document.getElementById("btnSignIn");
-      try{
-        btn.disabled = true;
-        await signInWithEmailAndPassword(auth,email,pass);
-        showToast("تم تسجيل الدخول");
-      }catch(err){
-        console.error(err);
-        alert("بيانات الدخول غير صحيحة");
-      }finally{
-        btn.disabled = false;
-    };
-  
 
   async function markRowStage(kind, vin, stage){
     const arr = (kind==="move") ? moveRequests : shootRequests;
@@ -2662,15 +2275,6 @@ function showAuthGate(){
       alert("فشل المسح: " + (err?.message || err));
     }
   }
-  document.getElementById("btnWipeAllRequests")?.addEventListener("click", wipeAllMoveAndShootRequests);
-
-</script>
+  document.getElementById("btnWipeAllRequests")?.addEventListener("click", wipeAllMoveAndShootRequests);</script>
 </body>
 </html>
-
-
-
-
-
-
-
