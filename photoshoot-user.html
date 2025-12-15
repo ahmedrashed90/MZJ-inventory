@@ -145,8 +145,8 @@ body{
 #inner-create .req-vin{width:70px}
 #inner-create .req-year{width:70px}
 #inner-create .req-ext,#inner-create .req-int{width:60px}
-#inner-create .req-location{width:110px}
-#inner-create .req-place{width:110px}
+#inner-create .req-location{width:250px}
+#inner-create .req-place{width:250px}
 .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
 .center{text-align:center}
 
@@ -253,7 +253,7 @@ body{
 
 #inner-create .req-place,
 #inner-create .req-location{
-  max-width:110px;
+  max-width:250px;
 }
 
 /* VIN والسيارة */
@@ -307,8 +307,8 @@ body{
 #inner-create .table th:nth-child(6), #inner-create .table td:nth-child(6){width:80px}   /* الخارجي */
 #inner-create .table th:nth-child(7), #inner-create .table td:nth-child(7){width:80px}   /* الداخلي */
 #inner-create .table th:nth-child(8), #inner-create .table td:nth-child(8){width:80px}   /* الموديل */
-#inner-create .table th:nth-child(9), #inner-create .table td:nth-child(9){width:170px}  /* المكان */
-#inner-create .table th:nth-child(10),#inner-create .table td:nth-child(10){width:150px} /* مكان التصوير/النقل */
+#inner-create .table th:nth-child(9), #inner-create .table td:nth-child(9){width:250px}  /* المكان */
+#inner-create .table th:nth-child(10),#inner-create .table td:nth-child(10){width:250px} /* مكان التصوير/النقل */
 #inner-create .table th:nth-child(11),#inner-create .table td:nth-child(11){width:120px} /* ملاحظة */
 #inner-create .table th:nth-child(12),#inner-create .table td:nth-child(12){width:70px}  /* مسح */
 
@@ -344,7 +344,7 @@ body{
 #inner-create .table td:nth-child(9),   /* المكان */
 #inner-create .table th:nth-child(10),
 #inner-create .table td:nth-child(10){  /* مكان التصوير */
-  width:220px !important;
+  width:100px !important;
 }
 
 
@@ -414,13 +414,13 @@ body{
 /* تكبير المكان */
 #inner-create .table th:nth-child(9),
 #inner-create .table td:nth-child(9){
-  width: 210px !important;
+  width: 100px !important;
 }
 
 /* تكبير مكان التصوير/النقل */
 #inner-create .table th:nth-child(10),
 #inner-create .table td:nth-child(10){
-  width: 190px !important;
+  width: 100px !important;
 }
 
 /* تحسين قراءة السيارة والفئة بدون ما تبهدل الصف */
@@ -441,14 +441,14 @@ body{
 /* # | نوع | VIN | السيارة | الفئة | الخارجي | الداخلي | الموديل | المكان | مكان التصوير/النقل | ملاحظة | مسح */
 #inner-create .table th:nth-child(1), #inner-create .table td:nth-child(1){width:50px !important;}
 #inner-create .table th:nth-child(2), #inner-create .table td:nth-child(2){width:120px !important;}
-#inner-create .table th:nth-child(3), #inner-create .table td:nth-child(3){width:140px !important;} /* VIN أكبر */
+#inner-create .table th:nth-child(3), #inner-create .table td:nth-child(3){width:100px !important;} /* VIN أكبر */
 #inner-create .table th:nth-child(4), #inner-create .table td:nth-child(4){width:240px !important;}
 #inner-create .table th:nth-child(5), #inner-create .table td:nth-child(5){width:240px !important;}
 #inner-create .table th:nth-child(6), #inner-create .table td:nth-child(6){width:105px !important;} /* خارجي */
 #inner-create .table th:nth-child(7), #inner-create .table td:nth-child(7){width:105px !important;} /* داخلي */
 #inner-create .table th:nth-child(8), #inner-create .table td:nth-child(8){width:90px !important;}
-#inner-create .table th:nth-child(9), #inner-create .table td:nth-child(9){width:220px !important;} /* المكان أكبر */
-#inner-create .table th:nth-child(10),#inner-create .table td:nth-child(10){width:200px !important;} /* مكان التصوير أكبر */
+#inner-create .table th:nth-child(9), #inner-create .table td:nth-child(9){width:100px !important;} /* المكان أكبر */
+#inner-create .table th:nth-child(10),#inner-create .table td:nth-child(10){width:100px !important;} /* مكان التصوير أكبر */
 #inner-create .table th:nth-child(11),#inner-create .table td:nth-child(11){width:140px !important;}
 #inner-create .table th:nth-child(12),#inner-create .table td:nth-child(12){width:70px !important;}
 
@@ -512,7 +512,7 @@ body{
 
 /* VIN أصغر */
 #inner-create .table td:nth-child(3) input{
-  height: 26px !important;
+  height: 30px !important;
   padding: 4px 6px !important;
   font-size: 11px !important;
   border-radius: 7px !important;
@@ -521,7 +521,7 @@ body{
 /* السيارة + الفئة أصغر وبنفس المحاذاة */
 #inner-create .table td:nth-child(4) input,
 #inner-create .table td:nth-child(5) input{
-  height: 26px !important;
+  height: 30px !important;
   padding: 4px 6px !important;
   font-size: 11px !important;
   border-radius: 7px !important;
@@ -532,7 +532,7 @@ body{
 
 /* المكان */
 #inner-create .table td:nth-child(9) input{
-  height: 34px !important;
+  height: 30px !important;
   padding: 6px 10px !important;
   font-size: 12px !important;
   border-radius: 10px !important;
@@ -540,7 +540,7 @@ body{
 
 /* مكان التصوير / النقل */
 #inner-create .table td:nth-child(10) select{
-  height: 34px !important;
+  height: 30px !important;
   padding: 6px 10px !important;
   font-size: 12px !important;
   border-radius: 10px !important;
@@ -576,12 +576,12 @@ body{
 #inner-create .table td:nth-child(4),
 #inner-create .table th:nth-child(5),
 #inner-create .table td:nth-child(5){
-  width: 210px !important;
+  width: 180px !important;
 }
 
 #inner-create .table td:nth-child(4) input,
 #inner-create .table td:nth-child(5) input{
-  height: 26px !important;
+  height: 30px !important;
   font-size: 11px !important;
   padding: 4px 6px !important;
   line-height: 1.2;
@@ -590,12 +590,12 @@ body{
 /* ===== المكان + مكان التصوير + ملاحظة (أكبر) ===== */
 #inner-create .table th:nth-child(9),
 #inner-create .table td:nth-child(9){
-  width: 260px !important;
+  width: 150px !important;
 }
 
 #inner-create .table th:nth-child(10),
 #inner-create .table td:nth-child(10){
-  width: 240px !important;
+  width: 150px !important;
 }
 
 #inner-create .table th:nth-child(11),
@@ -606,7 +606,7 @@ body{
 #inner-create .table td:nth-child(9) input,
 #inner-create .table td:nth-child(10) select,
 #inner-create .table td:nth-child(11) input{
-  height: 34px !important;
+  height: 30px !important;
   font-size: 12px !important;
   padding: 6px 10px !important;
 }
@@ -626,26 +626,6 @@ body{
 #inner-create .table td{padding:10px 8px !important;vertical-align:top !important}
 #inner-create .cell.actions{align-items:center}
 #inner-create .cell.actions label{text-align:center;width:100%}
-
-
-/* ===== رجوع لشكل النسخة القديمة (هيدر + مربعات تحتها) ===== */
-#inner-create thead{display:table-header-group !important;}
-#inner-create .cell{display:block !important;}
-#inner-create .cell label{display:none !important;}
-
-/* تثبيت محاذاة الهيدر مع المربعات عبر colgroup + table-layout */
-#inner-create table{table-layout:fixed;width:100%;}
-#inner-create th, #inner-create td{box-sizing:border-box;}
-
-/* المربعات تاخد عرض العمود بالكامل */
-#inner-create td input, #inner-create td select{width:100% !important; min-width:0 !important;}
-
-/* تصغير موحد للمربعات زي النسخة القديمة */
-#inner-create .small-input{height:30px !important; padding:5px 8px !important; font-size:12px !important; border-radius:10px !important;}
-#inner-create .table td{padding:10px 8px !important; vertical-align:middle !important;}
-
-/* منع قص VIN */
-#inner-create td:nth-child(3) input{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
 
 </style>
 </head>
@@ -717,22 +697,6 @@ body{
 
       <div class="tableWrap" style="margin-top:10px">
         <table class="table">
-
-<colgroup>
-  <col style="width:50px">
-  <col style="width:120px">
-  <col style="width:140px">
-  <col style="width:220px">
-  <col style="width:220px">
-  <col style="width:95px">
-  <col style="width:95px">
-  <col style="width:90px">
-  <col style="width:240px">
-  <col style="width:200px">
-  <col style="width:170px">
-  <col style="width:70px">
-</colgroup>
-
           <thead>
             <tr>
               <th style="width:60px" class="center">#</th>
@@ -1119,28 +1083,88 @@ function addFormRow(prefill={}){
   const tr = document.createElement('tr');
   tr.innerHTML = `
     <td class="center">1</td>
+
     <td>
-      <select class="small-input req-kind">
-        <option value="shoot" selected>طلب تصوير</option>
-        <option value="move">طلب نقل</option>
-      </select>
+      <div class="cell">
+        <label>نوع</label>
+        <select class="small-input req-kind">
+          <option value="shoot" selected>طلب تصوير</option>
+          <option value="move">طلب نقل</option>
+        </select>
+      </div>
     </td>
-    <td><input class="small-input mono req-vin" placeholder="VIN"></td>
-    <td><input class="small-input req-car" readonly></td>
-    <td><input class="small-input req-variant" readonly></td>
-    <td><input class="small-input req-ext" readonly></td>
-    <td><input class="small-input req-int" readonly></td>
-    <td class="center"><input class="small-input center req-year" readonly></td>
-    <td><input class="small-input req-location" readonly></td>
+
     <td>
-      <select class="small-input req-place">
-        <option value="">— اختر —</option>
-        ${SHOOT_PLACES.map(p=>`<option value="${p}">${p}</option>`).join("")}
-      </select>
+      <div class="cell">
+        <label>VIN</label>
+        <input class="small-input mono req-vin" placeholder="VIN">
+      </div>
     </td>
-    <td><input class="small-input req-note" placeholder="اختياري"></td>
+
+    <td>
+      <div class="cell">
+        <label>السيارة</label>
+        <input class="small-input req-car" readonly>
+      </div>
+    </td>
+
+    <td>
+      <div class="cell">
+        <label>الفئة</label>
+        <input class="small-input req-variant" readonly>
+      </div>
+    </td>
+
+    <td>
+      <div class="cell">
+        <label>الخارجي</label>
+        <input class="small-input req-ext" readonly>
+      </div>
+    </td>
+
+    <td>
+      <div class="cell">
+        <label>الداخلي</label>
+        <input class="small-input req-int" readonly>
+      </div>
+    </td>
+
     <td class="center">
-      <button class="btn danger btnRemoveRow" title="حذف الصف"><i class="fa-solid fa-trash"></i></button>
+      <div class="cell">
+        <label>الموديل</label>
+        <input class="small-input center req-year" readonly>
+      </div>
+    </td>
+
+    <td>
+      <div class="cell">
+        <label>المكان</label>
+        <input class="small-input req-location" readonly>
+      </div>
+    </td>
+
+    <td>
+      <div class="cell">
+        <label>مكان التصوير</label>
+        <select class="small-input req-place">
+          <option value="">— اختر —</option>
+          ${SHOOT_PLACES.map(p=>`<option value="${p}">${p}</option>`).join("")}
+        </select>
+      </div>
+    </td>
+
+    <td>
+      <div class="cell">
+        <label>ملاحظة</label>
+        <input class="small-input req-note" placeholder="اختياري">
+      </div>
+    </td>
+
+    <td class="center">
+      <div class="cell actions">
+        <label>مسح</label>
+        <button class="btn danger btnRemoveRow" title="حذف الصف"><i class="fa-solid fa-trash"></i></button>
+      </div>
     </td>
 `;
   reqRowsBody.appendChild(tr);
