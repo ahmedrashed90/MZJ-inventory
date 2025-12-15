@@ -4,6 +4,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -1252,6 +1253,16 @@ function updatePlaceHeader(){
   placeHeaderEl.textContent = anyMove ? "مكان النقل" : "مكان التصوير";
 }
 
+
+function updatePlaceLabelForRow(tr){
+  if(!tr) return;
+  const kind = tr.querySelector('.req-kind')?.value || 'shoot';
+  const lbl  = tr.querySelector('.req-place-label');
+  if(lbl) lbl.textContent = (kind === 'move') ? 'مكان النقل' : 'مكان التصوير';
+}
+function updatePlaceLabelsAll(){
+  Array.from(reqRowsBody.querySelectorAll('tr')).forEach(updatePlaceLabelForRow);
+}
 /* =======================
    Create Request (8 rows)
 ======================= */
@@ -1330,7 +1341,7 @@ function addFormRow(prefill={}){
 
     <td>
       <div class="cell">
-        <label>مكان التصوير</label>
+        <label class="req-place-label">مكان التصوير</label>
         <select class="small-input req-place">
           <option value="">— اختر —</option>
           ${SHOOT_PLACES.map(p=>`<option value="${p}">${p}</option>`).join("")}
@@ -1353,6 +1364,9 @@ function addFormRow(prefill={}){
     </td>
 `;
   reqRowsBody.appendChild(tr);
+  // ضبط عنوان المكان داخل الصف حسب نوع الطلب
+  updatePlaceLabelForRow(tr);
+  updatePlaceHeader();
 
   // Prefill if provided
   if(prefill.kind) tr.querySelector('.req-kind').value = prefill.kind;
@@ -1374,7 +1388,7 @@ function buildFormRows(){
 btnAddRow.addEventListener('click', ()=>addFormRow());
 btnResetRows.addEventListener('click', buildFormRows);
 reqRowsBody.addEventListener('change', (e)=>{
-  if(e.target.closest('.req-kind')) updatePlaceHeader();
+  if(e.target.closest('.req-kind')){ updatePlaceHeader(); updatePlaceLabelForRow(e.target.closest('tr')); }
 });
 
 // Remove row (or clear if it's the last row)
