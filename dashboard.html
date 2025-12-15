@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -450,20 +449,10 @@ tr:hover{ filter: brightness(0.98); }
 <div id="toast" class="toast">تم</div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
-<script>
-  // Safety: always show page even if a module error happens before liftNoFlash()
-  setTimeout(()=>{ 
-    const nf=document.getElementById('noFlash'); 
-    if(nf) nf.remove(); 
-    document.body.style.opacity='1'; 
-  }, 1500);
-</script>
-
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   /* ===== Firebase ===== */
   const firebaseConfig = {
@@ -565,15 +554,6 @@ function liftNoFlash(){
     const d=new Date();
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   };
-  function escapeHtml(s){
-    return (s??'').toString()
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;')
-      .replace(/'/g,'&#039;');
-  }
-
   function setStatus(mode,txt){ $('#connDot').className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'warn'); $('#connText').textContent=txt; }
   function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1400); }
   const trim = v => (v||'').toString().trim();
@@ -582,71 +562,7 @@ function liftNoFlash(){
   let stock=[], moves=[], models=[], variantsMap={};
   let shootRequests=[];
   let moveRequests=[];
-  
-  function getRequestKind(r){
-    const raw = (r && (r.kind || r.type || r.requestType || r.request_kind || r.request || r.kindLabel)) || '';
-    const s = String(raw).toLowerCase();
-    // Arabic
-    if (s.includes('تصوير') || s.includes('shoot')) return 'shoot';
-    if (s.includes('نقل') || s.includes('move') || s.includes('transfer')) return 'move';
-    // Some saved values may be exact
-    if (s === 'shoot') return 'shoot';
-    if (s === 'move') return 'move';
-    return null;
-  }
-
-  function getReqId(r){
-    return (r && (r.id || r.requestId || r.reqId || r.number || r.no || r._docId)) || '';
-  }
-
-  function formatAnyDate(v){
-    if(!v) return '';
-    // Firestore Timestamp
-    if(typeof v === 'object' && v !== null && ('seconds' in v)){
-      const ms = (Number(v.seconds)||0) * 1000 + Math.floor((Number(v.nanoseconds)||0)/1e6);
-      const d = new Date(ms);
-      if(!isNaN(d.getTime())){
-        const pad=n=>String(n).padStart(2,'0');
-        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      }
-    }
-    if(v instanceof Date){
-      const d=v; const pad=n=>String(n).padStart(2,'0');
-      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-    return String(v);
-  }
-
-  function formatReqDate(r){
-    return formatAnyDate((r && (r.createdAt || r.requestedAt || r.date || r.when)) || '');
-  }
-let currentFilterKey = null;
-  // ✅ Live collection fallback: requests (لو صفحة إدارة الطلبات بتكتب هنا)
-  let unsubRequestsCol = null;
-  function subscribeRequestsCollection(){
-    if(unsubRequestsCol) return;
-    try{
-      const reqCol = collection(db, 'requests');
-      // نكتفي بآخر 500 (لو زادت لاحقًا نعمل Pagination)
-      const qReq = query(reqCol, limit(500));
-      unsubRequestsCol = onSnapshot(qReq, (snap)=>{
-        const all = snap.docs.map(d=>({ _docId: d.id, ...(d.data()||{}) }));
-        const shoots = all.filter(r => getRequestKind(r) === 'shoot');
-        const movesArr = all.filter(r => getRequestKind(r) === 'move');
-        // لا نكسر بيانات v1 لو الكولكشن فاضي
-        if(shoots.length || movesArr.length){
-          shootRequests = shoots;
-          moveRequests  = movesArr;
-        }
-        renderAll();
-      }, (err)=>{
-        console.warn('requests snapshot error', err);
-      });
-    }catch(err){
-      console.warn('subscribeRequestsCollection failed', err);
-    }
-  }
-
+  let currentFilterKey = null;
 
   // ملخص طلبات المبيعات من نظام التتبع / ERP
   let salesSummary = null;
@@ -716,8 +632,6 @@ let currentFilterKey = null;
 
         await initData();
         subscribeLive();
-        // fallback listener لمزامنة الطلبات من collection requests
-        subscribeRequestsCollection();
       }catch(err){
         console.error(err);
         setStatus('err','خطأ في تحميل البيانات');
@@ -914,9 +828,7 @@ $('#btnLogin').addEventListener('click', async ()=>{
       }
       computeTransferRequests();
       renderAll();
-      // مزامنة ملخص طلبات المبيعات (حتى لو مشروع التتبع مش مسجّل دخول)
-      try{ await fetchSalesSummary(); }catch(e){ console.warn('fetchSalesSummary init failed', e); }
-}catch(e){
+    }catch(e){
       setStatus('warn','تعذّر تحميل البيانات');
     }
   }
@@ -988,17 +900,6 @@ $('#btnLogin').addEventListener('click', async ()=>{
     return { total, summary };
   }
 
-  async function refreshSalesSummary(){
-    try{
-      await fetchSalesSummary();
-      showToast('تمت المزامنة','ok');
-      renderAll();
-    }catch(e){
-      console.warn(e);
-      showToast('تعذّر تحديث بيانات المبيعات','err');
-    }
-  }
-
   /* ===== Group counts ===== */
   // helper: check any note fields on car row (عميل / إدارة مالية / إدارة عامة)
   function hasAnyCarNotes(row){
@@ -1047,15 +948,9 @@ $('#btnLogin').addEventListener('click', async ()=>{
 
   // تحويل وقت الطلب إلى رقم علشان نرتّب من الأحدث للأقدم
   function getRequestTimestamp(r){
-    const raw = r && (r.createdAt || r.requestedAt || r.date || r.when || '');
+    const raw = r && (r.createdAt || r.requestedAt || r.date || '');
     if (typeof raw === 'number') return raw;
     if (!raw) return 0;
-
-    // Firestore Timestamp object
-    if (typeof raw === 'object' && raw !== null && ('seconds' in raw)) {
-      const ms = (Number(raw.seconds)||0) * 1000 + Math.floor((Number(raw.nanoseconds)||0)/1e6);
-      return ms || 0;
-    }
 
     if (typeof raw === 'string') {
       const trimmed = raw.trim();
@@ -1119,305 +1014,457 @@ $('#btnLogin').addEventListener('click', async ()=>{
     return 'تم الإنشاء';
   }
 
-function shootStats(){
-    // نفس أرقام كروت إدارة الطلبات (تصوير + نقل)
-    const shootTotal = Array.isArray(shootRequests) ? shootRequests.length : 0;
-    const moveTotal  = Array.isArray(moveRequests)  ? moveRequests.length  : 0;
-    const total = shootTotal + moveTotal;
 
-    const allList = [
-      ...(Array.isArray(shootRequests) ? shootRequests : []),
-      ...(Array.isArray(moveRequests)  ? moveRequests  : [])
-    ];
+// ===============================
+// طلبات (تصوير + نقل) — مصدر واحد: collection "requests"
+// ===============================
+let requestsAll = [];     // [{id, kind, createdAt, sentAt, receivedAt, finishedAt, status, total, ...}]
 
-    // نستخدم مرحلة واحدة حصرية لكل طلب
-    const inProg   = allList.filter(r => getOrderStage(r) === 'تم الإنشاء').length;
-    const reviewing= allList.filter(r => getOrderStage(r) === 'تم الاستلام').length;
-    const prepared = allList.filter(r => getOrderStage(r) === 'تم الإرسال').length;
-    const done     = allList.filter(r => getOrderStage(r) === 'تم التنفيذ').length;
+function tsToDate(ts){
+  try{
+    if(!ts) return null;
+    if(ts.toDate) return ts.toDate();
+    if(typeof ts === 'number') return new Date(ts);
+    if(ts.seconds) return new Date(ts.seconds*1000);
+    return new Date(ts);
+  }catch(e){ return null; }
+}
+function fmtDate(ts){
+  const d = tsToDate(ts);
+  if(!d || isNaN(d.getTime())) return '—';
+  // dd/mm/yyyy hh:mm (ar-SA)
+  try{ return new Intl.DateTimeFormat('ar-SA',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(d); }
+  catch(e){ return d.toLocaleString(); }
+}
+function getRequestStage(req){
+  // ترتيب ثابت: إنشاء -> إرسال -> استلام -> مكتملة
+  if(req?.finishedAt || (req?.status && String(req.status).includes('مكتملة'))) return 'done';
+  if(req?.receivedAt) return 'received';
+  if(req?.sentAt) return 'sent';
+  return 'created';
+}
+function stageLabel(stage){
+  return stage==='done' ? 'مكتملة'
+    : stage==='received' ? 'تم الاستلام'
+    : stage==='sent' ? 'تم الإرسال'
+    : 'تم الإنشاء';
+}
 
-    return { total, shootTotal, moveTotal, inProg, prepared, reviewing, done };
+function computeRequestsStats(){
+  const total = requestsAll.length;
+  const shootTotal = shootRequests.length;
+  const moveTotal  = moveRequests.length;
+
+  const byStage = {created:0, sent:0, received:0, done:0};
+  for(const r of requestsAll){
+    const st = getRequestStage(r);
+    byStage[st] = (byStage[st]||0)+1;
   }
+  const inFollow = (byStage.sent + byStage.received); // تحت المتابعة
+  return { total, shootTotal, moveTotal, ...byStage, inFollow };
+}
 
-function renderShootCard(gridEl){
-    const st = shootStats();
-    const card = document.createElement('div');
-    card.className = 'card group-card';
-    card.id = 'ordersAdminCard';
-    card.innerHTML = `
-      <div class="group-head">
-        <div class="group-left">
-          <h3 class="group-title">
-            <i class="fa-solid fa-clipboard-list"></i>
-             الطلبات (تصوير و نقل)
-          </h3>
-          <div class="sub-metrics">
-            <span class="metric shoot-metric" data-status="ALL">
-              <i class="fa-solid fa-list-ol"></i>
-              إجمالي الطلبات:
-              <b>${st.total.toLocaleString('ar-SA')}</b>
-              — تصوير: <b>${st.shootTotal.toLocaleString('ar-SA')}</b>
-              | طلب نقل: <b>${st.moveTotal.toLocaleString('ar-SA')}</b>
-            </span>
-            <span class="metric shoot-metric" data-status="تم الإنشاء">
-              <i class="fa-solid fa-gears"></i>
-              تم الإنشاء:
-              <b>${st.inProg.toLocaleString('ar-SA')}</b>
-            </span>
-            <span class="metric shoot-metric" data-status="تم الإرسال">
-              <i class="fa-solid fa-wand-magic-sparkles"></i>
-              تم الإرسال:
-              <b>${st.prepared.toLocaleString('ar-SA')}</b>
-            </span>
-            <span class="metric shoot-metric" data-status="تم الاستلام">
-              <i class="fa-regular fa-hourglass-half"></i>
-              تم الاستلام:
-              <b>${st.reviewing.toLocaleString('ar-SA')}</b>
-            </span>
-            <span class="metric shoot-metric" data-status="تم التنفيذ">
-              <i class="fa-regular fa-circle-check"></i>
-              تم التنفيذ:
-              <b>${st.done.toLocaleString('ar-SA')}</b>
-            </span>
-          </div>
-        </div>
-        <div class="group-total" title="إجمالي الطلبات">
-          ${st.total.toLocaleString('ar-SA')}
-        </div>
+function shootStats(){ // (احتفاظ بالاسم لأن renderGroups بتناديها)
+  const s = computeRequestsStats();
+  return `
+    <div class="mini-metrics">
+      <div class="mini metric req-metric" data-kind="ALL" data-stage="ALL" title="عرض كل الطلبات">
+        <div class="k">${s.total}</div><div class="l">إجمالي الطلبات</div>
       </div>
-    `;
-
-    // الضغط في أي مكان في الكارت (خارج المتريكس) يفتح تفاصيل كل طلبات التصوير
-    card.addEventListener('click', (ev)=> {
-      if (ev.target.closest('.shoot-metric')) return;
-      openShootModal('ALL');
-    });
-
-    // كل متريك تفتح مودال الطلبات داخل البوردر مع فلتر مناسب
-    card.querySelectorAll('.shoot-metric').forEach(el => {
-      el.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        const status = el.getAttribute('data-status') || 'ALL';
-        if (status === 'ALL') {
-          openShootModal('ALL');
-        } else if (status === 'تم الإنشاء') {
-          openShootModal('تم الإنشاء');
-        } else if (status === 'تم الإرسال') {
-          openShootModal('تم الإرسال');
-        } else if (status === 'تم الاستلام') {
-          openShootModal('تم الاستلام');
-        } else if (status === 'تم التنفيذ') {
-          openShootModal('تم التنفيذ');
-        } else {
-          openShootModal(status);
-        }
-      });
-    });
-
-    // الضغط على الكارت يفتح إجمالي الطلبات
-    card.addEventListener('click', (ev)=>{
-      if(ev.target.closest('.sales-metric')) return;
-      openSalesModal('total');
-    });
-    // الضغط على أي رقم يفتح مودال بفلتر
-    card.querySelectorAll('.sales-metric').forEach(el=>{
-      el.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        const f = el.getAttribute('data-sfilter') || 'total';
-        openSalesModal(f);
-      });
-    });
-
-    gridEl.appendChild(card);
-  }
-
-
-
-/* ===== طلبات نقل السيارات: من moves ===== */
-  function isTransferPending(m){
-    const toLoc = (m.to || m.toLocation || m.target || '').toString();
-
-    // أي حركة رايحة لحالة "مباع تم التسليم"
-    if (!toLoc.includes('مباع تم التسليم')) return false;
-
-    const status = (m.status || '').toString();
-    if (status === 'cancelled' || status === 'rejected') return false;
-
-    // حالة الموافقات (تبقى ظاهرة حتى بعد اكتمالها علشان نعرف الطلب وصل لفين)
-    const adminOk   = (m.adminApproved === true || m.adminApproved === 'true' || m.adminApproval === true);
-    const financeOk = (m.financeApproved === true || m.financeApproved === 'true' || m.financeApproval === true);
-
-    // هل في فلاغ إن الطلب محتاج موافقة
-    const needsFlag =
-      m.requiresAdminApproval || m.needsAdminApproval ||
-      m.requiresFinanceApproval || m.needsFinanceApproval;
-
-    // أو الاستاتس واضح إنه في انتظار موافقات
-    const statusFlag =
-      status === 'pending' ||
-      status === 'awaiting_admin' ||
-      status === 'awaiting_finance' ||
-      status === 'awaiting_approvals';
-
-    // أو الرسالة فيها "طلب نقل" أو "بانتظار موافقة الإدارة"
-    const msg = (m.message || m.note || '').toString();
-    const msgFlag = /طلب نقل|بانتظار موافقة الإدارة/.test(msg);
-
-    // الطلب يفضل ظاهر طول ما هو مرتبط بنقل إلى مباع تم التسليم
-    // سواء في انتظار موافقات أو تمت الموافقة فعلاً
-    return !!(needsFlag || statusFlag || msgFlag || adminOk || financeOk);
-  }
-
-
-  function computeTransferRequests(){
-    transferRequests = [];
-    if(!Array.isArray(moves)) return;
-    moves.forEach((m,idx)=>{
-      if(isTransferPending(m)){
-        transferRequests.push({ ...m, _idx: idx });
-      }
-    });
-  }
-
-  function renderTransferCard(gridEl){
-    const total = transferRequests.length;
-
-    const adminApprovedCount = transferRequests.filter(t =>
-      t.adminApproved === true || t.adminApproved === 'true' || t.adminApproval === true
-    ).length;
-
-    const financeApprovedCount = transferRequests.filter(t =>
-      t.financeApproved === true || t.financeApproved === 'true' || t.financeApproval === true
-    ).length;
-
-    const adminPendingCount = total - adminApprovedCount;
-    const financePendingCount = total - financeApprovedCount;
-
-    const card = document.createElement('div');
-    card.className = 'card group-card';
-    card.id = 'transferCard';
-    card.innerHTML = `
-      <div class="group-head">
-        <div class="group-left">
-          <h3 class="group-title"><i class="fa-solid fa-right-left"></i> الموافقة المالية والإدارية</h3>
-          <div class="sub-metrics">
-            <span class="metric">
-              <i class="fa-solid fa-list-check"></i> طلبات النقل إلى مباع تم التسليم: <b>${total.toLocaleString('ar-SA')}</b>
-            </span>
-            <span class="metric">
-              <i class="fa-solid fa-user-check"></i> موافقة إدارية: <b>${adminPendingCount.toLocaleString('ar-SA')}</b>
-            </span>
-            <span class="metric">
-              <i class="fa-solid fa-coins"></i> موافقة مالية: <b>${financePendingCount.toLocaleString('ar-SA')}</b>
-            </span>
-          </div>
-        </div>
-        <div class="group-total" title="طلبات النقل بانتظار الموافقات">${total.toLocaleString('ar-SA')}</div>
+      <div class="mini metric req-metric" data-kind="shoot" data-stage="ALL" title="طلبات التصوير">
+        <div class="k">${s.shootTotal}</div><div class="l">تصوير</div>
       </div>
-    `;
-    card.addEventListener('click', ()=> openTransfersModal());
-    gridEl.appendChild(card);
-  }
+      <div class="mini metric req-metric" data-kind="move" data-stage="ALL" title="طلبات النقل">
+        <div class="k">${s.moveTotal}</div><div class="l">نقل</div>
+      </div>
+      <div class="mini metric req-metric" data-kind="ALL" data-stage="created" title="تم الإنشاء">
+        <div class="k">${s.created}</div><div class="l">تم الإنشاء</div>
+      </div>
+      <div class="mini metric req-metric" data-kind="ALL" data-stage="sent" title="تم الإرسال">
+        <div class="k">${s.sent}</div><div class="l">تم الإرسال</div>
+      </div>
+      <div class="mini metric req-metric" data-kind="ALL" data-stage="received" title="تم الاستلام">
+        <div class="k">${s.received}</div><div class="l">تم الاستلام</div>
+      </div>
+      <div class="mini metric req-metric" data-kind="ALL" data-stage="done" title="مكتملة">
+        <div class="k">${s.done}</div><div class="l">مكتملة</div>
+      </div>
+    </div>
+  `;
+}
 
-/* ===== Render ===== */
-  // بطاقة ملخص طلبات المبيعات من نظام التتبع / ERP
-
-  /* ===== Sales Orders Modal ===== */
-  function applySalesFilter(filterKey){
-    currentSalesMode = filterKey || 'total';
-    currentSales = Array.isArray(salesOrders) ? salesOrders.slice() : [];
-    if(currentSalesMode === 'notStarted'){
-      filteredSales = currentSales.filter(o=> o.doneCount === 0);
-    }else if(currentSalesMode === 'inProgress'){
-      filteredSales = currentSales.filter(o=> o.doneCount > 0 && o.doneCount < STAGES_COUNT);
-    }else if(currentSalesMode === 'completed'){
-      filteredSales = currentSales.filter(o=> o.doneCount >= STAGES_COUNT);
-    }else{
-      filteredSales = currentSales.slice();
-    }
-  }
-
-  function openSalesModal(filterKey='total'){
-    applySalesFilter(filterKey);
-    const title =
-      filterKey==='notStarted' ? 'طلبات المبيعات — لم تبدأ' :
-      filterKey==='inProgress' ? 'طلبات المبيعات — تحت المتابعة' :
-      filterKey==='completed' ? 'طلبات المبيعات — مكتملة' :
-      'طلبات المبيعات — إجمالي الطلبات';
-    openModal('sales', title);
-  }
-
-  function renderSalesTable(){
-    modalTableSalesBody.innerHTML = '';
-    (filteredSales||[]).forEach((o,idx)=>{
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${idx+1}</td>
-        <td>${o.orderNo||''}</td>
-        <td>${o.customerName||''}</td>
-        <td>${o.phone||''}</td>
-        <td>${o.branch||''}</td>
-        <td>${o.vin||''}</td>
-        <td>${o.deliveryDate||''}</td>
-        <td>${o.lastStageLabel||'—'}</td>
-        <td><span class="tag">${o.status||''}</span></td>
-      `;
-      modalTableSalesBody.appendChild(tr);
-    });
-    modalCount.textContent = `عدد طلبات المبيعات الظاهرة: ${(filteredSales||[]).length.toLocaleString('ar-SA')} من ${(currentSales||[]).length.toLocaleString('ar-SA')}`;
-  }
-
-  function renderSalesSummaryCard(gridEl){
-    const s = salesSummary || { total: 0, notStarted: 0, inProgress: 0, completed: 0 };
-    const card = document.createElement('div');
-    card.className = 'card group-card';
-    card.innerHTML = `
-      <div class="group-head">
-        <div class="group-left">
-          <h3 class="group-title">
-            <i class="fa-solid fa-file-invoice-dollar"></i>
-            طلبات المبيعات (ERP + تتبع)
-          </h3>
-          <div class="sub-metrics">
-            <span class="metric sales-metric" data-sfilter="total" style="cursor:pointer">
-              <i class="fa-solid fa-list-ol"></i>
-              إجمالي الطلبات: <b>${s.total.toLocaleString('ar-SA')}</b>
-            </span>
-            <span class="metric sales-metric" data-sfilter="notStarted" style="cursor:pointer">
-              <i class="fa-solid fa-circle-dot"></i>
-              لم تبدأ: <b>${s.notStarted.toLocaleString('ar-SA')}</b>
-            </span>
-            <span class="metric sales-metric" data-sfilter="inProgress" style="cursor:pointer">
-              <i class="fa-solid fa-spinner"></i>
-              تحت المتابعة: <b>${s.inProgress.toLocaleString('ar-SA')}</b>
-            </span>
-            <span class="metric sales-metric" data-sfilter="completed" style="cursor:pointer">
-              <i class="fa-solid fa-circle-check"></i>
-              مكتملة: <b>${s.completed.toLocaleString('ar-SA')}</b>
-            </span>
-          </div>
-        </div>
-        <div class="group-total" title="إجمالي الطلبات" style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-          <div>${s.total.toLocaleString('ar-SA')}</div>
-          <button class="btn btn-ghost" id="btnSalesSync" type="button" style="padding:6px 10px;font-size:12px;border-radius:999px;">
-            <i class="fa-solid fa-rotate"></i> مزامنة
+function renderShootCard(){ // (احتفاظ بالاسم لأن renderGroups بتناديها)
+  return `
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">الطلبات (تصوير و نقل)</div>
+        <div class="card-actions">
+          <button class="btn btn-outline btn-sm" id="btnSyncRequests" title="مزامنة الآن">
+            <span class="i">⟳</span> مزامنة
           </button>
         </div>
       </div>
+      ${shootStats()}
+      <div class="card-footnote">يتم الجلب مباشرة من Firestore: <span class="mono">requests</span></div>
+    </div>
+  `;
+}
+
+async function subscribeRequests(){
+  try{
+    // ترتيب حديث بالأحدث (لو مفيش createdAt مش هيظهر بالترتيب – بس هيظهر)
+    const q = query(collection(db, 'requests'), orderBy('createdAt','desc'));
+    onSnapshot(q, (snap)=>{
+      requestsAll = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+      shootRequests = requestsAll.filter(r => r.kind === 'shoot');
+      moveRequests  = requestsAll.filter(r => r.kind === 'move');
+      // إعادة رندر الكروت
+      renderGroups();
+      // لو المودال مفتوح، حدّثه
+      if(document.getElementById('requestsModal')?.classList.contains('show')){
+        const k = document.getElementById('requestsModal').dataset.kind || 'ALL';
+        const st = document.getElementById('requestsModal').dataset.stage || 'ALL';
+        renderRequestsModal(k, st);
+      }
+    }, (err)=>{
+      console.error('Requests snapshot error:', err);
+    });
+  }catch(e){
+    console.error('subscribeRequests failed:', e);
+  }
+}
+
+async function manualRefreshRequests(){
+  try{
+    const q = query(collection(db,'requests'), orderBy('createdAt','desc'));
+    const snap = await getDocs(q);
+    requestsAll = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    shootRequests = requestsAll.filter(r => r.kind === 'shoot');
+    moveRequests  = requestsAll.filter(r => r.kind === 'move');
+    renderGroups();
+  }catch(e){
+    console.error('manualRefreshRequests failed:', e);
+    toast('تعذر تحديث الطلبات الآن');
+  }
+}
+
+function ensureRequestsModal(){
+  let modal = document.getElementById('requestsModal');
+  if(modal) return modal;
+
+  modal = document.createElement('div');
+  modal.id = 'requestsModal';
+  modal.className = 'modal';
+  modal.innerHTML = `
+    <div class="modal-backdrop" data-close="1"></div>
+    <div class="modal-card wide">
+      <div class="modal-head">
+        <div class="modal-title" id="reqModalTitle">طلبات التصوير والنقل — الكل</div>
+        <div class="modal-actions">
+          <button class="btn btn-outline btn-sm" id="btnReqExport">تصدير Excel</button>
+          <button class="btn btn-danger btn-sm" data-close="1">إغلاق</button>
+        </div>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-toolbar">
+          <input id="reqSearch" class="input" placeholder="بحث..." />
+          <div class="chips" id="reqChips"></div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table" id="reqTable">
+            <thead>
+              <tr>
+                <th class="mono">رقم</th>
+                <th>التاريخ</th>
+                <th>نوع الطلب</th>
+                <th>الحالة</th>
+                <th>عدد الهياكل</th>
+                <th>مقدّم</th>
+                <th>ملاحظات الإدارة</th>
+                <th>تفاصيل الطلب</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="table-empty" id="reqEmpty" style="display:none">لا توجد طلبات مطابقة.</div>
+        </div>
+
+        <div class="details-panel" id="reqDetails" style="display:none">
+          <div class="details-head">
+            <div class="details-title" id="reqDetailsTitle">تفاصيل الطلب</div>
+          </div>
+          <div class="table-wrap">
+            <table class="table" id="reqRowsTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th class="mono">VIN</th>
+                  <th>السيارة</th>
+                  <th>البيان</th>
+                  <th>اللون الخارجي</th>
+                  <th>الموديل</th>
+                  <th>المكان الحالي</th>
+                  <th>مكان التصوير/النقل</th>
+                  <th>ملاحظات</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <div class="table-empty" id="reqRowsEmpty" style="display:none">لا توجد تفاصيل محفوظة لهذا الطلب (rows).</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  // إغلاق
+  modal.addEventListener('click', (e)=>{
+    const close = e.target.closest('[data-close="1"]');
+    if(close) closeRequestsModal();
+  });
+  // ESC
+  window.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape' && modal.classList.contains('show')) closeRequestsModal();
+  });
+
+  // Export
+  modal.querySelector('#btnReqExport').addEventListener('click', ()=> exportRequestsToExcel());
+
+  // Search
+  modal.querySelector('#reqSearch').addEventListener('input', ()=>{
+    const k = modal.dataset.kind || 'ALL';
+    const st = modal.dataset.stage || 'ALL';
+    renderRequestsModal(k, st);
+  });
+
+  return modal;
+}
+
+function openRequestsModal(kind='ALL', stage='ALL'){
+  const modal = ensureRequestsModal();
+  modal.dataset.kind = kind;
+  modal.dataset.stage = stage;
+  modal.classList.add('show');
+  renderRequestsModal(kind, stage);
+}
+
+function closeRequestsModal(){
+  const modal = document.getElementById('requestsModal');
+  if(!modal) return;
+  modal.classList.remove('show');
+  // اخفاء التفاصيل
+  const details = modal.querySelector('#reqDetails');
+  details.style.display = 'none';
+  details.querySelector('#reqRowsTable tbody').innerHTML = '';
+}
+
+function filterRequests(kind='ALL', stage='ALL', q=''){
+  const ql = (q||'').trim().toLowerCase();
+  return requestsAll.filter(r=>{
+    const kOk = (kind==='ALL') || (r.kind === kind);
+    const stOk = (stage==='ALL') || (getRequestStage(r) === stage);
+    if(!kOk || !stOk) return false;
+    if(!ql) return true;
+    const hay = [
+      r.id,
+      r.kind,
+      r.status,
+      r.createdByName,
+      r.createdByEmail,
+      r.note,
+      r._searchText
+    ].filter(Boolean).join(' ').toLowerCase();
+    return hay.includes(ql);
+  });
+}
+
+function renderRequestsModal(kind='ALL', stage='ALL'){
+  const modal = ensureRequestsModal();
+  const title = modal.querySelector('#reqModalTitle');
+  const kindLabel = kind==='ALL' ? 'الكل' : (kind==='shoot' ? 'تصوير' : 'نقل');
+  const stageLabelTxt = stage==='ALL' ? '' : ` — ${stageLabel(stage)}`;
+  title.textContent = `طلبات التصوير والنقل — ${kindLabel}${stageLabelTxt}`;
+
+  // Chips
+  const chips = modal.querySelector('#reqChips');
+  const chipsDef = [
+    {k:'ALL', s:'ALL', t:'الكل'},
+    {k:'shoot', s:'ALL', t:'تصوير'},
+    {k:'move', s:'ALL', t:'نقل'},
+    {k:'ALL', s:'created', t:'تم الإنشاء'},
+    {k:'ALL', s:'sent', t:'تم الإرسال'},
+    {k:'ALL', s:'received', t:'تم الاستلام'},
+    {k:'ALL', s:'done', t:'مكتملة'},
+  ];
+  chips.innerHTML = chipsDef.map(c=>{
+    const active = (c.k===kind && c.s===stage) ? 'active' : '';
+    return `<button class="chip ${active}" data-kind="${c.k}" data-stage="${c.s}">${c.t}</button>`;
+  }).join('');
+
+  chips.querySelectorAll('.chip').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      openRequestsModal(btn.dataset.kind, btn.dataset.stage);
+    });
+  });
+
+  const q = modal.querySelector('#reqSearch').value || '';
+  const list = filterRequests(kind, stage, q);
+
+  const tbody = modal.querySelector('#reqTable tbody');
+  const empty = modal.querySelector('#reqEmpty');
+  tbody.innerHTML = '';
+  empty.style.display = list.length ? 'none' : 'block';
+
+  list.forEach((r, i)=>{
+    const tr = document.createElement('tr');
+    const typeLabel = (r.kind === 'shoot') ? 'طلب تصوير' : 'طلب نقل';
+    const st = getRequestStage(r);
+    const statusTxt = (r.status && String(r.status).trim()) ? r.status : stageLabel(st);
+    const total = Number(r.total ?? 0);
+    const createdBy = r.createdByName || '—';
+    const adminNote = r.adminNote || r.adminNotes || '—';
+    tr.innerHTML = `
+      <td class="mono">${r.id}</td>
+      <td>${fmtDate(r.createdAt)}</td>
+      <td>${typeLabel}</td>
+      <td>${statusTxt}</td>
+      <td class="mono">${isFinite(total) ? total : 0}</td>
+      <td>${createdBy}</td>
+      <td>${adminNote || '—'}</td>
+      <td><button class="btn btn-outline btn-sm" data-details="${r.id}">تفاصيل</button></td>
     `;
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('button[data-details]').forEach(btn=>{
+    btn.addEventListener('click', ()=> loadRequestRows(btn.dataset.details));
+  });
+}
+
+async function loadRequestRows(requestId){
+  const modal = ensureRequestsModal();
+  const details = modal.querySelector('#reqDetails');
+  const title = modal.querySelector('#reqDetailsTitle');
+  const rowsTbody = modal.querySelector('#reqRowsTable tbody');
+  const rowsEmpty = modal.querySelector('#reqRowsEmpty');
+
+  title.textContent = `تفاصيل الطلب رقم: ${requestId}`;
+  details.style.display = 'block';
+  rowsTbody.innerHTML = '';
+  rowsEmpty.style.display = 'none';
+
+  try{
+    const q = query(collection(db,'requests',requestId,'rows'), orderBy('createdAt','asc'));
+    const snap = await getDocs(q);
+
+    const rows = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+    if(!rows.length){
+      rowsEmpty.style.display = 'block';
+      return;
+    }
+
+    rows.forEach((row, idx)=>{
+      const vin = row.vin || row.VIN || row.id || '—';
+      const car = row.car || '—';
+      const bayan = row.bayan || row.desc || '—';
+      const ext = row.extColor || row.ext || '—';
+      const model = row.modelYear || row.model || '—';
+      const loc = row.location || row.currentPlace || '—';
+      const sp = row.shootPlace || row.targetPlace || row.place || '—';
+      const note = row.note || '—';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="mono">${idx+1}</td>
+        <td class="mono">${vin}</td>
+        <td>${car}</td>
+        <td>${bayan}</td>
+        <td>${ext}</td>
+        <td>${model}</td>
+        <td>${loc}</td>
+        <td>${sp}</td>
+        <td>${note}</td>
+      `;
+      rowsTbody.appendChild(tr);
+    });
+  }catch(e){
+    console.error('loadRequestRows failed:', e);
+    rowsEmpty.style.display = 'block';
+  }
+}
+
+function exportRequestsToExcel(){
+  // لو عندك أكواد تصدير موجودة في الداش، نستخدمها. وإلا نعمل تصدير بسيط CSV.
+  try{
+    const modal = ensureRequestsModal();
+    const kind = modal.dataset.kind || 'ALL';
+    const stage = modal.dataset.stage || 'ALL';
+    const q = modal.querySelector('#reqSearch').value || '';
+    const list = filterRequests(kind, stage, q);
+
+    const headers = ['id','createdAt','kind','status','total','createdByName','createdByEmail'];
+    const rows = list.map(r=>[
+      r.id,
+      fmtDate(r.createdAt),
+      r.kind,
+      r.status || stageLabel(getRequestStage(r)),
+      r.total ?? 0,
+      r.createdByName || '',
+      r.createdByEmail || ''
+    ]);
+
+    const csv = [headers.join(','), ...rows.map(a=>a.map(v=>`"${String(v).replaceAll('"','""')}"`).join(','))].join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'requests.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }catch(e){
+    console.error('exportRequestsToExcel failed:', e);
+    toast('تعذر التصدير الآن');
+  }
+}
+
+// ربط الكارت: فتح المودال عند الضغط على أي مِتريك
+function bindRequestsCardInteractions(){
+  const root = document.querySelector('.req-metric')?.closest('.card');
+  if(!root) return;
+
+  root.querySelectorAll('.req-metric').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      openRequestsModal(el.dataset.kind || 'ALL', el.dataset.stage || 'ALL');
+    });
+  });
+
+  const syncBtn = root.querySelector('#btnSyncRequests');
+  if(syncBtn){
+    syncBtn.addEventListener('click', async ()=>{
+      syncBtn.disabled = true;
+      await manualRefreshRequests();
+      setTimeout(()=>{ syncBtn.disabled = false; }, 400);
+    });
+  }
+}
+
+// بعد كل renderGroups، نحتاج نربط الايفنتس للكارت الجديد
+const _origRenderGroups = renderGroups;
+renderGroups = function(){
+  _origRenderGroups();
+  // ربط أحداث الكارت بعد ما يتولد
+  setTimeout(()=> bindRequestsCardInteractions(), 0);
+};
     // فتح مودال طلبات المبيعات عند الضغط على الأرقام
     const totalBox = card.querySelector('.group-total');
     if(totalBox){
       totalBox.style.cursor = 'pointer';
       totalBox.addEventListener('click', (e)=>{ e.stopPropagation(); openSalesModal('total'); });
-    }
-
-    const btnSalesSync = card.querySelector('#btnSalesSync');
-    if(btnSalesSync){
-      btnSalesSync.addEventListener('click', async (e)=>{
-        e.stopPropagation();
-        await refreshSalesSummary();
-      });
     }
 
     card.querySelectorAll('.sales-metric').forEach(el=>{
@@ -1898,8 +1945,8 @@ function openShootModal(filter='ALL'){
       const tr=document.createElement('tr');
       const typeLabel = r._type === 'move' ? 'طلب نقل' : 'طلب تصوير';
       tr.innerHTML = `
-        <td>#${getReqId(r) || '—'}</td>
-        <td>${formatReqDate(r)}</td>
+        <td>#${r.id}</td>
+        <td>${r.createdAt || r.requestedAt || r.date || ''}</td>
         <td>${typeLabel}</td>
         <td>${r.createdBy || '-'}</td>
         <td>${(r.rows || []).length}</td>
@@ -1918,81 +1965,14 @@ function openShootModal(filter='ALL'){
     modalCount.textContent = `عدد الطلبات الظاهرة: ${filteredShoot.length.toLocaleString('ar-SA')} من ${currentShoot.length.toLocaleString('ar-SA')}`;
   }
 
-    async function openShootDetails(id, type){
-    const isMove = (type === 'move');
+  function openShootDetails(id, type){
+    const isMove = type === 'move';
     const source = isMove ? (Array.isArray(moveRequests) ? moveRequests : []) : (Array.isArray(shootRequests) ? shootRequests : []);
-
-    // نطابق بالـ docId أو أي رقم قديم
-    const req = source.find(r => String(getReqId(r)) === String(id) || String(r._docId||'') === String(id));
+    const req = source.find(r => String(r.id) === String(id));
     if(!req){
       showToast('تعذّر العثور على هذا الطلب');
       return;
     }
-
-    const reqId   = String(getReqId(req) || id || '');
-    const docId   = String(req._docId || reqId || id || '');
-    const kindLbl = isMove ? ' — طلب نقل' : ' — طلب تصوير';
-    shootDetailsIdSpan.textContent = '#' + reqId + kindLbl;
-
-    // نجيب الصفوف من Firestore (requests/{docId}/rows) لو مش موجودة داخل المستند
-    let rows = Array.isArray(req.rows) ? req.rows : [];
-    if((!rows || !rows.length) && docId){
-      try{
-        const rowsCol = collection(db, 'requests', docId, 'rows');
-        // لو موجود idx نرتّب عليه، لو مش موجود هنقرأ بدون ترتيب
-        let snap;
-        try{
-          snap = await getDocs(query(rowsCol, orderBy('idx','asc')));
-        }catch(_){
-          snap = await getDocs(rowsCol);
-        }
-        rows = snap.docs.map(d => ({ _rowId:d.id, ...(d.data()||{}) }));
-      }catch(err){
-        console.error(err);
-        rows = [];
-      }
-    }
-
-    shootDetailsTableBody.innerHTML = '';
-    rows = Array.isArray(rows) ? rows : [];
-
-    rows.forEach((row,idx)=>{
-      const vin        = row.vin || row.chassis || row.VIN || '';
-      const car        = row.car || row.model || row.carName || '';
-      const variant    = row.variant || row.trim || row.category || '';
-      const extColor   = row.extColor || row.color || row.ext_color || '';
-      const modelYear  = row.modelYear || row.year || row.model || '';
-      const currLoc    = row.currentLocation || row.from || row.fromLocation || req.fromLocation || row.location || '';
-      const destPlace  = isMove
-        ? (row.movePlace || row.transferPlace || row.to || row.toLocation || req.toLocation || '')
-        : (row.shootPlace || row.photoPlace || row.to || row.toLocation || req.toLocation || '');
-      const note       = row.note || row.notes || row.message || req.note || '';
-
-      const tr=document.createElement('tr');
-      tr.innerHTML = `
-        <td>${idx+1}</td>
-        <td>${escapeHtml(vin)}</td>
-        <td>${escapeHtml(car)}</td>
-        <td>${escapeHtml(variant)}</td>
-        <td>${escapeHtml(extColor)}</td>
-        <td>${escapeHtml(modelYear)}</td>
-        <td>${escapeHtml(currLoc)}</td>
-        <td>${escapeHtml(destPlace)}</td>
-        <td>${escapeHtml(note)}</td>
-      `;
-      shootDetailsTableBody.appendChild(tr);
-    });
-
-    // لو مفيش صفوف
-    if(!rows.length){
-      const tr=document.createElement('tr');
-      tr.innerHTML = `<td colspan="9" style="text-align:center;color:var(--muted);padding:16px">لا توجد تفاصيل (Rows) لهذا الطلب.</td>`;
-      shootDetailsTableBody.appendChild(tr);
-    }
-
-    shootDetailsBox.style.display='block';
-    shootDetailsBox.scrollIntoView({behavior:'smooth',block:'center'});
-  }
 
     shootDetailsIdSpan.textContent = '#' + id + (isMove ? ' — طلب نقل' : ' — طلب تصوير');
 
@@ -2384,7 +2364,6 @@ try{
 </script>
 </body>
 </html>
-
 
 
 
