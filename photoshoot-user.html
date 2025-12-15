@@ -982,26 +982,23 @@ async function upsertRequestToState({requestId, kind, status, total, createdByEm
   const vins = (rows||[]).map(r=>r.vin).filter(Boolean).join(' ');
   base._searchText = `${rid} ${kind} ${createdByEmail||''} ${createdByName||''} ${vins}`.trim();
 
-  const field = stateFieldPath(kind, rid);
-  await ADMIN_STATE_DOC.set({ [field]: base }, { merge:true });
+  const sub = ADMIN_STATE_DOC.collection(kind==='move'?'moveRequests':'shootRequests').doc(rid);
+  await sub.set(base, { merge:true });
 }
 
 async function patchRequestInState(requestId, kind, patch){
   const rid = String(requestId);
-  const field = stateFieldPath(kind, rid);
-  // flatten patch under field.*
-  const data = {};
-  Object.keys(patch||{}).forEach(k=>{
-    data[`${field}.${k}`] = patch[k];
-  });
-  data[`${field}.updatedAt`] = firebase.firestore.FieldValue.serverTimestamp();
-  await ADMIN_STATE_DOC.set(data, { merge:true });
+  const sub = ADMIN_STATE_DOC.collection(kind==='move'?'moveRequests':'shootRequests').doc(rid);
+  // merge patch directly
+  patch = patch || {};
+  patch.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+  await sub.set(patch, { merge:true });
 }
 
 async function deleteRequestFromState(requestId, kind){
   const rid = String(requestId);
-  const field = stateFieldPath(kind, rid);
-  await ADMIN_STATE_DOC.set({ [field]: firebase.firestore.FieldValue.delete() }, { merge:true });
+  const sub = ADMIN_STATE_DOC.collection(kind==='move'?'moveRequests':'shootRequests').doc(rid);
+  try{ await sub.delete(); }catch(e){ /* ignore */ }
 }
 /* ===== Roles & Permissions ===== */
   const ROLE_ADMIN   = 'الادارة';
@@ -2103,6 +2100,7 @@ document.body.classList.add(isAdmin() ? 'is-admin' : 'not-admin');
 
 </body>
 </html>
+
 
 
 
