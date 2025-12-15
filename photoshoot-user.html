@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -1110,7 +1111,7 @@ async function deleteRequestById(requestId){
     batch.delete(reqRef);
     await batch.commit();
 
-    await logAction("حذف طلب", `تم حذف الطلب #${id} بواسطة ${myName()}`);
+    await logAction("حذف طلب", "تم حذف الطلب #"+id+" بواسطة "+myName()+"");
     alert("تم حذف الطلب ✅");
   }catch(e){
     console.error(e);
@@ -1451,7 +1452,7 @@ btnSubmit.addEventListener('click', async ()=>{
     });
     await batch.commit();
 
-    await logAction("إنشاء طلب", `تم إنشاء طلب (${kind}) — عدد VINs: ${rows.length}`);
+    await logAction("إنشاء طلب", "تم إنشاء طلب (${kind}) — عدد VINs: ${rows.length}");
 
     alert("تم إنشاء الطلب ✅");
     buildFormRows();
@@ -1630,7 +1631,7 @@ async function applyStep(stepNo){
 
   await logAction(
     stepNo===1 ? "تم استلام الطلب" : (stepNo===2 ? "تم إرسال السيارة" : "تم استلام السيارة"),
-    `طلب #${openRequestId} — مرحلة ${stepNo} — عدد ${targets.length}`
+    "طلب #${openRequestId} — مرحلة ${stepNo} — عدد ${targets.length}"
   );
 }
 
@@ -1704,7 +1705,7 @@ async function finishRequest(){
     try{ await updateStockLocationsAfterMoveFinish(openRows); }catch(e){ console.error(e); }
   }
 
-  await logAction("تم الانتهاء", `تم إنهاء الطلب #${openRequestId} بواسطة ${myName()}`);
+  await logAction("تم الانتهاء", "تم إنهاء الطلب #${openRequestId} بواسطة "+myName()+"");
 }
 
 btnStep1.addEventListener('click', ()=>applyStep(1));
@@ -1748,7 +1749,7 @@ btnEditReq.addEventListener('click', async ()=>{
   batch.set(reqRef, { updatedAt: now }, { merge:true });
   await batch.commit();
 
-  await logAction("تعديل الطلب", `تم تعديل وجهات الطلب #${openRequestId} بواسطة ${myName()}`);
+  await logAction("تعديل الطلب", "تم تعديل وجهات الطلب #${openRequestId} بواسطة "+myName()+"");
 
   editMode=false;
 });
@@ -1818,16 +1819,25 @@ function renderManage(all){
   ordersTbody.innerHTML='';
   list.forEach(req=>{
     const tr=document.createElement('tr');
-    tr.innerHTML = `
-      <td><b>#${req.__id}</b></td>
-      <td>${kindLabel(req.kind)}</td>
-      <td>${statusLabel(req)}</td>
-      <td class="muted">${req.createdByName||req.createdByEmail||"—"}</td>
-      <td class="muted">${fmtTs(req.updatedAt||req.createdAt)}</td>
-      <td><button class="btn primary" data-open="${req.__id}"><i class="fa-solid fa-up-right-from-square"></i>فتح</button>
-${canDeleteRequest(req) ? `<button class="btn danger" data-del="${req.__id}" style="margin-right:6px"><i class="fa-solid fa-trash"></i>حذف</button>` : ``}</td>
-    `;
-    tr.querySelector('[data-open]').addEventListener('click', ()=>openRequest(req.__id));
+    
+      const actionBtn = canDeleteRequest(req)
+        ? '<button class="row-del" title="حذف الطلب" data-del="'+req.id+'"><i class="fa fa-trash"></i></button>'
+        : '';
+
+      tr.innerHTML =
+        '<td class="center">#'+req.id+'</td>' +
+        '<td>'+ (kindLabel(req.kind||'') ) +'</td>' +
+        '<td class="mono">'+ (req.vin||'—') +'</td>' +
+        '<td>'+ (req.car||'—') +'</td>' +
+        '<td>'+ (req.trim||'—') +'</td>' +
+        '<td>'+ (req.ext||'—') +'</td>' +
+        '<td>'+ (req.int||'—') +'</td>' +
+        '<td>'+ (req.model||'—') +'</td>' +
+        '<td>'+ (req.location||'—') +'</td>' +
+        '<td>'+ (req.shootPlace||'—') +'</td>' +
+        '<td>'+ (req.notes||'') +'</td>' +
+        '<td class="center">'+ actionBtn +'</td>';
+tr.querySelector('[data-open]').addEventListener('click', ()=>openRequest(req.__id));
     const delBtn = tr.querySelector('[data-del]');
     if(delBtn){ delBtn.addEventListener('click', ()=>deleteRequestById(req.__id)); }
 
