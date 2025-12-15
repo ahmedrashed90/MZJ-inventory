@@ -2,457 +2,140 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MZJ — إدارة الطلبات</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
-
-  <style>
-    :root{
-      --brown:#3e2420;
-      --beige:#bc8f74;
-      --cream:#fff8ef;
-      --text:#1f2937;
-      --muted:#6b7280;
-      --line:#e8d6c8;
-      --radius:16px;
-      --shadow:0 12px 30px rgba(0,0,0,.08);
-      --ok:#16a34a;
-      --warn:#f59e0b;
-      --danger:#ef4444;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:"Tajawal",system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
-      background:var(--cream);
-      color:var(--text);
-    }
-
-    /* ===== Topbar (Workspace tabs) ===== */
-    .topbar{
-      position:sticky; top:0; z-index:50;
-      background:rgba(255,255,255,.92);
-      backdrop-filter: blur(8px);
-      border-bottom:1px solid var(--line);
-    }
-    .topbar-inner{
-      max-width:1200px; margin:0 auto;
-      padding:14px 16px;
-      display:flex; align-items:center; gap:12px; justify-content:space-between;
-    }
-    .brand{
-      display:flex; align-items:center; gap:10px;
-      min-width:260px;
-    }
-    .brand-badge{
-      width:44px; height:44px; border-radius:14px;
-      background:var(--brown); color:#fff;
-      display:flex; align-items:center; justify-content:center;
-      font-weight:800;
-      box-shadow: 0 10px 22px rgba(62,36,32,.2);
-    }
-    .brand-title{
-      display:flex; flex-direction:column; line-height:1.2;
-    }
-    .brand-title b{font-size:15px}
-    .brand-title span{font-size:12px; color:var(--muted)}
-    .tabs{
-      display:flex; gap:8px;
-      overflow:auto; white-space:nowrap;
-      padding-bottom:6px;
-    }
-    .tabs::-webkit-scrollbar{height:6px}
-    .tabs::-webkit-scrollbar-thumb{background:#dcc3b2;border-radius:999px}
-    .tab{
-      display:inline-flex; align-items:center; justify-content:center;
-      padding:10px 14px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:#fff;
-      color:var(--brown);
-      font-size:14px;
-      font-weight:700;
-      text-decoration:none;
-      transition:.15s ease;
-    }
-    .tab:hover{background:#f6eee7}
-    .tab.active{
-      background:var(--brown);
-      border-color:var(--brown);
-      color:#fff;
-    }
-
-    /* ===== Page ===== */
-    .wrap{max-width:1200px; margin:0 auto; padding:18px 16px 42px}
-    .hero{
-      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
-      padding:18px 18px;
-      background:linear-gradient(180deg, rgba(62,36,32,.10), rgba(255,255,255,.95));
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      box-shadow: var(--shadow);
-    }
-    .hero h1{margin:0; font-size:20px; color:var(--brown)}
-    .hero p{margin:6px 0 0; color:var(--muted); font-size:13px; line-height:1.6}
-    .chips{
-      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
-      justify-content:flex-start;
-      margin-top:10px;
-    }
-    .chip{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 12px;
-      border-radius:999px;
-      background:#fff;
-      border:1px solid var(--line);
-      font-size:13px;
-      color:var(--text);
-    }
-    .dot{width:10px;height:10px;border-radius:999px;background:var(--warn)}
-    .dot.ok{background:var(--ok)}
-    .dot.bad{background:var(--danger)}
-
-    /* ===== Primary Tabs (bottom-ish) ===== */
-    .subtabs{
-      margin-top:16px;
-      display:flex; gap:10px; flex-wrap:wrap;
-    }
-    .subtab{
-      padding:12px 16px;
-      border:1px solid var(--line);
-      border-radius:999px;
-      background:#fff;
-      color:var(--brown);
-      font-weight:800;
-      cursor:pointer;
-      transition:.15s ease;
-    }
-    .subtab.active{background:var(--brown); color:#fff; border-color:var(--brown)}
-    .panel{
-      margin-top:14px;
-      background:#fff;
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .panel-head{
-      padding:14px 16px;
-      border-bottom:1px solid var(--line);
-      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
-      background:rgba(255,248,239,.55);
-    }
-    .panel-head .title{font-weight:900; color:var(--brown); font-size:16px}
-    .actions{
-      display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-    }
-    .btn{
-      appearance:none;
-      border:1px solid var(--line);
-      background:#fff;
-      color:var(--brown);
-      font-weight:800;
-      padding:10px 14px;
-      border-radius:12px;
-      cursor:pointer;
-      transition:.15s ease;
-    }
-    .btn:hover{background:#f6eee7}
-    .btn.primary{
-      background:var(--brown); color:#fff; border-color:var(--brown);
-    }
-    .btn.primary:hover{filter:brightness(.98)}
-    .btn:disabled{
-      opacity:.55; cursor:not-allowed;
-    }
-    .input, select{
-      font-family:inherit;
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:10px 12px;
-      outline:none;
-      background:#fff;
-      min-width:190px;
-    }
-
-    /* ===== Table ===== */
-    .table-wrap{overflow:auto}
-    table{width:100%; border-collapse:separate; border-spacing:0}
-    thead th{
-      position:sticky; top:0;
-      background:#fff7f0;
-      color:var(--brown);
-      font-weight:900;
-      font-size:13px;
-      border-bottom:1px solid var(--line);
-      padding:12px 10px;
-      white-space:nowrap;
-    }
-    tbody td{
-      border-bottom:1px solid #f3e7dd;
-      padding:12px 10px;
-      vertical-align:middle;
-      font-size:13.5px;
-      white-space:nowrap;
-    }
-    tbody tr:hover{background:#fffaf6}
-    .muted{color:var(--muted)}
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      border:1px solid var(--line);
-      background:#fff;
-      border-radius:999px;
-      padding:7px 10px;
-      font-weight:800;
-      color:var(--brown);
-      font-size:12.5px;
-    }
-    .pill.ok{border-color:rgba(22,163,74,.25); background:rgba(22,163,74,.06); color:#14532d}
-    .pill.warn{border-color:rgba(245,158,11,.25); background:rgba(245,158,11,.08); color:#7c2d12}
-    .pill.bad{border-color:rgba(239,68,68,.25); background:rgba(239,68,68,.06); color:#7f1d1d}
-
-    /* ===== Create table inputs ===== */
-    .vin-input{
-      width:140px; text-align:center; font-weight:900; letter-spacing:.5px;
-    }
-    .small-select{min-width:140px}
-    .note-input{min-width:220px}
-    .trash{
-      width:36px;height:36px;border-radius:12px;
-      border:1px solid var(--line); background:#fff;
-      cursor:pointer;
-      font-weight:900;
-    }
-    .trash:hover{background:#fff0f0;border-color:rgba(239,68,68,.25); color:#991b1b}
-
-    /* ===== Modal ===== */
-    .modal{
-      position:fixed; inset:0; z-index:1000;
-      display:none;
-      align-items:center; justify-content:center;
-      padding:18px;
-      background:rgba(15,23,42,.42);
-    }
-    .modal.open{display:flex}
-    .modal-card{
-      width:min(1100px, 98vw);
-      max-height:92vh;
-      overflow:auto;
-      background:#fff;
-      border-radius:22px;
-      border:1px solid var(--line);
-      box-shadow: 0 30px 70px rgba(0,0,0,.25);
-    }
-    .modal-head{
-      position:sticky; top:0;
-      background:#fff;
-      border-bottom:1px solid var(--line);
-      padding:14px 16px;
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      z-index:2;
-    }
-    .modal-head .mh-title{
-      font-weight:1000; color:var(--brown); font-size:16px;
-    }
-    .modal-close{
-      border:1px solid var(--line);
-      background:#fff;
-      border-radius:12px;
-      padding:10px 14px;
-      cursor:pointer;
-      font-weight:900;
-      color:var(--brown);
-    }
-    .modal-body{padding:16px}
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:12px;
-      margin-bottom:12px;
-    }
-    @media (max-width: 900px){
-      .grid{grid-template-columns:1fr}
-      .brand{min-width:auto}
-    }
-    .card{
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:14px;
-      background:linear-gradient(180deg, rgba(255,248,239,.8), #fff);
-    }
-    .card h3{
-      margin:0 0 10px;
-      font-size:14px;
-      color:var(--brown);
-      font-weight:1000;
-    }
-    .kv{
-      display:grid;
-      grid-template-columns: 140px 1fr;
-      gap:8px 10px;
-      font-size:13px;
-    }
-    .kv div:nth-child(odd){color:var(--muted)}
-    .progress-box{
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:12px;
-      background:#fff;
-    }
-    .bar{
-      height:10px;
-      background:#f3e7dd;
-      border-radius:999px;
-      overflow:hidden;
-      margin-top:8px;
-    }
-    .bar > i{
-      display:block;
-      height:100%;
-      width:0%;
-      background:linear-gradient(90deg, rgba(62,36,32,.85), rgba(188,143,116,1));
-      border-radius:999px;
-      transition:width .25s ease;
-    }
-    .steps{
-      display:flex; gap:8px; flex-wrap:wrap;
-      margin-top:10px;
-    }
-    .step-chip{
-      padding:8px 10px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:#fff;
-      font-size:12px;
-      font-weight:900;
-      color:var(--brown);
-    }
-    .step-chip.done{background:rgba(22,163,74,.08); border-color:rgba(22,163,74,.25); color:#14532d}
-    .step-chip.lock{opacity:.55}
-
-    .modal-actions{
-      margin-top:12px;
-      display:flex; gap:10px; flex-wrap:wrap;
-      align-items:flex-start;
-    }
-    .stage-btn{
-      flex:1 1 180px;
-      padding:12px 14px;
-      border-radius:14px;
-      border:1px solid var(--line);
-      background:#fff;
-      font-weight:1000;
-      color:var(--brown);
-      cursor:pointer;
-      transition:.15s ease;
-      min-width:180px;
-    }
-    .stage-btn:hover{background:#f6eee7}
-    .stage-btn.done{background:rgba(22,163,74,.08); border-color:rgba(22,163,74,.25); color:#14532d}
-    .stage-btn:disabled{opacity:.55; cursor:not-allowed}
-    .note-area{
-      flex: 2 1 360px;
-      min-width:280px;
-    }
-    textarea{
-      width:100%;
-      min-height:48px;
-      resize:vertical;
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:12px;
-      font-family:inherit;
-    }
-
-    .hint{
-      margin-top:8px;
-      color:var(--muted);
-      font-size:12.5px;
-      line-height:1.6;
-    }
-
-    .inline-badge{
-      display:inline-flex; gap:6px; align-items:center;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid var(--line);
-      background:#fff;
-      font-weight:900;
-      font-size:12px;
-      color:var(--brown);
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MZJ — إدارة الطلبات</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brown:#3e2420;
+  --beige:#bc8f74;
+  --cream:#fff8ef;
+  --line:#e8d6c8;
+  --muted:#6b7280;
+  --radius:14px;
+  --shadow:0 10px 30px rgba(62,36,32,.08);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;font-family:"Tajawal",system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#fff8ef,#fff);color:#1f2937}
+a{text-decoration:none}
+.container{max-width:1180px;margin:0 auto;padding:18px}
+/* Topbar */
+.topbar{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:12px 14px;display:flex;align-items:center;gap:12px;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:44px;height:44px;border-radius:14px;background:var(--brown);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;letter-spacing:.5px}
+.brand-title{display:flex;flex-direction:column;line-height:1.2}
+.brand-title b{font-size:16px}
+.brand-title span{font-size:12px;color:var(--muted)}
+.nav{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.tab{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--brown);font-weight:700;font-size:13px;transition:.2s}
+.tab:hover{background:#fbf2eb}
+.tab.active{background:var(--brown);color:#fff;border-color:var(--brown)}
+.status-pill{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted);font-size:12px}
+.dot{width:8px;height:8px;border-radius:999px;background:#f59e0b;display:inline-block}
+/* Internal tabs (requested to be lower) */
+.page-tabs-wrap{margin-top:16px}
+.page-tabs{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:10px;display:flex;gap:10px;flex-wrap:wrap}
+.page-tab{flex:0 0 auto}
+/* Cards */
+.card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+.card-hd{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-hd h2{margin:0;font-size:16px;color:var(--brown)}
+.card-bd{padding:14px 16px}
+.btn{border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;transition:.2s;font-family:inherit}
+.btn.primary{background:var(--brown);color:#fff}
+.btn.primary:hover{filter:brightness(0.95)}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--brown)}
+.btn.ghost:hover{background:#fbf2eb}
+.btn.danger{background:#fee2e2;color:#991b1b}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.input, select{font-family:inherit;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;outline:none}
+.input:focus, select:focus{border-color:#d7b7a2;box-shadow:0 0 0 3px rgba(188,143,116,.18)}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px}
+table{width:100%;border-collapse:separate;border-spacing:0;min-width:980px}
+thead th{position:sticky;top:0;background:#fff7f0;border-bottom:1px solid var(--line);padding:10px 12px;font-size:12px;color:var(--brown);text-align:right}
+tbody td{border-bottom:1px solid #f2e4da;padding:10px 12px;vertical-align:middle;font-size:13px}
+tbody tr:hover{background:#fffdfb}
+.badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;color:var(--brown);background:#fff}
+.badge.type-move{background:#fff;}
+.badge.type-shoot{background:#fff;}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+/* Modal */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;align-items:flex-start;justify-content:center;padding:24px;overflow:auto;z-index:50}
+.backdrop.show{display:flex}
+.modal{width:min(1080px,100%);background:#fff;border-radius:22px;border:1px solid var(--line);box-shadow:0 30px 80px rgba(0,0,0,.25);overflow:hidden}
+.modal-hd{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.modal-hd b{font-size:16px;color:var(--brown)}
+.grid2{display:grid;grid-template-columns:1.1fr .9fr;gap:12px;padding:14px 16px}
+@media(max-width:980px){.grid2{grid-template-columns:1fr}}
+.box{border:1px solid var(--line);border-radius:18px;padding:12px;background:#fff}
+.box h3{margin:0 0 8px 0;font-size:13px;color:var(--brown)}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:8px;font-size:13px}
+.kv div{padding:6px 0;border-bottom:1px dashed #f2e4da}
+.kv div:nth-child(odd){color:var(--muted)}
+.kv div:nth-last-child(-n+2){border-bottom:none}
+.progress{height:10px;background:#f3e5da;border-radius:999px;overflow:hidden}
+.progress > i{display:block;height:100%;background:var(--brown);width:0%}
+.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.notearea{width:100%;min-height:84px;resize:vertical}
+.hint{margin-top:8px;color:var(--muted);font-size:12px}
+</style>
 </head>
-
 <body>
-
-  <!-- TOPBAR (workspace) -->
+<div class="container">
+  <!-- TOP BAR -->
   <div class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <div class="brand-badge">MZJ</div>
-        <div class="brand-title">
-          <b>محمد بن ذعار العجمي للسيارات</b>
-          <span>Workspace · طلبات نقل / تصوير</span>
-        </div>
+    <div class="brand">
+      <div class="logo">MZJ</div>
+      <div class="brand-title">
+        <b>محمد بن ذعار العجمي للسيارات</b>
+        <span>Workspace · إدارة الطلبات</span>
       </div>
-
-      <div class="tabs" aria-label="Workspace Navigation">
-        <a class="tab" href="admin.html">الإدارة</a>
-        <a class="tab" href="inventory.html">المخزون</a>
-        <a class="tab" href="dashboard.html">الداش بورد</a>
-        <a class="tab" href="vt.html">نقل السيارات</a>
-        <a class="tab active" href="photoshoot-user.html">إدارة الطلبات</a>
-        <a class="tab" href="cars.html">كل السيارات</a>
-        <a class="tab" href="Activity.html">سجل النشاط</a>
-      </div>
+    </div>
+    <div class="nav" aria-label="روابط الصفحات">
+      <a class="tab" href="admin.html">الإدارة</a>
+      <a class="tab" href="inventory.html">المخزون</a>
+      <a class="tab" href="dashboard.html">الداش بورد</a>
+      <a class="tab" href="vt.html">نقل السيارات</a>
+      <a class="tab active" href="photoshoot-user.html">إدارة الطلبات</a>
+      <a class="tab" href="cars.html">كل السيارات</a>
+      <a class="tab" href="Activity.html">سجل النشاط</a>
+    </div>
+    <div class="status-pill">
+      <div class="pill"><span class="dot" id="connDot"></span> <span id="connText">جارٍ الاتصال…</span></div>
+      <div class="pill">الدور: <b id="roleText">—</b></div>
+      <div class="pill">المكان: <b id="locText">—</b></div>
     </div>
   </div>
 
-  <div class="wrap">
-    <div class="hero">
-      <div>
-        <h1>إدارة الطلبات</h1>
-        <p>إنشاء طلب نقل/تصوير + متابعة التنفيذ لحظيًا داخل المودال بدون Refresh.</p>
-        <div class="chips">
-          <span class="chip"><span class="dot" id="connDot"></span><span id="connText">جارٍ الاتصال…</span></span>
-          <span class="chip">الدور: <b id="roleText">—</b></span>
-          <span class="chip">المكان: <b id="locText">—</b></span>
-          <span class="chip">Email: <b id="emailText">—</b></span>
-        </div>
-      </div>
-      <div class="chips" style="justify-content:flex-end">
-        <button class="btn" id="logoutBtn" type="button">تسجيل خروج</button>
+  <!-- INTERNAL TABS (lower) -->
+  <div class="page-tabs-wrap">
+    <div class="page-tabs">
+      <button class="btn ghost page-tab" id="tabManageBtn">إدارة الطلبات</button>
+      <button class="btn ghost page-tab" id="tabCreateBtn">إنشاء طلب</button>
+      <button class="btn ghost page-tab" id="tabDoneBtn">الطلبات المكتملة</button>
+    </div>
+  </div>
+
+  <!-- MANAGE -->
+  <div class="card" id="manageView" style="margin-top:14px">
+    <div class="card-hd">
+      <h2>إدارة الطلبات (قيد التنفيذ)</h2>
+      <div class="flex">
+        <select id="filterKind">
+          <option value="all">الكل</option>
+          <option value="move">طلبات نقل</option>
+          <option value="shoot">طلبات تصوير</option>
+        </select>
+        <input class="input" id="searchVin" placeholder="بحث VIN داخل الطلبات" style="min-width:260px"/>
+        <button class="btn ghost" id="refreshBtn">تحديث</button>
       </div>
     </div>
-
-    <!-- Primary Tabs (requested) -->
-    <div class="subtabs" style="margin-top:18px">
-      <button class="subtab active" id="tabManage" type="button">إدارة الطلبات</button>
-      <button class="subtab" id="tabCreate" type="button">إنشاء طلب</button>
-      <button class="subtab" id="tabDone" type="button">الطلبات المكتملة</button>
-    </div>
-
-    <!-- MANAGE -->
-    <section class="panel" id="panelManage">
-      <div class="panel-head">
-        <div class="title">إدارة الطلبات (قيد التنفيذ)</div>
-        <div class="actions">
-          <select id="filterKind" class="input">
-            <option value="all">الكل</option>
-            <option value="move">طلب نقل</option>
-            <option value="shoot">طلب تصوير</option>
-          </select>
-          <input id="searchVin" class="input" placeholder="بحث VIN داخل الطلبات" />
-          <button class="btn" id="refreshBtn" type="button">تحديث</button>
-        </div>
-      </div>
-
+    <div class="card-bd">
       <div class="table-wrap">
         <table>
           <thead>
@@ -461,69 +144,42 @@
               <th>النوع</th>
               <th>VINs</th>
               <th>من</th>
-              <th>إلى</th>
+              <th>إلى/تنفيذ</th>
               <th>المنشئ</th>
-              <th>التقدّم</th>
+              <th>التقدم</th>
             </tr>
           </thead>
-          <tbody id="manageTbody">
-            <tr><td colspan="7" class="muted">جار التحميل…</td></tr>
+          <tbody id="requestsTbody">
+            <tr><td colspan="7" class="muted">جارٍ التحميل…</td></tr>
           </tbody>
         </table>
       </div>
-    </section>
+      <div class="hint">الترتيب: الأحدث أولاً — التحديث لحظي بدون Refresh.</div>
+    </div>
+  </div>
 
-    <!-- DONE -->
-    <section class="panel" id="panelDone" style="display:none">
-      <div class="panel-head">
-        <div class="title">الطلبات المكتملة</div>
-        <div class="actions">
-          <select id="filterKindDone" class="input">
-            <option value="all">الكل</option>
-            <option value="move">طلب نقل</option>
-            <option value="shoot">طلب تصوير</option>
-          </select>
-          <input id="searchVinDone" class="input" placeholder="بحث VIN داخل المكتملة" />
-          <button class="btn" id="refreshDoneBtn" type="button">تحديث</button>
-        </div>
+  <!-- CREATE -->
+  <div class="card" id="createView" style="margin-top:14px;display:none">
+    <div class="card-hd">
+      <h2>إنشاء طلب (نقل / تصوير)</h2>
+      <div class="flex">
+        <select id="createKind">
+          <option value="move">طلب نقل</option>
+          <option value="shoot">طلب تصوير</option>
+        </select>
+        <select id="createToLocation">
+          <option value="">— اختر مكان التنفيذ —</option>
+        </select>
+        <button class="btn primary" id="submitRequestBtn">إرسال الطلب</button>
+        <button class="btn ghost" id="clearCreateBtn">تفريغ</button>
       </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>رقم</th>
-              <th>النوع</th>
-              <th>VINs</th>
-              <th>من</th>
-              <th>إلى</th>
-              <th>المنشئ</th>
-              <th>تم في</th>
-            </tr>
-          </thead>
-          <tbody id="doneTbody">
-            <tr><td colspan="7" class="muted">جار التحميل…</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- CREATE -->
-    <section class="panel" id="panelCreate" style="display:none">
-      <div class="panel-head">
-        <div class="title">إنشاء طلب (حتى 8 هياكل)</div>
-        <div class="actions">
-          <button class="btn" id="clearCreateBtn" type="button">تفريغ</button>
-          <button class="btn primary" id="submitCreateBtn" type="button">إرسال الطلب</button>
-        </div>
-      </div>
-
+    </div>
+    <div class="card-bd">
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>#</th>
-              <th>نوع الطلب</th>
               <th>رقم الهيكل (VIN)</th>
               <th>السيارة</th>
               <th>البيان</th>
@@ -539,1000 +195,847 @@
           <tbody id="createTbody"></tbody>
         </table>
       </div>
-
-      <div class="hint" style="padding:14px 16px">
-        • اكتب VIN فقط: يتم تعبئة البيانات تلقائي من <b>cars</b> حسب الحقل <b>vin</b>.<br>
-        • <b>الإدارة</b> تقدر تعمل طلب لأي مكان. الإداري: يقدر يعمل طلب للـ VINs اللي مكانها ضمن <b>user.locations</b> فقط.
-      </div>
-    </section>
-
-  </div>
-
-  <!-- MODAL -->
-  <div class="modal" id="modal">
-    <div class="modal-card" role="dialog" aria-modal="true">
-      <div class="modal-head">
-        <div class="mh-title" id="modalTitle">تفاصيل الطلب</div>
-        <button class="modal-close" id="modalClose" type="button">إغلاق</button>
-      </div>
-      <div class="modal-body">
-        <div class="grid">
-          <div class="card">
-            <h3>معلومات الطلب</h3>
-            <div class="kv">
-              <div>رقم الطلب</div><div id="m_id">—</div>
-              <div>النوع</div><div id="m_kind">—</div>
-              <div>المنشئ</div><div id="m_creator">—</div>
-              <div>الحالة</div><div id="m_status">—</div>
-              <div>تاريخ الإنشاء</div><div id="m_createdAt">—</div>
-            </div>
-            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-              <span class="inline-badge" id="m_canEdit">canEdit: —</span>
-              <span class="inline-badge" id="m_youCan">—</span>
-            </div>
-          </div>
-
-          <div class="card">
-            <h3>التقدّم</h3>
-            <div class="progress-box">
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-                <b style="color:var(--brown)">التقدّم العام</b>
-                <span class="pill" id="m_pct">0%</span>
-              </div>
-              <div class="bar"><i id="m_bar"></i></div>
-              <div class="steps" id="m_steps"></div>
-              <div class="hint">التحديث لحظي داخل المودال. لو فيه أكثر من VIN، النسبة محسوبة على إجمالي خطوات التنفيذ لكل VIN.</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card" style="margin-bottom:12px">
-          <h3>المسؤولين حسب المكان (توضيح سريع)</h3>
-          <div class="kv">
-            <div>المكان الحالي (أصل السيارة)</div><div id="m_fromOwners">—</div>
-            <div>مكان التنفيذ (تصوير/استلام)</div><div id="m_toOwners">—</div>
-          </div>
-          <div class="hint">الهدف: أي موظف يفتح الطلب يعرف هل الطلب يخص مكانه ولا لا. (الإدارة: تقدر تعمل أي إجراء.)</div>
-        </div>
-
-        <div class="card">
-          <h3>الهياكل داخل الطلب</h3>
-          <div class="table-wrap" style="border-radius:14px;border:1px solid var(--line)">
-            <table>
-              <thead>
-                <tr>
-                  <th>VIN</th>
-                  <th>السيارة</th>
-                  <th>المكان الحالي</th>
-                  <th>مكان التنفيذ</th>
-                  <th>المرحلة 1</th>
-                  <th>المرحلة 2</th>
-                  <th>المرحلة 3</th>
-                  <th>المرحلة 4</th>
-                </tr>
-              </thead>
-              <tbody id="m_rows">
-                <tr><td colspan="8" class="muted">—</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="hint">كل مرحلة تُظهر: (تم/لا) + اسم المنفذ + ملاحظة المرحلة إن وجدت.</div>
-        </div>
-
-        <div class="card" style="margin-top:12px">
-          <h3>الإجراءات</h3>
-          <div class="modal-actions">
-            <button class="stage-btn" id="btnS1" type="button">1 تم استلام الطلب</button>
-            <button class="stage-btn" id="btnS2" type="button">2 تم إرسال السيارة</button>
-            <button class="stage-btn" id="btnS3" type="button">3 تم استلام السيارة</button>
-            <button class="stage-btn" id="btnS4" type="button">4 تم الانتهاء</button>
-            <div class="note-area">
-              <textarea id="stageNote" placeholder="ملاحظة (تتسجل على الإجراء)…"></textarea>
-              <div class="hint">ملاحظات كل مرحلة بتظهر داخل الهياكل + تتسجل في سجل النشاط.</div>
-            </div>
-          </div>
-
-          <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-            <button class="btn" id="btnEdit" type="button">تعديل الطلب</button>
-            <span class="hint" id="editHint">يظهر فقط لو canEdit=true (ولا يوجد أي إجراء على أي VIN).</span>
-          </div>
-        </div>
-
-      </div>
+      <div class="hint" id="createHint">اكتب VIN فقط… والبيانات بتنزل تلقائي. الطلب يدعم حتى 8 هياكل.</div>
     </div>
   </div>
 
-  <!-- Firebase (ESM) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-    import { getFirestore, collection, doc, getDoc, getDocs, query, where, orderBy, limit, onSnapshot, addDoc, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  <!-- DONE -->
+  <div class="card" id="doneView" style="margin-top:14px;display:none">
+    <div class="card-hd">
+      <h2>الطلبات المكتملة</h2>
+      <div class="flex">
+        <select id="doneFilterKind">
+          <option value="all">الكل</option>
+          <option value="move">نقل</option>
+          <option value="shoot">تصوير</option>
+        </select>
+      </div>
+    </div>
+    <div class="card-bd">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>رقم</th>
+              <th>النوع</th>
+              <th>VINs</th>
+              <th>من</th>
+              <th>إلى/تنفيذ</th>
+              <th>المنشئ</th>
+              <th>تاريخ الإنهاء</th>
+            </tr>
+          </thead>
+          <tbody id="doneTbody">
+            <tr><td colspan="7" class="muted">جارٍ التحميل…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 
-    // ✅ Config (provided by you)
-    const firebaseConfig = {
-      apiKey: "AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw",
-      authDomain: "mzj-agenda.firebaseapp.com",
-      projectId: "mzj-agenda",
-      storageBucket: "mzj-agenda.firebasestorage.app",
-      messagingSenderId: "834700407721",
-      appId: "1:834700407721:web:75c17665d4f032fd65cab8"
-    };
+<!-- MODAL -->
+<div class="backdrop" id="modalBackdrop" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-hd">
+      <b id="modalTitle">تفاصيل الطلب</b>
+      <button class="btn ghost" id="modalCloseBtn">إغلاق</button>
+    </div>
 
-    // ===== Constants =====
-    const LOCATIONS = ["معرض الملتقى","الاستديو","الصالة الاساسية","صالة القادسية"];
-    const ADMIN_EMAILS = new Set([
-      "coo@mzcars.com",
-      "aldynmtwlys@gmail.com",
-      "alaasamak100@gmail.com",
-      "kamelashraf948@gmail.com",
-      "mohammed.ezat1989@gmail.com",
-      "mr.ahmed_rashed@outlook.sa"
-    ]);
+    <div class="grid2">
+      <div class="box">
+        <h3>التقدم</h3>
+        <div class="flex" style="justify-content:space-between">
+          <div class="badge" id="overallPct">0%</div>
+          <div class="muted small">التقدم العام</div>
+        </div>
+        <div class="progress" style="margin:10px 0 8px 0"><i id="progressBar"></i></div>
+        <div class="flex small muted">
+          <span class="badge">1 استلام الطلب</span>
+          <span class="badge">2 إرسال السيارة</span>
+          <span class="badge">3 استلام السيارة</span>
+          <span class="badge">4 تم الانتهاء</span>
+        </div>
+      </div>
 
-    // ===== UI refs =====
-    const connDot = document.getElementById("connDot");
-    const connText = document.getElementById("connText");
-    const roleText = document.getElementById("roleText");
-    const locText  = document.getElementById("locText");
-    const emailText= document.getElementById("emailText");
-    const logoutBtn= document.getElementById("logoutBtn");
+      <div class="box">
+        <h3>معلومات الطلب</h3>
+        <div class="kv">
+          <div>رقم الطلب</div><div id="kvId">—</div>
+          <div>النوع</div><div id="kvKind">—</div>
+          <div>المنشئ</div><div id="kvCreator">—</div>
+          <div>الحالة</div><div id="kvStatus">—</div>
+          <div>تاريخ الإنشاء</div><div id="kvCreatedAt">—</div>
+          <div>مكان التنفيذ</div><div id="kvTo">—</div>
+        </div>
+      </div>
 
-    const tabManage = document.getElementById("tabManage");
-    const tabCreate = document.getElementById("tabCreate");
-    const tabDone   = document.getElementById("tabDone");
-    const panelManage= document.getElementById("panelManage");
-    const panelCreate= document.getElementById("panelCreate");
-    const panelDone  = document.getElementById("panelDone");
+      <div class="box" style="grid-column:1/-1">
+        <h3>المسؤولون حسب المكان (توضيح سريع)</h3>
+        <div class="kv" style="grid-template-columns:190px 1fr">
+          <div>المكان الحالي (أصل السيارة)</div><div id="kvFromLoc">—</div>
+          <div>مكان التنفيذ (نقل/تصوير)</div><div id="kvToLoc">—</div>
+          <div>مسؤول المكان الحالي</div><div id="kvFromOwner">—</div>
+          <div>مسؤول مكان التنفيذ</div><div id="kvToOwner">—</div>
+        </div>
+        <div class="hint">المسؤول يظهر حسب المكان (ومن ضمنهم الإدارة تقدر تعمل أي إجراء).</div>
+      </div>
 
-    const manageTbody = document.getElementById("manageTbody");
-    const doneTbody = document.getElementById("doneTbody");
-    const filterKind = document.getElementById("filterKind");
-    const filterKindDone = document.getElementById("filterKindDone");
-    const searchVin = document.getElementById("searchVin");
-    const searchVinDone = document.getElementById("searchVinDone");
-    const refreshBtn = document.getElementById("refreshBtn");
-    const refreshDoneBtn = document.getElementById("refreshDoneBtn");
+      <div class="box" style="grid-column:1/-1">
+        <h3>الهياكل داخل الطلب</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>VIN</th>
+                <th>السيارة</th>
+                <th>المكان الحالي</th>
+                <th>مكان التنفيذ</th>
+                <th>المرحلة 1</th>
+                <th>المرحلة 2</th>
+                <th>المرحلة 3</th>
+                <th>ملاحظات</th>
+              </tr>
+            </thead>
+            <tbody id="modalRowsTbody">
+              <tr><td colspan="8" class="muted">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="hint">كل مرحلة تظهر: (تم/لا) + اسم المنفذ + ملاحظة المرحلة إن وجدت.</div>
+      </div>
 
-    const createTbody = document.getElementById("createTbody");
-    const clearCreateBtn = document.getElementById("clearCreateBtn");
-    const submitCreateBtn = document.getElementById("submitCreateBtn");
+      <div class="box" style="grid-column:1/-1">
+        <h3>الإجراءات</h3>
+        <div class="actions">
+          <button class="btn primary" id="act1">1 تم استلام الطلب</button>
+          <button class="btn primary" id="act2">2 تم إرسال السيارة</button>
+          <button class="btn primary" id="act3">3 تم استلام السيارة</button>
+          <button class="btn primary" id="act4">4 تم الانتهاء</button>
+          <span class="badge" id="whoCan" style="margin-inline-start:auto">—</span>
+        </div>
+        <textarea class="input notearea" id="actionNote" placeholder="ملاحظة (تتسجل على الإجراء)…"></textarea>
+        <div class="hint">ESC يقفل المودال.</div>
+      </div>
+    </div>
+  </div>
+</div>
 
-    const modal = document.getElementById("modal");
-    const modalClose = document.getElementById("modalClose");
-    const modalTitle = document.getElementById("modalTitle");
+<script type="module">
+/* Firebase v9 (module) */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import {
+  getFirestore, collection, doc, getDoc, getDocs, query, where, orderBy, limit, onSnapshot,
+  addDoc, serverTimestamp, updateDoc, runTransaction
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-    const m_id = document.getElementById("m_id");
-    const m_kind = document.getElementById("m_kind");
-    const m_creator = document.getElementById("m_creator");
-    const m_status = document.getElementById("m_status");
-    const m_createdAt = document.getElementById("m_createdAt");
-    const m_canEdit = document.getElementById("m_canEdit");
-    const m_youCan = document.getElementById("m_youCan");
-    const m_pct = document.getElementById("m_pct");
-    const m_bar = document.getElementById("m_bar");
-    const m_steps = document.getElementById("m_steps");
-    const m_rows = document.getElementById("m_rows");
-    const m_fromOwners = document.getElementById("m_fromOwners");
-    const m_toOwners = document.getElementById("m_toOwners");
+const firebaseConfig = {'apiKey': 'AIzaSyC614bGqnYf4Q-weTNemzWENTpa8DjGeHw', 'authDomain': 'mzj-agenda.firebaseapp.com', 'projectId': 'mzj-agenda', 'storageBucket': 'mzj-agenda.firebasestorage.app', 'messagingSenderId': '834700407721', 'appId': '1:834700407721:web:75c17665d4f032fd65cab8'};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-    const btnS1 = document.getElementById("btnS1");
-    const btnS2 = document.getElementById("btnS2");
-    const btnS3 = document.getElementById("btnS3");
-    const btnS4 = document.getElementById("btnS4");
-    const stageNote = document.getElementById("stageNote");
-    const btnEdit = document.getElementById("btnEdit");
-    const editHint = document.getElementById("editHint");
+/* Locations + owners */
+const LOCATIONS = ["معرض الملتقى","الاستديو","الصالة الاساسية","صالة القادسية"];
+const LOCATION_OWNER = {
+  "الاستديو": "Mohammed.ezat1989@gmail.com",
+  "الصالة الاساسية": "aldynmtwlys@gmail.com",
+  "صالة القادسية": "alaasamak100@gmail.com",
+  "معرض الملتقى": "kamelashraf948@gmail.com"
+};
+const PHOTO_ADMIN_EMAIL = "an9036663@gmail.com";
 
-    // ===== Firebase init =====
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+/* UI refs */
+const connDot = document.getElementById('connDot');
+const connText = document.getElementById('connText');
+const roleText = document.getElementById('roleText');
+const locText = document.getElementById('locText');
 
-    // ===== State =====
-    let currentUser = null;
-    let profile = null;
-    let isAdmin = false;
-    let manageUnsub = null;
-    let doneUnsub = null;
+const tabManageBtn = document.getElementById('tabManageBtn');
+const tabCreateBtn = document.getElementById('tabCreateBtn');
+const tabDoneBtn = document.getElementById('tabDoneBtn');
+const manageView = document.getElementById('manageView');
+const createView = document.getElementById('createView');
+const doneView = document.getElementById('doneView');
 
-    let openReqId = null;
-    let openReqUnsub = null;
+const requestsTbody = document.getElementById('requestsTbody');
+const doneTbody = document.getElementById('doneTbody');
+const filterKind = document.getElementById('filterKind');
+const doneFilterKind = document.getElementById('doneFilterKind');
+const searchVin = document.getElementById('searchVin');
+const refreshBtn = document.getElementById('refreshBtn');
 
-    // Cache owners by location
-    const ownersCache = new Map(); // location -> string
+const createKind = document.getElementById('createKind');
+const createToLocation = document.getElementById('createToLocation');
+const createTbody = document.getElementById('createTbody');
+const submitRequestBtn = document.getElementById('submitRequestBtn');
+const clearCreateBtn = document.getElementById('clearCreateBtn');
+const createHint = document.getElementById('createHint');
 
-    // ===== Helpers =====
-    const esc = (s="") => (s ?? "").toString();
-    const fmtDate = (ts) => {
-      try{
-        if(!ts) return "—";
-        // Firestore Timestamp or string
-        if(typeof ts === "string") return ts;
-        if(ts?.toDate) return ts.toDate().toLocaleString("ar-SA");
-      }catch(e){}
-      return "—";
-    };
+/* Modal */
+const modalBackdrop = document.getElementById('modalBackdrop');
+const modalCloseBtn = document.getElementById('modalCloseBtn');
+const modalTitle = document.getElementById('modalTitle');
+const overallPct = document.getElementById('overallPct');
+const progressBar = document.getElementById('progressBar');
+const kvId = document.getElementById('kvId');
+const kvKind = document.getElementById('kvKind');
+const kvCreator = document.getElementById('kvCreator');
+const kvStatus = document.getElementById('kvStatus');
+const kvCreatedAt = document.getElementById('kvCreatedAt');
+const kvTo = document.getElementById('kvTo');
+const kvFromLoc = document.getElementById('kvFromLoc');
+const kvToLoc = document.getElementById('kvToLoc');
+const kvFromOwner = document.getElementById('kvFromOwner');
+const kvToOwner = document.getElementById('kvToOwner');
+const modalRowsTbody = document.getElementById('modalRowsTbody');
+const act1 = document.getElementById('act1');
+const act2 = document.getElementById('act2');
+const act3 = document.getElementById('act3');
+const act4 = document.getElementById('act4');
+const whoCan = document.getElementById('whoCan');
+const actionNote = document.getElementById('actionNote');
 
-    function setConn(ok, text){
-      connDot.classList.toggle("ok", !!ok);
-      connDot.classList.toggle("bad", ok === false);
-      connText.textContent = text || (ok ? "متصل" : "غير متصل");
+/* State */
+let currentUser = null;
+let userProfile = null;
+let isAdmin = false;
+let userEmail = "";
+let userLocation = ""; // optional single location in profile
+let manageUnsub = null;
+let doneUnsub = null;
+let modalUnsub = null;
+let activeRequest = null;
+
+/* Helpers */
+const fmtDate = (ts)=>{
+  try {
+    if(!ts) return "—";
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    return d.toLocaleString("ar-SA");
+  } catch(e){ return "—"; }
+};
+const kindLabel = (k)=> k==="move" ? "نقل" : (k==="shoot" ? "تصوير" : "—");
+const escClose = (e)=>{ if(e.key==="Escape") closeModal(); };
+document.addEventListener('keydown', escClose);
+
+function setView(which){
+  manageView.style.display = which==="manage" ? "" : "none";
+  createView.style.display = which==="create" ? "" : "none";
+  doneView.style.display = which==="done" ? "" : "none";
+  tabManageBtn.classList.toggle('primary', which==="manage");
+  tabCreateBtn.classList.toggle('primary', which==="create");
+  tabDoneBtn.classList.toggle('primary', which==="done");
+  // keep visual
+  [tabManageBtn,tabCreateBtn,tabDoneBtn].forEach(b=>b.classList.remove('primary'));
+  if(which==="manage") tabManageBtn.classList.add('primary');
+  if(which==="create") tabCreateBtn.classList.add('primary');
+  if(which==="done") tabDoneBtn.classList.add('primary');
+}
+tabManageBtn.onclick = ()=>setView("manage");
+tabCreateBtn.onclick = ()=>setView("create");
+tabDoneBtn.onclick = ()=>setView("done");
+
+function fillToLocations(){
+  createToLocation.innerHTML = '<option value="">— اختر مكان التنفيذ —</option>';
+  LOCATIONS.forEach(l=>{
+    const o=document.createElement('option');
+    o.value=l; o.textContent=l;
+    createToLocation.appendChild(o);
+  });
+}
+fillToLocations();
+
+function connection(ok){
+  connDot.style.background = ok ? "#22c55e" : "#f59e0b";
+  connText.textContent = ok ? "متصل" : "جارٍ الاتصال…";
+}
+
+async function loadUserProfileByEmail(email){
+  // Try doc(uid) first
+  try {
+    const d = await getDoc(doc(db,"user", currentUser.uid));
+    if(d.exists()) return d.data();
+  } catch(e){}
+  // Fallback query by Email field
+  try {
+    const qy = query(collection(db,"user"), where("Email","==",email), limit(1));
+    const snap = await getDocs(qy);
+    if(!snap.empty) return snap.docs[0].data();
+  } catch(e){}
+  // Try "members" collection if used
+  try {
+    const qy2 = query(collection(db,"members"), where("email","==",email), limit(1));
+    const snap2 = await getDocs(qy2);
+    if(!snap2.empty) return snap2.docs[0].data();
+  } catch(e){}
+  return null;
+}
+
+function computeIsAdmin(profile){
+  const r = (profile?.role || profile?.Role || "").toString().trim();
+  return r==="الإدارة" || r==="ادارة" || r==="admin" || r==="Admin" || r==="الاداره";
+}
+
+function getUserLocations(profile){
+  // support locations array or single location
+  const locs = profile?.locations || profile?.Locations || profile?.location || profile?.Location || [];
+  if(Array.isArray(locs)) return locs.map(x=>String(x).trim()).filter(Boolean);
+  if(typeof locs === "string" && locs.trim()) return [locs.trim()];
+  return [];
+}
+
+function ownerForLocation(loc){
+  return LOCATION_OWNER[loc] || "—";
+}
+
+async function findCarByVin(vin){
+  const v = String(vin||"").trim();
+  if(!v) return null;
+  const qy = query(collection(db,"cars"), where("vin","==",v), limit(1));
+  const snap = await getDocs(qy);
+  if(snap.empty) return null;
+  const d = snap.docs[0];
+  return { id:d.id, ...d.data() };
+}
+
+function makeEmptyRow(index){
+  const tr = document.createElement('tr');
+  tr.dataset.idx = String(index);
+  tr.innerHTML = `
+    <td class="muted">${index+1}</td>
+    <td><input class="input vinInput" placeholder="VIN" style="min-width:140px"></td>
+    <td class="carName muted">—</td>
+    <td class="carVariant muted">—</td>
+    <td class="carExt muted">—</td>
+    <td class="carInt muted">—</td>
+    <td class="carYear muted">—</td>
+    <td class="carLoc muted">—</td>
+    <td class="execLoc muted">—</td>
+    <td><input class="input noteInput" placeholder="اختياري" style="min-width:180px"></td>
+    <td><button class="btn danger delBtn" title="حذف">×</button></td>
+  `;
+  const vinInput = tr.querySelector('.vinInput');
+  const delBtn = tr.querySelector('.delBtn');
+  delBtn.onclick = ()=>{ tr.remove(); rebuildCreateIndexes(); ensureCreateRows(); };
+  vinInput.addEventListener('change', ()=>onVinChanged(tr));
+  vinInput.addEventListener('blur', ()=>onVinChanged(tr));
+  return tr;
+}
+
+function rebuildCreateIndexes(){
+  [...createTbody.querySelectorAll('tr')].forEach((tr,i)=>{
+    tr.dataset.idx = String(i);
+    tr.querySelector('td').textContent = String(i+1);
+  });
+}
+
+function ensureCreateRows(){
+  const rows = [...createTbody.querySelectorAll('tr')];
+  if(rows.length===0){
+    for(let i=0;i<3;i++) createTbody.appendChild(makeEmptyRow(i));
+    return;
+  }
+  // If last row has VIN and less than 8, add a new row
+  const last = rows[rows.length-1];
+  const lastVin = last.querySelector('.vinInput')?.value?.trim();
+  if(lastVin && rows.length<8) createTbody.appendChild(makeEmptyRow(rows.length));
+  // clamp to 8
+  while(createTbody.querySelectorAll('tr').length>8) createTbody.lastElementChild.remove();
+}
+
+async function onVinChanged(tr){
+  const vin = tr.querySelector('.vinInput')?.value?.trim();
+  if(!vin) return;
+  tr.querySelector('.carName').textContent = "جارٍ التحميل…";
+  const car = await findCarByVin(vin);
+  if(!car){
+    tr.querySelector('.carName').textContent = "غير موجود";
+    tr.querySelector('.carVariant').textContent = "—";
+    tr.querySelector('.carExt').textContent = "—";
+    tr.querySelector('.carInt').textContent = "—";
+    tr.querySelector('.carYear').textContent = "—";
+    tr.querySelector('.carLoc').textContent = "—";
+    tr.querySelector('.execLoc').textContent = "—";
+    ensureCreateRows();
+    return;
+  }
+  tr.dataset.carid = car.id;
+  tr.dataset.fromloc = (car.location||car.Location||"").toString();
+  tr.querySelector('.carName').textContent = (car.car||"—");
+  tr.querySelector('.carVariant').textContent = (car.variant||"—");
+  tr.querySelector('.carExt').textContent = (car.extColor||car.extcolor||"—");
+  tr.querySelector('.carInt').textContent = (car.intColor||car.intcolor||"—");
+  tr.querySelector('.carYear').textContent = (car.modelYear||car.year||"—");
+  tr.querySelector('.carLoc').textContent = (car.location||"—");
+  // execution location from header selection
+  tr.querySelector('.execLoc').textContent = createToLocation.value || "—";
+  ensureCreateRows();
+}
+
+createToLocation.addEventListener('change', ()=>{
+  [...createTbody.querySelectorAll('tr')].forEach(tr=>{
+    tr.querySelector('.execLoc').textContent = createToLocation.value || "—";
+  });
+});
+
+createKind.addEventListener('change', ()=>{
+  const k = createKind.value;
+  createToLocation.value = "";
+  fillToLocations();
+  createHint.textContent = k==="move"
+    ? "طلب نقل: اختر مكان النقل (الوجهة)، واكتب VIN فقط…"
+    : "طلب تصوير: اختر مكان التصوير (الاستديو/..)، واكتب VIN فقط…";
+});
+
+clearCreateBtn.onclick = ()=>{
+  createTbody.innerHTML = "";
+  ensureCreateRows();
+  actionNote.value="";
+};
+ensureCreateRows();
+
+/* Permissions model per your sheet */
+function canCreateForRows(kind, toLoc, rows){
+  if(isAdmin) return {ok:true, reason:""};
+  if(!userEmail) return {ok:false, reason:"غير مسجل"};
+  if(kind==="shoot" && userEmail !== PHOTO_ADMIN_EMAIL) {
+    return {ok:false, reason:"إنشاء طلب تصوير مسموح لمدير التصوير فقط (إلا الإدارة)."};
+  }
+  if(kind==="move") {
+    // creator must be destination owner
+    const destOwner = ownerForLocation(toLoc);
+    if(destOwner !== userEmail) return {ok:false, reason:"في النقل: منشئ الطلب لازم يكون مسؤول مكان الوجهة (إلا الإدارة)."};
+  }
+  // For both kinds: allow adding vins from any locations (as per examples)
+  return {ok:true, reason:""};
+}
+
+function canDoActionOnRequest(req, actionNo){
+  if(isAdmin) return true;
+  if(!req || !userEmail) return false;
+  const creator = req.createdByEmail || req.createdBy || "";
+  const toLoc = req.toLocation || req.execLocation || "";
+  const destOwner = ownerForLocation(toLoc);
+
+  if(actionNo===4) return (creator===userEmail);
+  // actions 1&2 are for each row's fromLocation owner
+  // action 3 is destination owner
+  if(actionNo===3) return (destOwner===userEmail);
+  if(actionNo===1 || actionNo===2) {
+    // permitted if user is owner of ANY fromLocation among rows
+    const vins = req.vins || [];
+    const ok = vins.some(v=> ownerForLocation(v.fromLocation)===userEmail);
+    return ok;
+  }
+  return false;
+}
+
+function stagePctForReq(req){
+  const vins = req.vins || [];
+  if(vins.length===0) return 0;
+  let doneSteps=0, totalSteps=0;
+  for(const v of vins){
+    const st = (req.rowStates && req.rowStates[v.vin]) || {};
+    totalSteps += 3; // stages 1-3 per vin
+    if(st.step1?.done) doneSteps++;
+    if(st.step2?.done) doneSteps++;
+    if(st.step3?.done) doneSteps++;
+  }
+  // request finished counts as extra one step globally
+  totalSteps += 1;
+  if(req.finished?.done) doneSteps += 1;
+  return Math.round((doneSteps/totalSteps)*100);
+}
+
+function uniq(arr){
+  return [...new Set(arr.filter(Boolean))];
+}
+
+function renderManageRow(docId, req){
+  const tr = document.createElement('tr');
+  tr.style.cursor = "pointer";
+  const pct = stagePctForReq(req);
+  const vins = (req.vins||[]).map(x=>x.vin).filter(Boolean);
+  const froms = uniq((req.vins||[]).map(x=>x.fromLocation));
+  const to = req.toLocation || "—";
+  tr.innerHTML = `
+    <td><b>#${req.number||docId}</b></td>
+    <td><span class="badge">${kindLabel(req.kind)}</span></td>
+    <td class="small">${vins.slice(0,3).join("، ")}{vins.length>3 ? "… ("+vins.length+")" : ""}</td>
+    <td class="small">${froms.join("، ")||"—"}</td>
+    <td class="small">${to}</td>
+    <td class="small muted">${req.createdByEmail||req.createdBy||"—"}</td>
+    <td><span class="badge">${pct}%</span></td>
+  `;
+  tr.addEventListener('click', ()=>openModal(docId));
+  return tr;
+}
+
+function renderDoneRow(docId, req){
+  const tr = document.createElement('tr');
+  const vins = (req.vins||[]).map(x=>x.vin).filter(Boolean);
+  const froms = uniq((req.vins||[]).map(x=>x.fromLocation));
+  const to = req.toLocation || "—";
+  tr.innerHTML = `
+    <td><b>#${req.number||docId}</b></td>
+    <td><span class="badge">${kindLabel(req.kind)}</span></td>
+    <td class="small">${vins.slice(0,3).join("، ")}{vins.length>3 ? "… ("+vins.length+")" : ""}</td>
+    <td class="small">${froms.join("، ")||"—"}</td>
+    <td class="small">${to}</td>
+    <td class="small muted">${req.createdByEmail||req.createdBy||"—"}</td>
+    <td class="small">${fmtDate(req.finished?.at || req.completedAt)}</td>
+  `;
+  tr.addEventListener('click', ()=>openModal(docId));
+  return tr;
+}
+
+function listenManage(){
+  if(manageUnsub) manageUnsub();
+  const qy = query(collection(db,"requests"), orderBy("createdAt","desc"));
+  manageUnsub = onSnapshot(qy, (snap)=>{
+    const kind = filterKind.value;
+    const needle = (searchVin.value||"").trim();
+    const rows = [];
+    snap.forEach(d=>{
+      const req = d.data();
+      const isDone = !!req.finished?.done;
+      if(isDone) return;
+      if(kind!=="all" && req.kind!==kind) return;
+      if(needle){
+        const vins = (req.vins||[]).map(x=>String(x.vin||""));
+        if(!vins.some(v=>v.includes(needle))) return;
+      }
+      rows.push(renderManageRow(d.id, req));
+    });
+    requestsTbody.innerHTML = "";
+    if(rows.length===0){
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td colspan="7" class="muted">لا توجد طلبات حالياً.</td>`;
+      requestsTbody.appendChild(tr);
+    } else {
+      rows.forEach(r=>requestsTbody.appendChild(r));
     }
+  }, (err)=>{
+    requestsTbody.innerHTML = `<tr><td colspan="7" class="muted">حدث خطأ في التحميل.</td></tr>`;
+    console.error(err);
+  });
+}
 
-    function showTab(which){
-      const map = {
-        manage: [tabManage, panelManage],
-        create: [tabCreate, panelCreate],
-        done: [tabDone, panelDone],
-      };
-      // reset
-      [tabManage, tabCreate, tabDone].forEach(t=>t.classList.remove("active"));
-      [panelManage, panelCreate, panelDone].forEach(p=>p.style.display="none");
-      map[which][0].classList.add("active");
-      map[which][1].style.display="block";
+function listenDone(){
+  if(doneUnsub) doneUnsub();
+  const qy = query(collection(db,"requests"), orderBy("createdAt","desc"));
+  doneUnsub = onSnapshot(qy, (snap)=>{
+    const kind = doneFilterKind.value;
+    const rows = [];
+    snap.forEach(d=>{
+      const req = d.data();
+      const isDone = !!req.finished?.done;
+      if(!isDone) return;
+      if(kind!=="all" && req.kind!==kind) return;
+      rows.push(renderDoneRow(d.id, req));
+    });
+    doneTbody.innerHTML = "";
+    if(rows.length===0){
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td colspan="7" class="muted">لا توجد طلبات مكتملة.</td>`;
+      doneTbody.appendChild(tr);
+    } else {
+      rows.forEach(r=>doneTbody.appendChild(r));
     }
+  });
+}
 
-    function kindLabel(k){
-      return k === "move" ? "نقل" : (k === "shoot" ? "تصوير" : (k || "—"));
+filterKind.onchange = ()=>listenManage();
+doneFilterKind.onchange = ()=>listenDone();
+searchVin.addEventListener('input', ()=>listenManage());
+refreshBtn.onclick = ()=>listenManage();
+
+/* Create request */
+submitRequestBtn.onclick = async ()=>{
+  try {
+    if(!currentUser) return alert("غير مسجل");
+    const kind = createKind.value;
+    const toLoc = createToLocation.value;
+    if(!toLoc) return alert("اختر مكان التنفيذ");
+    // gather rows with VIN
+    const trs = [...createTbody.querySelectorAll('tr')];
+    const vins = [];
+    for(const tr of trs){
+      const vin = tr.querySelector('.vinInput')?.value?.trim();
+      if(!vin) continue;
+      const fromLoc = tr.dataset.fromloc || "";
+      const note = tr.querySelector('.noteInput')?.value?.trim() || "";
+      if(!fromLoc) {
+        return alert("VIN غير محمّل/غير موجود: " + vin);
+      }
+      vins.push({ vin, fromLocation: fromLoc, toLocation: toLoc, note });
     }
+    if(vins.length===0) return alert("اكتب VIN واحد على الأقل");
+    if(vins.length>8) return alert("الحد الأقصى 8 هياكل");
 
-    function progressOfRows(vins){
-      // Each VIN has 4 stages => total steps = count*4, done steps = sum stage flags
-      const total = (vins?.length || 0) * 4;
-      if(total === 0) return {done:0,total:0,pct:0};
-      let done = 0;
+    const perm = canCreateForRows(kind, toLoc, vins);
+    if(!perm.ok) return alert(perm.reason);
+
+    submitRequestBtn.disabled = true;
+
+    // counter
+    const counterRef = doc(db,"meta","requests_counter");
+    const requestRef = await runTransaction(db, async (tx)=>{
+      const cSnap = await tx.get(counterRef);
+      let next = 1;
+      if(cSnap.exists()) next = (cSnap.data().last||0) + 1;
+      tx.set(counterRef, { last: next }, { merge:true });
+      // create request
+      const reqCol = collection(db,"requests");
+      const reqDocRef = doc(reqCol);
+      const rowStates = {};
       for(const v of vins){
-        const p = v.progress || {};
-        if(p.s1?.done) done++;
-        if(p.s2?.done) done++;
-        if(p.s3?.done) done++;
-        if(p.s4?.done) done++;
+        rowStates[v.vin] = {
+          step1: {done:false, at:null, byEmail:"", byName:"", note:""},
+          step2: {done:false, at:null, byEmail:"", byName:"", note:""},
+          step3: {done:false, at:null, byEmail:"", byName:"", note:""}
+        };
       }
-      const pct = Math.round((done/total)*100);
-      return {done,total,pct};
-    }
-
-    function normalizeLocationForMatch(loc){
-      // Sometimes Firestore car.location is like "فرع 2 الملتقى : المخزون المتاح" or "المستودع : ..."
-      const s = esc(loc);
-      if(s.includes("الملتقى")) return "معرض الملتقى";
-      if(s.includes("الاستديو")) return "الاستديو";
-      if(s.includes("الصالة")) return "الصالة الاساسية";
-      if(s.includes("القادسية")) return "صالة القادسية";
-      // fallback: if it exactly matches already
-      if(LOCATIONS.includes(s)) return s;
-      return s;
-    }
-
-    async function getOwnersForLocation(loc){
-      const key = esc(loc);
-      if(!key) return "—";
-      if(ownersCache.has(key)) return ownersCache.get(key);
-
-      // Query all users that have this location in their locations array
-      let names = [];
-      try{
-        const q1 = query(collection(db, "user"), where("locations", "array-contains", key));
-        const snap = await getDocs(q1);
-        snap.forEach(d=>{
-          const u = d.data() || {};
-          const name = u.name || u.Name || u.displayName || "—";
-          const email = u.email || u.Email || "";
-          const role = u.role || u.Role || "";
-          names.push(`${name}${email ? " ("+email+")" : ""}${role ? " — "+role : ""}`);
-        });
-      }catch(e){
-        // ignore
-      }
-      const out = names.length ? names.join(" • ") : "—";
-      ownersCache.set(key, out);
-      return out;
-    }
-
-    // ===== Profile (from Firestore `user` collection) =====
-    async function loadUserProfile(uid, email){
-      // doc id might be UID OR email in your system; we attempt both.
-      // 1) try doc(uid)
-      let data = null;
-      try{
-        const d1 = await getDoc(doc(db, "user", uid));
-        if(d1.exists()) data = d1.data();
-      }catch(e){}
-
-      // 2) try query by email field
-      if(!data && email){
-        try{
-          const q1 = query(collection(db,"user"), where("email","==", email));
-          const s1 = await getDocs(q1);
-          if(!s1.empty) data = s1.docs[0].data();
-        }catch(e){}
-        if(!data){
-          try{
-            const q2 = query(collection(db,"user"), where("Email","==", email));
-            const s2 = await getDocs(q2);
-            if(!s2.empty) data = s2.docs[0].data();
-          }catch(e){}
-        }
-      }
-
-      if(!data){
-        // fallback minimal
-        return { email, role:"", locations:[] , name: email?.split("@")[0] || "—"};
-      }
-
-      const role = data.role || data.Role || "";
-      const locations = data.locations || data.Locations || [];
-      const name = data.name || data.Name || data.displayName || data.DisplayName || (email?.split("@")[0] || "—");
-      const final = { email, role, locations: Array.isArray(locations)? locations : [], name };
-      return final;
-    }
-
-    function computeIsAdmin(p){
-      const r = (p?.role || "").replace(/\s+/g,"");
-      if(r === "الادارة" || r === "الإدارة") return true;
-      if(ADMIN_EMAILS.has((p?.email||"").toLowerCase())) return true;
-      return false;
-    }
-
-    // ===== CREATE TABLE =====
-    function buildCreateTable(){
-      createTbody.innerHTML = "";
-      for(let i=1;i<=8;i++){
-        const tr = document.createElement("tr");
-        tr.dataset.row = String(i);
-        tr.innerHTML = `
-          <td>${i}</td>
-          <td>
-            <select class="small-select kindSel">
-              <option value="move">نقل</option>
-              <option value="shoot">تصوير</option>
-            </select>
-          </td>
-          <td>
-            <input class="input vin-input vinIn" placeholder="VIN" inputmode="numeric" />
-            <div class="hint" style="margin-top:6px" data-hint></div>
-          </td>
-          <td class="carCell muted">—</td>
-          <td class="dealerCell muted">—</td>
-          <td class="extCell muted">—</td>
-          <td class="intCell muted">—</td>
-          <td class="modelCell muted">—</td>
-          <td class="locCell muted">—</td>
-          <td>
-            <select class="input execSel">
-              <option value="">— اختر —</option>
-              ${LOCATIONS.map(x=>`<option value="${x}">${x}</option>`).join("")}
-            </select>
-          </td>
-          <td><input class="input note-input noteIn" placeholder="اختياري" /></td>
-          <td><button class="trash" type="button" title="مسح السطر">×</button></td>
-        `;
-        createTbody.appendChild(tr);
-      }
-
-      // event binding
-      createTbody.querySelectorAll("tr").forEach(tr=>{
-        const vinIn = tr.querySelector(".vinIn");
-        const kindSel = tr.querySelector(".kindSel");
-        const execSel = tr.querySelector(".execSel");
-        const trash = tr.querySelector(".trash");
-        const hint = tr.querySelector("[data-hint]");
-
-        function updateExecPlaceholder(){
-          const k = kindSel.value;
-          execSel.title = (k === "move") ? "مكان النقل (الوجهة)" : "مكان التصوير";
-        }
-        updateExecPlaceholder();
-        kindSel.addEventListener("change", updateExecPlaceholder);
-
-        trash.addEventListener("click", ()=>{
-          vinIn.value = "";
-          hint.textContent = "";
-          fillRow(tr, null, true);
-        });
-
-        vinIn.addEventListener("change", async ()=>{
-          const vin = vinIn.value.trim();
-          if(!vin){
-            hint.textContent = "";
-            fillRow(tr, null, true);
-            return;
-          }
-          hint.textContent = "جار التحميل…";
-          const car = await fetchCarByVin(vin);
-          if(!car){
-            hint.textContent = "VIN غير موجود في cars";
-            fillRow(tr, null, true);
-            return;
-          }
-
-          const carLoc = normalizeLocationForMatch(car.location || car.Location || "");
-          // Permission: non-admin can only create requests for VINs in their locations
-          if(!isAdmin){
-            const allowed = (profile?.locations || []).some(l => normalizeLocationForMatch(l) === carLoc || esc(l).includes(carLoc) || carLoc.includes(esc(l)));
-            if(!allowed){
-              hint.textContent = "ممنوع: الهيكل خارج أماكن المستخدم";
-              fillRow(tr, null, true);
-              vinIn.focus();
-              return;
-            }
-          }
-          hint.textContent = "";
-          fillRow(tr, car, false);
-        });
-      });
-    }
-
-    function fillRow(tr, car, clearOnly){
-      const set = (sel, val, mutedIfEmpty=true)=>{
-        const el = tr.querySelector(sel);
-        if(!el) return;
-        const v = clearOnly ? "—" : (val ?? "—");
-        el.textContent = v;
-        if(mutedIfEmpty) el.classList.toggle("muted", v === "—" || v === "");
-      };
-      if(!car){
-        set(".carCell","—"); set(".dealerCell","—"); set(".extCell","—"); set(".intCell","—");
-        set(".modelCell","—"); set(".locCell","—");
-        tr.dataset.carJson = "";
-        return;
-      }
-      const carName = car.car || car.Car || car.batchName || car.BatchName || "—";
-      const dealer = car.dealer || car.Dealer || car.dealerName || "—";
-      const ext = car.extColor || car.extcolor || car.exColor || car.color || "—";
-      const intc = car.intColor || car.intcolor || "—";
-      const model = car.modelYear ? String(car.modelYear) : (car.model || "—");
-      const loc = car.location || "—";
-      set(".carCell", carName);
-      set(".dealerCell", dealer);
-      set(".extCell", ext);
-      set(".intCell", intc);
-      set(".modelCell", model);
-      set(".locCell", loc);
-      tr.dataset.carJson = JSON.stringify(car);
-    }
-
-    async function fetchCarByVin(vin){
-      // cars collection where vin == "123"
-      try{
-        const q1 = query(collection(db,"cars"), where("vin","==", vin), limit(1));
-        const snap = await getDocs(q1);
-        if(!snap.empty) return snap.docs[0].data();
-      }catch(e){}
-      // fallback: vin stored as number or different field
-      try{
-        const q2 = query(collection(db,"cars"), where("VIN","==", vin), limit(1));
-        const snap2 = await getDocs(q2);
-        if(!snap2.empty) return snap2.docs[0].data();
-      }catch(e){}
-      return null;
-    }
-
-    function collectCreateRows(){
-      const rows = [];
-      createTbody.querySelectorAll("tr").forEach(tr=>{
-        const vin = tr.querySelector(".vinIn")?.value?.trim();
-        if(!vin) return;
-        const kind = tr.querySelector(".kindSel")?.value || "move";
-        const exec = tr.querySelector(".execSel")?.value || "";
-        const note = tr.querySelector(".noteIn")?.value || "";
-        const carJson = tr.dataset.carJson ? JSON.parse(tr.dataset.carJson) : null;
-        if(!carJson) return;
-
-        const carLoc = normalizeLocationForMatch(carJson.location || carJson.Location || "");
-        rows.push({
-          vin,
-          kind,
-          fromLocation: carLoc,
-          toLocation: exec, // destination OR shoot place
-          car: carJson.car || carJson.Car || carJson.batchName || "",
-          dealer: carJson.dealer || carJson.Dealer || "",
-          extColor: carJson.extColor || carJson.extcolor || "",
-          intColor: carJson.intColor || carJson.intcolor || "",
-          modelYear: carJson.modelYear || carJson.model || "",
-          rawLocation: carJson.location || "",
-          note: note || "",
-          progress: {
-            s1: { done:false, by:"", note:"", at:null },
-            s2: { done:false, by:"", note:"", at:null },
-            s3: { done:false, by:"", note:"", at:null },
-            s4: { done:false, by:"", note:"", at:null },
-          }
-        });
-      });
-      return rows;
-    }
-
-    async function createRequest(){
-      if(!currentUser) return alert("غير مسجل");
-      const rows = collectCreateRows();
-      if(rows.length === 0) return alert("اكتب VIN واحد على الأقل");
-
-      // validate execution place per row
-      for(const r of rows){
-        if(!r.toLocation) return alert("اختر مكان التنفيذ لكل VIN");
-      }
-
-      // Admin can create any; non-admin must satisfy already checked per VIN in fill
-      const reqKind = rows[0].kind; // allow mix? user asked per row choose; but request has kind derived by row? We'll split by kind? For now: enforce one kind per request.
-      const mixed = rows.some(x=>x.kind !== reqKind);
-      if(mixed) return alert("الطلب الواحد لازم يكون نوع واحد (كل الصفوف نقل أو تصوير)");
-
-      const payload = {
-        kind: reqKind, // "move" | "shoot"
+      tx.set(reqDocRef, {
+        number: next,
+        kind,
+        toLocation: toLoc,
         createdAt: serverTimestamp(),
         createdByUid: currentUser.uid,
-        createdByEmail: profile?.email || currentUser.email || "",
-        createdByName: profile?.name || (currentUser.email?.split("@")[0] || ""),
-        status: "in_progress",
-        canEdit: true,
-        vins: rows.map(r => ({
-          vin: r.vin,
-          fromLocation: r.fromLocation,
-          toLocation: r.toLocation,
-          car: r.car,
-          dealer: r.dealer,
-          extColor: r.extColor,
-          intColor: r.intColor,
-          modelYear: r.modelYear,
-          rawLocation: r.rawLocation,
-          note: r.note,
-          progress: r.progress
-        }))
-      };
-
-      submitCreateBtn.disabled = true;
-      try{
-        const ref = await addDoc(collection(db,"requests"), payload);
-        await logActivity("إنشاء طلب", `تم إنشاء طلب #${ref.id} (${kindLabel(reqKind)}) بعدد VINs: ${rows.length}`, ref.id);
-        alert("تم إرسال الطلب ✅");
-        clearCreate();
-        showTab("manage");
-      }catch(e){
-        console.error(e);
-        alert("حدث خطأ أثناء إنشاء الطلب");
-      }finally{
-        submitCreateBtn.disabled = false;
-      }
-    }
-
-    function clearCreate(){
-      buildCreateTable();
-    }
-
-    // ===== LISTENERS =====
-    function setupManageListener(){
-      if(manageUnsub) manageUnsub();
-      const qBase = query(collection(db,"requests"), orderBy("createdAt","desc"), limit(200));
-      manageUnsub = onSnapshot(qBase, (snap)=>{
-        const items = [];
-        snap.forEach(d=>{
-          const data = d.data() || {};
-          if(data.status === "done") return; // only in_progress here
-          items.push({id:d.id, ...data});
-        });
-        renderManage(items);
-      }, (err)=>{
-        console.error(err);
-        manageTbody.innerHTML = `<tr><td colspan="7" class="muted">تعذر تحميل البيانات</td></tr>`;
+        createdByEmail: userEmail,
+        createdByName: userProfile?.Name || userProfile?.name || "",
+        vins,
+        rowStates,
+        finished: {done:false, at:null, byEmail:"", byName:"", note:""}
       });
-    }
+      return reqDocRef;
+    });
 
-    function setupDoneListener(){
-      if(doneUnsub) doneUnsub();
-      const qBase = query(collection(db,"requests"), orderBy("createdAt","desc"), limit(200));
-      doneUnsub = onSnapshot(qBase, (snap)=>{
-        const items = [];
-        snap.forEach(d=>{
-          const data = d.data() || {};
-          if(data.status !== "done") return;
-          items.push({id:d.id, ...data});
-        });
-        renderDone(items);
-      }, (err)=>{
-        console.error(err);
-        doneTbody.innerHTML = `<tr><td colspan="7" class="muted">تعذر تحميل البيانات</td></tr>`;
+    alert("تم إنشاء الطلب");
+    createTbody.innerHTML = "";
+    ensureCreateRows();
+    setView("manage");
+  } catch(e) {
+    console.error(e);
+    alert("حدث خطأ أثناء إنشاء الطلب");
+  } finally {
+    submitRequestBtn.disabled = false;
+  }
+};
+
+/* Modal logic */
+function openModal(reqId){
+  closeModal();
+  modalBackdrop.classList.add('show');
+  actionNote.value = "";
+  const ref = doc(db,"requests",reqId);
+  modalUnsub = onSnapshot(ref, (snap)=>{
+    if(!snap.exists()) return;
+    const req = snap.data();
+    activeRequest = { id:reqId, ...req };
+    renderModal(activeRequest);
+  });
+}
+
+function closeModal(){
+  modalBackdrop.classList.remove('show');
+  if(modalUnsub) modalUnsub();
+  modalUnsub=null;
+  activeRequest=null;
+}
+modalCloseBtn.onclick = closeModal;
+modalBackdrop.addEventListener('click', (e)=>{ if(e.target===modalBackdrop) closeModal(); });
+
+function renderModal(req){
+  modalTitle.textContent = `تفاصيل الطلب #${req.number||req.id}`;
+  kvId.textContent = `#${req.number||req.id}`;
+  kvKind.textContent = kindLabel(req.kind);
+  kvCreator.textContent = req.createdByEmail || "—";
+  kvStatus.textContent = req.finished?.done ? "مكتمل" : "قيد التنفيذ";
+  kvCreatedAt.textContent = fmtDate(req.createdAt);
+  kvTo.textContent = req.toLocation || "—";
+
+  const vins = req.vins || [];
+  const froms = uniq(vins.map(v=>v.fromLocation));
+  const toLoc = req.toLocation || "";
+  kvFromLoc.textContent = froms.join("، ") || "—";
+  kvToLoc.textContent = toLoc || "—";
+  // owners: if multiple froms, show list
+  kvFromOwner.textContent = froms.length ? froms.map(l=>`${l} — ${ownerForLocation(l)}`).join(" | ") : "—";
+  kvToOwner.textContent = toLoc ? `${toLoc} — ${ownerForLocation(toLoc)}` : "—";
+
+  // table rows
+  modalRowsTbody.innerHTML = "";
+  if(vins.length===0){
+    const tr=document.createElement('tr');
+    tr.innerHTML = `<td colspan="8" class="muted">لا توجد هياكل داخل الطلب.</td>`;
+    modalRowsTbody.appendChild(tr);
+  } else {
+    for(const v of vins){
+      const st = (req.rowStates && req.rowStates[v.vin]) || {};
+      const s1 = st.step1 || {};
+      const s2 = st.step2 || {};
+      const s3 = st.step3 || {};
+      const tr=document.createElement('tr');
+      tr.innerHTML = `
+        <td><b>${v.vin}</b></td>
+        <td class="muted">${v.carName||""}</td>
+        <td>${v.fromLocation||"—"}</td>
+        <td>${req.toLocation||"—"}</td>
+        <td class="small">${s1.done ? "✅ "+(s1.byEmail||"") : "—"}</td>
+        <td class="small">${s2.done ? "✅ "+(s2.byEmail||"") : "—"}</td>
+        <td class="small">${s3.done ? "✅ "+(s3.byEmail||"") : "—"}</td>
+        <td class="small muted">${[s1.note,s2.note,s3.note].filter(Boolean).join(" | ") || "—"}</td>
+      `;
+      modalRowsTbody.appendChild(tr);
+    }
+  }
+
+  // progress
+  const pct = stagePctForReq(req);
+  overallPct.textContent = `${pct}%`;
+  progressBar.style.width = `${pct}%`;
+
+  // action enabled
+  act1.disabled = !canDoActionOnRequest(req,1);
+  act2.disabled = !canDoActionOnRequest(req,2);
+  act3.disabled = !canDoActionOnRequest(req,3);
+  act4.disabled = !canDoActionOnRequest(req,4) || !!req.finished?.done;
+
+  whoCan.textContent = isAdmin ? "أنت (الإدارة): تقدر تعمل أي إجراء." : "الصلاحيات حسب المكان/المنشئ.";
+}
+
+async function logActivity(payload){
+  try {
+    await addDoc(collection(db,"mzj_activity_log"), {
+      ...payload,
+      createdAt: serverTimestamp()
+    });
+  } catch(e){ /* ignore if no permission */ }
+}
+
+function userName(){
+  return userProfile?.Name || userProfile?.name || "";
+}
+
+async function applyAction(actionNo){
+  if(!activeRequest) return;
+  const req = activeRequest;
+  if(!canDoActionOnRequest(req, actionNo)) return alert("لا توجد صلاحية");
+  const note = actionNote.value.trim();
+
+  const reqRef = doc(db,"requests", req.id);
+  await runTransaction(db, async (tx)=>{
+    const snap = await tx.get(reqRef);
+    if(!snap.exists()) throw new Error("missing");
+    const cur = snap.data();
+    const vins = cur.vins || [];
+    const rowStates = cur.rowStates || {};
+
+    const now = new Date();
+    const byEmail = userEmail;
+    const byName = userName();
+
+    if(actionNo===4){
+      if(cur.finished?.done) return;
+      tx.update(reqRef, {
+        "finished": { done:true, at: serverTimestamp(), byEmail, byName, note }
       });
+      return;
     }
 
-    function filterList(items, kindFilter, vinNeedle){
-      const k = kindFilter;
-      const vq = (vinNeedle || "").trim();
-      return items.filter(it=>{
-        if(k !== "all" && it.kind !== k) return false;
-        if(vq){
-          const vins = (it.vins || []).map(x=>esc(x.vin)).join(" ");
-          if(!vins.includes(vq)) return false;
-        }
-        return true;
-      });
+    // actions 1 & 2: apply to vins where current user is owner of fromLocation OR admin
+    // action 3: apply to vins where current user is owner of destination OR admin
+    for(const v of vins){
+      const vin = v.vin;
+      const fromLoc = v.fromLocation;
+      const toLoc = cur.toLocation;
+      const allow = isAdmin || (actionNo===3 ? ownerForLocation(toLoc)===byEmail : ownerForLocation(fromLoc)===byEmail);
+      if(!allow) continue;
+      const st = rowStates[vin] || { step1:{done:false}, step2:{done:false}, step3:{done:false} };
+      if(actionNo===1 && !st.step1?.done){
+        st.step1 = { done:true, at: serverTimestamp(), byEmail, byName, note };
+      }
+      if(actionNo===2 && st.step1?.done && !st.step2?.done){
+        st.step2 = { done:true, at: serverTimestamp(), byEmail, byName, note };
+      }
+      if(actionNo===3 && st.step2?.done && !st.step3?.done){
+        st.step3 = { done:true, at: serverTimestamp(), byEmail, byName, note };
+        // update car location when received at destination (move OR shoot)
+        // We'll update cars collection doc by VIN lookup (best-effort outside tx) -> cannot tx across query
+      }
+      rowStates[vin] = st;
     }
+    tx.update(reqRef, { rowStates });
+  });
 
-    function renderManage(items){
-      const list = filterList(items, filterKind.value, searchVin.value);
-      if(list.length === 0){
-        manageTbody.innerHTML = `<tr><td colspan="7" class="muted">لا توجد طلبات</td></tr>`;
-        return;
-      }
-      manageTbody.innerHTML = "";
-      for(const it of list){
-        const vins = (it.vins || []).map(x=>x.vin).join(", ");
-        const from = (it.vins?.[0]?.fromLocation) || "—";
-        const to   = (it.vins?.[0]?.toLocation) || "—";
-        const creator = it.createdByEmail || it.createdByName || "—";
-        const pr = progressOfRows(it.vins || []);
-        const pill = pr.pct === 100 ? "ok" : (pr.pct === 0 ? "warn" : "warn");
-        const tr = document.createElement("tr");
-        tr.style.cursor = "pointer";
-        tr.innerHTML = `
-          <td><b>#${it.id}</b></td>
-          <td><span class="pill">${kindLabel(it.kind)}</span></td>
-          <td>${esc(vins) || "—"}</td>
-          <td>${esc(from) || "—"}</td>
-          <td>${esc(to) || "—"}</td>
-          <td><span class="muted">${esc(creator)}</span></td>
-          <td><span class="pill ${pill}">${pr.pct}%</span></td>
-        `;
-        tr.addEventListener("click", ()=>openModal(it.id));
-        manageTbody.appendChild(tr);
-      }
-    }
-
-    function renderDone(items){
-      const list = filterList(items, filterKindDone.value, searchVinDone.value);
-      if(list.length === 0){
-        doneTbody.innerHTML = `<tr><td colspan="7" class="muted">لا توجد طلبات مكتملة</td></tr>`;
-        return;
-      }
-      doneTbody.innerHTML = "";
-      for(const it of list){
-        const vins = (it.vins || []).map(x=>x.vin).join(", ");
-        const from = (it.vins?.[0]?.fromLocation) || "—";
-        const to   = (it.vins?.[0]?.toLocation) || "—";
-        const creator = it.createdByEmail || it.createdByName || "—";
-        const doneAt = fmtDate(it.completedAt || it.doneAt || it.updatedAt);
-        const tr = document.createElement("tr");
-        tr.style.cursor = "pointer";
-        tr.innerHTML = `
-          <td><b>#${it.id}</b></td>
-          <td><span class="pill ok">${kindLabel(it.kind)}</span></td>
-          <td>${esc(vins) || "—"}</td>
-          <td>${esc(from) || "—"}</td>
-          <td>${esc(to) || "—"}</td>
-          <td><span class="muted">${esc(creator)}</span></td>
-          <td><span class="muted">${doneAt}</span></td>
-        `;
-        tr.addEventListener("click", ()=>openModal(it.id));
-        doneTbody.appendChild(tr);
-      }
-    }
-
-    // ===== MODAL LIVE =====
-    function closeModal(){
-      modal.classList.remove("open");
-      openReqId = null;
-      if(openReqUnsub){ openReqUnsub(); openReqUnsub = null; }
-      stageNote.value = "";
-    }
-
-    async function openModal(reqId){
-      openReqId = reqId;
-      modal.classList.add("open");
-      modalTitle.textContent = `تفاصيل الطلب #${reqId}`;
-      stageNote.value = "";
-
-      // Live snapshot
-      if(openReqUnsub) openReqUnsub();
-      openReqUnsub = onSnapshot(doc(db,"requests", reqId), async (snap)=>{
-        if(!snap.exists()){
-          closeModal();
-          return alert("الطلب غير موجود");
-        }
-        const data = snap.data() || {};
-        await renderModal(reqId, data);
-      }, (err)=>{
-        console.error(err);
-        alert("تعذر فتح الطلب");
-        closeModal();
-      });
-    }
-
-    function stageSummaryCell(s, n){
-      const done = !!s?.done;
-      const by = esc(s?.by || "—");
-      const note = esc(s?.note || "");
-      const at = fmtDate(s?.at);
-      const pill = done ? "ok" : "warn";
-      const label = done ? "تم" : "—";
-      const lines = [
-        `<span class="pill ${pill}">${n}: ${label}</span>`,
-        `<div class="muted" style="margin-top:6px">${by}</div>`,
-      ];
-      if(note) lines.push(`<div class="muted" style="margin-top:4px">ملاحظة: ${note}</div>`);
-      if(at && at !== "—") lines.push(`<div class="muted" style="margin-top:4px">${at}</div>`);
-      return lines.join("");
-    }
-
-    async function renderModal(reqId, data){
-      m_id.textContent = reqId;
-      m_kind.textContent = kindLabel(data.kind);
-      m_creator.textContent = data.createdByEmail || data.createdByName || "—";
-      m_status.textContent = data.status === "done" ? "مكتمل" : "قيد التنفيذ";
-      m_createdAt.textContent = fmtDate(data.createdAt);
-      m_canEdit.textContent = `canEdit: ${data.canEdit ? "true" : "false"}`;
-
-      // Responsibilities (owners by location)
-      const first = data.vins?.[0] || {};
-      const fromL = normalizeLocationForMatch(first.fromLocation || first.rawLocation || "");
-      const toL   = normalizeLocationForMatch(first.toLocation || "");
-      m_fromOwners.textContent = await getOwnersForLocation(fromL);
-      m_toOwners.textContent = await getOwnersForLocation(toL);
-
-      // Progress
-      const pr = progressOfRows(data.vins || []);
-      m_pct.textContent = `${pr.pct}%`;
-      m_bar.style.width = `${pr.pct}%`;
-
-      // Steps overview (aggregate)
-      m_steps.innerHTML = "";
-      const chips = [
-        {k:"s1", t:"1 استلام"},
-        {k:"s2", t:"2 إرسال"},
-        {k:"s3", t:"3 استلام"},
-        {k:"s4", t:"4 إنهاء"},
-      ];
-      for(const c of chips){
-        // done if all vins done for this stage
-        const allDone = (data.vins || []).length ? (data.vins || []).every(v=>v.progress?.[c.k]?.done) : false;
-        const el = document.createElement("span");
-        el.className = "step-chip" + (allDone ? " done" : "");
-        el.textContent = `${c.t}`;
-        m_steps.appendChild(el);
-      }
-
-      // Permission text
-      const you = profile?.name || profile?.email || "—";
-      m_youCan.textContent = isAdmin ? `أنت (الإدارة): تقدر تعمل أي إجراء` : `أنت: ${you}`;
-
-      // Render VIN rows (show all details)
-      const vins = data.vins || [];
-      if(!vins.length){
-        m_rows.innerHTML = `<tr><td colspan="8" class="muted">لا توجد هياكل داخل الطلب</td></tr>`;
-      }else{
-        m_rows.innerHTML = "";
-        for(const v of vins){
-          const p = v.progress || {};
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td><b>${esc(v.vin)}</b></td>
-            <td>${esc(v.car || "—")}</td>
-            <td>${esc(v.rawLocation || v.fromLocation || "—")}</td>
-            <td>${esc(v.toLocation || "—")}</td>
-            <td>${stageSummaryCell(p.s1,1)}</td>
-            <td>${stageSummaryCell(p.s2,2)}</td>
-            <td>${stageSummaryCell(p.s3,3)}</td>
-            <td>${stageSummaryCell(p.s4,4)}</td>
-          `;
-          m_rows.appendChild(tr);
-        }
-      }
-
-      // Determine if canEdit (no actions yet) + creator only (or admin? user asked: creator edits; keep admin can also if needed - we'll keep creator/admin)
-      const hasAnyAction = (data.vins || []).some(v=>{
-        const p = v.progress || {};
-        return p.s1?.done || p.s2?.done || p.s3?.done || p.s4?.done;
-      });
-      const creatorEmail = (data.createdByEmail || "").toLowerCase();
-      const youEmail = (profile?.email || currentUser?.email || "").toLowerCase();
-      const canEditUi = !!data.canEdit && !hasAnyAction && (isAdmin || (creatorEmail && creatorEmail === youEmail));
-      btnEdit.style.display = canEditUi ? "inline-flex" : "none";
-      editHint.style.display = canEditUi ? "none" : "inline";
-
-      // Stage buttons: enabled by role rules
-      // Rules summary:
-      // - Admin: can do any stage always (on this request)
-      // - Non-admin:
-      //    Stage 1 & 2: allowed only if user's locations include current (fromLocation) for ALL VINs not yet done stage
-      //    Stage 3: allowed only if user's locations include execution/destination (toLocation)
-      //    Stage 4: allowed only by request creator (createdByEmail)
-      function allowedForStage(stage){
-        if(isAdmin) return true;
-
-        if(stage === 4){
-          return creatorEmail && creatorEmail === youEmail;
-        }
-
-        // For stage 1,2 -> needs to be owner of FROM location for each vin pending for that stage
-        if(stage === 1 || stage === 2){
-          return (data.vins || []).every(v=>{
-            const loc = normalizeLocationForMatch(v.fromLocation || v.rawLocation || "");
-            return (profile?.locations || []).some(l=> normalizeLocationForMatch(l) === loc || esc(l).includes(loc) || loc.includes(esc(l)));
-          });
-        }
-
-        // Stage 3 -> owner of TO location
-        if(stage === 3){
-          return (data.vins || []).every(v=>{
-            const loc = normalizeLocationForMatch(v.toLocation || "");
-            return (profile?.locations || []).some(l=> normalizeLocationForMatch(l) === loc || esc(l).includes(loc) || loc.includes(esc(l)));
-          });
-        }
-        return false;
-      }
-
-      const all = data.vins || [];
-      const allS1 = all.length ? all.every(v=>v.progress?.s1?.done) : false;
-      const allS2 = all.length ? all.every(v=>v.progress?.s2?.done) : false;
-      const allS3 = all.length ? all.every(v=>v.progress?.s3?.done) : false;
-      const allS4 = all.length ? all.every(v=>v.progress?.s4?.done) : false;
-
-      // Button states
-      btnS1.classList.toggle("done", allS1);
-      btnS2.classList.toggle("done", allS2);
-      btnS3.classList.toggle("done", allS3);
-      btnS4.classList.toggle("done", allS4);
-
-      btnS1.disabled = allS1 || !allowedForStage(1);
-      btnS2.disabled = !allS1 || allS2 || !allowedForStage(2);
-      btnS3.disabled = !allS2 || allS3 || !allowedForStage(3);
-      btnS4.disabled = !allS3 || allS4 || !allowedForStage(4);
-
-      // auto-complete: if s4 done for all => mark request done (server-side update)
-      if(allS4 && data.status !== "done"){
-        try{
-          await updateDoc(doc(db,"requests", reqId), { status:"done", completedAt: serverTimestamp() });
-        }catch(e){}
-      }
-    }
-
-    async function applyStage(stage){
-      if(!openReqId) return;
-      const note = stageNote.value.trim();
-
-      const reqRef = doc(db,"requests", openReqId);
-      const snap = await getDoc(reqRef);
-      if(!snap.exists()) return;
-
-      const data = snap.data() || {};
-      const vins = data.vins || [];
-
-      // Any action => canEdit false
-      const updatedVins = vins.map(v=>{
-        const p = v.progress || {};
-        const key = "s"+stage;
-        if(p[key]?.done) return v;
-        // For stage 2 require stage 1 done, etc. (UI already enforces)
-        const by = profile?.name || profile?.email || currentUser?.email || "—";
-        const next = {
-          ...v,
-          progress: {
-            ...p,
-            [key]: { done:true, by, note, at: new Date().toISOString() }
+  // After stage3, update cars location (best effort)
+  try {
+    const reqNowSnap = await getDoc(doc(db,"requests",req.id));
+    if(reqNowSnap.exists()){
+      const cur = reqNowSnap.data();
+      const toLoc = cur.toLocation;
+      const vins = cur.vins||[];
+      for(const v of vins){
+        const st = cur.rowStates?.[v.vin];
+        if(st?.step3?.done){
+          // find car by VIN
+          const car = await findCarByVin(v.vin);
+          if(car){
+            await updateDoc(doc(db,"cars",car.id), { location: toLoc, updatedAt: serverTimestamp() });
           }
-        };
-        return next;
-      });
-
-      const patch = {
-        vins: updatedVins,
-        canEdit: false,
-        updatedAt: serverTimestamp()
-      };
-
-      // stage 4 => if all done after patch, mark done
-      if(stage === 4){
-        patch.status = "done";
-        patch.completedAt = serverTimestamp();
-      }
-
-      // Write update
-      try{
-        await updateDoc(reqRef, patch);
-        await logActivity(`تنفيذ مرحلة ${stage}`, `تم تنفيذ المرحلة ${stage} للطلب #${openReqId}`, openReqId, note);
-        stageNote.value = "";
-      }catch(e){
-        console.error(e);
-        alert("تعذر تنفيذ الإجراء");
+        }
       }
     }
+  } catch(e){ console.warn(e); }
 
-    async function logActivity(action, details, requestId, note=""){
-      // Always log; UI for log is elsewhere (Activity.html)
-      try{
-        await addDoc(collection(db,"mzj_activity_log"), {
-          action,
-          details,
-          note,
-          requestId: requestId || "",
-          user: profile?.name || profile?.email || currentUser?.email || "—",
-          email: profile?.email || currentUser?.email || "",
-          role: profile?.role || "",
-          ts: new Date().toISOString(),
-          date: new Date().toISOString().slice(0,10)
-        });
-      }catch(e){}
-    }
+  await logActivity({
+    requestId: req.id,
+    requestNumber: req.number||null,
+    actionNo,
+    note,
+    byEmail: userEmail,
+    byName: userName()
+  });
 
-    // ===== Events =====
-    tabManage.addEventListener("click", ()=>showTab("manage"));
-    tabCreate.addEventListener("click", ()=>showTab("create"));
-    tabDone.addEventListener("click", ()=>showTab("done"));
+  actionNote.value = "";
+}
 
-    refreshBtn.addEventListener("click", ()=>setupManageListener());
-    refreshDoneBtn.addEventListener("click", ()=>setupDoneListener());
+act1.onclick = ()=>applyAction(1);
+act2.onclick = ()=>applyAction(2);
+act3.onclick = ()=>applyAction(3);
+act4.onclick = ()=>applyAction(4);
 
-    filterKind.addEventListener("change", ()=>setupManageListener());
-    filterKindDone.addEventListener("change", ()=>setupDoneListener());
-    searchVin.addEventListener("input", ()=>setupManageListener());
-    searchVinDone.addEventListener("input", ()=>setupDoneListener());
+/* Start */
+setView("manage");
+connection(false);
 
-    clearCreateBtn.addEventListener("click", clearCreate);
-    submitCreateBtn.addEventListener("click", createRequest);
+onAuthStateChanged(auth, async (u)=>{
+  currentUser = u;
+  if(!u){
+    connection(false);
+    roleText.textContent = "—";
+    locText.textContent = "—";
+    requestsTbody.innerHTML = `<tr><td colspan="7" class="muted">غير مسجل.</td></tr>`;
+    doneTbody.innerHTML = `<tr><td colspan="7" class="muted">غير مسجل.</td></tr>`;
+    return;
+  }
+  userEmail = (u.email||"").toLowerCase();
+  connection(true);
 
-    modalClose.addEventListener("click", closeModal);
-    modal.addEventListener("click", (e)=>{
-      if(e.target === modal) closeModal();
-    });
-    document.addEventListener("keydown", (e)=>{
-      if(e.key === "Escape" && modal.classList.contains("open")) closeModal();
-    });
+  userProfile = await loadUserProfileByEmail(u.email||"");
+  isAdmin = computeIsAdmin(userProfile);
+  const locs = getUserLocations(userProfile);
+  userLocation = locs[0] || "";
+  roleText.textContent = (userProfile?.role || userProfile?.Role || (isAdmin ? "الإدارة" : "—")) || "—";
+  locText.textContent = isAdmin ? "كل الفروع" : (userLocation || "—");
 
-    btnS1.addEventListener("click", ()=>applyStage(1));
-    btnS2.addEventListener("click", ()=>applyStage(2));
-    btnS3.addEventListener("click", ()=>applyStage(3));
-    btnS4.addEventListener("click", ()=>applyStage(4));
-
-    btnEdit.addEventListener("click", async ()=>{
-      if(!openReqId) return;
-      alert("تعديل الطلب: فعّلنا زر التعديل حسب canEdit + عدم وجود إجراءات. لو عايز شاشة تعديل كاملة (إضافة/حذف VIN) قولّي ونضيفها بنفس المودال.");
-    });
-
-    logoutBtn.addEventListener("click", async ()=>{
-      try{ await signOut(auth); }catch(e){}
-    });
-
-    // ===== Auth bootstrap =====
-    async function bootstrapUser(u){
-      currentUser = u;
-      const email = (u?.email || "").toLowerCase();
-      profile = await loadUserProfile(u.uid, email);
-      // ensure email in profile
-      profile.email = profile.email || email;
-
-      isAdmin = computeIsAdmin(profile);
-
-      emailText.textContent = profile.email || "—";
-      roleText.textContent = profile.role || "—";
-      locText.textContent = (isAdmin ? "كل الفروع" : (profile.locations?.[0] || "—"));
-
-      setConn(true, "متصل");
-      buildCreateTable();
-      setupManageListener();
-      setupDoneListener();
-      showTab("manage");
-    }
-
-    onAuthStateChanged(auth, async (u)=>{
-      if(!u){
-        setConn(false, "غير مسجل");
-        roleText.textContent = "—";
-        locText.textContent = "—";
-        emailText.textContent = "—";
-        manageTbody.innerHTML = `<tr><td colspan="7" class="muted">غير مسجل</td></tr>`;
-        doneTbody.innerHTML = `<tr><td colspan="7" class="muted">غير مسجل</td></tr>`;
-        return;
-      }
-      try{
-        await bootstrapUser(u);
-      }catch(e){
-        console.error(e);
-        setConn(false, "تعذر تحميل الملف الشخصي");
-      }
-    });
-
-    // Optional: auto sign-in if your workspace uses persisted auth; no manual login UI here.
-    // If you need email/password login inside the page, tell me and I'll add it.
-  </script>
-
+  listenManage();
+  listenDone();
+});
+</script>
 </body>
 </html>
