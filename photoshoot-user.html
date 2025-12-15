@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -76,7 +77,13 @@ body{
   border-color:var(--brown);
 }
 
-.container{max-width:1200px;margin:18px auto;padding:0 16px 60px}
+.container{max-width:1600px;margin:18px auto;padding:0 12px 60px}
+@media (min-width:1200px){ .container{max-width:95vw;} }
+/* توسيع صفحة الطلبات */
+#page-orders{max-width:100%;}
+#page-orders .card{max-width:100%;}
+#inner-create .table{min-width:1500px;}
+
 .card{
   background:var(--card);
   border:1px solid var(--line);
@@ -214,6 +221,114 @@ body{
 .stage{border:1px solid var(--line);border-radius:14px;padding:10px;background:#fff}
 .stage .s-title{font-weight:900;color:var(--brown);font-size:12px}
 .stage .s-val{color:var(--muted);font-size:12px;margin-top:4px}
+
+/* ===== منع الاسكرول الأفقي وجعل الجدول يدخل الشاشة ===== */
+#inner-create .tableWrap{
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+#inner-create table{
+  table-layout: fixed;
+  width:100%;
+}
+
+#inner-create th,
+#inner-create td{
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* تصغير الأعمدة الثانوية */
+#inner-create .req-ext,
+#inner-create .req-int,
+#inner-create .req-year{
+  max-width:60px;
+}
+
+#inner-create .req-note{
+  max-width:90px;
+}
+
+#inner-create .req-place,
+#inner-create .req-location{
+  max-width:110px;
+}
+
+/* VIN والسيارة */
+#inner-create th:nth-child(3),
+#inner-create td:nth-child(3){
+  width:90px;
+}
+
+#inner-create th:nth-child(4),
+#inner-create td:nth-child(4){
+  width:auto;
+}
+
+
+/* ===== ضبط تركيب جدول إنشاء الطلب (بدون اسكرول) ===== */
+#inner-create .tableWrap{ overflow: hidden; }
+
+/* خلي الجدول يرتب نفسه بشكل أنضف */
+#inner-create table{
+  table-layout: fixed;
+  width:100%;
+}
+
+/* الهيدر ما ينقصش (ممنوع ellipsis في العناوين) */
+#inner-create th{
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  line-height: 1.15;
+}
+
+/* الخلايا تفضل مضغوطة لكن من غير ما تقص الهيدر */
+#inner-create td{
+  white-space: nowrap;
+}
+
+/* المدخلات تاخد عرض الخلية بالكامل */
+#inner-create .small-input,
+#inner-create .input,
+#inner-create .select{
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+/* توزيع أعمدة ثابت ومرتب */
+#inner-create .table th:nth-child(1), #inner-create .table td:nth-child(1){width:50px}   /* # */
+#inner-create .table th:nth-child(2), #inner-create .table td:nth-child(2){width:110px}  /* نوع */
+#inner-create .table th:nth-child(3), #inner-create .table td:nth-child(3){width:95px}   /* VIN */
+#inner-create .table th:nth-child(4), #inner-create .table td:nth-child(4){width:220px}  /* السيارة */
+#inner-create .table th:nth-child(5), #inner-create .table td:nth-child(5){width:200px}  /* الفئة */
+#inner-create .table th:nth-child(6), #inner-create .table td:nth-child(6){width:80px}   /* الخارجي */
+#inner-create .table th:nth-child(7), #inner-create .table td:nth-child(7){width:80px}   /* الداخلي */
+#inner-create .table th:nth-child(8), #inner-create .table td:nth-child(8){width:80px}   /* الموديل */
+#inner-create .table th:nth-child(9), #inner-create .table td:nth-child(9){width:170px}  /* المكان */
+#inner-create .table th:nth-child(10),#inner-create .table td:nth-child(10){width:150px} /* مكان التصوير/النقل */
+#inner-create .table th:nth-child(11),#inner-create .table td:nth-child(11){width:120px} /* ملاحظة */
+#inner-create .table th:nth-child(12),#inner-create .table td:nth-child(12){width:70px}  /* مسح */
+
+/* تحسين شكل الصف */
+#inner-create .table th, #inner-create .table td{ padding:6px 8px; }
+#inner-create .small-input{ height:30px; }
+
+/* على الشاشات الأضيق نخفي أعمدة ثانوية عشان “تركب كويس” */
+@media (max-width: 1320px){
+  #inner-create .table th:nth-child(6), #inner-create .table td:nth-child(6),
+  #inner-create .table th:nth-child(7), #inner-create .table td:nth-child(7){
+    display:none;
+  }
+}
+@media (max-width: 1180px){
+  #inner-create .table th:nth-child(8), #inner-create .table td:nth-child(8){
+    display:none;
+  }
+}
+
 </style>
 </head>
 
@@ -1311,6 +1426,7 @@ auth.onAuthStateChanged(async (u)=>{
 
   if(!u){
     userProfile=null;
+    loginCard.style.display='block';
     btnLogout.style.display='none';
     setProfileBadges();
     pageOrders.style.display='none';
@@ -1328,7 +1444,8 @@ auth.onAuthStateChanged(async (u)=>{
   setProfileBadges();
 
   // Show main pages
-  loginCard.style.display='block';
+  // لا نعرض كارت تسجيل الدخول للمستخدم المسجل
+  loginCard.style.display='none';
   pageOrders.style.display='block';
   showPage('orders');
   showInner('create');
