@@ -489,8 +489,44 @@
     }
 
   </style>
+<script>
+window.addEventListener('error', function(e){
+  try{
+    console.error('window.error', e);
+    const el = document.getElementById('statusText');
+    if(el) el.textContent = 'خطأ بالصفحة: ' + (e.message||'') + (e.lineno?(' @'+e.lineno):'');
+  }catch(_){}
+});
+window.addEventListener('unhandledrejection', function(e){
+  try{
+    console.error('unhandledrejection', e);
+    const el = document.getElementById('statusText');
+    const msg = (e && e.reason && e.reason.message) ? e.reason.message : String(e.reason||'');
+    if(el) el.textContent = 'خطأ (Promise): ' + msg;
+  }catch(_){}
+});
+</script>
 </head>
 <body>
+  <div id="statusBar" style="position:sticky;top:0;z-index:999;background:#fff8ef;border-bottom:1px solid rgba(0,0,0,.08);padding:8px 12px;font-family:Tajawal,system-ui;font-size:13px;color:#3e2420;display:flex;gap:10px;align-items:center;justify-content:space-between">
+    <div><strong>الحالة:</strong> <span id="statusText">جار التحميل…</span></div>
+    <div style="opacity:.85" id="debugUser">—</div>
+    <div style="opacity:.65;font-size:12px" id="debugHint"></div>
+  </div>
+<script>
+  (function(){
+    try{
+      const h = document.getElementById('debugHint');
+      if(!h) return;
+      if(location.protocol === 'file:'){
+        h.textContent = '⚠️ الصفحة مفتوحة كـ file:// — لازم تفتحها من دومين/https (Vercel/Hosting) علشان Firebase Auth/Firestore يشتغلوا.';
+      }else{
+        h.textContent = 'Origin: ' + location.origin;
+      }
+    }catch(_){ }
+  })();
+</script>
+
 <div class="top">
   <div class="inner">
     <div class="top-left">
@@ -849,6 +885,24 @@
   };
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const AUTH_HINT_TIMEOUT = setTimeout(()=>{
+    try{
+      if(!auth.currentUser){
+        setStatus('err','غير مسجل — افتح شاشة الدخول');
+        if(typeof showAuthGate==='function') showAuthGate();
+      }
+    }catch(_){ }
+  }, 2000);
+
+  const LOADING_WATCHDOG = setTimeout(()=>{
+    try{
+      const t = document.getElementById('statusText')?.textContent || '';
+      if(t.includes('تحميل') || t.includes('جلب')){
+        setStatus('err','متوقف على التحميل — غالباً (غير مسجل دخول) أو (Firestore Rules تمنع القراءة)');
+      }
+    }catch(_){ }
+  }, 20000);
+
   const db   = getFirestore(app);
 
   const STATE_REF   = doc(db, "mzj_admin_state", "v1");
@@ -1001,13 +1055,17 @@ const ROLE_PAGES = {
     });
   }
 
-  function setStatus(mode,txt){
-    const dot=$("#connDot");
-    const txtEl=$("#connText");
-    if(!dot || !txtEl) return;
-    dot.className="dot"+(mode==="ok"?" ok":mode==="err"?" err":"");
-    txtEl.textContent = txt;
+  function setStatus(type, text){
+  try{
+    const el = document.getElementById("statusText");
+    if(el) el.textContent = text || "—";
+  }catch(_){}
+  const pill = document.getElementById("statusPill");
+  if(pill){
+    pill.className = "pill " + (type || "");
+    pill.textContent = text || "—";
   }
+}
   function normalizeVin(v){
     if(!v) return "";
     const ar={'٠':'0','١':'1','٢':'2','٣':'3','٤':'4','٥':'5','٦':'6','٧':'7','٨':'8','٩':'9'};
