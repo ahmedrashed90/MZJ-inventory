@@ -928,7 +928,67 @@ const auth = firebase.auth();
 const db   = firebase.firestore();
 
 
-  /* ===== Roles & Permissions ===== */
+  
+// ===== Admin State (mzj_admin_state/v1) =====
+const ADMIN_STATE_DOC = db.collection('mzj_admin_state').doc('v1');
+
+function stateFieldPath(kind, requestId){
+  const k = (kind==='move') ? 'moveRequests' : 'shootRequests';
+  return `${k}.${requestId}`;
+}
+
+async function upsertRequestToState({requestId, kind, status, total, createdByEmail, createdByName, rows}){
+  const rid = String(requestId);
+  const base = {
+    id: rid,
+    kind,
+    status: status || 'تحت المتابعة',
+    total: total || (rows? rows.length : 0),
+    createdBy: createdByName || '',
+    createdByEmail: createdByEmail || '',
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    admin: {},
+    notes: '',
+  };
+
+  // approvals only for move
+  if(kind === 'move'){
+    base.approvals = {
+      adminApproved: null,
+      adminNotes: '',
+      financeApproved: null,
+      financeNotes: '',
+      issuesNotes: ''
+    };
+  }
+
+  // search text
+  const vins = (rows||[]).map(r=>r.vin).filter(Boolean).join(' ');
+  base._searchText = `${rid} ${kind} ${createdByEmail||''} ${createdByName||''} ${vins}`.trim();
+
+  const field = stateFieldPath(kind, rid);
+  await ADMIN_STATE_DOC.set({ [field]: base }, { merge:true });
+}
+
+async function patchRequestInState(requestId, kind, patch){
+  const rid = String(requestId);
+  const field = stateFieldPath(kind, rid);
+  // flatten patch under field.*
+  const data = {};
+  Object.keys(patch||{}).forEach(k=>{
+    data[`${field}.${k}`] = patch[k];
+  });
+  data[`${field}.updatedAt`] = firebase.firestore.FieldValue.serverTimestamp();
+  await ADMIN_STATE_DOC.set(data, { merge:true });
+}
+
+async function deleteRequestFromState(requestId, kind){
+  const rid = String(requestId);
+  const field = stateFieldPath(kind, rid);
+  await ADMIN_STATE_DOC.set({ [field]: firebase.firestore.FieldValue.delete() }, { merge:true });
+}
+/* ===== Roles & Permissions ===== */
   const ROLE_ADMIN   = 'الادارة';
   const ROLE_IDARI   = 'اداري';
   const ROLE_BRANCH  = 'مدراء فروع';
@@ -1104,14 +1164,20 @@ async function deleteRequestById(requestId){
   if(!confirm("تأكيد حذف الطلب؟ سيتم حذف الطلب وكل الصفوف التابعة له.")) return;
 
   const reqRef = db.collection("requests").doc(id);
-  try{
+      const reqSnap = await reqRef.get();
+    const req = reqSnap.exists ? (reqSnap.data()||{}) : {};
+try{
     const rowsSnap = await reqRef.collection("rows").get();
     const batch = db.batch();
     rowsSnap.forEach(d=>batch.delete(d.ref));
     batch.delete(reqRef);
     await batch.commit();
 
-    await logAction("حذف طلب", "تم حذف الطلب #"+id+" بواسطة "+myName()+"");
+    // remove from mzj_admin_state/v1 maps
+    try{ await deleteRequestFromState(id, (req && req.kind) ? req.kind : 'shoot'); }catch(e){}
+
+
+    await logAction("حذف طلب", `تم حذف الطلب #${id} بواسطة ${myName()}`);
     alert("تم حذف الطلب ✅");
   }catch(e){
     console.error(e);
@@ -1438,7 +1504,10 @@ btnSubmit.addEventListener('click', async ()=>{
       total: rows.length
     });
 
-    // Write rows as subcollection (docId = VIN to avoid duplicates)
+        // Mirror summary into mzj_admin_state/v1.{moveRequests|shootRequests}
+    await upsertRequestToState({requestId: reqRef.id, kind, status:'تحت المتابعة', total: rows.length, createdByEmail: myEmail(), createdByName: myName(), rows});
+
+// Write rows as subcollection (docId = VIN to avoid duplicates)
     const batch = db.batch();
     rows.forEach(r=>{
       const rowId = r.vin; // stable
@@ -1452,7 +1521,7 @@ btnSubmit.addEventListener('click', async ()=>{
     });
     await batch.commit();
 
-    await logAction("إنشاء طلب", "تم إنشاء طلب (${kind}) — عدد VINs: ${rows.length}");
+    await logAction("إنشاء طلب", `تم إنشاء طلب (${kind}) — عدد VINs: ${rows.length}`);
 
     alert("تم إنشاء الطلب ✅");
     buildFormRows();
@@ -1631,7 +1700,7 @@ async function applyStep(stepNo){
 
   await logAction(
     stepNo===1 ? "تم استلام الطلب" : (stepNo===2 ? "تم إرسال السيارة" : "تم استلام السيارة"),
-    "طلب #${openRequestId} — مرحلة ${stepNo} — عدد ${targets.length}"
+    `طلب #${openRequestId} — مرحلة ${stepNo} — عدد ${targets.length}`
   );
 }
 
@@ -1705,7 +1774,7 @@ async function finishRequest(){
     try{ await updateStockLocationsAfterMoveFinish(openRows); }catch(e){ console.error(e); }
   }
 
-  await logAction("تم الانتهاء", "تم إنهاء الطلب #${openRequestId} بواسطة "+myName()+"");
+  await logAction("تم الانتهاء", `تم إنهاء الطلب #${openRequestId} بواسطة ${myName()}`);
 }
 
 btnStep1.addEventListener('click', ()=>applyStep(1));
@@ -1749,7 +1818,7 @@ btnEditReq.addEventListener('click', async ()=>{
   batch.set(reqRef, { updatedAt: now }, { merge:true });
   await batch.commit();
 
-  await logAction("تعديل الطلب", "تم تعديل وجهات الطلب #${openRequestId} بواسطة "+myName()+"");
+  await logAction("تعديل الطلب", `تم تعديل وجهات الطلب #${openRequestId} بواسطة ${myName()}`);
 
   editMode=false;
 });
@@ -1819,25 +1888,16 @@ function renderManage(all){
   ordersTbody.innerHTML='';
   list.forEach(req=>{
     const tr=document.createElement('tr');
-    
-      const actionBtn = canDeleteRequest(req)
-        ? '<button class="row-del" title="حذف الطلب" data-del="'+req.id+'"><i class="fa fa-trash"></i></button>'
-        : '';
-
-      tr.innerHTML =
-        '<td class="center">#'+req.id+'</td>' +
-        '<td>'+ (kindLabel(req.kind||'') ) +'</td>' +
-        '<td class="mono">'+ (req.vin||'—') +'</td>' +
-        '<td>'+ (req.car||'—') +'</td>' +
-        '<td>'+ (req.trim||'—') +'</td>' +
-        '<td>'+ (req.ext||'—') +'</td>' +
-        '<td>'+ (req.int||'—') +'</td>' +
-        '<td>'+ (req.model||'—') +'</td>' +
-        '<td>'+ (req.location||'—') +'</td>' +
-        '<td>'+ (req.shootPlace||'—') +'</td>' +
-        '<td>'+ (req.notes||'') +'</td>' +
-        '<td class="center">'+ actionBtn +'</td>';
-tr.querySelector('[data-open]').addEventListener('click', ()=>openRequest(req.__id));
+    tr.innerHTML = `
+      <td><b>#${req.__id}</b></td>
+      <td>${kindLabel(req.kind)}</td>
+      <td>${statusLabel(req)}</td>
+      <td class="muted">${req.createdByName||req.createdByEmail||"—"}</td>
+      <td class="muted">${fmtTs(req.updatedAt||req.createdAt)}</td>
+      <td><button class="btn primary" data-open="${req.__id}"><i class="fa-solid fa-up-right-from-square"></i>فتح</button>
+${canDeleteRequest(req) ? `<button class="btn danger" data-del="${req.__id}" style="margin-right:6px"><i class="fa-solid fa-trash"></i>حذف</button>` : ``}</td>
+    `;
+    tr.querySelector('[data-open]').addEventListener('click', ()=>openRequest(req.__id));
     const delBtn = tr.querySelector('[data-del]');
     if(delBtn){ delBtn.addEventListener('click', ()=>deleteRequestById(req.__id)); }
 
