@@ -3,6 +3,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -661,7 +662,6 @@ body.auth-checking #loginCard{display:none !important;}
 
 
 /* إخفاء تبويبات الإدارة لغير الإدارة */
-body:not(.is-admin) .tab.admin-only{display:none !important;}
 
 </style>
 </head>
@@ -671,13 +671,13 @@ body:not(.is-admin) .tab.admin-only{display:none !important;}
 <!-- TOP BAR -->
 <div class="dashboard-topbar">
   <div class="dashboard-tabs">
-    <a class="tab admin-only" href="admin.html">الإدارة</a>
-    <a class="tab admin-only" href="inventory.html">المخزون</a>
-    <a class="tab admin-only" href="dashboard.html">الداش بورد</a>
-    <a class="tab admin-only" href="vt.html">نقل السيارات</a>
+    <a class="tab" href="admin.html">الإدارة</a>
+    <a class="tab" href="inventory.html">المخزون</a>
+    <a class="tab" href="dashboard.html">الداش بورد</a>
+    <a class="tab" href="vt.html">نقل السيارات</a>
     <a class="tab active" href="photoshoot-user.html">إدارة الطلبات</a>
-    <a class="tab admin-only" href="cars.html">كل السيارات</a>
-    <a class="tab admin-only" href="Activity.html">سجل النشاط</a>
+    <a class="tab" href="cars.html">كل السيارات</a>
+    <a class="tab" href="Activity.html">سجل النشاط</a>
   </div>
 </div>
 
@@ -2046,7 +2046,10 @@ auth.onAuthStateChanged(async (u)=>{
   userProfile = await loadUserProfile(u);
   setProfileBadges();
 
-  document.body.classList.add(isAdmin() ? 'is-admin' : 'not-admin');
+  
+  currentUserRole = myRole();
+  applyRolePermissions();
+document.body.classList.add(isAdmin() ? 'is-admin' : 'not-admin');
 
   // Show main pages
   // لا نعرض كارت تسجيل الدخول للمستخدم المسجل
