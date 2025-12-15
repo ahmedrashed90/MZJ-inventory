@@ -88,6 +88,8 @@
       color:#fff;
       border-color:var(--beige);
     }
+    .btn.danger{background:#b42318;color:#fff;border:1px solid rgba(0,0,0,.08)}
+    .btn.danger:hover{filter:brightness(.95)}
     .btn.primary{
       background:var(--brown);
       color:#fff;
@@ -246,6 +248,8 @@
 
     .actions{display:flex;flex-wrap:wrap;gap:4px;}
     .actions .btn-mini{border-radius:8px;font-size:10px;padding:3px 7px}
+    .row-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+    .row-actions .btn-mini{padding:4px 8px;border-radius:10px}
 
     /* Status dot in header */
     .status{
@@ -1075,6 +1079,32 @@ const ROLE_PAGES = {
       if(stage==="received"){
         return userMatchesPlace((row.location||""));
       }
+
+  // === UI سريع لأزرار الإجراءات داخل الجدول ===
+  function renderRowActions(kind, req, row){
+    const vin = normalizeVin(row.vin||"");
+    const st  = (req.admin && req.admin.rowState) ? (req.admin.rowState[vin]||{}) : {};
+
+    function mk(label, stage, icon){
+      const done = st[stage]===true;
+      const allowed = canActOnRow(kind, row, stage);
+      const disabled = done || !allowed;
+      const cls = disabled ? "btn ghost btn-mini" : "btn secondary btn-mini";
+      const data = (kind==="move")
+        ? `data-act-move="${vin}" data-stage="${stage}"`
+        : `data-act-shoot="${vin}" data-stage="${stage}"`;
+      return `<button type="button" class="${cls}" ${data} ${disabled?"disabled":""}><i class="${icon}"></i> ${label}</button>`;
+    }
+
+    return `
+      <div class="row-actions">
+        ${mk("استلام","received","fa-regular fa-clipboard-check")}
+        ${mk("إرسال","sent","fa-solid fa-truck")}
+        ${mk(kind==="move" ? "استلام الوجهة" : "استلام التصوير","carReceived","fa-solid fa-car-side")}
+      </div>
+    `;
+  }
+
       if(stage==="sent"){
         return userMatchesPlace((row.location||""));
       }
@@ -1470,6 +1500,8 @@ window.__shootEditMode = false;
   }
 
   async function saveNewRequest(){
+    const btn = document.getElementById('btnSendRequest');
+    const oldBtnText = btn ? btn.textContent : "";
     const rb = document.getElementById("reqBy");
     const user = auth.currentUser;
     const createdBy =
@@ -2007,46 +2039,72 @@ window.__shootEditMode = false;
 let currentShootReqId = null;
   let currentMoveReqId  = null;
 function openReqModal(req){
-  currentShootReqId = req.id;
+    currentShootReqId = req.id;
 
-  const backdrop = document.getElementById("reqModalBackdrop");
-  if (!backdrop) return;
+    const backdrop = document.getElementById("reqModalBackdrop");
+    if(!backdrop) return;
 
-  // always use latest version from memory (snapshot might have updated)
-  const latest = (shootRequests||[]).find(r=>r.id===req.id) || req;
+    // افتح المودال فورًا (بدون انتظار بناء الجدول)
+    backdrop.classList.add("show");
 
-  const titleEl  = document.getElementById("reqModalTitle");
-  const subEl    = document.getElementById("reqModalSub");
-  const rowsBody = document.getElementById("reqModalRows");
-  const statusBox= document.getElementById("reqModalStatusBox");
-  const recvBox  = document.getElementById("reqModalReceiveInfo");
-  const prepBox  = document.getElementById("reqModalPrepInfo");
-  const notesEl  = document.getElementById("adminNotes");
-  const btnEdit  = document.getElementById("btnEditReq");
+    const latest = (shootRequests||[]).find(r=>r.id===req.id) || req;
 
-  if (titleEl) titleEl.textContent = "تفاصيل طلب التصوير #" + (latest.id || "-");
-  if (subEl)   subEl.textContent   = (latest.createdAt || "") + " — " + (latest.createdBy || "");
+    const titleEl  = document.getElementById("reqModalTitle");
+    const subEl    = document.getElementById("reqModalSub");
+    const rowsBody = document.getElementById("reqModalRows");
+    const statusBox= document.getElementById("reqModalStatusBox");
 
-  // eligibility: edit only before any action happened
-  const canEditUser = (isRequestOwner(latest) || isSuperAdmin());
-  const started     = requestStarted(latest);
-  if(btnEdit){
-    btnEdit.style.display = (canEditUser && !started) ? "inline-flex" : "none";
-    btnEdit.disabled = false;
-    btnEdit.innerHTML = window.__shootEditMode
-      ? '<i class="fa-solid fa-floppy-disk"></i> حفظ التعديل'
-      : '<i class="fa-solid fa-pen"></i> تعديل الطلب';
+    if(titleEl) titleEl.textContent = "تفاصيل طلب التصوير #" + (latest.id || "-");
+    if(subEl)   subEl.textContent   = (latest.createdAt || "") + " — " + (latest.createdBy || "");
 
-    btnEdit.onclick = async ()=>{
-      // safety
-      const cur = (shootRequests||[]).find(r=>r.id===latest.id) || latest;
-      if(!(isRequestOwner(cur) || isSuperAdmin())) return;
+    if(rowsBody){
+      rowsBody.innerHTML = `<tr><td colspan="12" class="center muted">جارٍ تحميل الإجراءات…</td></tr>`;
+    }
 
-      // lock editing if any action happened
-      if(requestStarted(cur)){
-        showToast("لا يمكن تعديل الطلب بعد بدء أي إجراء");
-        return;
+    ensureRowStates(latest);
+    renderShootTimeline(latest);
+
+    requestAnimationFrame(()=>{
+      const fresh = (shootRequests||[]).find(r=>r.id===req.id) || latest;
+      ensureRowStates(fresh);
+
+      if(statusBox){
+        const c1 = stageCount(fresh,"received");
+        const c2 = stageCount(fresh,"sent");
+        const c3 = stageCount(fresh,"carReceived");
+        const c4 = stageCount(fresh,"finished");
+        statusBox.textContent = [
+          `استلام الفروع: ${pct(c1.done,c1.total)}% (${c1.done}/${c1.total})`,
+          `إرسال للتصوير: ${pct(c2.done,c2.total)}% (${c2.done}/${c2.total})`,
+          `استلام التصوير: ${pct(c3.done,c3.total)}% (${c3.done}/${c3.total})`,
+          `الانتهاء: ${pct(c4.done,c4.total)}% (${c4.done}/${c4.total})`
+        ].join("\n");
+        statusBox.style.whiteSpace="pre-line";
       }
+
+      if(rowsBody){
+        rowsBody.innerHTML = "";
+        const rows = Array.isArray(fresh.rows)?fresh.rows:[];
+        rows.forEach((row, idx)=>{
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="center">${idx+1}</td>
+            <td class="mono">${row.vin||""}</td>
+            <td>${row.car||""}</td>
+            <td>${row.variant||""}</td>
+            <td>${row.extColor||""}</td>
+            <td>${row.intColor||""}</td>
+            <td>${row.modelYear||""}</td>
+            <td class="muted">${row.location||"-"}</td>
+            <td class="muted">${row.shootPlace||row.place||"-"}</td>
+            <td class="center">${renderRowActions("shoot", fresh, row)}</td>
+            <td>${row.note||""}</td>
+          `;
+          rowsBody.appendChild(tr);
+        });
+      }
+    });
+  }
 
       // save
       if(window.__shootEditMode){
@@ -2075,7 +2133,7 @@ function openReqModal(req){
         window.__shootEditMode = true;
         openReqModal(cur); // re-render modal in edit mode
         showToast("وضع التعديل مفعل");
-      }
+      
     };
   }
 
@@ -2144,7 +2202,9 @@ function openReqModal(req){
     currentMoveReqId = req.id;
 
     const backdrop = document.getElementById("moveModalBackdrop");
-    if (!backdrop) return;
+    if(!backdrop) return;
+
+    backdrop.classList.add("show");
 
     const latest = (moveRequests||[]).find(r=>r.id===req.id) || req;
 
@@ -2153,28 +2213,57 @@ function openReqModal(req){
     const rowsBody = document.getElementById("moveModalRows");
     const statusBox= document.getElementById("moveModalStatusBox");
 
-    if (titleEl) titleEl.textContent = "تفاصيل طلب النقل #" + (latest.id || "-");
-    if (subEl)   subEl.textContent   = (latest.createdAt || "") + " — " + (latest.createdBy || "");
+    if(titleEl) titleEl.textContent = "تفاصيل طلب النقل #" + (latest.id || "-");
+    if(subEl)   subEl.textContent   = (latest.createdAt || "") + " — " + (latest.createdBy || "");
 
     if(rowsBody){
-      rowsBody.innerHTML = "";
-      const rows = Array.isArray(latest.rows)?latest.rows:[];
-      rows.forEach((row, idx)=>{
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="center">${idx+1}</td>
-          <td class="mono">${row.vin||""}</td>
-          <td>${row.car||""}</td>
-          <td>${row.variant||""}</td>
-          <td>${row.extColor||""}</td>
-          <td>${row.intColor||""}</td>
-          <td>${row.modelYear||""}</td>
-          <td class="muted">${row.fromLocation || row.location || "-"}</td>
-          <td class="muted">${row.toLocation || row.place || "-"}</td>
-          <td>${row.note||""}</td>
-        `;
-        rowsBody.appendChild(tr);
-      });
+      rowsBody.innerHTML = `<tr><td colspan="11" class="center muted">جارٍ تحميل الإجراءات…</td></tr>`;
+    }
+
+    ensureRowStates(latest);
+    renderMoveTimeline(latest);
+
+    requestAnimationFrame(()=>{
+      const fresh = (moveRequests||[]).find(r=>r.id===req.id) || latest;
+      ensureRowStates(fresh);
+
+      if(statusBox){
+        const c1 = stageCount(fresh,"received");
+        const c2 = stageCount(fresh,"sent");
+        const c3 = stageCount(fresh,"carReceived");
+        const c4 = stageCount(fresh,"finished");
+        statusBox.textContent = [
+          `استلام الطلب: ${pct(c1.done,c1.total)}% (${c1.done}/${c1.total})`,
+          `نقل/إرسال السيارة: ${pct(c2.done,c2.total)}% (${c2.done}/${c2.total})`,
+          `استلام الوجهة: ${pct(c3.done,c3.total)}% (${c3.done}/${c3.total})`,
+          `الانتهاء: ${pct(c4.done,c4.total)}% (${c4.done}/${c4.total})`
+        ].join("\n");
+        statusBox.style.whiteSpace="pre-line";
+      }
+
+      if(rowsBody){
+        rowsBody.innerHTML = "";
+        const rows = Array.isArray(fresh.rows)?fresh.rows:[];
+        rows.forEach((row, idx)=>{
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="center">${idx+1}</td>
+            <td class="mono">${row.vin||""}</td>
+            <td>${row.car||""}</td>
+            <td>${row.variant||""}</td>
+            <td>${row.extColor||""}</td>
+            <td>${row.intColor||""}</td>
+            <td>${row.modelYear||""}</td>
+            <td class="muted">${row.fromLocation || row.location || "-"}</td>
+            <td class="muted">${row.toLocation || row.place || "-"}</td>
+            <td class="center">${renderRowActions("move", fresh, row)}</td>
+            <td>${row.note||""}</td>
+          `;
+          rowsBody.appendChild(tr);
+        });
+      }
+    });
+  });
     }
 
     ensureRowStates(latest);
@@ -2496,9 +2585,85 @@ function showAuthGate(){
         alert("بيانات الدخول غير صحيحة");
       }finally{
         btn.disabled = false;
-      }
     });
   }
+
+  async function markRowStage(kind, vin, stage){
+    const arr = (kind==="move") ? moveRequests : shootRequests;
+    const id  = (kind==="move") ? currentMoveReqId : currentShootReqId;
+    const idx = arr.findIndex(r=>r.id===id);
+    if(idx===-1) return;
+
+    const req = arr[idx];
+    ensureRowStates(req);
+    const st = req.admin.rowState[vin] || {received:false,sent:false,carReceived:false,finished:false};
+
+    if(stage==="sent" && !st.received) st.received = true;
+    if(stage==="carReceived"){
+      if(!st.received) st.received = true;
+      if(!st.sent) st.sent = true;
+    }
+    st[stage] = true;
+    req.admin.rowState[vin] = st;
+
+    // تحديث مكان السيارة
+    const row = (req.rows||[]).find(r=> normalizeVin(r.vin||"")===vin) || {};
+    if(kind==="shoot" && stage==="sent"){
+      const place = (row.shootPlace||row.place||"").trim();
+      if(place){
+        moveCarsToShootPlace([{vin, shootPlace: place}]);
+      }
+    }
+
+    // تحديث المخزون النهائي في النقل يتم عند الإنهاء فقط (زر إنهاء الطلب)
+    arr[idx] = req;
+
+    await persistAll();
+    metrics(); render();
+
+    // تحديث المودال المفتوح
+    if(kind==="move") openMoveModal(req);
+    else openReqModal(req);
+
+    showToast("تم تحديث الإجراء");
+  }
+
+  document.addEventListener("click", (e)=>{
+    const b = e.target.closest("button");
+    if(!b) return;
+
+    if(b.dataset.actMove){
+      markRowStage("move", b.dataset.actMove, b.dataset.stage);
+    }
+    if(b.dataset.actShoot){
+      markRowStage("shoot", b.dataset.actShoot, b.dataset.stage);
+    }
+  });
+
+  async function wipeAllMoveAndShootRequests(){
+    if(!isSuperAdmin()){
+      showToast("غير مسموح");
+      return;
+    }
+    const ok = confirm("تحذير: سيتم مسح كل طلبات النقل والتصوير نهائيًا من Firebase. هل أنت متأكد؟");
+    if(!ok) return;
+
+    try{
+      setStatus("","جارٍ المسح…");
+      await setDoc(STATE_REF, { shootRequests: [], moveRequests: [], updatedAt: now() }, { merge: true });
+      shootRequests = [];
+      moveRequests  = [];
+      metrics(); render();
+      showToast("تم مسح جميع الطلبات");
+      setStatus("ok","تم");
+    }catch(err){
+      console.error("wipeAllMoveAndShootRequests error", err);
+      setStatus("err","فشل المسح");
+      alert("فشل المسح: " + (err?.message || err));
+    }
+  }
+  document.getElementById("btnWipeAllRequests")?.addEventListener("click", wipeAllMoveAndShootRequests);
+
 </script>
 </body>
 </html>
