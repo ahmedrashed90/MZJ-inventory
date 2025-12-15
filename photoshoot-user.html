@@ -664,6 +664,19 @@ body.auth-checking #loginCard{display:none !important;}
 
 /* إخفاء تبويبات الإدارة لغير الإدارة */
 
+
+  /* ===== Visual helper for مسئول التنفيذ ===== */
+  .row-turn td{background:#ecfdf3 !important;}
+  .turn-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:6px 10px;border-radius:999px;
+    border:1px solid #bbf7d0;background:#ecfdf3;
+    color:#14532d;font-weight:800;font-size:12px;
+    white-space:nowrap;
+  }
+  .turn-badge.wait{
+    border-color:#fed7aa;background:#fff7ed;color:#9a3412;
+  }
 </style>
 </head>
 
@@ -878,6 +891,7 @@ body.auth-checking #loginCard{display:none !important;}
             <th style="width:170px">الوجهة</th>
             <th style="width:110px">النوع</th>
             <th style="width:160px">حالة التنفيذ</th>
+            <th style="width:140px">دورك الآن</th>
             <th style="width:220px">تعديل الوجهة</th>
           </tr></thead>
           <tbody id="rowsTbody"></tbody>
@@ -1633,6 +1647,11 @@ function renderRowsTable(){
     const src=rowSourcePlace(row);
     const dst=rowDestPlace(row);
 
+    // ✅ تحديد المرحلة التالية + هل هي دور المستخدم الحالي؟
+    const nextStep = (!row.steps?.received?.at) ? 1 : (!row.steps?.sent?.at) ? 2 : (!row.steps?.carReceived?.at) ? 3 : 0;
+    const myTurn = nextStep ? canDoStep(row, nextStep) : false;
+    if(myTurn) tr.classList.add('row-turn');
+
     tr.innerHTML = `
       <td class="center">${idx+1}</td>
       <td class="mono">${row.vin||row.__id||"—"}</td>
@@ -1641,6 +1660,7 @@ function renderRowsTable(){
       <td class="muted">${dst||"—"}</td>
       <td>${kindLabel(row.kind)}</td>
       <td>${stageText(row)}</td>
+      <td>${myTurn ? '<span class="turn-badge">دورك الآن</span>' : (nextStep? '<span class="turn-badge wait">بانتظار مسؤول المرحلة</span>' : '—')}</td>
     `;
 
     const editTd=document.createElement('td');
@@ -1702,8 +1722,10 @@ async function applyStep(stepNo){
     const stepObj = { at: now, byUid: myUid(), byEmail: myEmail(), byName: myName() };
     batch.set(rowRef, { steps: { [key]: stepObj }, updatedAt: now }, { merge:true });
 
-    // Step2: update current location to destination
-    if(stepNo===2){
+    // ✅ ملاحظة مهمة:
+// لا نغيّر مكان السيارة عند "تم إرسال السيارة" (المرحلة 2)
+// تغيير المكان يتم فقط عند "تم استلام السيارة" (المرحلة 3)
+    if(stepNo===3){
       const newLoc = rowDestPlace(row);
       if(newLoc) batch.set(rowRef, { location: newLoc }, { merge:true });
     }
