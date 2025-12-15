@@ -926,6 +926,58 @@ try{ firebase.initializeApp(firebaseConfig); }catch(e){}
 const auth = firebase.auth();
 const db   = firebase.firestore();
 
+
+  /* ===== Roles & Permissions ===== */
+  const ROLE_ADMIN   = 'الادارة';
+  const ROLE_IDARI   = 'اداري';
+  const ROLE_BRANCH  = 'مدراء فروع';
+
+  // الدور الحالي للمستخدم
+  let currentUserRole = null;
+
+  // الأدوار المسموح لها بعمل الموافقات على طلبات النقل
+  const ADMIN_APPROVAL_ROLES   = [ROLE_ADMIN]; // موافقة الإدارة
+  const FINANCE_APPROVAL_ROLES = [ROLE_ADMIN]; // موافقة مالية (يمكن توسيعها لاحقًا)
+
+  // الصفحات المسموح بها لكل تصنيف
+  const ROLE_PAGES = {
+    [ROLE_ADMIN] : 'ALL', // الإدارة تشوف كل الصفحات
+    // الإداري: يشوف فقط الداشبورد + نقل السيارات + إدارة الطلبات + كل السيارات + المبيعات
+    [ROLE_IDARI] : ['dashboard.html','vt.html','photoshoot-user.html','cars.html','sales.html'],
+    [ROLE_BRANCH]: ['dashboard.html']
+  };
+
+  function applyRolePermissions(){
+    const links = document.querySelectorAll('.dashboard-tabs .tab');
+    const currentPage = (location.pathname.split('/').pop() || '').toLowerCase();
+
+    links.forEach(link=>{
+      const href = (link.getAttribute('href')||'').toLowerCase();
+
+      // الإدارة تشوف الكل
+      if(ROLE_PAGES[currentUserRole] === 'ALL'){
+        link.style.display = 'inline-flex';
+        return;
+      }
+
+      // غير كده نشوف الصفحة مسموحة ولا لأ
+      if((ROLE_PAGES[currentUserRole]||[]).map(x=>x.toLowerCase()).includes(href)){
+        link.style.display = 'inline-flex';
+      }else{
+        link.style.display = 'none';
+      }
+    });
+
+    // حماية إضافية: لو دخل صفحة مش مسموح له (حتى لو كتب اللينك يدويًا)
+    if(ROLE_PAGES[currentUserRole] !== 'ALL'){
+      const allowed = (ROLE_PAGES[currentUserRole]||[]).map(x=>x.toLowerCase());
+      if(currentPage && !allowed.includes(currentPage)){
+        alert('غير مصرح لك بدخول هذه الصفحة');
+        window.location.href = allowed[0] || 'dashboard.html';
+      }
+    }
+  }
+
 // refs
 const authState = document.getElementById('authState');
 const roleBadge = document.getElementById('roleBadge');
