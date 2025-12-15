@@ -452,7 +452,7 @@ tr:hover{ filter: brightness(0.98); }
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, orderBy, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, getDocs, limit } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   /* ===== Firebase ===== */
   const firebaseConfig = {
@@ -993,603 +993,553 @@ $('#btnLogin').addEventListener('click', async ()=>{
  
   
   // تحديد المرحلة الحالية للطلب (بايبلاين حصري لكل طلب)
-  function getOrderStage(r){
-    const status   = (r.status || '').toString().trim();
-    const received = !!(r.admin && r.admin.received);
-    const prepared = !!(r.admin && r.admin.prepared);
+  
+// ─────────────────────────────────────────────
+// ✅ كارت الطلبات (تصوير و نقل) — Rebuild نظيف
+// يعتمد على collection: requests
+// تفاصيل الطلب تُقرأ من subcollection: requests/{id}/rows
+// ─────────────────────────────────────────────
 
-    // المرحلة النهائية
-    if (status === 'تم' || status === 'منفّذ' || isShootDone(r)) {
-      return 'تم التنفيذ';
-    }
-    // تم الإرسال بعد تجهيز السيارة
-    if (prepared) {
-      return 'تم الإرسال';
-    }
-    // تم الاستلام بعد استلام الطلب
-    if (received) {
-      return 'تم الاستلام';
-    }
-    // أي حالة أخرى تعتبر تم الإنشاء
-    return 'تم الإنشاء';
-  }
-
-
-// ===============================
-// طلبات (تصوير + نقل) — مصدر واحد: collection "requests"
-// ===============================
-let requestsAll = [];     // [{id, kind, createdAt, sentAt, receivedAt, finishedAt, status, total, ...}]
-
-function tsToDate(ts){
+/** --------- Helpers --------- **/
+function REQ_isTS(v){ return v && typeof v === 'object' && ('seconds' in v || 'nanoseconds' in v); }
+function REQ_toDate(v){
   try{
-    if(!ts) return null;
-    if(ts.toDate) return ts.toDate();
-    if(typeof ts === 'number') return new Date(ts);
-    if(ts.seconds) return new Date(ts.seconds*1000);
-    return new Date(ts);
+    if(!v) return null;
+    if(v instanceof Date) return v;
+    if(REQ_isTS(v)) return new Date(v.seconds*1000);
+    if(typeof v === 'number') return new Date(v);
+    if(typeof v === 'string'){
+      // ISO or "YYYY-MM-DD HH:mm" etc.
+      const d = new Date(v);
+      if(!isNaN(d.getTime())) return d;
+    }
+    return null;
   }catch(e){ return null; }
 }
-function fmtDate(ts){
-  const d = tsToDate(ts);
-  if(!d || isNaN(d.getTime())) return '—';
-  // dd/mm/yyyy hh:mm (ar-SA)
-  try{ return new Intl.DateTimeFormat('ar-SA',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(d); }
-  catch(e){ return d.toLocaleString(); }
-}
-function getRequestStage(req){
-  // ترتيب ثابت: إنشاء -> إرسال -> استلام -> مكتملة
-  if(req?.finishedAt || (req?.status && String(req.status).includes('مكتملة'))) return 'done';
-  if(req?.receivedAt) return 'received';
-  if(req?.sentAt) return 'sent';
-  return 'created';
-}
-function stageLabel(stage){
-  return stage==='done' ? 'مكتملة'
-    : stage==='received' ? 'تم الاستلام'
-    : stage==='sent' ? 'تم الإرسال'
-    : 'تم الإنشاء';
-}
-
-function computeRequestsStats(){
-  const total = requestsAll.length;
-  const shootTotal = shootRequests.length;
-  const moveTotal  = moveRequests.length;
-
-  const byStage = {created:0, sent:0, received:0, done:0};
-  for(const r of requestsAll){
-    const st = getRequestStage(r);
-    byStage[st] = (byStage[st]||0)+1;
-  }
-  const inFollow = (byStage.sent + byStage.received); // تحت المتابعة
-  return { total, shootTotal, moveTotal, ...byStage, inFollow };
-}
-
-function shootStats(){ // (احتفاظ بالاسم لأن renderGroups بتناديها)
-  const s = computeRequestsStats();
-  return `
-    <div class="mini-metrics">
-      <div class="mini metric req-metric" data-kind="ALL" data-stage="ALL" title="عرض كل الطلبات">
-        <div class="k">${s.total}</div><div class="l">إجمالي الطلبات</div>
-      </div>
-      <div class="mini metric req-metric" data-kind="shoot" data-stage="ALL" title="طلبات التصوير">
-        <div class="k">${s.shootTotal}</div><div class="l">تصوير</div>
-      </div>
-      <div class="mini metric req-metric" data-kind="move" data-stage="ALL" title="طلبات النقل">
-        <div class="k">${s.moveTotal}</div><div class="l">نقل</div>
-      </div>
-      <div class="mini metric req-metric" data-kind="ALL" data-stage="created" title="تم الإنشاء">
-        <div class="k">${s.created}</div><div class="l">تم الإنشاء</div>
-      </div>
-      <div class="mini metric req-metric" data-kind="ALL" data-stage="sent" title="تم الإرسال">
-        <div class="k">${s.sent}</div><div class="l">تم الإرسال</div>
-      </div>
-      <div class="mini metric req-metric" data-kind="ALL" data-stage="received" title="تم الاستلام">
-        <div class="k">${s.received}</div><div class="l">تم الاستلام</div>
-      </div>
-      <div class="mini metric req-metric" data-kind="ALL" data-stage="done" title="مكتملة">
-        <div class="k">${s.done}</div><div class="l">مكتملة</div>
-      </div>
-    </div>
-  `;
-}
-
-function renderShootCard(){ // (احتفاظ بالاسم لأن renderGroups بتناديها)
-  return `
-    <div class="card">
-      <div class="card-head">
-        <div class="card-title">الطلبات (تصوير و نقل)</div>
-        <div class="card-actions">
-          <button class="btn btn-outline btn-sm" id="btnSyncRequests" title="مزامنة الآن">
-            <span class="i">⟳</span> مزامنة
-          </button>
-        </div>
-      </div>
-      ${shootStats()}
-      <div class="card-footnote">يتم الجلب مباشرة من Firestore: <span class="mono">requests</span></div>
-    </div>
-  `;
-}
-
-async function subscribeRequests(){
+function REQ_fmtDate(v){
+  const d = REQ_toDate(v);
+  if(!d) return '—';
   try{
-    // ترتيب حديث بالأحدث (لو مفيش createdAt مش هيظهر بالترتيب – بس هيظهر)
-    const q = query(collection(db, 'requests'), orderBy('createdAt','desc'));
-    onSnapshot(q, (snap)=>{
-      requestsAll = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-      shootRequests = requestsAll.filter(r => r.kind === 'shoot');
-      moveRequests  = requestsAll.filter(r => r.kind === 'move');
-      // إعادة رندر الكروت
-      renderGroups();
-      // لو المودال مفتوح، حدّثه
-      if(document.getElementById('requestsModal')?.classList.contains('show')){
-        const k = document.getElementById('requestsModal').dataset.kind || 'ALL';
-        const st = document.getElementById('requestsModal').dataset.stage || 'ALL';
-        renderRequestsModal(k, st);
-      }
-    }, (err)=>{
-      console.error('Requests snapshot error:', err);
-    });
+    return d.toLocaleString('ar-SA', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
   }catch(e){
-    console.error('subscribeRequests failed:', e);
+    return d.toISOString();
   }
 }
-
-async function manualRefreshRequests(){
-  try{
-    const q = query(collection(db,'requests'), orderBy('createdAt','desc'));
-    const snap = await getDocs(q);
-    requestsAll = snap.docs.map(d=>({id:d.id, ...d.data()}));
-    shootRequests = requestsAll.filter(r => r.kind === 'shoot');
-    moveRequests  = requestsAll.filter(r => r.kind === 'move');
-    renderGroups();
-  }catch(e){
-    console.error('manualRefreshRequests failed:', e);
-    toast('تعذر تحديث الطلبات الآن');
+function REQ_kindLabel(kind){
+  return (kind === 'shoot' || kind === 'photo' || kind === 'تصوير') ? 'تصوير' : 'نقل';
+}
+function REQ_normStatus(s, doc){
+  const raw = (s ?? doc?.status ?? '').toString().trim();
+  const v = raw.replace(/\s+/g,' ');
+  if(!v) {
+    // fallback based on timestamps
+    if(doc?.finishedAt) return 'مكتملة';
+    if(doc?.receivedAt || doc?.steps?.carReceived?.at) return 'تم الاستلام';
+    if(doc?.sentAt || doc?.steps?.carSent?.at) return 'تم الإرسال';
+    return 'تم الإنشاء';
   }
+  if(v.includes('مكتملة') || v.includes('تم الانتهاء') || v.includes('تم الإتمام') || v.includes('تم الانتهاء')) return 'مكتملة';
+  if(v.includes('تم الاستلام') || v.includes('استلام')) return 'تم الاستلام';
+  if(v.includes('تم الإرسال') || v.includes('ارسال') || v.includes('إرسال')) return 'تم الإرسال';
+  if(v.includes('تم الإنشاء') || v.includes('إنشاء') || v.includes('انشاء')) return 'تم الإنشاء';
+  if(v.includes('تحت المتابعة') || v.includes('متابعة')) return 'تحت المتابعة';
+  if(v.includes('لم تبدأ') || v.includes('لم يبدا')) return 'لم تبدأ';
+  return v;
+}
+function REQ_statusDotClass(st){
+  const s = REQ_normStatus(st);
+  if(s === 'مكتملة') return 'dot-green';
+  if(s === 'تم الاستلام') return 'dot-blue';
+  if(s === 'تم الإرسال') return 'dot-amber';
+  if(s === 'تم الإنشاء') return 'dot-gray';
+  if(s === 'تحت المتابعة') return 'dot-purple';
+  return 'dot-gray';
+}
+function REQ_safeText(v, fallback='—'){
+  if(v===null || v===undefined) return fallback;
+  const t = (typeof v === 'string') ? v.trim() : String(v);
+  return t ? t : fallback;
 }
 
-function ensureRequestsModal(){
-  let modal = document.getElementById('requestsModal');
-  if(modal) return modal;
+/** --------- State --------- **/
+let REQ_allRequests = [];
+let REQ_unsubRequests = null;
+let REQ_rowsCache = {};   // { [requestId]: rowsArray }
+let REQ_currentFilter = 'all'; // all | move | shoot | created | sent | received | done
+let REQ_currentSelectedId = null;
+let REQ_modalOpen = false;
 
-  modal = document.createElement('div');
+/** --------- Mount UI (card + modal) --------- **/
+function REQ_ensureUI(){
+  // Card container already exists in dashboard markup under "الطلبات (تصوير و نقل)"
+  // We only ensure modal exists.
+  if(document.getElementById('requestsModal')) return;
+
+  const modal = document.createElement('div');
   modal.id = 'requestsModal';
-  modal.className = 'modal';
+  modal.className = 'mzj-modal hidden';
   modal.innerHTML = `
-    <div class="modal-backdrop" data-close="1"></div>
-    <div class="modal-card wide">
-      <div class="modal-head">
-        <div class="modal-title" id="reqModalTitle">طلبات التصوير والنقل — الكل</div>
-        <div class="modal-actions">
-          <button class="btn btn-outline btn-sm" id="btnReqExport">تصدير Excel</button>
-          <button class="btn btn-danger btn-sm" data-close="1">إغلاق</button>
+    <div class="mzj-modal-backdrop" data-close="1"></div>
+    <div class="mzj-modal-dialog">
+      <div class="mzj-modal-header">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button class="btn btn-light" id="REQ_closeModalBtn">✕ إغلاق</button>
+          <button class="btn btn-light" id="REQ_refreshBtn">⟲ تحديث</button>
         </div>
+        <h2 style="margin:0; font-weight:800;">طلبات التصوير والنقل — الكل</h2>
       </div>
 
-      <div class="modal-body">
-        <div class="modal-toolbar">
-          <input id="reqSearch" class="input" placeholder="بحث..." />
-          <div class="chips" id="reqChips"></div>
+      <div class="mzj-modal-body">
+        <div class="mzj-modal-toolbar">
+          <input id="REQ_search" class="input" placeholder="بحث..." />
+          <div class="chip-row" id="REQ_filterChips"></div>
         </div>
 
-        <div class="table-wrap">
-          <table class="table" id="reqTable">
+        <div class="mzj-table-wrap">
+          <table class="mzj-table">
             <thead>
               <tr>
-                <th class="mono">رقم</th>
-                <th>التاريخ</th>
-                <th>نوع الطلب</th>
-                <th>الحالة</th>
-                <th>عدد الهياكل</th>
-                <th>مقدّم</th>
-                <th>ملاحظات الإدارة</th>
-                <th>تفاصيل الطلب</th>
+                <th style="width:140px;">رقم</th>
+                <th style="width:170px;">التاريخ</th>
+                <th style="width:120px;">نوع الطلب</th>
+                <th style="width:140px;">مُقدّم</th>
+                <th style="width:110px;">عدد الهياكل</th>
+                <th style="width:140px;">الحالة</th>
+                <th style="width:120px;">تفاصيل الطلب</th>
               </tr>
             </thead>
-            <tbody></tbody>
+            <tbody id="REQ_tbody"></tbody>
           </table>
-          <div class="table-empty" id="reqEmpty" style="display:none">لا توجد طلبات مطابقة.</div>
         </div>
 
-        <div class="details-panel" id="reqDetails" style="display:none">
-          <div class="details-head">
-            <div class="details-title" id="reqDetailsTitle">تفاصيل الطلب</div>
+        <div id="REQ_detailsBox" class="req-details-box hidden">
+          <div class="req-details-head">
+            <h3 id="REQ_detailsTitle" style="margin:0; font-weight:800;"></h3>
+            <div class="req-details-meta" id="REQ_detailsMeta"></div>
           </div>
-          <div class="table-wrap">
-            <table class="table" id="reqRowsTable">
+
+          <div class="mzj-table-wrap">
+            <table class="mzj-table">
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th class="mono">VIN</th>
+                  <th style="width:50px;">#</th>
+                  <th style="width:120px;">VIN</th>
                   <th>السيارة</th>
-                  <th>البيان</th>
-                  <th>اللون الخارجي</th>
-                  <th>الموديل</th>
-                  <th>المكان الحالي</th>
-                  <th>مكان التصوير/النقل</th>
-                  <th>ملاحظات</th>
+                  <th style="width:120px;">البيان</th>
+                  <th style="width:120px;">اللون الخارجي</th>
+                  <th style="width:120px;">الموديل</th>
+                  <th style="width:160px;">المكان الحالي</th>
+                  <th style="width:190px;">مكان التصوير/النقل</th>
+                  <th style="width:180px;">ملاحظات</th>
                 </tr>
               </thead>
-              <tbody></tbody>
+              <tbody id="REQ_rowsTbody"></tbody>
             </table>
-            <div class="table-empty" id="reqRowsEmpty" style="display:none">لا توجد تفاصيل محفوظة لهذا الطلب (rows).</div>
           </div>
         </div>
+
+        <div class="mzj-modal-footer-note" id="REQ_footerNote"></div>
       </div>
-    </div>
   `;
   document.body.appendChild(modal);
 
-  // إغلاق
+  // minimal styles (safe + isolated)
+  const style = document.createElement('style');
+  style.textContent = `
+    .mzj-modal.hidden{ display:none; }
+    .mzj-modal{ position:fixed; inset:0; z-index:9999; }
+    .mzj-modal-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,.35); }
+    .mzj-modal-dialog{ position:relative; width:min(1200px, calc(100% - 40px)); max-height:calc(100% - 40px); margin:20px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+    .mzj-modal-header{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(0,0,0,.08); background:#fff; }
+    .mzj-modal-body{ padding:14px 16px 18px; background:#fff; overflow:auto; max-height:calc(100vh - 120px); }
+    .mzj-modal-toolbar{ display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:10px; flex-wrap:wrap; }
+    .chip-row{ display:flex; gap:8px; flex-wrap:wrap; }
+    .chip{ border:1px solid rgba(0,0,0,.12); padding:8px 10px; border-radius:999px; background:#fff; cursor:pointer; font-weight:700; }
+    .chip.active{ background:rgba(62,36,32,.06); border-color:rgba(62,36,32,.35); }
+    .req-details-box{ margin-top:14px; border:1px solid rgba(0,0,0,.08); border-radius:14px; padding:12px; background:#fff8ef; }
+    .req-details-box.hidden{ display:none; }
+    .req-details-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:10px; }
+    .req-details-meta{ color:#6b7280; font-weight:700; }
+    .dot{ display:inline-block; width:10px; height:10px; border-radius:999px; margin-inline-end:8px; vertical-align:middle; }
+    .dot-green{ background:#16a34a; }
+    .dot-blue{ background:#2563eb; }
+    .dot-amber{ background:#d97706; }
+    .dot-gray{ background:#6b7280; }
+    .dot-purple{ background:#7c3aed; }
+    .btn{ border:1px solid rgba(0,0,0,.12); padding:8px 12px; border-radius:10px; background:#fff; cursor:pointer; font-weight:800; }
+    .btn.btn-light{ background:#fff; }
+    .btn.btn-primary{ background:rgb(62,36,32); border-color:rgb(62,36,32); color:#fff; }
+    .input{ border:1px solid rgba(0,0,0,.12); border-radius:12px; padding:10px 12px; min-width:240px; font-weight:700; }
+    .mzj-table-wrap{ border:1px solid rgba(0,0,0,.08); border-radius:14px; overflow:hidden; background:#fff; }
+    .mzj-table{ width:100%; border-collapse:collapse; }
+    .mzj-table thead th{ background:rgba(62,36,32,.06); color:#3e2420; font-weight:900; padding:12px 10px; border-bottom:1px solid rgba(0,0,0,.08); }
+    .mzj-table tbody td{ padding:12px 10px; border-bottom:1px solid rgba(0,0,0,.06); vertical-align:top; }
+    .mzj-table tbody tr:hover{ background:rgba(0,0,0,.02); }
+    .mzj-modal-footer-note{ margin-top:10px; color:#6b7280; font-weight:700; }
+  `;
+  document.head.appendChild(style);
+
+  // modal events
+  document.getElementById('REQ_closeModalBtn').addEventListener('click', REQ_closeModal);
+  document.getElementById('REQ_refreshBtn').addEventListener('click', () => {
+    // Force refresh by re-subscribing (safe)
+    REQ_forceReload();
+  });
+  document.getElementById('REQ_search').addEventListener('input', () => REQ_renderModal());
+
   modal.addEventListener('click', (e)=>{
-    const close = e.target.closest('[data-close="1"]');
-    if(close) closeRequestsModal();
+    const t = e.target;
+    if(t && t.getAttribute && t.getAttribute('data-close')==='1'){ REQ_closeModal(); }
   });
-  // ESC
-  window.addEventListener('keydown', (e)=>{
-    if(e.key === 'Escape' && modal.classList.contains('show')) closeRequestsModal();
-  });
-
-  // Export
-  modal.querySelector('#btnReqExport').addEventListener('click', ()=> exportRequestsToExcel());
-
-  // Search
-  modal.querySelector('#reqSearch').addEventListener('input', ()=>{
-    const k = modal.dataset.kind || 'ALL';
-    const st = modal.dataset.stage || 'ALL';
-    renderRequestsModal(k, st);
-  });
-
-  return modal;
-}
-
-function openRequestsModal(kind='ALL', stage='ALL'){
-  const modal = ensureRequestsModal();
-  modal.dataset.kind = kind;
-  modal.dataset.stage = stage;
-  modal.classList.add('show');
-  renderRequestsModal(kind, stage);
-}
-
-function closeRequestsModal(){
-  const modal = document.getElementById('requestsModal');
-  if(!modal) return;
-  modal.classList.remove('show');
-  // اخفاء التفاصيل
-  const details = modal.querySelector('#reqDetails');
-  details.style.display = 'none';
-  details.querySelector('#reqRowsTable tbody').innerHTML = '';
-}
-
-function filterRequests(kind='ALL', stage='ALL', q=''){
-  const ql = (q||'').trim().toLowerCase();
-  return requestsAll.filter(r=>{
-    const kOk = (kind==='ALL') || (r.kind === kind);
-    const stOk = (stage==='ALL') || (getRequestStage(r) === stage);
-    if(!kOk || !stOk) return false;
-    if(!ql) return true;
-    const hay = [
-      r.id,
-      r.kind,
-      r.status,
-      r.createdByName,
-      r.createdByEmail,
-      r.note,
-      r._searchText
-    ].filter(Boolean).join(' ').toLowerCase();
-    return hay.includes(ql);
+  document.addEventListener('keydown', (e)=>{
+    if(e.key === 'Escape' && REQ_modalOpen) REQ_closeModal();
   });
 }
 
-function renderRequestsModal(kind='ALL', stage='ALL'){
-  const modal = ensureRequestsModal();
-  const title = modal.querySelector('#reqModalTitle');
-  const kindLabel = kind==='ALL' ? 'الكل' : (kind==='shoot' ? 'تصوير' : 'نقل');
-  const stageLabelTxt = stage==='ALL' ? '' : ` — ${stageLabel(stage)}`;
-  title.textContent = `طلبات التصوير والنقل — ${kindLabel}${stageLabelTxt}`;
+/** --------- Firestore subscription --------- **/
+function REQ_subscribe(){
+  if(!db) return;
+  if(REQ_unsubRequests) return;
+  try{
+    const qy = query(collection(db, 'requests'), orderBy('createdAt','desc'));
+    REQ_unsubRequests = onSnapshot(qy, (snap)=>{
+      REQ_allRequests = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      REQ_renderCard();
+      if(REQ_modalOpen) REQ_renderModal();
+      if(REQ_modalOpen && REQ_currentSelectedId) REQ_renderDetails(REQ_currentSelectedId);
+    }, (err)=>{
+      console.error('REQ_subscribe error', err);
+      REQ_allRequests = [];
+      REQ_renderCard();
+      if(REQ_modalOpen) REQ_renderModal();
+    });
+  }catch(e){
+    console.error('REQ_subscribe exception', e);
+  }
+}
+function REQ_forceReload(){
+  try{
+    if(REQ_unsubRequests){ REQ_unsubRequests(); REQ_unsubRequests=null; }
+  }catch(e){}
+  REQ_rowsCache = {};
+  REQ_currentSelectedId = null;
+  REQ_subscribe();
+}
 
-  // Chips
-  const chips = modal.querySelector('#reqChips');
-  const chipsDef = [
-    {k:'ALL', s:'ALL', t:'الكل'},
-    {k:'shoot', s:'ALL', t:'تصوير'},
-    {k:'move', s:'ALL', t:'نقل'},
-    {k:'ALL', s:'created', t:'تم الإنشاء'},
-    {k:'ALL', s:'sent', t:'تم الإرسال'},
-    {k:'ALL', s:'received', t:'تم الاستلام'},
-    {k:'ALL', s:'done', t:'مكتملة'},
-  ];
-  chips.innerHTML = chipsDef.map(c=>{
-    const active = (c.k===kind && c.s===stage) ? 'active' : '';
-    return `<button class="chip ${active}" data-kind="${c.k}" data-stage="${c.s}">${c.t}</button>`;
-  }).join('');
+/** --------- Card rendering --------- **/
+function REQ_counts(){
+  const counts = {
+    total: 0,
+    shoot: 0,
+    move: 0,
+    created: 0,
+    sent: 0,
+    received: 0,
+    done: 0
+  };
+  counts.total = REQ_allRequests.length;
 
-  chips.querySelectorAll('.chip').forEach(btn=>{
+  for(const r of REQ_allRequests){
+    const kind = (r.kind || '').toString();
+    if(kind === 'shoot') counts.shoot += 1;
+    else if(kind === 'move') counts.move += 1;
+
+    const st = REQ_normStatus(r.status, r);
+    if(st === 'تم الإنشاء') counts.created += 1;
+    else if(st === 'تم الإرسال') counts.sent += 1;
+    else if(st === 'تم الاستلام') counts.received += 1;
+    else if(st === 'مكتملة') counts.done += 1;
+  }
+  return counts;
+}
+
+function REQ_renderCard(){
+  const host = document.getElementById('shootCardHost') || document.getElementById('requestsCardHost') || document.querySelector('[data-card="shoot"]');
+  // If your dashboard has a known container, prefer it:
+  const card = document.getElementById('shootCard') || document.getElementById('requestsCard') || document.querySelector('.shoot-card') || document.querySelector('[data-card="requests"]');
+
+  // If card not found, do nothing (no breaking)
+  if(!card && !host) return;
+
+  const c = REQ_counts();
+
+  // find the exact buttons by their ids if exist, else render a fresh inner HTML in card
+  const root = card || host;
+
+  root.innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-head">
+        <div class="kpi-title">
+          <span class="kpi-icon">📷</span>
+          <span>الطلبات (تصوير و نقل)</span>
+        </div>
+        <button class="btn btn-light" id="REQ_openAllBtn">عرض الطلبات</button>
+      </div>
+
+      <div class="kpi-grid">
+        <button class="kpi-pill" data-filter="all"><span>إجمالي الطلبات</span><b>${c.total}</b></button>
+        <button class="kpi-pill" data-filter="shoot"><span>تصوير</span><b>${c.shoot}</b></button>
+        <button class="kpi-pill" data-filter="move"><span>نقل</span><b>${c.move}</b></button>
+        <button class="kpi-pill" data-filter="created"><span>تم الإنشاء</span><b>${c.created}</b></button>
+        <button class="kpi-pill" data-filter="sent"><span>تم الإرسال</span><b>${c.sent}</b></button>
+        <button class="kpi-pill" data-filter="received"><span>تم الاستلام</span><b>${c.received}</b></button>
+        <button class="kpi-pill" data-filter="done"><span>مكتملة</span><b>${c.done}</b></button>
+      </div>
+    </div>
+  `;
+
+  // local styles for the card pills (kept minimal and isolated)
+  if(!document.getElementById('REQ_cardStyles')){
+    const st = document.createElement('style');
+    st.id = 'REQ_cardStyles';
+    st.textContent = `
+      .kpi-card{ background:#fff; border:1px solid rgba(0,0,0,.08); border-radius:16px; padding:14px; }
+      .kpi-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; }
+      .kpi-title{ display:flex; align-items:center; gap:10px; font-weight:900; color:#3e2420; }
+      .kpi-icon{ width:32px; height:32px; display:inline-flex; align-items:center; justify-content:center; border-radius:10px; background:rgba(188,143,116,.25); }
+      .kpi-grid{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
+      @media(min-width:900px){ .kpi-grid{ grid-template-columns:repeat(4, minmax(0,1fr)); } }
+      .kpi-pill{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px; border-radius:14px; border:1px solid rgba(0,0,0,.08); background:#fff8ef; cursor:pointer; font-weight:900; }
+      .kpi-pill b{ font-size:18px; color:#3e2420; }
+    `;
+    document.head.appendChild(st);
+  }
+
+  // events
+  const openBtn = document.getElementById('REQ_openAllBtn');
+  if(openBtn) openBtn.addEventListener('click', ()=>REQ_openModal('all'));
+
+  root.querySelectorAll('.kpi-pill').forEach(btn=>{
     btn.addEventListener('click', ()=>{
-      openRequestsModal(btn.dataset.kind, btn.dataset.stage);
+      const f = btn.getAttribute('data-filter') || 'all';
+      REQ_openModal(f);
     });
   });
+}
 
-  const q = modal.querySelector('#reqSearch').value || '';
-  const list = filterRequests(kind, stage, q);
+/** --------- Modal rendering --------- **/
+function REQ_openModal(filter){
+  REQ_ensureUI();
+  REQ_modalOpen = true;
+  REQ_currentFilter = filter || 'all';
+  document.getElementById('requestsModal').classList.remove('hidden');
+  REQ_renderModal();
+}
 
-  const tbody = modal.querySelector('#reqTable tbody');
-  const empty = modal.querySelector('#reqEmpty');
+function REQ_closeModal(){
+  const m = document.getElementById('requestsModal');
+  if(m) m.classList.add('hidden');
+  REQ_modalOpen = false;
+  REQ_currentSelectedId = null;
+  const box = document.getElementById('REQ_detailsBox');
+  if(box) box.classList.add('hidden');
+}
+
+function REQ_filterRequests(list, filter, searchText){
+  let out = [...list];
+
+  // filter type/stage
+  if(filter === 'shoot') out = out.filter(r => (r.kind||'') === 'shoot');
+  else if(filter === 'move') out = out.filter(r => (r.kind||'') === 'move');
+  else if(filter === 'created') out = out.filter(r => REQ_normStatus(r.status, r) === 'تم الإنشاء');
+  else if(filter === 'sent') out = out.filter(r => REQ_normStatus(r.status, r) === 'تم الإرسال');
+  else if(filter === 'received') out = out.filter(r => REQ_normStatus(r.status, r) === 'تم الاستلام');
+  else if(filter === 'done') out = out.filter(r => REQ_normStatus(r.status, r) === 'مكتملة');
+
+  // search
+  const q = (searchText || '').trim().toLowerCase();
+  if(q){
+    out = out.filter(r=>{
+      const fields = [
+        r.id,
+        r.createdByName,
+        r.createdByEmail,
+        r.finishedByName,
+        r.status,
+        r.kind
+      ].map(x => (x||'').toString().toLowerCase());
+
+      return fields.some(f => f.includes(q));
+    });
+  }
+  return out;
+}
+
+function REQ_renderFilterChips(){
+  const chips = [
+    ['all', 'الكل'],
+    ['move', 'نقل'],
+    ['shoot', 'تصوير'],
+    ['created', 'تم الإنشاء'],
+    ['sent', 'تم الإرسال'],
+    ['received', 'تم الاستلام'],
+    ['done', 'مكتملة'],
+  ];
+
+  const wrap = document.getElementById('REQ_filterChips');
+  if(!wrap) return;
+
+  wrap.innerHTML = '';
+  for(const [key,label] of chips){
+    const el = document.createElement('button');
+    el.className = 'chip' + (REQ_currentFilter===key ? ' active' : '');
+    el.textContent = label;
+    el.addEventListener('click', ()=>{
+      REQ_currentFilter = key;
+      // update title
+      const ttl = document.querySelector('#requestsModal h2');
+      if(ttl) ttl.textContent = `طلبات التصوير والنقل — ${label}`;
+      REQ_renderModal();
+    });
+    wrap.appendChild(el);
+  }
+}
+
+function REQ_renderModal(){
+  if(!REQ_modalOpen) return;
+
+  REQ_renderFilterChips();
+
+  const searchText = document.getElementById('REQ_search')?.value || '';
+  const list = REQ_filterRequests(REQ_allRequests, REQ_currentFilter, searchText);
+
+  const tbody = document.getElementById('REQ_tbody');
+  if(!tbody) return;
+
   tbody.innerHTML = '';
-  empty.style.display = list.length ? 'none' : 'block';
+  for(const r of list){
+    const kind = REQ_kindLabel(r.kind);
+    const st = REQ_normStatus(r.status, r);
+    const total = Number.isFinite(+r.total) ? +r.total : 0;
 
-  list.forEach((r, i)=>{
     const tr = document.createElement('tr');
-    const typeLabel = (r.kind === 'shoot') ? 'طلب تصوير' : 'طلب نقل';
-    const st = getRequestStage(r);
-    const statusTxt = (r.status && String(r.status).trim()) ? r.status : stageLabel(st);
-    const total = Number(r.total ?? 0);
-    const createdBy = r.createdByName || '—';
-    const adminNote = r.adminNote || r.adminNotes || '—';
     tr.innerHTML = `
-      <td class="mono">${r.id}</td>
-      <td>${fmtDate(r.createdAt)}</td>
-      <td>${typeLabel}</td>
-      <td>${statusTxt}</td>
-      <td class="mono">${isFinite(total) ? total : 0}</td>
-      <td>${createdBy}</td>
-      <td>${adminNote || '—'}</td>
-      <td><button class="btn btn-outline btn-sm" data-details="${r.id}">تفاصيل</button></td>
+      <td dir="ltr">${REQ_safeText(r.id)}</td>
+      <td>${REQ_fmtDate(r.createdAt || r.created_at)}</td>
+      <td>${kind}</td>
+      <td>${REQ_safeText(r.createdByName || r.createdBy || r.createdByEmail)}</td>
+      <td>${total}</td>
+      <td><span class="dot ${REQ_statusDotClass(st)}"></span>${st}</td>
+      <td><button class="btn btn-primary" data-id="${r.id}">تفاصيل</button></td>
     `;
     tbody.appendChild(tr);
+  }
+
+  // Footer note
+  const note = document.getElementById('REQ_footerNote');
+  if(note){
+    note.textContent = `عدد الطلبات الظاهرة: ${list.length} من ${REQ_allRequests.length}`;
+  }
+
+  // wire details buttons
+  tbody.querySelectorAll('button[data-id]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = btn.getAttribute('data-id');
+      await REQ_renderDetails(id);
+    });
   });
 
-  tbody.querySelectorAll('button[data-details]').forEach(btn=>{
-    btn.addEventListener('click', ()=> loadRequestRows(btn.dataset.details));
-  });
+  // if selected request not in list, hide details
+  if(REQ_currentSelectedId && !list.some(x=>x.id===REQ_currentSelectedId)){
+    REQ_currentSelectedId = null;
+    document.getElementById('REQ_detailsBox')?.classList.add('hidden');
+  }
 }
 
-async function loadRequestRows(requestId){
-  const modal = ensureRequestsModal();
-  const details = modal.querySelector('#reqDetails');
-  const title = modal.querySelector('#reqDetailsTitle');
-  const rowsTbody = modal.querySelector('#reqRowsTable tbody');
-  const rowsEmpty = modal.querySelector('#reqRowsEmpty');
-
-  title.textContent = `تفاصيل الطلب رقم: ${requestId}`;
-  details.style.display = 'block';
-  rowsTbody.innerHTML = '';
-  rowsEmpty.style.display = 'none';
+/** --------- Details (rows subcollection) --------- **/
+async function REQ_loadRows(requestId){
+  if(REQ_rowsCache[requestId]) return REQ_rowsCache[requestId];
 
   try{
-    const q = query(collection(db,'requests',requestId,'rows'), orderBy('createdAt','asc'));
-    const snap = await getDocs(q);
+    const baseRef = collection(db, 'requests', requestId, 'rows');
 
-    const rows = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-    if(!rows.length){
-      rowsEmpty.style.display = 'block';
-      return;
+    // Try orderBy __vinLower if exists; fallback to createdAt
+    let snap;
+    try{
+      const q1 = query(baseRef, orderBy('__vinLower','asc'));
+      snap = await getDocs(q1);
+    }catch(e1){
+      const q2 = query(baseRef, orderBy('createdAt','asc'));
+      snap = await getDocs(q2);
     }
 
-    rows.forEach((row, idx)=>{
-      const vin = row.vin || row.VIN || row.id || '—';
-      const car = row.car || '—';
-      const bayan = row.bayan || row.desc || '—';
-      const ext = row.extColor || row.ext || '—';
-      const model = row.modelYear || row.model || '—';
-      const loc = row.location || row.currentPlace || '—';
-      const sp = row.shootPlace || row.targetPlace || row.place || '—';
-      const note = row.note || '—';
+    const rows = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    REQ_rowsCache[requestId] = rows;
+    return rows;
+  }catch(e){
+    console.error('REQ_loadRows error', e);
+    REQ_rowsCache[requestId] = [];
+    return [];
+  }
+}
 
+async function REQ_renderDetails(requestId){
+  REQ_ensureUI();
+  REQ_currentSelectedId = requestId;
+
+  const req = REQ_allRequests.find(r=>r.id===requestId);
+  if(!req){
+    // show toast if you have one, else fallback alert
+    if(typeof showToast === 'function') showToast('تعذر العثور على الطلب', 'error');
+    else alert('تعذر العثور على الطلب');
+    return;
+  }
+
+  const rows = await REQ_loadRows(requestId);
+
+  const title = document.getElementById('REQ_detailsTitle');
+  const meta = document.getElementById('REQ_detailsMeta');
+  const box = document.getElementById('REQ_detailsBox');
+  const tbody = document.getElementById('REQ_rowsTbody');
+
+  if(!title || !meta || !box || !tbody) return;
+
+  const kind = REQ_kindLabel(req.kind);
+  const st = REQ_normStatus(req.status, req);
+
+  title.textContent = `تفاصيل الطلب رقم: ${req.id} — ${kind}`;
+  meta.textContent = `المصدر: requests • الحالة: ${st} • التاريخ: ${REQ_fmtDate(req.createdAt)}`;
+
+  tbody.innerHTML = '';
+
+  if(!rows || rows.length === 0){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="9" style="text-align:center; color:#6b7280; font-weight:800;">لا توجد تفاصيل محفوظة لهذا الطلب (rows).</td>`;
+    tbody.appendChild(tr);
+  }else{
+    let i=1;
+    for(const rw of rows){
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td class="mono">${idx+1}</td>
-        <td class="mono">${vin}</td>
-        <td>${car}</td>
-        <td>${bayan}</td>
-        <td>${ext}</td>
-        <td>${model}</td>
-        <td>${loc}</td>
-        <td>${sp}</td>
-        <td>${note}</td>
+        <td>${i++}</td>
+        <td dir="ltr">${REQ_safeText(rw.__vinLower || rw.vin || rw.VIN || rw.id)}</td>
+        <td>${REQ_safeText(rw.car)}</td>
+        <td>${REQ_safeText(rw.trim || rw.variant || rw.variantName)}</td>
+        <td>${REQ_safeText(rw.extColor || rw.externalColor || rw.color)}</td>
+        <td>${REQ_safeText(rw.modelYear)}</td>
+        <td>${REQ_safeText(rw.location || rw.currentLocation)}</td>
+        <td>${REQ_safeText(rw.shootPlace || rw.place || rw.toLocation || rw.destination)}</td>
+        <td>${REQ_safeText(rw.note)}</td>
       `;
-      rowsTbody.appendChild(tr);
-    });
-  }catch(e){
-    console.error('loadRequestRows failed:', e);
-    rowsEmpty.style.display = 'block';
-  }
-}
-
-function exportRequestsToExcel(){
-  // لو عندك أكواد تصدير موجودة في الداش، نستخدمها. وإلا نعمل تصدير بسيط CSV.
-  try{
-    const modal = ensureRequestsModal();
-    const kind = modal.dataset.kind || 'ALL';
-    const stage = modal.dataset.stage || 'ALL';
-    const q = modal.querySelector('#reqSearch').value || '';
-    const list = filterRequests(kind, stage, q);
-
-    const headers = ['id','createdAt','kind','status','total','createdByName','createdByEmail'];
-    const rows = list.map(r=>[
-      r.id,
-      fmtDate(r.createdAt),
-      r.kind,
-      r.status || stageLabel(getRequestStage(r)),
-      r.total ?? 0,
-      r.createdByName || '',
-      r.createdByEmail || ''
-    ]);
-
-    const csv = [headers.join(','), ...rows.map(a=>a.map(v=>`"${String(v).replaceAll('"','""')}"`).join(','))].join('\n');
-    const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'requests.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }catch(e){
-    console.error('exportRequestsToExcel failed:', e);
-    toast('تعذر التصدير الآن');
-  }
-}
-
-// ربط الكارت: فتح المودال عند الضغط على أي مِتريك
-function bindRequestsCardInteractions(){
-  const root = document.querySelector('.req-metric')?.closest('.card');
-  if(!root) return;
-
-  root.querySelectorAll('.req-metric').forEach(el=>{
-    el.addEventListener('click', ()=>{
-      openRequestsModal(el.dataset.kind || 'ALL', el.dataset.stage || 'ALL');
-    });
-  });
-
-  const syncBtn = root.querySelector('#btnSyncRequests');
-  if(syncBtn){
-    syncBtn.addEventListener('click', async ()=>{
-      syncBtn.disabled = true;
-      await manualRefreshRequests();
-      setTimeout(()=>{ syncBtn.disabled = false; }, 400);
-    });
-  }
-}
-
-// بعد كل renderGroups، نحتاج نربط الايفنتس للكارت الجديد
-const _origRenderGroups = renderGroups;
-renderGroups = function(){
-  _origRenderGroups();
-  // ربط أحداث الكارت بعد ما يتولد
-  setTimeout(()=> bindRequestsCardInteractions(), 0);
-};
-    // فتح مودال طلبات المبيعات عند الضغط على الأرقام
-    const totalBox = card.querySelector('.group-total');
-    if(totalBox){
-      totalBox.style.cursor = 'pointer';
-      totalBox.addEventListener('click', (e)=>{ e.stopPropagation(); openSalesModal('total'); });
+      tbody.appendChild(tr);
     }
-
-    card.querySelectorAll('.sales-metric').forEach(el=>{
-      el.addEventListener('click', (e)=>{
-        e.stopPropagation();
-        const f = el.getAttribute('data-sfilter') || 'total';
-        openSalesModal(f);
-      });
-    });
-
-    // الضغط على مساحة الكارت يفتح إجمالي الطلبات
-    card.addEventListener('click', ()=> openSalesModal('total'));
-
-    gridEl.appendChild(card);
   }
 
-  function renderShortagesCard(){
-    const { total, summary } = computeShortagesSummaryBranches();
-    $('#shortagesTotal').textContent = total.toLocaleString('ar-SA');
-    const pills = summary.map(s=> `<span class="pill"><i class="fa-solid fa-store"></i> ${s.title}: <b>${s.count.toLocaleString('ar-SA')}</b></span>`).join('');
-    $('#shortagesPills').innerHTML = pills;
+  box.classList.remove('hidden');
+}
+
+/** --------- Auto init --------- **/
+(function(){
+  try{
+    REQ_ensureUI();
+    REQ_subscribe();
+    // render empty immediately
+    REQ_renderCard();
+  }catch(e){
+    console.error('REQ init error', e);
   }
-
-  function renderGroups(){
-    const grid = $('#groupsGrid');
-    grid.innerHTML='';
-
-    groupsDef.forEach(g=>{
-      const { available, notes, pending, delivered, actualTotal, keysTotal } = groupBreakdownCounts(g);
-      const card = document.createElement('div');
-      card.className='card group-card';
-      card.innerHTML = `
-        <div class="group-head">
-          <div class="group-left">
-            <h3 class="group-title"><i class="fa-solid ${g.icon}"></i> ${g.title}</h3>
-            <div class="sub-metrics">
-              <span class="metric" title="الإجمالي الفعلي"><i class="fa-solid fa-equals"></i> الإجمالي الفعلي: <b>${actualTotal.toLocaleString('ar-SA')}</b></span>
-              <span class="metric" title="إجمالي المفاتيح"><i class="fa-solid fa-key"></i> إجمالي المفاتيح: <b>${keysTotal.toLocaleString('ar-SA')}</b></span>
-            </div>
-          </div>
-          <div class="group-total" title="الإجمالي الفعلي">${actualTotal.toLocaleString('ar-SA')}</div>
-        </div>
-
-        <div class="chips">
-          <span class="chip" data-group="${g.key}" data-mode="rows" data-filter="available" title="المخزون المتاح">
-            <i class="fa-solid fa-boxes-stacked"></i> متاح: <b>${available.toLocaleString('ar-SA')}</b>
-          </span>
-          <span class="chip" data-group="${g.key}" data-mode="rows" data-filter="notes" title="سيارات بها ملاحظات">
-            <i class="fa-solid fa-triangle-exclamation"></i> ملاحظات: <b>${notes.toLocaleString('ar-SA')}</b>
-          </span>
-          <span class="chip" data-group="${g.key}" data-mode="rows" data-filter="pending" title="مباع تحت التسليم">
-            <i class="fa-solid fa-truck"></i> تحت التسليم: <b>${pending.toLocaleString('ar-SA')}</b>
-          </span>
-          <span class="chip" data-group="${g.key}" data-mode="rows" data-filter="delivered" title="مباع تم التسليم">
-            <i class="fa-solid fa-circle-check"></i> تم التسليم: <b>${delivered.toLocaleString('ar-SA')}</b>
-          </span>
-        </div>
-      `;
-      card.addEventListener('click', (ev)=>{ if(ev.target.closest('.chip')) return; openModalForGroupRows(g, null); });
-      grid.appendChild(card);
-    });
-    /* بطاقة طلبات نقل السيارات */
-    renderTransferCard(grid);
-    /* بطاقة إدارة الطلبات (تصوير + نقل) */
-    renderShootCard(grid);
-    /* بطاقة ملخص طلبات المبيعات (ERP + تتبع) */
-    renderSalesSummaryCard(grid);
-
-    // حدث الشرائح للجهات
-    grid.addEventListener('click',(e)=>{
-      const chip = e.target.closest('.chip');
-      if(!chip || chip.hasAttribute('data-shoot')) return;
-      e.stopPropagation();
-      const key   = chip.getAttribute('data-group');
-      const filt  = chip.getAttribute('data-filter');
-      const g = groupsDef.find(x=>x.key===key);
-      if(!g) return;
-      openModalForGroupRows(g, filt);
-    });
-  }
-
-  function renderAll(){
-    renderShortagesCard();
-    renderGroups();
-  }
-
-  /* ===== Modal: rows + shortages (branches) + shoot + transfers ===== */
-  const backdrop = $('#backdrop');
-  const modalTitle = $('#modalTitle');
-  const modalSearch = $('#modalSearch');
-  const btnCloseModal = $('#btnCloseModal');
-  const btnExportGroup = $('#btnExportGroup');
-
-  const tableRowsWrap = $('#tableRowsWrap');
-  const tableShortWrap= $('#tableShortWrap');
-  const tableShootWrap= $('#tableShootWrap');
-  const tableTransfersWrap = $('#tableTransfersWrap');
-  const tableSalesWrap = $('#tableSalesWrap');
-
-  const modalTableRowsHead = $('#rowsHeadTr');
-  const modalTableRowsBody  = document.querySelector('#modalTableRows tbody');
-  const modalTableShortBody = document.querySelector('#modalTableShort tbody');
-  const modalTableShootBody = document.querySelector('#modalTableShoot tbody');
-  const modalTableTransfersBody = document.querySelector('#modalTableTransfers tbody');
-  const modalTableSalesBody = document.querySelector('#modalTableSales tbody');
-  const modalCount = $('#modalCount');
-
-  const shortTabs = $('#shortTabs');
-
-  const shootDetailsBox = $('#shootDetailsBox');
-  const shootDetailsIdSpan = $('#shootDetailsId');
-  const shootDetailsTableBody = document.querySelector('#shootDetailsTable tbody');
-
-  const approvalBox = $('#approvalBox');
-  const approvalStatus = $('#approvalStatus');
-  const approvalNotes  = $('#approvalNotes');
-  const approvalTarget = $('#approvalTarget');
-  const btnSaveApproval = $('#btnSaveApproval');
-  const btnCancelApproval = $('#btnCancelApproval');
-
-  let currentMode = 'rows'; // 'rows' | 'shortagesBranches' | 'shoot' | 'transfers'
-  let currentRows = []; let filteredRows = [];
-  let shortDataByKey = new Map(); let shortActiveKey = 'ALL'; let shortFiltered = [];
-  let currentShoot = []; let filteredShoot = []; let currentShootFilter = 'ALL';
-  let currentSales = []; let filteredSales = []; let currentSalesMode = 'total';
+})();
+let currentSalesMode = 'total';
 
   function openModal(mode, title){
     currentMode = mode;
@@ -2364,6 +2314,7 @@ try{
 </script>
 </body>
 </html>
+
 
 
 
