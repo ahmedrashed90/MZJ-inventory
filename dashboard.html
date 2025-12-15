@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -449,10 +450,20 @@ tr:hover{ filter: brightness(0.98); }
 <div id="toast" class="toast">تم</div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+  // Safety: always show page even if a module error happens before liftNoFlash()
+  setTimeout(()=>{ 
+    const nf=document.getElementById('noFlash'); 
+    if(nf) nf.remove(); 
+    document.body.style.opacity='1'; 
+  }, 1500);
+</script>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, getDocs, limit, orderBy } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   /* ===== Firebase ===== */
   const firebaseConfig = {
@@ -554,6 +565,15 @@ function liftNoFlash(){
     const d=new Date();
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   };
+  function escapeHtml(s){
+    return (s??'').toString()
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#039;');
+  }
+
   function setStatus(mode,txt){ $('#connDot').className='dot '+(mode==='ok'?'ok':mode==='err'?'err':'warn'); $('#connText').textContent=txt; }
   function showToast(msg){ toast.textContent=msg; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1400); }
   const trim = v => (v||'').toString().trim();
@@ -562,7 +582,45 @@ function liftNoFlash(){
   let stock=[], moves=[], models=[], variantsMap={};
   let shootRequests=[];
   let moveRequests=[];
-  let currentFilterKey = null;
+  
+  function getRequestKind(r){
+    const raw = (r && (r.kind || r.type || r.requestType || r.request_kind || r.request || r.kindLabel)) || '';
+    const s = String(raw).toLowerCase();
+    // Arabic
+    if (s.includes('تصوير') || s.includes('shoot')) return 'shoot';
+    if (s.includes('نقل') || s.includes('move') || s.includes('transfer')) return 'move';
+    // Some saved values may be exact
+    if (s === 'shoot') return 'shoot';
+    if (s === 'move') return 'move';
+    return null;
+  }
+
+  function getReqId(r){
+    return (r && (r.id || r.requestId || r.reqId || r.number || r.no || r._docId)) || '';
+  }
+
+  function formatAnyDate(v){
+    if(!v) return '';
+    // Firestore Timestamp
+    if(typeof v === 'object' && v !== null && ('seconds' in v)){
+      const ms = (Number(v.seconds)||0) * 1000 + Math.floor((Number(v.nanoseconds)||0)/1e6);
+      const d = new Date(ms);
+      if(!isNaN(d.getTime())){
+        const pad=n=>String(n).padStart(2,'0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+    }
+    if(v instanceof Date){
+      const d=v; const pad=n=>String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+    return String(v);
+  }
+
+  function formatReqDate(r){
+    return formatAnyDate((r && (r.createdAt || r.requestedAt || r.date || r.when)) || '');
+  }
+let currentFilterKey = null;
   // ✅ Live collection fallback: requests (لو صفحة إدارة الطلبات بتكتب هنا)
   let unsubRequestsCol = null;
   function subscribeRequestsCollection(){
@@ -573,8 +631,8 @@ function liftNoFlash(){
       const qReq = query(reqCol, limit(500));
       unsubRequestsCol = onSnapshot(qReq, (snap)=>{
         const all = snap.docs.map(d=>({ _docId: d.id, ...(d.data()||{}) }));
-        const shoots = all.filter(r => String(r.kind||r.type||'').toLowerCase() === 'shoot');
-        const movesArr = all.filter(r => String(r.kind||r.type||'').toLowerCase() === 'move');
+        const shoots = all.filter(r => getRequestKind(r) === 'shoot');
+        const movesArr = all.filter(r => getRequestKind(r) === 'move');
         // لا نكسر بيانات v1 لو الكولكشن فاضي
         if(shoots.length || movesArr.length){
           shootRequests = shoots;
@@ -989,9 +1047,15 @@ $('#btnLogin').addEventListener('click', async ()=>{
 
   // تحويل وقت الطلب إلى رقم علشان نرتّب من الأحدث للأقدم
   function getRequestTimestamp(r){
-    const raw = r && (r.createdAt || r.requestedAt || r.date || '');
+    const raw = r && (r.createdAt || r.requestedAt || r.date || r.when || '');
     if (typeof raw === 'number') return raw;
     if (!raw) return 0;
+
+    // Firestore Timestamp object
+    if (typeof raw === 'object' && raw !== null && ('seconds' in raw)) {
+      const ms = (Number(raw.seconds)||0) * 1000 + Math.floor((Number(raw.nanoseconds)||0)/1e6);
+      return ms || 0;
+    }
 
     if (typeof raw === 'string') {
       const trimmed = raw.trim();
@@ -1834,8 +1898,8 @@ function openShootModal(filter='ALL'){
       const tr=document.createElement('tr');
       const typeLabel = r._type === 'move' ? 'طلب نقل' : 'طلب تصوير';
       tr.innerHTML = `
-        <td>#${r.id}</td>
-        <td>${r.createdAt || r.requestedAt || r.date || ''}</td>
+        <td>#${getReqId(r) || '—'}</td>
+        <td>${formatReqDate(r)}</td>
         <td>${typeLabel}</td>
         <td>${r.createdBy || '-'}</td>
         <td>${(r.rows || []).length}</td>
@@ -1854,14 +1918,81 @@ function openShootModal(filter='ALL'){
     modalCount.textContent = `عدد الطلبات الظاهرة: ${filteredShoot.length.toLocaleString('ar-SA')} من ${currentShoot.length.toLocaleString('ar-SA')}`;
   }
 
-  function openShootDetails(id, type){
-    const isMove = type === 'move';
+    async function openShootDetails(id, type){
+    const isMove = (type === 'move');
     const source = isMove ? (Array.isArray(moveRequests) ? moveRequests : []) : (Array.isArray(shootRequests) ? shootRequests : []);
-    const req = source.find(r => String(r.id) === String(id));
+
+    // نطابق بالـ docId أو أي رقم قديم
+    const req = source.find(r => String(getReqId(r)) === String(id) || String(r._docId||'') === String(id));
     if(!req){
       showToast('تعذّر العثور على هذا الطلب');
       return;
     }
+
+    const reqId   = String(getReqId(req) || id || '');
+    const docId   = String(req._docId || reqId || id || '');
+    const kindLbl = isMove ? ' — طلب نقل' : ' — طلب تصوير';
+    shootDetailsIdSpan.textContent = '#' + reqId + kindLbl;
+
+    // نجيب الصفوف من Firestore (requests/{docId}/rows) لو مش موجودة داخل المستند
+    let rows = Array.isArray(req.rows) ? req.rows : [];
+    if((!rows || !rows.length) && docId){
+      try{
+        const rowsCol = collection(db, 'requests', docId, 'rows');
+        // لو موجود idx نرتّب عليه، لو مش موجود هنقرأ بدون ترتيب
+        let snap;
+        try{
+          snap = await getDocs(query(rowsCol, orderBy('idx','asc')));
+        }catch(_){
+          snap = await getDocs(rowsCol);
+        }
+        rows = snap.docs.map(d => ({ _rowId:d.id, ...(d.data()||{}) }));
+      }catch(err){
+        console.error(err);
+        rows = [];
+      }
+    }
+
+    shootDetailsTableBody.innerHTML = '';
+    rows = Array.isArray(rows) ? rows : [];
+
+    rows.forEach((row,idx)=>{
+      const vin        = row.vin || row.chassis || row.VIN || '';
+      const car        = row.car || row.model || row.carName || '';
+      const variant    = row.variant || row.trim || row.category || '';
+      const extColor   = row.extColor || row.color || row.ext_color || '';
+      const modelYear  = row.modelYear || row.year || row.model || '';
+      const currLoc    = row.currentLocation || row.from || row.fromLocation || req.fromLocation || row.location || '';
+      const destPlace  = isMove
+        ? (row.movePlace || row.transferPlace || row.to || row.toLocation || req.toLocation || '')
+        : (row.shootPlace || row.photoPlace || row.to || row.toLocation || req.toLocation || '');
+      const note       = row.note || row.notes || row.message || req.note || '';
+
+      const tr=document.createElement('tr');
+      tr.innerHTML = `
+        <td>${idx+1}</td>
+        <td>${escapeHtml(vin)}</td>
+        <td>${escapeHtml(car)}</td>
+        <td>${escapeHtml(variant)}</td>
+        <td>${escapeHtml(extColor)}</td>
+        <td>${escapeHtml(modelYear)}</td>
+        <td>${escapeHtml(currLoc)}</td>
+        <td>${escapeHtml(destPlace)}</td>
+        <td>${escapeHtml(note)}</td>
+      `;
+      shootDetailsTableBody.appendChild(tr);
+    });
+
+    // لو مفيش صفوف
+    if(!rows.length){
+      const tr=document.createElement('tr');
+      tr.innerHTML = `<td colspan="9" style="text-align:center;color:var(--muted);padding:16px">لا توجد تفاصيل (Rows) لهذا الطلب.</td>`;
+      shootDetailsTableBody.appendChild(tr);
+    }
+
+    shootDetailsBox.style.display='block';
+    shootDetailsBox.scrollIntoView({behavior:'smooth',block:'center'});
+  }
 
     shootDetailsIdSpan.textContent = '#' + id + (isMove ? ' — طلب نقل' : ' — طلب تصوير');
 
