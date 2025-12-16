@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -298,18 +299,116 @@
       .topbar{flex-direction:column;align-items:flex-start;gap:6px;}
       .tabs{flex-wrap:wrap;}
     }
-  </style>
+  
+/* ===== Admin-like Topbar overrides for Sales ===== */
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:1000;
+  background:#fff;
+  border-bottom:1px solid var(--line, #e5e7eb);
+  color:var(--text);
+  padding:0; /* override sales padding */
+  box-shadow:none; /* override sales shadow */
+}
+.topbar-inner{
+  max-width:1240px;
+  margin:auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 16px;
+  gap:12px;
+}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .logo{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--brown),#2a1613);
+  display:grid;place-items:center;color:#fff;font-weight:800;
+}
+.brand-text h1{margin:0;font-size:18px;color:var(--brown);font-weight:800;line-height:1.1}
+.brand-text .hint{color:var(--muted);font-size:12px}
+
+/* Tabs (keep original sales .tabs for page content untouched, target only in topbar) */
+.topbar .tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start}
+.topbar .tab{
+  padding:8px 12px;
+  border:1px solid var(--line, #e5e7eb);
+  border-radius:999px;
+  background:#fff;
+  text-decoration:none;
+  color:var(--text);
+  font-weight:800;
+  font-size:13px;
+}
+.topbar .tab.active{background:var(--brown);border-color:var(--brown);color:#fff}
+
+/* Right side actions (avoid .row conflict in sales page) */
+.topbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.status-badge{
+  display:inline-flex;gap:8px;align-items:center;
+  border:1px solid var(--line, #e5e7eb);
+  background:#fff;border-radius:12px;padding:6px 10px;font-size:12px
+}
+.dot{width:10px;height:10px;border-radius:999px;background:#f59e0b}
+.dot.ok{background:var(--ok, #16a34a)} .dot.err{background:var(--danger, #ef4444)} .dot.warn{background:#f59e0b}
+.whoami{color:var(--muted);font-size:12px;font-weight:700}
+
+/* Button style like admin */
+.tb-btn{
+  border:1px solid var(--line, #e5e7eb);
+  background:#fff;
+  border-radius:12px;
+  padding:8px 12px;
+  cursor:pointer;
+  font-weight:800;
+  font-size:13px;
+}
+.tb-btn:hover{transform:translateY(-1px)}
+.tb-btn:active{transform:translateY(0)}
+
+@media (max-width:900px){
+  .topbar-inner{align-items:flex-start;flex-direction:column}
+  .topbar-actions{justify-content:flex-start}
+}
+
+</style>
 </head>
 <body>
+  
+  <!-- Topbar (Matched with Admin) -->
   <div class="topbar">
-    <div class="topbar-title">MZJ – إدارة المبيعات وتتبع الطلبات</div>
-    <div class="topbar-right">
-      <span id="whoami"></span>
-      <button id="logoutBtn" class="logout" style="display:none;">تسجيل الخروج</button>
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo" title="MZJ">MZJ</div>
+        <div class="brand-text">
+          <h1>لوحة إدارة المبيعات</h1>
+          <small class="hint">مجموعة محمد بن ذعار العجمي للسيارات</small>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <a class="tab" href="admin.html">الإدارة</a>
+        <a class="tab active" href="sales.html">المبيعات</a>
+        <a class="tab" href="inventory.html">المخزون</a>
+        <a class="tab" href="dashboard.html">الداش بورد</a>
+        <a class="tab" href="vt.html">نقل السيارات</a>
+        <a class="tab" href="photoshoot-user.html">إدارة الطلبات</a>
+        <a class="tab" href="cars.html">كل السيارات</a>
+        <a class="tab" href="Activity.html">سجل النشاط</a>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="status-badge">
+          <span class="dot warn" id="connDot"></span>
+          <span id="connText">—</span>
+        </div>
+        <span id="whoami" class="whoami"></span>
+        <button id="logoutBtn" class="tb-btn" style="display:none;">تسجيل الخروج</button>
+      </div>
     </div>
   </div>
-
-  <div class="wrap">
+<div class="wrap">
 
     <!-- Auth -->
     <div class="card" id="authCard">
@@ -1548,6 +1647,23 @@ function clearErpTable() {
     buildStagesUI({ });
 
   </script>
+
+<script>
+  // Topbar connection badge helper (non-invasive)
+  (function(){
+    const who = document.getElementById('whoami');
+    const dot = document.getElementById('connDot');
+    const txt = document.getElementById('connText');
+    function tick(){
+      const hasUser = who && (who.textContent||'').trim().length>0;
+      if(dot) dot.className = 'dot ' + (hasUser ? 'ok' : 'warn');
+      if(txt) txt.textContent = hasUser ? 'متصل' : 'غير مسجل';
+    }
+    setInterval(tick, 700);
+    setTimeout(tick, 50);
+  })();
+</script>
+
 </body>
 </html>
 
