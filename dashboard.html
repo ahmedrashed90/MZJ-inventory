@@ -1991,38 +1991,6 @@ function openShootModal(filter='ALL'){
   shootDetailsBox.scrollIntoView({behavior:'smooth',block:'center'});
 }
 
-    shootDetailsIdSpan.textContent = '#' + id + (isMove ? ' — طلب نقل' : ' — طلب تصوير');
-
-    const rows = Array.isArray(req.rows) ? req.rows : [];
-    shootDetailsTableBody.innerHTML = '';
-    rows.forEach((row,idx)=>{
-      const vin        = row.vin || row.chassis || '';
-      const car        = row.car || row.model || '';
-      const variant    = row.variant || row.trim || '';
-      const extColor   = row.extColor || row.color || row.ext_color || '';
-      const modelYear  = row.modelYear || row.year || '';
-      const currLoc    = row.currentLocation || row.from || row.fromLocation || req.fromLocation || '';
-      const shootPlace = row.shootPlace || row.to || row.toLocation || req.toLocation || '';
-      const note       = row.note || row.message || req.note || '';
-
-      const tr=document.createElement('tr');
-      tr.innerHTML = `
-        <td>${idx+1}</td>
-        <td>${vin}</td>
-        <td>${car}</td>
-        <td>${variant}</td>
-        <td>${extColor}</td>
-        <td>${modelYear}</td>
-        <td>${currLoc}</td>
-        <td>${shootPlace}</td>
-        <td>${note}</td>
-      `;
-      shootDetailsTableBody.appendChild(tr);
-    });
-
-    shootDetailsBox.style.display='block';
-    shootDetailsBox.scrollIntoView({behavior:'smooth',block:'center'});
-  }
 
   document.getElementById('tableShootWrap').addEventListener('click', (e)=>{
     const btn = e.target.closest('button[data-view-id]');
@@ -2381,7 +2349,6 @@ try{
 </script>
 </body>
 </html>
-
 
 
 
