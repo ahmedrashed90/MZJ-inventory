@@ -1,0 +1,2725 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.png">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MZJ – تتبع المبيعات</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --brown:#3e2420;
+      --beige:#bc8f74;
+      --cream:#fff8ef;
+      --text:#111827;
+      --muted:#6b7280;
+      --radius:16px;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      font-family:"Tajawal",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:radial-gradient(circle at top,#fffdf8 0,#fff3e6 40%,#fbe9da 70%,#f5e3d3 100%);
+      color:var(--text);
+    }
+    .topbar{
+      background:var(--brown);
+      color:#fff;
+      padding:10px 20px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      box-shadow:0 6px 14px rgba(0,0,0,.2);
+    }
+    .topbar-title{
+      font-weight:800;
+      letter-spacing:.6px;
+      font-size:17px;
+    }
+    .topbar-right{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:13px;
+    }
+    .logout{
+      border:0;
+      padding:6px 12px;
+      border-radius:999px;
+      background:#fff;
+      color:var(--brown);
+      cursor:pointer;
+      font-family:inherit;
+      font-size:12px;
+    }
+    .wrap{
+      max-width:1150px;
+      margin:22px auto 36px;
+      padding:0 14px;
+    }
+    .card{
+      background:#fff;
+      border-radius:var(--radius);
+      box-shadow:0 16px 40px rgba(62,36,32,.13);
+      padding:18px 18px 20px;
+      margin-bottom:18px;
+    }
+    .title{
+      margin:0 0 12px 0;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      color:var(--brown);
+      font-size:18px;
+    }
+    .title .icon{
+      width:26px;
+      height:26px;
+      border-radius:999px;
+      background:rgba(188,143,116,.16);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:16px;
+    }
+    .row{
+      display:grid;
+      grid-template-columns:repeat(12,1fr);
+      gap:10px;
+    }
+    .col-3{grid-column:span 3;}
+    .col-4{grid-column:span 4;}
+    .col-6{grid-column:span 6;}
+    .col-12{grid-column:span 12;}
+    label{
+      display:block;
+      font-size:13px;
+      margin-bottom:4px;
+      color:var(--muted);
+    }
+    input{
+      width:100%;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid #e5e7eb;
+      background:#f9fafb;
+      font-family:inherit;
+      font-size:14px;
+      outline:none;
+    }
+    input:focus{
+      background:#fff;
+      border-color:var(--beige);
+      box-shadow:0 0 0 1px rgba(188,143,116,.45);
+    }
+    select{
+      width:100%;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid #e5e7eb;
+      background:#f9fafb;
+      font-family:inherit;
+      font-size:14px;
+      outline:none;
+      appearance:none;
+    }
+    select:focus{
+      background:#fff;
+      border-color:var(--beige);
+      box-shadow:0 0 0 1px rgba(188,143,116,.45);
+    }
+    .btn{
+      border:0;
+      border-radius:999px;
+      padding:8px 16px;
+      font-family:inherit;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:14px;
+      background:var(--brown);
+      color:#fff;
+    }
+    .btn-outline{
+      border-radius:999px;
+      border:1px solid var(--brown);
+      padding:8px 14px;
+      font-family:inherit;
+      cursor:pointer;
+      background:transparent;
+      color:var(--brown);
+      font-size:13px;
+    }
+    .btn:disabled,.btn-outline:disabled{
+      opacity:.5;
+      cursor:not-allowed;
+    }
+    .muted{color:var(--muted);font-size:13px;}
+    .hint{color:var(--muted);font-size:12px;margin-top:4px;}
+    .ok{color:#047857;font-weight:700;}
+    .err{color:#b91c1c;font-weight:700;}
+    .badge{
+      display:inline-block;
+      padding:3px 9px;
+      border-radius:999px;
+      background:rgba(188,143,116,.16);
+      color:var(--brown);
+      font-size:11px;
+      margin-left:4px;
+    }
+    .erp-table-wrap{
+      margin-top:8px;
+      overflow-x:auto;
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:13px;
+    }
+    thead{
+      background:#f3f4f6;
+    }
+    th,td{
+      padding:6px 8px;
+      border-bottom:1px solid #e5e7eb;
+      white-space:nowrap;
+    }
+    th{font-weight:600;color:#374151;text-align:right;}
+    td{color:#111827;}
+    .grid-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    .stage{
+      background:#fffaf3;
+      border-radius:12px;
+      padding:10px 12px;
+      border:1px dashed rgba(188,143,116,.55);
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .stage.done{
+      background:#ecfdf5;
+      border-style:solid;
+      border-color:#22c55e;
+    }
+    .stage-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+    }
+    .stage strong{color:var(--brown);font-size:13px;}
+    .stage small{font-size:11px;color:var(--muted);}
+
+    .tabs{
+      display:none;
+      margin:-8px 0 10px;
+      gap:8px;
+    }
+    .tab-btn{
+      padding:6px 14px;
+      border-radius:999px;
+      border:1px solid transparent;
+      background:#f3f4f6;
+      color:#374151;
+      font-size:13px;
+      cursor:pointer;
+      font-family:inherit;
+    }
+    .tab-btn.tab-active{
+      background:var(--brown);
+      color:#fff;
+      border-color:var(--brown);
+    }
+    .link-btn{
+      border:0;
+      background:none;
+      color:#1d4ed8;
+      text-decoration:underline;
+      cursor:pointer;
+      font-size:13px;
+      font-family:inherit;
+      padding:0;
+    }
+
+    /* Orders list: unread (not opened yet) rows */
+    .unread-row td{font-weight:800;}
+    .unread-row td .link-btn{font-weight:900;}
+
+    .totals-box{
+      margin:6px 0 10px;
+      padding:8px 10px;
+      border-radius:10px;
+      background:#fffaf3;
+      border:1px solid rgba(188,143,116,.4);
+      font-size:13px;
+      color:var(--brown);
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .totals-box span{
+      white-space:nowrap;
+    }
+
+    /* VIN picker box احترافي */
+    .vin-box{
+      display:none;
+      margin:10px 0 14px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:#fffaf3;
+      border:1px solid rgba(188,143,116,.6);
+    }
+    .vin-box-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:6px;
+    }
+    .vin-box-title{
+      font-size:13px;
+      font-weight:600;
+      color:var(--brown);
+    }
+    .vin-chip{
+      padding:3px 10px;
+      border-radius:999px;
+      background:rgba(62,36,32,.06);
+      font-size:11px;
+      color:var(--muted);
+    }
+
+    @media(max-width:900px){
+      .row{grid-template-columns:1fr;}
+      .col-3,.col-4,.col-6,.col-12{grid-column:span 1;}
+      .grid-2{grid-template-columns:1fr;}
+      .topbar{flex-direction:column;align-items:flex-start;gap:6px;}
+      .tabs{flex-wrap:wrap;}
+    }
+  
+/* ===== Admin-like Topbar overrides for Sales ===== */
+.topbar{
+  position:sticky;
+  top:0;
+  z-index:1000;
+  background:#fff;
+  border-bottom:1px solid var(--line, #e5e7eb);
+  color:var(--text);
+  padding:0; /* override sales padding */
+  box-shadow:none; /* override sales shadow */
+}
+.topbar-inner{
+  max-width:1240px;
+  margin:auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px 16px;
+  gap:12px;
+}
+.brand{display:flex;align-items:center;gap:10px}
+.brand .logo{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,var(--brown),#2a1613);
+  display:grid;place-items:center;color:#fff;font-weight:800;
+}
+.brand-text h1{margin:0;font-size:18px;color:var(--brown);font-weight:800;line-height:1.1}
+.brand-text .hint{color:var(--muted);font-size:12px}
+
+/* Tabs (keep original sales .tabs for page content untouched, target only in topbar) */
+.topbar .tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-start}
+.topbar .tab{
+  padding:8px 12px;
+  border:1px solid var(--line, #e5e7eb);
+  border-radius:999px;
+  background:#fff;
+  text-decoration:none;
+  color:var(--text);
+  font-weight:800;
+  font-size:13px;
+}
+.topbar .tab.active{background:var(--brown);border-color:var(--brown);color:#fff}
+
+/* Right side actions (avoid .row conflict in sales page) */
+.topbar-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.status-badge{
+  display:inline-flex;gap:8px;align-items:center;
+  border:1px solid var(--line, #e5e7eb);
+  background:#fff;border-radius:12px;padding:6px 10px;font-size:12px
+}
+.dot{width:10px;height:10px;border-radius:999px;background:#f59e0b}
+.dot.ok{background:var(--ok, #16a34a)} .dot.err{background:var(--danger, #ef4444)} .dot.warn{background:#f59e0b}
+.whoami{color:var(--muted);font-size:12px;font-weight:700}
+
+/* Button style like admin */
+.tb-btn{
+  border:1px solid var(--line, #e5e7eb);
+  background:#fff;
+  border-radius:12px;
+  padding:8px 12px;
+  cursor:pointer;
+  font-weight:800;
+  font-size:13px;
+}
+.tb-btn:hover{transform:translateY(-1px)}
+.tb-btn:active{transform:translateY(0)}
+
+@media (max-width:900px){
+  .topbar-inner{align-items:flex-start;flex-direction:column}
+  .topbar-actions{justify-content:flex-start}
+}
+
+</style>
+  <link rel="stylesheet" href="./mzj-ui.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet"/>
+
+<style>
+  /* ===== Sales Safe Refactor: hide legacy topbar ONLY (keep #tabsBar visible) ===== */
+  .legacy-sales .topbar,
+  .legacy-sales .topbar .tabs,
+  .legacy-sales .nav-tabs,
+  .legacy-sales .header,
+  .legacy-sales header:not(.mzj-topbar){display:none !important;}
+
+  /* Keep content spacing nice */
+  .legacy-sales{padding-top: 6px;}
+</style>
+
+
+<style>
+  /* Ensure the functional tabs bar (بحث عن طلب / كل الطلبات) is visible when JS enables it */
+  .legacy-sales #tabsBar{ display:flex !important; }
+  .legacy-sales #tabsBar[style*="display: none"]{ display:none !important; } /* respect JS when it hides */
+</style>
+
+  <link rel="stylesheet" href="./sales.m.css">
+</head>
+<body class="mzj">
+
+  <!-- MZJ Unified Topbar -->
+  <header class="mzj-topbar">
+    <div class="topbar-left">
+      <button class="icon-btn" id="mzjSidebarBtn" aria-label="القائمة"><i class="fa-solid fa-bars"></i></button>
+      <div class="brand">
+        <div class="brand-mark">MZJ</div>
+        <div class="brand-text">
+          <div class="brand-title">محمد بن ذعار العجمي للسيارات</div>
+          <div class="brand-sub">Workspace</div>
+        </div>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <div class="mzj-breadcrumb">
+        <span class="crumb">الرئيسية</span>
+        <i class="fa-solid fa-chevron-left"></i>
+        <span class="crumb current">المبيعات</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="mzj-chip"><i class="fa-regular fa-clock"></i><span id="mzjNow">—</span></div>
+      <button id="btnSignOut" class="btn btn-ghost" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="mzj-shell" id="mzjShell">
+    <aside class="mzj-sidebar" id="mzjSidebar">
+      <div class="side-section">
+        <div class="side-title">تتبع المبيعات</div>
+        <nav class="side-nav">
+          <a class="side-link tab active" href="./sales.m.html"><i class="fa-solid fa-handshake"></i><span>تتبع المبيعات</span></a>
+          <a class="side-link tab" href="./dashboard.m.html"><i class="fa-solid fa-gauge"></i><span>الداش بورد</span></a>
+          <a class="side-link tab" href="./inventory.m.html"><i class="fa-solid fa-boxes-stacked"></i><span>المخزون</span></a>
+          <a class="side-link tab" href="./vt.m.html"><i class="fa-solid fa-right-left"></i><span>نقل السيارات</span></a>
+          <a class="side-link tab" href="./photoshoot-user.m.html"><i class="fa-solid fa-camera"></i><span>إدارة الطلبات</span></a>
+          <a class="side-link tab" href="./cars.m.html"><i class="fa-solid fa-car"></i><span>كل السيارات</span></a>
+          <a class="side-link tab" href="./admin.m.html"><i class="fa-solid fa-shield-halved"></i><span>الإدارة</span></a>
+          <a class="side-link tab" href="./Activity.m.html"><i class="fa-solid fa-clipboard-list"></i><span>سجل النشاط</span></a>
+
+      </div>
+    </aside>
+
+    <div class="mzj-backdrop" id="mzjBackdrop"></div>
+
+    <main class="mzj-content">
+      <section class="mzj-pagehead">
+        <div class="pagehead-left">
+          <h1 class="page-title">لوحة إدارة المبيعات</h1>
+          <p class="page-desc">نفس الداتا والمنطق — واجهة موحّدة.</p>
+        </div>
+      </section>
+
+      <div class="legacy legacy-sales">
+
+  
+  <!-- Topbar (Matched with Admin) -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo" title="MZJ">MZJ</div>
+        <div class="brand-text">
+          <h1>لوحة تتبع المبيعات</h1>
+          <small class="hint">مجموعة محمد بن ذعار العجمي للسيارات</small>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <a class="tab" href="admin.m.html">الإدارة</a>
+        <a class="tab active" href="sales.m.html">المبيعات</a>
+        <a class="tab" href="inventory.m.html">المخزون</a>
+        <a class="tab" href="dashboard.m.html">الداش بورد</a>
+        <a class="tab" href="vt.m.html">نقل السيارات</a>
+        <a class="tab" href="photoshoot-user.m.html">إدارة الطلبات</a>
+        <a class="tab" href="cars.m.html">كل السيارات</a>
+        <a class="tab" href="Activity.m.html">سجل النشاط</a>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="status-badge">
+          <span class="dot warn" id="connDot"></span>
+          <span id="connText">—</span>
+        </div>
+        <span id="whoami" class="whoami"></span>
+        <button id="logoutBtn" class="tb-btn" style="display:none;">تسجيل الخروج</button>
+      </div>
+    </div>
+  </div>
+<div class="wrap">
+
+    <!-- Auth -->
+    <div class="card" id="authCard">
+      <h3 class="title"><span class="icon">🔐</span>تسجيل الدخول</h3>
+      <div class="row">
+        <div class="col-4">
+          <label>البريد الإلكتروني</label>
+          <input id="email" type="email" placeholder="user@mzjcars.com" />
+        </div>
+        <div class="col-4">
+          <label>كلمة السر</label>
+          <input id="password" type="password" placeholder="••••••••" />
+        </div>
+        <div class="col-4" style="display:flex;align-items:flex-end;gap:8px;">
+          <button class="btn" id="loginBtn">دخول</button>
+        </div>
+      </div>
+      <div id="authMsg" class="muted" style="margin-top:6px;"></div>
+      <div class="hint">الدخول مطلوب لإدارة الطلبات وتحديث مراحلها.</div>
+    </div>
+
+    <!-- Search -->
+    <div class="card" id="orderCard" style="display:none;">
+      <h3 class="title"><span class="icon">📄</span>البحث عن طلب</h3>
+      <div class="row">
+        <div class="col-4">
+          <label>رقم الطلب</label>
+          <input id="orderId" placeholder="SAL-ORD-2025-01109 أو SAL-ORD-2025-01109_1" />
+        </div>
+        <div class="col-4" style="display:none;">
+          <label>رقم الهيكل (VIN)</label>
+          <input id="vinInput" placeholder="اكتب رقم الهيكل (VIN)" />
+        </div>
+        <div class="col-4" style="display:flex;align-items:flex-end;gap:8px;">
+          <button class="btn" id="loadBtn">فتح الطلب</button>
+          <button class="btn-outline" id="clearBtn">تفريغ</button>
+        </div>
+      </div>
+      <div id="orderMsg" class="muted" style="margin-top:6px;"></div>
+      <div class="hint">اكتب رقم الطلب ثم اضغط فتح الطلب.</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs" id="tabsBar">
+      <button class="tab-btn tab-active" id="tabSearchBtn">بحث عن طلب</button>
+      <button class="tab-btn" id="tabListBtn">كل الطلبات</button>
+    </div>
+
+    <!-- ERP details -->
+    <div class="card" id="erpCard" style="display:none;">
+      <h3 class="title">
+        <span class="icon">📊</span>
+        تفاصيل الطلب من نظام المبيعات (ERP)
+      </h3>
+      <div id="erpMeta" class="muted" style="margin-bottom:6px;"></div>
+      <!-- اختيار رقم الهيكل لو الطلب فيه أكثر من VIN -->
+      <div id="vinPickerBox" class="vin-box">
+        <div class="vin-box-header">
+          <div class="vin-box-title">اختر رقم الهيكل للعمل عليه</div>
+          <div class="vin-chip" id="vinCountChip"></div>
+        </div>
+        <select id="vinPicker"></select>
+        <div class="hint">أي تحديث في مراحل تتبع الطلب سيكون لهذا رقم الهيكل فقط.</div>
+        <button id="trackLinkBtn" class="btn" type="button" style="margin-top:8px;width:100%;">رابط التتبع</button>
+        <button id="trackQrBtn" class="btn-outline" type="button" style="margin-top:8px;width:100%;">QR التتبع (اضغط لفتح)</button>
+      </div>
+
+      <div id="erpTotals" class="totals-box" style="display:none;"></div>
+      <div class="erp-table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>اسم العميل</th>
+            <th>الرقم الضريبي للعميل</th>
+            <th>رقم جوال العميل</th>
+            <th>الفرع</th>
+            <th>تاريخ الطلب</th>
+            <th>تاريخ التسليم</th>
+            <th>مسؤول المبيعات</th>
+            <th>رقم الصنف</th>
+            <th>نوع الصنف</th>
+            <th>فئة الصنف</th>
+            <th>الموديل</th>
+            <th>رقم الهيكل VIN</th>
+            <th>اللون الداخلي</th>
+            <th>اللون الخارجي</th>
+            <th>الوكيل</th>
+            <th>الكمية</th>
+            <th>سعر الوحدة</th>
+            <th>قيمة الصنف</th>
+            <th>كود الضريبة</th>
+            <th>نوع الضريبة</th>
+            <th>نسبة الضريبة</th>
+            <th>قيمة الضريبة</th>
+            <th>الإجمالي قبل الضريبة</th>
+            <th>الإجمالي شامل الضريبة</th>
+          </tr>
+          </thead>
+          <tbody id="erpBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Orders list tab -->
+    <div class="card" id="ordersListCard" style="display:none;">
+      <h3 class="title"><span class="icon">📋</span>كل الطلبات</h3>
+      <div class="hint">اضغط على رقم الطلب لفتحه، واختيار رقم الهيكل من الأعلى لو كان أكثر من سيارة.</div>
+      <div class="row" style="margin-top:10px;">
+        <div class="col-6">
+          <label>بحث سريع</label>
+          <input id="ordersSearch" placeholder="اكتب اسم العميل / رقم الجوال / رقم الهيكل (VIN) / رقم الطلب" />
+          <div class="hint">تقدر تبحث بأي جزء من البيانات.</div>
+        </div>
+      </div>
+      <div class="erp-table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>رقم الطلب</th>
+            <th>اسم العميل</th>
+            <th>رقم الجوال</th>
+            <th>الفرع</th>
+            <th>رقم الهيكل VIN</th>
+          </tr>
+          </thead>
+          <tbody id="ordersListBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Stages -->
+    <div class="card" id="stagesCard" style="display:none;">
+      <h3 class="title"><span class="icon">🚦</span>مراحل تتبع الطلب</h3>
+      <div class="grid-2" id="stagesList"></div>
+      <div class="hint" style="margin-top:8px;">
+        اضغط على <strong>تم الانتهاء</strong> أمام أي مرحلة ليتم ختمها وتحديث صفحة تتبع العميل تلقائياً.  
+        بعد ختم جميع المراحل لهذا الهيكل لا يمكن تعديلها مرة أخرى.
+      </div>
+      <!-- Archive actions -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-start;width:100%;margin:10px 0 0;">
+        <button id="archiveOrderBtn" class="btn-outline" type="button" style="font-size:12px;">
+          <i class="fa-solid fa-box-archive"></i> أرشفة الطلب
+        </button>
+        <button id="unarchiveOrderBtn" class="btn-outline" type="button" style="font-size:12px;display:none;">
+          <i class="fa-solid fa-rotate-left"></i> إلغاء الأرشفة
+        </button>
+        <span id="archiveHint" class="muted" style="font-size:12px;"></span>
+      </div>
+
+      
+      <div class="muted" id="stageMsg" style="margin-top:6px;"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      updateDoc,
+      deleteField,
+      deleteDoc,
+      serverTimestamp,
+      collection,
+      query,
+      where,
+      getDocs,
+      limit,
+      writeBatch
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCorGtT5_Z68jCtLODvqnv0Fb7QW5eR6MQ",
+      authDomain: "mzj-tracking.firebaseapp.com",
+      projectId: "mzj-tracking",
+      storageBucket: "mzj-tracking.firebasestorage.app",
+      messagingSenderId: "655452217491",
+      appId: "1:655452217491:web:9348d172c47bdd411fad66"
+    };
+
+    const ERP_COLLECTION      = "erp_orders";
+    const ERP_VINS_COLLECTION = "erp_vins";
+    const TRACK_COLLECTION    = "orders";
+    const ARCHIVE_COLLECTION  = "sales_archives";
+
+    // ✅ API base (separate project) for WhatsApp/Mersal serverless routes
+    const MZJ_TRACKING_API_BASE = window.location.origin; // نفس الدومين (mzj-workflow)
+
+    const ERP_FIELDS = [
+      "CustomerName","CustomerVAT","CustomerPhone","Branch","OrderDate","DeliveryDate","SalesPerson",
+      "ItemNo","ItemType","ItemCategory","ItemModel","VIN","InteriorColor","ExteriorColor","Dealer",
+      "Qty","UnitPrice","ItemValue","TaxCode","TaxName","TaxRate","TaxValue","SubtotalExclVAT","TotalInclVAT"
+    ];
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // UI refs
+    const authCard   = document.getElementById("authCard");
+    const orderCard  = document.getElementById("orderCard");
+    const erpCard    = document.getElementById("erpCard");
+    const stagesCard = document.getElementById("stagesCard");
+    const whoami     = document.getElementById("whoami");
+    const logoutBtn  = document.getElementById("logoutBtn");
+
+    const tabsBar      = document.getElementById("tabsBar");
+    const tabSearchBtn = document.getElementById("tabSearchBtn");
+    const tabListBtn   = document.getElementById("tabListBtn");
+    const ordersListCard  = document.getElementById("ordersListCard");
+    const ordersListBody  = document.getElementById("ordersListBody");
+
+    const ordersSearchInput = document.getElementById("ordersSearch");
+    let ordersListCache = [];
+    let ordersReadSet = new Set();
+
+    let archiveSet = new Set();
+    let archiveLoaded = false;
+
+
+    const email      = document.getElementById("email");
+    const password   = document.getElementById("password");
+    const loginBtn   = document.getElementById("loginBtn");
+    const signupBtn  = document.getElementById("signupBtn");
+    const authMsg    = document.getElementById("authMsg");
+
+    const orderIdInput = document.getElementById("orderId");
+    const vinInput     = document.getElementById("vinInput");
+    const loadBtn      = document.getElementById("loadBtn");
+    const clearBtn     = document.getElementById("clearBtn");
+    const orderMsg     = document.getElementById("orderMsg");
+
+    const erpMetaEl    = document.getElementById("erpMeta");
+    const erpBody      = document.getElementById("erpBody");
+    const erpTotals    = document.getElementById("erpTotals");
+    const archiveOrderBtn = document.getElementById("archiveOrderBtn");
+    const unarchiveOrderBtn = document.getElementById("unarchiveOrderBtn");
+    const archiveHint = document.getElementById("archiveHint");
+
+
+    const vinPickerBox = document.getElementById("vinPickerBox");
+    const vinPicker    = document.getElementById("vinPicker");
+    const vinCountChip = document.getElementById("vinCountChip");
+    const trackLinkBtn = document.getElementById("trackLinkBtn");
+
+    const stagesList   = document.getElementById("stagesList");
+    const stageMsg     = document.getElementById("stageMsg");
+
+    let currentOrderId      = null;
+    let currentVin          = null;
+    let currentItemNo       = null;
+    let currentOrderRecords = [];
+    let currentCustomerPhone = ""; // رقم جوال العميل
+    // بيانات نحتاجها لقالب واتساب (tracking_message)
+    let currentCustomerName = "";
+    let currentOrderCarsCount = 0;
+    let currentCarsSubtotal = "";
+    let currentCarsTax = "";
+    let currentRegFee = "";
+    let currentGrandTotalIncl = "";
+    let currentTrackingLink = "";
+
+    let currentTrackData = null;
+    let currentStagesObjCache = {};
+
+    const STAGES = [
+      "1) طلب الشراء (خاص بالعميل)",
+      "2) إيصال الدفع (خاص بالعميل)",
+      "3) التواصل من قِبل ممثلي خدمة العملاء بإرسال البطاقة الجركية (خاص بالمعرض)",
+      "4) سداد رسوم التسجيل (خاص بالعميل)",
+      "5) التأمين – شرط الربط على السيستم (خاص بالعميل)",
+      "6) استيفاء المبالغ المتبقية (خاص بالعميل)",
+      "7) استيفاء الأوراق المتبقية (خاص بالعميل)",
+      "8) إصدار اللوحات أو نقل الملكية (خاص بالمعرض)",
+      "9) جاهزية السيارة للاستلام (خاص بالمعرض)",
+      "10) إتمام عملية التسليم بنجاح"
+    ];
+
+    const FIELD_SYNONYMS = {
+      CustomerName: ["CustomerName","customerName"],
+      CustomerVAT:  ["CustomerVAT","customerVat","customerVAT"],
+      CustomerPhone:["CustomerPhone","customerPhone","customer_phone","contact_mobile"],
+      Branch:       ["Branch","branch"],
+      OrderDate:    ["OrderDate","orderDate"],
+      DeliveryDate: ["DeliveryDate","deliveryDate"],
+      SalesPerson:  ["SalesPerson","salesPerson"],
+
+      ItemNo:       ["ItemNo","itemNo","no"],
+      ItemType:     ["ItemType","itemType","type"],
+      ItemCategory: ["ItemCategory","itemCategory","category"],
+      ItemModel:    ["ItemModel","itemModel","model"],
+
+      VIN:          ["VIN","vin"],
+
+      InteriorColor:["InteriorColor","interiorColor"],
+      ExteriorColor:["ExteriorColor","exteriorColor"],
+      Dealer:       ["Dealer","dealer"],
+
+      Qty:          ["Qty","qty"],
+      UnitPrice:    ["UnitPrice","unitPrice"],
+      ItemValue:    ["ItemValue","itemValue","value"],
+
+      TaxCode:         ["taxCode","TaxCode"],
+      TaxName:         ["taxName","TaxName"],
+      TaxRate:         ["taxRate","TaxRate","vatRate","VATRate","tax_rate","vat_rate","rate","VAT"],
+      TaxValue:        ["taxValue", "TaxValue", "vatAmount", "VATAmount", "vat_amount", "vatAmount", "vatValue", "VATValue", "tax_amount", "taxAmount", "taxValueAmount", "vat", "carTaxValue", "car_tax_value"],
+      SubtotalExclVAT: ["subtotalExclVAT", "SubtotalExclVAT", "subtotalExclVat", "subtotal_excl_vat", "subtotalBeforeVat", "SubtotalBeforeVat", "netTotal", "net_total", "amountBeforeTax", "amount_before_tax", "subtotal", "net", "carSubtotalExclVAT", "car_subtotal_excl_vat"],
+      TotalInclVAT:    ["totalInclVAT", "TotalInclVAT", "totalInclVat", "total_incl_vat", "grandTotal", "GrandTotal", "grand_total", "total", "Total", "amountAfterTax", "amount_after_tax", "carTotalInclVAT", "car_total_incl_vat"],
+
+      // ✅ على مستوى الطلب (رسوم التسجيل/إجمالي الطلب)
+      RegistrationFee: ["registrationFee","RegistrationFee"],
+      SubtotalBeforeTax:["subtotalBeforeTax","SubtotalBeforeTax"],
+      GrandTotal:      ["grandTotal","GrandTotal"]
+    };
+
+    function buildCandidates(name) {
+      const syns = FIELD_SYNONYMS[name] || [name];
+      const arr = [];
+      syns.forEach(s => {
+        if (!s) return;
+        arr.push(s);
+        arr.push(s.toLowerCase());
+        arr.push(s.toUpperCase());
+      });
+      return Array.from(new Set(arr));
+    }
+
+    function lookupIn(obj, candidates) {
+      if (!obj) return undefined;
+      for (const key of candidates) {
+        if (Object.prototype.hasOwnProperty.call(obj, key) && obj[key] !== undefined) {
+          return obj[key];
+        }
+      }
+      return undefined;
+    }
+
+    function getFieldFlex(fieldName, data) {
+      if (!data) return "-";
+      const candidates = buildCandidates(fieldName);
+
+      let v = lookupIn(data, candidates);
+      if (v !== undefined) return v;
+
+      v = lookupIn(data.item, candidates);
+      if (v !== undefined) return v;
+
+      v = lookupIn(data.totals, candidates);
+      if (v !== undefined) return v;
+
+      // ✅ دعم مخططات أقدم: بعض الداتا بتكون تحت taxes أو summary
+      v = lookupIn(data.taxes, candidates);
+      if (v !== undefined) return v;
+
+      v = lookupIn(data.summary, candidates);
+      if (v !== undefined) return v;
+
+      return "-";
+    }
+
+    function parseAmountFront(value) {
+      if (value === null || value === undefined || value === "-") return null;
+      if (typeof value === "number") return value;
+      const s = String(value)
+        .replace(/[^\d.,\-]/g, "")
+        .replace(/,/g, "");
+      const n = parseFloat(s);
+      return isNaN(n) ? null : n;
+    }
+
+    
+    // تنسيق رقم الجوال لصيغة سعودية 966
+        function normalizeSaudiPhone(raw) {
+      if (!raw) return "";
+
+      let digits = String(raw).trim();
+
+      // شيل أي حاجة غير أرقام
+      digits = digits.replace(/[^\d]/g, "");
+
+      // 009665xxxxxxxx → 9665xxxxxxxx
+      if (digits.startsWith("00")) {
+        digits = digits.slice(2);
+      }
+
+      // 05xxxxxxxx → 9665xxxxxxxx
+      if (digits.startsWith("05")) {
+        digits = "966" + digits.slice(1);
+      }
+
+      // 5xxxxxxxx → 9665xxxxxxxx
+      if (digits.length === 9 && digits.startsWith("5")) {
+        digits = "966" + digits;
+      }
+
+      // تأكيد نهائي
+      if (!digits.startsWith("9665") || digits.length !== 12) {
+        return "";
+      }
+
+      return digits;
+    }
+
+    
+    // ===== Message Templates (shared for SMS + WhatsApp) =====
+    function getDefaultStageMessage(stageNum, stageLabel){
+      const orderNo = currentOrderId || "";
+      const vin = currentVin || "";
+      const trackingLink = vin ? `https://mzj-tracking.vercel.app/Test-Track.html?vin=${vin}` : "";
+
+      switch(stageNum){
+        case 1: {
+          // ✅ رسالة ملخص الطلب (ديناميكية حسب الطلب) — بدون بيانات سيارة فردية
+          const rec0 = (currentOrderRecords && currentOrderRecords.length) ? currentOrderRecords[0] : {};
+          const customerName = getFieldFlex("CustomerName", rec0) || "";
+
+          // VIN المختار فقط للرابط (نقطة دخول للتتبع)
+          const vinForLink = vin || "";
+          const trackingLink2 = vinForLink ? `https://mzj-tracking.vercel.app/Test-Track.html?vin=${vinForLink}` : "";
+
+          // رسوم التسجيل (إجمالي الطلب)
+          const regFeeNum = (() => {
+            const v = getFieldFlex("RegistrationFee", rec0);
+            const n = parseAmountFront(v);
+            return (n !== null && n > 0) ? n : 0;
+          })();
+
+          const rows = (currentOrderRecords && currentOrderRecords.length) ? currentOrderRecords : [];
+          const totalCars = rows.length || 0;
+
+          let carsSubtotal = 0;
+          let carsTax = 0;
+
+          rows.forEach(r => {
+            const subVal = parseAmountFront(getFieldFlex("SubtotalExclVAT", r));
+            const taxVal = parseAmountFront(getFieldFlex("TaxValue", r));
+            if (subVal !== null) carsSubtotal += subVal;
+            if (taxVal !== null) carsTax += taxVal;
+          });
+
+          // fallback لو السطور مش كاملة
+          if (carsSubtotal === 0 && carsTax === 0) {
+            const headerSubBT = parseAmountFront(getFieldFlex("SubtotalBeforeTax", rec0));
+            const headerTax   = parseAmountFront(getFieldFlex("TaxValue", rec0));
+            if (headerSubBT !== null) carsSubtotal = Math.max(0, (headerSubBT || 0) - (regFeeNum || 0));
+            if (headerTax !== null)   carsTax = headerTax || 0;
+          }
+
+          const grandTotalIncl = (carsSubtotal + carsTax) + (regFeeNum || 0);
+
+          const fmt = (n) => (n || 0).toLocaleString("ar-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+          // ✅ تخزين القيم للقالب (tracking_message)
+          currentCustomerName = customerName || "";
+          currentOrderCarsCount = totalCars || 0;
+          currentCarsSubtotal = fmt(carsSubtotal);
+          currentCarsTax = fmt(carsTax);
+          currentRegFee = fmt(regFeeNum || 0);
+          currentGrandTotalIncl = fmt(grandTotalIncl);
+          currentTrackingLink = trackingLink2 || "";
+
+          return (
+`عميلنا العزيز / ${customerName}\n` +
+`مرحباً بكم في مجموعة محمد ذعار العجمي للسيارات\n\n` +
+`تم تسجيل طلب شرائكم بنجاح ✅\n\n` +
+`عدد السيارات: ${totalCars}\n` +
+`الإجمالي قبل الضريبة: ${fmt(carsSubtotal)} ر.س\n` +
+`قيمة الضريبة: ${fmt(carsTax)} ر.س\n` +
+(regFeeNum > 0 ? (`رسوم التسجيل: ${fmt(regFeeNum)} ر.س\n`) : ``) +
+`الإجمالي شامل الضريبة: ${fmt(grandTotalIncl)} ر.س\n\n` +
+`يمكنكم متابعة حالة الطلب عبر الرابط التالي:\n` +
+`${trackingLink2}\n\n` +
+`مع مجموعة محمد ذعار العجمي للسيارات\n` +
+`أنت نجم الطريق ⭐\n` +
+`📞 920014635`
+
+          );
+        }
+        case 9:
+          return (
+`عميلنا العزيز يسعدنا إبلاغك بجاهزية سيارتك،
+الآن يمكنك التوجه للاستلام أو طلب خدمة الشحن.
+
+مواعيد العمل:
+*الفترة الصباحية*
+من الساعة 9 صباحاً إلى 11 صباحاً
+عدا يوم الجمعة
+
+*الفترة المسائية*
+من الساعة 4 مساءً إلى 9 مساءً
+جميع أيام الأسبوع
+
+مع مجموعة محمد بن ذعار العجمي للسيارات
+أنت نجم الطريق ⭐
+
+📞 920014635`
+
+          );
+        case 10:
+          return (`عميلنا العزيز
+` +
+`نبارك لكم إتمام عملية التسليم بنجاح
+
+` +
+`*شكراً لثقتكم ونتمنى لكم قيادة آمنة وتجربة ممتعة*
+
+` +
+`مع مجموعة محمد بن ذعار العجمي للسيارات
+` +
+`أنت نجم الطريق ⭐
+
+` +
+`📞 920014635`
+
+          );
+
+        default:
+          return `عميلنا العزيز، بخصوص طلبكم رقم ${orderNo}.\nمعرض محمد بن ذعار العجمي للسيارات.`;
+      }
+    }
+
+    // ===== Modal: Edit before send =====
+    const msgModal        = document.getElementById("msgModal");
+    const msgModalBackdrop= document.getElementById("msgModalBackdrop");
+    const msgModalClose   = document.getElementById("msgModalClose");
+    const msgModalTitle   = document.getElementById("msgModalTitle");
+    const msgModalSub     = document.getElementById("msgModalSub");
+    const msgModalText    = document.getElementById("msgModalText");
+    const msgModalSend    = document.getElementById("msgModalSend");
+    const msgModalReset   = document.getElementById("msgModalReset");
+    const msgModalCopy    = document.getElementById("msgModalCopy");
+    const msgModalMsg     = document.getElementById("msgModalMsg");
+    const msgModalChannel = document.getElementById("msgModalChannel");
+    const msgModalPhone   = document.getElementById("msgModalPhone");
+    const msgModalVin     = document.getElementById("msgModalVin");
+
+    let modalCtx = { channel:"sms", stageNum:0, stageLabel:"", defaultText:"" };
+
+    function closeMessageModal(){
+      if(!msgModal) return;
+      msgModal.style.display = "none";
+      msgModalMsg.textContent = "";
+      msgModalSend.disabled = false;
+    }
+    function openMessageModal(channel, stageNum, stageLabel){
+      stageMsg.textContent = "";
+      if (!currentCustomerPhone) {
+        stageMsg.innerHTML = "<span class='err'>لا يوجد رقم جوال محفوظ لهذا الطلب.</span>";
+        return;
+      }
+      const phone = normalizeSaudiPhone(currentCustomerPhone);
+      if (!phone) {
+        stageMsg.innerHTML = "<span class='err'>رقم الجوال غير صالح.</span>";
+        return;
+      }
+
+      const defText = getDefaultStageMessage(stageNum, stageLabel);
+
+      modalCtx = { channel, stageNum, stageLabel, defaultText: defText };
+
+      msgModalTitle.textContent = (channel === "whatsapp") ? "إرسال واتساب للعميل" : "إرسال SMS للعميل";
+      msgModalSub.textContent = `المرحلة ${stageNum}: ${stageLabel || ""}`;
+      msgModalText.value = defText;
+
+      msgModalChannel.textContent = (channel === "whatsapp") ? "WhatsApp" : "SMS";
+      msgModalPhone.textContent = phone ? ("966…" + phone.slice(-3)) : "—";
+      msgModalVin.textContent = (currentVin ? ("VIN: " + currentVin) : "VIN: —");
+
+      msgModal.style.display = "block";
+      setTimeout(() => msgModalText.focus(), 50);
+    }
+
+    if (msgModalBackdrop) msgModalBackdrop.addEventListener("click", closeMessageModal);
+    if (msgModalClose) msgModalClose.addEventListener("click", closeMessageModal);
+
+    if (msgModalReset) msgModalReset.addEventListener("click", () => {
+      msgModalText.value = modalCtx.defaultText || "";
+      msgModalMsg.innerHTML = "<span class='muted'>تم الرجوع للنص الأصلي.</span>";
+      setTimeout(()=> msgModalMsg.textContent="", 1200);
+    });
+
+    if (msgModalCopy) msgModalCopy.addEventListener("click", async () => {
+      try{
+        await navigator.clipboard.writeText(msgModalText.value || "");
+        msgModalMsg.innerHTML = "<span class='ok'>تم نسخ النص.</span>";
+      }catch(e){
+        msgModalMsg.innerHTML = "<span class='err'>تعذر نسخ النص.</span>";
+      }
+      setTimeout(()=> msgModalMsg.textContent="", 1200);
+    });
+
+    async function sendWhatsAppFreeText(phone, text, stageNum){
+      // ✅ Send via Mersal WhatsApp API (server-side in mzj-tracking project)
+      return fetch(`${MZJ_TRACKING_API_BASE}/api/mersal-wa`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: String(phone || "").trim(),     // must be like 9665xxxxxxxx
+          message: String(text || ""),
+          stageNum: stageNum ?? null,
+          orderId: window.__mzj_current_order_id || ""
+        })
+      }).then(async (res)=>{
+        const bodyText = await res.text();
+        if(!res.ok) throw new Error(bodyText || ("HTTP " + res.status));
+        try { return JSON.parse(bodyText); } catch { return { ok:true, raw: bodyText }; }
+      });
+    }
+
+    async function sendWhatsAppTemplate(phone, templateName, templateLanguage, bodyParams, stageNum){
+      // ✅ Template-based WhatsApp message via mzj-tracking project
+      // Expects a serverless route: /api/mersal-wa-template
+      return fetch(`${MZJ_TRACKING_API_BASE}/api/mersal-wa-template`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: String(phone || "").trim(),
+          template_name: String(templateName || "").trim(),
+          template_language: String(templateLanguage || "ar").trim(),
+          body_params: Array.isArray(bodyParams) ? bodyParams : [],
+          stageNum: stageNum ?? null,
+          orderId: window.__mzj_current_order_id || ""
+        })
+      }).then(async (res)=>{
+        const bodyText = await res.text();
+        if(!res.ok) throw new Error(bodyText || ("HTTP " + res.status));
+        try { return JSON.parse(bodyText); } catch { return { ok:true, raw: bodyText }; }
+      });
+    }
+
+    
+
+    // Direct send for Step 1 ONLY (same logic as send temp bay ajax.html)
+    // NOTE: Token is embedded client-side by request.
+    const MERSAL_DIRECT_TOKEN_STEP1 = "N47Nm9eP20Ppctd3RmM6EBiM5b7dAaoljMHVJyns16b42721";
+
+    async function sendWhatsAppTemplateDirectStep1(phone, bodyParams){
+      return fetch("https://w-mersal.com/api/wpbox/sendtemplatemessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: MERSAL_DIRECT_TOKEN_STEP1,
+          phone: String(phone || "").trim(),
+          template_name: "tracking_message",
+          template_language: "ar",
+          components: [
+            {
+              type: "body",
+              parameters: (Array.isArray(bodyParams) ? bodyParams : []).map(v => ({
+                type: "text",
+                text: String(v ?? "")
+              }))
+            }
+          ]
+        })
+      }).then(async (res)=>{
+        const bodyText = await res.text();
+        if(!res.ok) throw new Error(bodyText || ("HTTP " + res.status));
+        try { return JSON.parse(bodyText); } catch { return ({ ok:true, raw: bodyText }); }
+      });
+    }
+function toEnglishDigits(str) {
+      return String(str)
+        .replace(/[٠-٩]/g, d => "0123456789"["٠١٢٣٤٥٦٧٨٩".indexOf(d)])
+        .replace(/[٬]/g, ",")
+        .replace(/[٫]/g, ".")
+        .replace(/\u00A0/g, " ");
+    }
+    function safeParam(v, fallback = "0"){
+      const s = (v === null || v === undefined) ? "" : String(v);
+      const cleaned = toEnglishDigits(s).trim();
+      return cleaned ? cleaned : fallback;
+    }
+
+    function buildTrackingTemplateParams(){
+      // mapping for template tracking_message: {{1}}..{{7}}
+      const customerName = safeParam((currentCustomerName || "").trim(), "عميلنا العزيز");
+      const totalCars    = safeParam(currentOrderCarsCount, "0");
+      const subtotal     = safeParam(currentCarsSubtotal, "0");
+      const tax          = safeParam(currentCarsTax, "0");
+      const regFee       = safeParam(currentRegFee, "0"); // ✅ ممنوع يبقى فاضي
+      const totalIncl    = safeParam(currentGrandTotalIncl, "0");
+      const trackingLink = safeParam(currentTrackingLink, "https://mzj-tracking.vercel.app/");
+
+      return [customerName, totalCars, subtotal, tax, regFee, totalIncl, trackingLink];
+    }
+
+    async function sendWhatsAppMessage(phone, text, stageNum){
+      // ✅ Stage 1/9/10 = قوالب واتساب (Templates) — باقي المراحل نص حر
+      const st = Number(stageNum);
+
+      if (st === 1){
+        const params = buildTrackingTemplateParams();
+        // Step 1 uses direct Mersal send (to fix delivery)
+        return sendWhatsAppTemplateDirectStep1(phone, params);
+      }
+
+      if (st === 9){
+        // قالب: السيارة جاهزة للتسليم
+        return sendWhatsAppTemplate(phone, "mzj_car_ready_delivery", "ar", [], st);
+      }
+
+      if (st === 10){
+        // قالب: تم التسليم
+        return sendWhatsAppTemplate(phone, "mzj_delivery_completed", "ar", [], st);
+      }
+
+      return sendWhatsAppFreeText(phone, text, st);
+    }
+
+
+    if (msgModalSend) msgModalSend.addEventListener("click", async () => {
+      msgModalMsg.textContent = "";
+      msgModalSend.disabled = true;
+
+      const phone = normalizeSaudiPhone(currentCustomerPhone);
+      const msg = (msgModalText.value || "").trim();
+
+      try{
+        if (modalCtx.channel === "whatsapp") {
+          await sendWhatsAppMessage(phone, msg, modalCtx.stageNum);
+          msgModalMsg.innerHTML = "<span class='ok'>تم إرسال الرسالة من الرقم الموحد عبر واتساب API.</span>";
+        } else {
+          await sendStcSmsForStage(modalCtx.stageNum, modalCtx.stageLabel, msg);
+          // sendStcSmsForStage writes to stageMsg; mirror here too:
+          msgModalMsg.innerHTML = "<span class='ok'>تم إرسال SMS (أو تم تنفيذ محاولة الإرسال).</span>";
+        }
+      }catch(e){
+        console.error(e);
+        msgModalMsg.innerHTML = "<span class='err'>حصل خطأ أثناء الإرسال: " + String(e && (e.message||e)).slice(0,180) + "</span>";
+      }finally{
+        msgModalSend.disabled = false;
+      }
+    });
+
+    // ===== Dynamic QR (click to open tracking) =====
+    const trackQrBtn = document.getElementById("trackQrBtn");
+    const trackQrModal = document.getElementById("trackQrModal");
+    const trackQrBackdrop = document.getElementById("trackQrBackdrop");
+    const trackQrClose = document.getElementById("trackQrClose");
+    const trackQrImg = document.getElementById("trackQrImg");
+    const trackQrLink = document.getElementById("trackQrLink");
+    const trackQrCopy = document.getElementById("trackQrCopy");
+
+    function getTrackingUrl(){
+      return currentVin ? `https://mzj-tracking.vercel.app/Test-Track.html?vin=${encodeURIComponent(currentVin)}` : "";
+    }
+
+    function refreshTrackingQr(){
+      const url = getTrackingUrl();
+      if(!trackQrImg || !trackQrLink) return;
+
+      if(!url){
+        trackQrImg.src = "";
+        trackQrLink.href = "#";
+        trackQrImg.style.opacity = .4;
+        return;
+      }
+
+      // Use a reliable QR image endpoint (no library needed)
+      const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=" + encodeURIComponent(url);
+      trackQrImg.src = qrUrl;
+      trackQrLink.href = url;
+      trackQrImg.style.opacity = 1;
+    }
+
+    function openTrackQr(){
+      if(!currentVin){
+        alert("اختر رقم الهيكل أولاً.");
+        return;
+      }
+      refreshTrackingQr();
+      if(trackQrModal) trackQrModal.style.display = "block";
+    }
+    function closeTrackQr(){
+      if(trackQrModal) trackQrModal.style.display = "none";
+    }
+
+    if (trackQrBtn) trackQrBtn.addEventListener("click", openTrackQr);
+    if (trackQrBackdrop) trackQrBackdrop.addEventListener("click", closeTrackQr);
+    if (trackQrClose) trackQrClose.addEventListener("click", closeTrackQr);
+
+    if (trackQrCopy) trackQrCopy.addEventListener("click", async () => {
+      const url = getTrackingUrl();
+      if(!url) return;
+      try{
+        await navigator.clipboard.writeText(url);
+        alert("تم نسخ رابط التتبع");
+      }catch(e){
+        alert("تعذر نسخ الرابط");
+      }
+    });
+
+
+    // إرسال SMS عبر endpoint /api/stc-sms
+   async function sendStcSmsForStage(stageNum, stageLabel, messageOverride=null) {
+  stageMsg.textContent = "";
+
+  if (!currentCustomerPhone) {
+    stageMsg.innerHTML = "<span class='err'>لا يوجد رقم جوال محفوظ لهذا الطلب.</span>";
+    return;
+  }
+
+  const phone = normalizeSaudiPhone(currentCustomerPhone);
+  if (!phone) {
+    stageMsg.innerHTML = "<span class='err'>رقم الجوال غير صالح.</span>";
+    return;
+  }
+
+  const orderNo = currentOrderId || "";
+  const vin = currentVin || "";
+  const trackingLink = vin ? `https://mzj-tracking.vercel.app/Test-Track.html?vin=${vin}` : "";
+
+  let text = "";
+
+  switch (stageNum) {
+
+    // -------------------------
+    // 1️⃣ الخطوة رقم 1 — تهنئة + رابط التتبع
+    // -------------------------
+    case 1: {
+      // ✅ قيمة السيارة = للهيكل المختار فقط (مش إجمالي الطلب)
+      const rec = (currentOrderRecords && currentOrderRecords.length)
+        ? (currentOrderRecords.find(r => String(getFieldFlex("VIN", r) || "").trim() === String(vin || "").trim()) || currentOrderRecords[0])
+        : {};
+
+      const customerName = getFieldFlex("CustomerName", rec) || "";
+      const carName = getFieldFlex("ItemType", rec) || "";
+      const carType = getFieldFlex("ItemCategory", rec) || "";
+
+      const sub = parseAmountFront(getFieldFlex("SubtotalExclVAT", rec));
+      const itemVal = parseAmountFront(getFieldFlex("ItemValue", rec));
+      const tax = parseAmountFront(getFieldFlex("TaxValue", rec));
+
+      const base = (sub !== null ? sub : (itemVal !== null ? itemVal : null));
+      const lineTotalNum = (base !== null ? (base + (tax || 0)) : null);
+
+      const amountStr = (lineTotalNum !== null)
+        ? lineTotalNum.toLocaleString("ar-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " ر.س"
+        : "";
+
+      text =
+        `عميلنا العزيز / ${customerName}\n` +
+        `مرحباً بكم في معرض محمد بن ذعار العجمي للسيارات\n\n` +
+        `تم تسجيل طلب شرائك بنجاح \n\n` +
+        `*للسيارة* ${carName}\n` +
+        `نوع السيارة : ${carType}\n` +
+        `رقم الهيكل : ${vin}\n` +
+        `قيمة السيارة : ${amountStr}\n\n` +
+        `يمكنك متابعة حالة طلبك عبر الرابط التالي: \n${trackingLink}\n\n` +
+        `#مع_#معرض #محمد #بن #ذعار #العجمي #للسيارات … #أنت #نجم الطريق`;
+      break;
+    }
+    case 9:
+      text =
+        `عميلنا العزيز يسعدنا ابلاغك بجاهزية سيارتك الأن يمكنك الحضور للاستلام او طلب خدمة الشحن. 
+
+` +
+        `مواعيد العمل: 
+` +
+        `*الفترة الصباحية*
+` +
+        `من الساعة 9 صباحاً الى 11 مساء 
+` +
+        `عدا يوم الجمعة
+
+` +
+        `*الفترة المسائية* 
+` +
+        `من الساعة 4 مساء الى 9 مساء 
+` +
+        `جميع أيام الأسبوع 
+
+` +
+        `#مع_#معرض #محمد #بن #ذعار #العجمي #للسيارات … #أنت #نجم الطريق`;
+      break;
+// -------------------------
+    // 🔟 الخطوة رقم 10 — إتمام التسليم
+    // -------------------------
+    case 10:
+      text =
+        `عميلنا العزيز 
+` +
+        `نبارك لكم إتمام عملية التسليم بنجاح 
+
+` +
+        `*شكراً لثقتكم و نتمنى لكم قيادة آمنة وتجربة ممتعة*
+
+` +
+        `#مع_#معرض #محمد #بن #ذعار #العجمي #للسيارات … #أنت #نجم الطريق`;
+      break;
+
+
+    // -------------------------
+    // في حال تم الضغط على زر الرسالة من خطوة غير مفعّلة
+    // -------------------------
+    default:
+      text =
+        `عميلنا العزيز، بخصوص طلبكم رقم ${orderNo}.\n` +
+        `معرض محمد بن ذعار العجمي للسيارات.`;
+  }
+
+  if (messageOverride && String(messageOverride).trim()) {
+    text = String(messageOverride);
+  }
+
+  try {
+    const res = await fetch("/api/stc-sms", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, message: text, orderNo, stageNum })
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("SMS API error:", errText);
+      throw new Error(errText || "SMS API failed");
+    }
+
+    stageMsg.innerHTML = "<span class='ok'>تم إرسال رسالة SMS للعميل بنجاح.</span>";
+  } catch (err) {
+    console.error(err);
+    stageMsg.innerHTML =
+      "<span class='err'>تعذر إرسال رسالة SMS، تأكد من إعدادات STC أو تواصل مع المسؤول التقني.</span>";
+  }
+}
+
+
+function clearErpTable() {
+      erpMetaEl.textContent = "";
+      erpBody.innerHTML = "";
+      erpTotals.style.display = "none";
+      erpTotals.innerHTML = "";
+      vinPickerBox.style.display = "none";
+      vinPicker.innerHTML = "";
+      vinCountChip.textContent = "";
+    }
+
+    function resolveItemNoForVin(vin, records){
+      if (!records || !records.length) return 1;
+      let itemNo = null;
+
+      if (vin) {
+        const matched = records.find(r => {
+          const v = (getFieldFlex("VIN", r) || "").toString().trim();
+          return v && v === vin.toString().trim();
+        });
+        if (matched) {
+          itemNo = getFieldFlex("ItemNo", matched);
+        }
+      }
+
+      if (itemNo === null || itemNo === "-" || itemNo === "") {
+        const first = records[0] || null;
+        if (first) itemNo = getFieldFlex("ItemNo", first);
+      }
+
+      const parsed = parseInt(itemNo, 10);
+      return (!isNaN(parsed) && parsed > 0) ? parsed : 1;
+    }
+
+    function fillErpTable(records, preferredVin = ""){
+      if (!records || !records.length) {
+        erpCard.style.display = "none";
+        clearErpTable();
+        return;
+      }
+      erpCard.style.display = "";
+      clearErpTable();
+
+      // نحتفظ بنسخة من سجلات السيارات فقط
+      currentOrderRecords = records.slice();
+
+      const first = records[0] || {};
+      const orderNo = first.orderNo || first.OrderNo || currentOrderId || "";
+      currentCustomerPhone = getFieldFlex("CustomerPhone", first) || "";
+      let vinBadgeLabel = "";
+
+      // ✅ VINs (نهمل '-' و القيم الفارغة)
+      const vins = Array.from(new Set(
+        records
+          .map(r => (getFieldFlex("VIN", r) || "").toString().trim())
+          .filter(v => v && v !== "-" && v !== "—")
+      ));
+
+      if (vins.length === 1) {
+        vinBadgeLabel = "VIN: " + vins[0];
+      } else if (vins.length > 1) {
+        vinBadgeLabel = "أكثر من هيكل (" + vins.length + ")";
+      } else {
+        vinBadgeLabel = "لا يوجد VIN في البيانات";
+      }
+
+      erpMetaEl.innerHTML =
+        '<span class="badge">رقم الطلب: ' + (orderNo || "غير متوفر") + '</span>' +
+        '<span class="badge">' + vinBadgeLabel + '</span>';
+
+      // ===== رسوم التسجيل (قد تكون في الطلب حتى لو فيه هيكل واحد) =====
+      const regFeeNum = (() => {
+        const v = getFieldFlex("RegistrationFee", first);
+        const n = parseAmountFront(v);
+        return (n !== null && n > 0) ? n : 0;
+      })();
+
+      // ✅ نعرض في الجدول سيارات فقط (رسوم التسجيل تظهر أعلى في صندوق الإجماليات)
+      const totalCars = records.length;
+      const displayRecords = records.slice();
+
+      // تعبئة جدول ERP
+      displayRecords.forEach(rec => {
+        const tr = document.createElement("tr");
+        ERP_FIELDS.forEach(field => {
+          const td = document.createElement("td");
+          let val = getFieldFlex(field, rec);
+
+          // ✅ فallback + تصحيح: بعض الطلبات ترجع TotalInclVAT على مستوى الطلب وتكرره بكل سطر
+          // هنا نُجبره يكون "لكل هيكل" = (قبل الضريبة + الضريبة) + (رسوم التسجيل ÷ عدد الهياكل)
+          if (field === "TotalInclVAT") {
+            const _sub = parseAmountFront(getFieldFlex("SubtotalExclVAT", rec));
+            const _tax = parseAmountFront(getFieldFlex("TaxValue", rec));
+            const computed = (_sub || 0) + (_tax || 0);
+
+            const perReg = (regFeeNum > 0 && totalCars > 0) ? (regFeeNum / totalCars) : 0;
+            const computedPerLine = computed + perReg;
+
+            // لو عندنا subtotal/tax — اعتمد الحسبة دي دائمًا (خصوصًا لو الطلب متعدد الهياكل)
+            if (computed > 0) {
+              val = computedPerLine;
+            } else {
+              // fallback لو مفيش subtotal/tax
+              const numRaw = parseAmountFront(val);
+              if (numRaw === null || numRaw === 0) {
+                val = null;
+              }
+            }
+          }
+
+          if (field === "TaxRate") {
+            const num = parseAmountFront(val);
+            let pc = num !== null ? (num <= 1 ? num * 100 : num) : 15;
+            const pcStr = pc.toString().replace(/\.0+$/, "");
+            val = pcStr + " %";
+          } else if (field === "TotalInclVAT" || field === "TaxValue" || field === "SubtotalExclVAT") {
+            const num = parseAmountFront(val);
+            if (num !== null) {
+              val = num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " ر.س";
+            }
+          }
+
+          td.textContent = val;
+          tr.appendChild(td);
+        });
+        erpBody.appendChild(tr);
+      });
+
+      // إدارة VIN للدروب داون
+      let selectedVin = preferredVin && vins.includes(preferredVin) ? preferredVin : null;
+      if (!selectedVin && vins.length === 1) {
+        selectedVin = vins[0];
+      }
+
+      if (vins.length > 1) {
+        vinPickerBox.style.display = "block";
+        vinPicker.innerHTML = vins.map(v => `<option value="${v}">${v}</option>`).join("");
+        vinCountChip.textContent = vins.length + " أرقام هياكل في هذا الطلب";
+        if (selectedVin && vins.includes(selectedVin)) {
+          vinPicker.value = selectedVin;
+        } else {
+          vinPicker.value = vins[0];
+          selectedVin = vins[0];
+        }
+      } else if (vins.length === 1) {
+        vinPickerBox.style.display = "block";
+        vinPicker.innerHTML = `<option value="${vins[0]}">${vins[0]}</option>`;
+        vinPicker.disabled = false;
+        vinCountChip.textContent = "هيكل واحد في هذا الطلب";
+        selectedVin = vins[0];
+      } else {
+        vinPickerBox.style.display = "none";
+      }
+
+      currentVin    = selectedVin || (vins[0] || preferredVin || "");
+      try{ refreshTrackingQr(); }catch(e){}
+      currentItemNo = resolveItemNoForVin(currentVin, records);
+
+      // حساب إجمالي الطلب (السيارات فقط) + رسوم التسجيل (بدون ضريبة)
+      // const totalCars = records.length; // مُعرّف بالأعلى
+
+
+      // ✅ نحسب إجماليات السيارات من السطور (أفضل مصدر ثابت)
+      let carsSubtotal = 0; // قبل الضريبة
+      let carsTax      = 0; // قيمة الضريبة
+      let carsTotal    = 0; // شامل الضريبة (سيارات فقط بدون رسوم التسجيل)
+
+      // ملاحظة مهمة:
+      // بعض ملفات الـ ERP تكرر TotalInclVAT (إجمالي الطلب) داخل كل سطر عند وجود أكثر من هيكل.
+      // لذلك لا نجمع TotalInclVAT بشكل أعمى. نستخدم Subtotal+Tax كمصدر أساسي،
+      // ونتعامل مع TotalInclVAT بحذر (تجميعي فقط لو كان مختلفًا لكل سطر).
+      const totVals = [];
+
+      records.forEach(rec => {
+        const subVal = parseAmountFront(getFieldFlex("SubtotalExclVAT", rec));
+        const taxVal = parseAmountFront(getFieldFlex("TaxValue", rec));
+        const totVal = parseAmountFront(getFieldFlex("TotalInclVAT", rec));
+
+        if (subVal !== null) carsSubtotal += subVal;
+        if (taxVal !== null) carsTax      += taxVal;
+
+        if (totVal !== null && totVal > 0) totVals.push(totVal);
+      });
+
+      // لو TotalInclVAT موجود:
+      // - لو قيمة واحدة مكررة مع تعدد السطور => اعتبرها إجمالي الطلب (لا تجمعها)
+      // - لو قيم متعددة مختلفة => اجمعها (يعني TotalInclVAT لكل سطر فعلاً)
+      if (totVals.length) {
+        const uniq = Array.from(new Set(totVals.map(v => Number(v).toFixed(2))));
+        if (uniq.length === 1 && totVals.length > 1) {
+          carsTotal = parseFloat(uniq[0]); // إجمالي الطلب (سيارات فقط) مكرر داخل السطور
+        } else {
+          carsTotal = totVals.reduce((a, b) => a + b, 0); // إجمالي لكل سطر
+        }
+      }
+
+      // ✅ لو السطور ما فيها إجماليات (طلبات قديمة/بدون أعمدة Y/Z) خُدها مرة واحدة من الهيدر
+      if (carsSubtotal === 0 && carsTax === 0 && carsTotal === 0) {
+        const headerGrand = parseAmountFront(getFieldFlex("GrandTotal", first));
+        const headerSubBT = parseAmountFront(getFieldFlex("SubtotalBeforeTax", first));
+        const headerSub   = parseAmountFront(getFieldFlex("SubtotalExclVAT", first));
+        const headerTax   = parseAmountFront(getFieldFlex("TaxValue", first));
+
+        // الأفضل: (SubtotalBeforeTax + Tax) أو GrandTotal مباشرة
+        if (headerSubBT !== null) {
+          carsSubtotal = Math.max(0, (headerSubBT || 0) - (regFeeNum || 0));
+        } else if (headerSub !== null) {
+          carsSubtotal = headerSub || 0;
+        }
+
+        if (headerGrand !== null) {
+          carsTotal = Math.max(0, (headerGrand || 0) - (regFeeNum || 0));
+        } else if (headerSubBT !== null && headerTax !== null) {
+          carsTotal = Math.max(0, ((headerSubBT || 0) + (headerTax || 0)) - (regFeeNum || 0));
+        }
+
+        if (headerTax !== null) {
+          carsTax = headerTax || 0;
+        } else if (carsTotal > 0 || carsSubtotal > 0) {
+          const inferred = (carsTotal || 0) - (carsSubtotal || 0);
+          carsTax = inferred > 0 ? inferred : 0;
+        }
+      }
+
+      // ✅ الإجمالي للسيارات = (الإجمالي قبل الضريبة + قيمة الضريبة)
+// نتجاهل TotalInclVAT لتفادي تكرار إجمالي الطلب داخل كل سطر عند تعدد الهياكل
+      carsTotal = (carsSubtotal || 0) + (carsTax || 0);
+
+      // ✅ رسوم التسجيل (بدون ضريبة) — تُضاف فقط على الإجمالي شامل الضريبة
+      const grandTotalIncl = (carsTotal || 0) + (regFeeNum || 0);
+
+      // عرض صندوق الإجماليات (بالمسميات المطلوبة)
+      const hasTotals = (carsSubtotal > 0 || carsTax > 0 || carsTotal > 0 || regFeeNum > 0);
+      if (hasTotals) {
+        const parts = [];
+        parts.push(`<span>عدد السيارات في الطلب: <strong>${totalCars}</strong></span>`);
+        parts.push(`<span>قيمة الضريبة: <strong>${(carsTax||0).toLocaleString('ar-SA',{minimumFractionDigits:2, maximumFractionDigits:2})} ر.س</strong></span>`);
+        parts.push(`<span>الإجمالي قبل الضريبة: <strong>${(carsSubtotal||0).toLocaleString('ar-SA',{minimumFractionDigits:2, maximumFractionDigits:2})} ر.س</strong></span>`);
+        if (regFeeNum > 0) {
+          parts.push(`<span>رسوم التسجيل: <strong>${regFeeNum.toLocaleString('ar-SA',{minimumFractionDigits:2, maximumFractionDigits:2})} ر.س</strong></span>`);
+        }
+        parts.push(`<span>الإجمالي شامل الضريبة: <strong>${(grandTotalIncl||0).toLocaleString('ar-SA',{minimumFractionDigits:2, maximumFractionDigits:2})} ر.س</strong></span>`);
+
+        erpTotals.innerHTML = parts.join("");
+        erpTotals.style.display = "flex";
+      } else {
+        erpTotals.style.display = "none";
+        erpTotals.innerHTML = "";
+      }
+
+// تحميل مراحل التتبع للحالة الحالية
+      loadTrackingForCurrentSelection();
+      try{ refreshTrackingQr(); }catch(e){}
+    }
+
+    // STAGES UI
+
+    function buildStagesUI(orderData = {}) {
+      stagesList.innerHTML = "";
+
+      const currentUserEmail = (auth.currentUser?.email || "").toLowerCase();
+      function isStageVisible(stageNum){
+        const email = (currentUserEmail || "").trim().toLowerCase();
+
+        // ✅ CFO / COO: all stages (1-10)
+        if (email === "cfo@mzjcars.com" || email === "coo@mzjcars.com"){
+          return true;
+        }
+
+        // ✅ محددين: فقط 1 و 2 و 9 و 10
+        if (
+          email === "aldynmtwlys@gmail.com" ||
+          email === "alaasamak100@gmail.com" ||
+          email === "kamelashraf948@gmail.com"
+        ){
+          return (stageNum === 1 || stageNum === 2 || stageNum === 9 || stageNum === 10);
+        }
+
+        // ✅ Samir: اخفاء 1 و 2 و 6 و 7 و 9 و 10
+        if (email === "samirali19918@gmail.com"){
+          return !(stageNum === 1 || stageNum === 2 || stageNum === 6 || stageNum === 7 || stageNum === 9 || stageNum === 10);
+        }
+
+        // default
+        return true;
+      }
+      const stagesObj = orderData.stages || {};
+
+      const doneKeys = Object.keys(stagesObj).filter(k => stagesObj[k]);
+      const doneCount = doneKeys.length;
+      const allDone = STAGES.every((_, idx) => {
+        const key = "s" + (idx + 1);
+        return !!stagesObj[key];
+      });
+
+      STAGES.forEach((label, idx) => {
+        const num = idx + 1;
+
+        if (!isStageVisible(num)) return;
+        const key = "s" + num;
+        const ts  = stagesObj[key];
+
+        const tsStr = ts
+          ? new Date(ts.toDate ? ts.toDate() : ts).toLocaleString("ar-SA")
+          : null;
+
+        const wrap = document.createElement("div");
+        wrap.className = "stage";
+        if (tsStr) wrap.classList.add("done");
+
+        const header = document.createElement("div");
+        header.className = "stage-header";
+
+        const tEl = document.createElement("div");
+        tEl.innerHTML = "<strong>" + label + "</strong>";
+
+        const meta = document.createElement("div");
+        meta.innerHTML = tsStr
+          ? "<small>تم الانتهاء: " + tsStr + "</small>"
+          : "<small>لم تُنفّذ بعد</small>";
+
+        header.appendChild(tEl);
+        header.appendChild(meta);
+
+        const actions = document.createElement("div");
+
+        // زر تم الانتهاء
+        const btnDone = document.createElement("button");
+        btnDone.className = "btn-outline";
+        btnDone.style.fontSize = "12px";
+        btnDone.textContent = "تم الانتهاء";
+        btnDone.disabled = !!tsStr || allDone;
+        btnDone.onclick = () => completeStage(num);
+        actions.appendChild(btnDone);
+
+        
+        // زر رسالة SMS للعميل في الخطوات 1 و 9 و 10 فقط
+        if (num === 1 || num === 9 || num === 10) {
+          const btnSms = document.createElement("button");
+          btnSms.className = "btn-outline";
+          btnSms.style.fontSize = "12px";
+          btnSms.style.marginRight = "6px";
+          btnSms.textContent = "رسالة SMS للعميل";
+          btnSms.disabled = !currentCustomerPhone;
+          btnSms.onclick = () => openMessageModal("sms", num, label);
+          actions.appendChild(btnSms);
+
+          const btnWa = document.createElement("button");
+          btnWa.className = "btn-outline";
+          btnWa.style.fontSize = "12px";
+          btnWa.style.marginRight = "6px";
+          btnWa.innerHTML = '<i class="fa-brands fa-whatsapp"></i> واتساب للعميل';
+          btnWa.disabled = !currentCustomerPhone;
+          btnWa.onclick = () => openMessageModal("whatsapp", num, label);
+          actions.appendChild(btnWa);
+        }
+    
+
+        // زر التراجع
+        const btnUndo = document.createElement("button");
+        btnUndo.className = "btn-outline";
+        btnUndo.style.fontSize = "12px";
+        btnUndo.style.marginRight = "6px";
+        btnUndo.textContent = "تراجع";
+        btnUndo.disabled = !tsStr;
+        btnUndo.onclick = () => revertStage(num);
+        actions.appendChild(btnUndo);
+
+        wrap.appendChild(header);
+        wrap.appendChild(actions);
+
+        stagesList.appendChild(wrap);
+      });
+
+      if (allDone) {
+        const info = document.createElement("div");
+        info.className = "hint";
+        info.style.marginTop = "8px";
+        info.textContent = "تم إكمال جميع المراحل لهذا رقم الهيكل، ولا يمكن إضافة مراحل جديدة.";
+        stagesList.appendChild(info);
+      }
+    }
+
+
+    async function completeStage(num) {
+      stageMsg.textContent = "";
+      if (!currentOrderId || !currentItemNo) {
+        stageMsg.innerHTML = "<span class='err'>اختر طلب ورقم هيكل أولاً قبل تحديث المراحل.</span>";
+        return;
+      }
+
+      const baseId = currentOrderId;
+      const docId = baseId + "_" + currentItemNo;
+      const key = "s" + num;
+
+      // ✅ استخدم كاش المراحل (بدون قراءة getDoc كل مرة)
+      const stagesObj = Object.assign({}, currentStagesObjCache || {});
+      if (stagesObj[key]) {
+        stageMsg.innerHTML = "<span class='muted'>هذه المرحلة تم ختمها مسبقاً.</span>";
+        return;
+      }
+
+      // ✅ تحديث واجهة بشكل فوري (Optimistic UI) لتحسّن السرعة
+      const optimisticStages = Object.assign({}, stagesObj, { [key]: new Date() });
+      currentStagesObjCache = optimisticStages;
+      currentTrackData = currentTrackData || {
+        orderId: baseId,
+        vin: currentVin || "",
+        itemNo: currentItemNo || 1,
+        currentStage: 0,
+        stages: {}
+      };
+      currentTrackData.orderId = baseId;
+      currentTrackData.vin = currentVin || "";
+      currentTrackData.itemNo = currentItemNo || 1;
+      currentTrackData.stages = optimisticStages;
+
+      const doneCount = Object.keys(optimisticStages).filter(k => optimisticStages[k]).length;
+      currentTrackData.currentStage = doneCount;
+
+      buildStagesUI(currentTrackData);
+      stageMsg.innerHTML = "<span class='muted'>جاري حفظ المرحلة...</span>";
+
+      try {
+        const orderRef  = doc(db, TRACK_COLLECTION, docId);
+        const publicRef = doc(db, TRACK_COLLECTION, docId, "public", "status");
+
+        // ✅ كتابة واحدة (Batch) بدل 2 setDoc متتابعين
+        const batch = writeBatch(db);
+
+        batch.set(orderRef, {
+          orderId: baseId,
+          vin: currentVin || "",
+          itemNo: currentItemNo || 1,
+          currentStage: doneCount,
+          stages: { [key]: serverTimestamp() }
+        }, { merge: true });
+
+        batch.set(publicRef, {
+          orderId: baseId,
+          vin: currentVin || "",
+          itemNo: currentItemNo || 1,
+          currentStage: doneCount,
+          stages: { [key]: serverTimestamp() },
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        await batch.commit();
+
+        stageMsg.innerHTML = "<span class='ok'>تم ختم المرحلة رقم " + num + " وتحديث صفحة التتبع.</span>";
+      } catch (e) {
+        console.error(e);
+        stageMsg.innerHTML = "<span class='err'>حدث خطأ أثناء حفظ المرحلة. حاول مرة أخرى.</span>";
+        // رجّع الداتا من السيرفر لضمان التطابق (قراءة واحدة فقط عند الفشل)
+        try { await loadTrackingForCurrentSelection(); } catch(e2) {}
+      }
+    }
+
+
+
+    async function revertStage(num) {
+      stageMsg.textContent = "";
+      if (!currentOrderId || !currentItemNo) {
+        stageMsg.innerHTML = "<span class='err'>اختر طلب ورقم هيكل أولاً قبل التراجع عن المرحلة.</span>";
+        return;
+      }
+
+      const baseId = currentOrderId;
+      const docId = baseId + "_" + currentItemNo;
+      const key = "s" + num;
+
+      const stagesObj = Object.assign({}, currentStagesObjCache || {});
+      if (!stagesObj[key]) {
+        stageMsg.innerHTML = "<span class='muted'>هذه المرحلة غير مكتملة أصلاً.</span>";
+        return;
+      }
+
+      // ✅ Optimistic UI
+      delete stagesObj[key];
+      currentStagesObjCache = stagesObj;
+
+      currentTrackData = currentTrackData || {
+        orderId: baseId,
+        vin: currentVin || "",
+        itemNo: currentItemNo || 1,
+        currentStage: 0,
+        stages: {}
+      };
+      currentTrackData.orderId = baseId;
+      currentTrackData.vin = currentVin || "";
+      currentTrackData.itemNo = currentItemNo || 1;
+      currentTrackData.stages = stagesObj;
+
+      const doneCount = Object.keys(stagesObj).filter(k => stagesObj[k]).length;
+      currentTrackData.currentStage = doneCount;
+
+      buildStagesUI(currentTrackData);
+      stageMsg.innerHTML = "<span class='muted'>جاري حفظ التراجع...</span>";
+
+      try {
+        const orderRef  = doc(db, TRACK_COLLECTION, docId);
+        const publicRef = doc(db, TRACK_COLLECTION, docId, "public", "status");
+
+        const batch = writeBatch(db);
+
+        batch.update(orderRef, {
+          [`stages.${key}`]: deleteField(),
+          currentStage: doneCount
+        });
+
+        batch.update(publicRef, {
+          [`stages.${key}`]: deleteField(),
+          currentStage: doneCount,
+          updatedAt: serverTimestamp()
+        });
+
+        await batch.commit();
+
+        stageMsg.innerHTML = "<span class='ok'>تم التراجع عن المرحلة رقم " + num + " لهذا رقم الهيكل.</span>";
+      } catch (e) {
+        console.error(e);
+        stageMsg.innerHTML = "<span class='err'>حدث خطأ أثناء حفظ التراجع. حاول مرة أخرى.</span>";
+        try { await loadTrackingForCurrentSelection(); } catch(e2) {}
+      }
+    }
+
+    async function loadTrackingForCurrentSelection(){
+      if (!currentOrderId || !currentItemNo) {
+        buildStagesUI({ });
+        return;
+      }
+      try{
+        const baseId = currentOrderId;
+        const docId  = baseId + "_" + currentItemNo;
+
+        const orderRef = doc(db, TRACK_COLLECTION, docId);
+        const trackSnap = await getDoc(orderRef);
+        let trackData;
+        if (trackSnap.exists()) {
+          trackData = trackSnap.data();
+        } else {
+          trackData = {
+            orderId: baseId,
+            vin: currentVin || "",
+            itemNo: currentItemNo || 1,
+            currentStage: 0,
+            stages:{}
+          };
+          await setDoc(orderRef, trackData, {merge:true});
+          const publicRef = doc(db, TRACK_COLLECTION, docId, "public", "status");
+          await setDoc(publicRef, {
+            orderId: baseId,
+            vin: currentVin || "",
+            itemNo: currentItemNo || 1,
+            currentStage: 0,
+            stages:{},
+            updatedAt: serverTimestamp()
+          }, {merge:true});
+        }
+
+        const stagesObj = trackData.stages || {};
+        const doneKeys = Object.keys(stagesObj).filter(k => stagesObj[k]);
+        const doneCount = doneKeys.length;
+        trackData.currentStage = doneCount;
+
+        currentTrackData = trackData;
+        currentStagesObjCache = trackData.stages || {};
+
+        buildStagesUI(trackData);
+      }catch(e){
+        console.error(e);
+        buildStagesUI({ });
+      }
+    }
+
+    async function findByVin(vinRaw) {
+      const val = vinRaw.trim();
+      if (!val) return null;
+
+      const colRef = collection(db, ERP_COLLECTION);
+
+      let q1 = query(colRef, where("vin","==",val));
+      let snap = await getDocs(q1);
+      if (!snap.empty) return snap.docs[0];
+
+      const asNum = Number(val);
+      if (!Number.isNaN(asNum)) {
+        q1 = query(colRef, where("vin","==",asNum));
+        snap = await getDocs(q1);
+        if (!snap.empty) return snap.docs[0];
+      }
+
+      try {
+        const vinRef = doc(db, ERP_VINS_COLLECTION, val);
+        const vinSnap = await getDoc(vinRef);
+        if (vinSnap.exists()) {
+          const vData = vinSnap.data();
+          const ordNo = vData.lastOrderNo || vData.orderNo || vData.OrderNo || null;
+          if (ordNo) {
+            const ordRef = doc(db, ERP_COLLECTION, ordNo);
+            const ordSnap = await getDoc(ordRef);
+            if (ordSnap.exists()) return ordSnap;
+
+            const q2 = query(colRef, where("orderNo","==",ordNo));
+            const s2 = await getDocs(q2);
+            if (!s2.empty) return s2.docs[0];
+          }
+        }
+      } catch (e) {
+        console.error("VIN lookup via erp_vins failed", e);
+      }
+
+      return null;
+    }
+
+    async function loadOrder(){
+      orderMsg.textContent = "";
+      stageMsg.textContent = "";
+      clearErpTable();
+      currentOrderId      = null;
+      currentVin          = null;
+      currentItemNo       = null;
+      currentOrderRecords = [];
+
+      const idRaw  = orderIdInput.value.trim();
+      const vinRaw = vinInput.value.trim();
+
+      if(!idRaw && !vinRaw){
+        orderMsg.innerHTML = "<span class='err'>أدخل رقم الطلب أو رقم الهيكل.</span>";
+        erpCard.style.display = "none";
+        buildStagesUI({ });
+        return;
+      }
+
+      try{
+        let erpRecords = [];
+        let erpDocId = null;
+
+        if(idRaw){
+          const ref = doc(db, ERP_COLLECTION, idRaw);
+          const snap = await getDoc(ref);
+          if(snap.exists()){
+            erpRecords.push(snap.data());
+            erpDocId = snap.id;
+          }
+        }
+
+        let baseOrder = idRaw;
+        if(!erpRecords.length && baseOrder){
+          if(baseOrder.includes("_")) baseOrder = baseOrder.split("_")[0];
+          const q = query(collection(db, ERP_COLLECTION), where("orderNo","==",baseOrder));
+          const qsnap = await getDocs(q);
+          if(!qsnap.empty){
+            erpRecords = qsnap.docs.map(d => d.data());
+            erpDocId = qsnap.docs[0].id;
+          }
+        }
+
+        if(!erpRecords.length && vinRaw){
+          const d = await findByVin(vinRaw);
+          if(d){
+            const data = d.data();
+            erpDocId = d.id;
+            const ordNo = data.orderNo || data.OrderNo || null;
+            if (ordNo) {
+              const q2 = query(collection(db, ERP_COLLECTION), where("orderNo","==",ordNo));
+              const s2 = await getDocs(q2);
+              if (!s2.empty) {
+                erpRecords = s2.docs.map(docSnap => docSnap.data());
+              } else {
+                erpRecords = [data];
+              }
+            } else {
+              erpRecords = [data];
+            }
+          }
+        }
+
+        if(!erpRecords.length){
+          orderMsg.innerHTML = "<span class='err'>لا يوجد طلب مطابق في بيانات ERP.</span>";
+          erpCard.style.display = "none";
+          buildStagesUI({ });
+          return;
+        }
+
+        const firstRec = erpRecords[0] || {};
+        const detectedOrderNo = firstRec.orderNo || firstRec.OrderNo || (erpDocId || idRaw);
+
+        currentOrderId = detectedOrderNo;
+
+        orderIdInput.value = detectedOrderNo || "";
+        const preferredVin =
+          vinRaw ||
+          (erpRecords.length === 1 ? (getFieldFlex("VIN", firstRec) || "") : "");
+
+        fillErpTable(erpRecords, preferredVin);
+        await refreshArchiveUI();
+
+        stagesCard.style.display = "";
+        ordersListCard.style.display = ordersListCard.style.display;
+
+        orderMsg.innerHTML = "<span class='ok'>تم تحميل الطلب وربطه بالتتبع.</span>";
+      }catch(e){
+        console.error(e);
+        orderMsg.innerHTML = "<span class='err'>حدث خطأ أثناء تحميل الطلب.</span>";
+        erpCard.style.display = "none";
+        buildStagesUI({ });
+      }
+    }
+
+    loadBtn.onclick = loadOrder;
+
+    clearBtn.onclick = () => {
+      orderIdInput.value = "";
+      vinInput.value = "";
+      orderMsg.textContent = "";
+      stageMsg.textContent = "";
+      currentOrderId      = null;
+      currentVin          = null;
+      currentItemNo       = null;
+      currentOrderRecords = [];
+      clearErpTable();
+      erpCard.style.display = "none";
+      buildStagesUI({ });
+      refreshArchiveUI();
+    };
+
+    vinPicker.addEventListener("change", () => {
+      if (!currentOrderId || !currentOrderRecords.length) return;
+      const selected = vinPicker.value;
+      currentVin    = selected;
+      currentItemNo = resolveItemNoForVin(selected, currentOrderRecords);
+      loadTrackingForCurrentSelection();
+    });
+
+    // ---- تبويب كل الطلبات ----
+
+    
+    function loadReadOrders(){
+      try{
+        const arr = JSON.parse(localStorage.getItem("mzj_read_orders") || "[]");
+        if (Array.isArray(arr)) ordersReadSet = new Set(arr.map(String));
+      }catch(e){ ordersReadSet = new Set(); }
+    }
+    function saveReadOrders(){
+      try{
+        localStorage.setItem("mzj_read_orders", JSON.stringify(Array.from(ordersReadSet)));
+      }catch(e){}
+    }
+
+    // ---- أرشفة الطلبات (لتخفيف قائمة "كل الطلبات") ----
+    async function loadArchiveSet(force=false){
+      try{
+        if (archiveLoaded && !force) return archiveSet;
+        archiveSet = new Set();
+        // ✅ قراءة واحدة فقط (محدودة) لكل الأرشيف
+        const snap = await getDocs(query(collection(db, ARCHIVE_COLLECTION), limit(1000)));
+        snap.forEach(ds => {
+          const id = ds.id;
+          if (id) archiveSet.add(String(id));
+        });
+        archiveLoaded = true;
+        return archiveSet;
+      }catch(e){
+        console.warn("archive load failed", e);
+        archiveLoaded = true;
+        return archiveSet;
+      }
+    }
+
+    async function refreshArchiveUI(){
+      if (!archiveOrderBtn || !unarchiveOrderBtn || !archiveHint) return;
+      archiveHint.textContent = "";
+      if (!currentOrderId){
+        archiveOrderBtn.style.display = "none";
+        unarchiveOrderBtn.style.display = "none";
+        return;
+      }
+      archiveOrderBtn.style.display = "inline-flex";
+      unarchiveOrderBtn.style.display = "none";
+
+      try{
+        // نستخدم الكاش لو متاح
+        if (!archiveLoaded) await loadArchiveSet();
+        const isArchived = archiveSet.has(String(currentOrderId));
+        if (isArchived){
+          archiveOrderBtn.style.display = "none";
+          unarchiveOrderBtn.style.display = "inline-flex";
+          archiveHint.textContent = "هذا الطلب مؤرشف ولن يظهر في (كل الطلبات).";
+        } else {
+          archiveOrderBtn.style.display = "inline-flex";
+          unarchiveOrderBtn.style.display = "none";
+          archiveHint.textContent = "";
+        }
+      }catch(e){}
+    }
+
+    async function archiveCurrentOrder(){
+      if (!currentOrderId) return;
+      const ord = String(currentOrderId);
+      const ok = confirm("تأكيد: أرشفة الطلب " + ord + " ؟\nسيختفي من تبويب (كل الطلبات) فقط.");
+      if (!ok) return;
+
+      try{
+        const ref = doc(db, ARCHIVE_COLLECTION, ord);
+        await setDoc(ref, {
+          orderNo: ord,
+          archivedAt: serverTimestamp(),
+          archivedBy: (auth.currentUser?.email || "")
+        }, { merge:true });
+
+        // ✅ Mark public tracking status as archived (so customer sees: الطلب منتهي)
+        // We don't add any extra reads; we rely on currentOrderRecords already loaded from ERP.
+        try{
+          const batch2 = writeBatch(db);
+          const recs = Array.isArray(currentOrderRecords) ? currentOrderRecords : [];
+          if (recs.length){
+            recs.forEach((r, idx) => {
+              const itemNoRaw = getFieldFlex("ItemNo", r);
+              const itemNo = (() => {
+                const n = parseInt(itemNoRaw, 10);
+                return (!isNaN(n) && n > 0) ? n : (idx + 1);
+              })();
+
+              const docId2 = ord + "_" + itemNo;
+              const publicRef2 = doc(db, TRACK_COLLECTION, docId2, "public", "status");
+              batch2.set(publicRef2, {
+                archived: true,
+                archivedAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+              }, { merge: true });
+
+              // mark main track doc too (harmless)
+              const trackRef2 = doc(db, TRACK_COLLECTION, docId2);
+              batch2.set(trackRef2, {
+                archived: true,
+                archivedAt: serverTimestamp()
+              }, { merge: true });
+            });
+            await batch2.commit();
+          } else if (currentItemNo){
+            const docId2 = ord + "_" + currentItemNo;
+            const publicRef2 = doc(db, TRACK_COLLECTION, docId2, "public", "status");
+            await setDoc(publicRef2, { archived:true, archivedAt: serverTimestamp(), updatedAt: serverTimestamp() }, { merge:true });
+            const trackRef2 = doc(db, TRACK_COLLECTION, docId2);
+            await setDoc(trackRef2, { archived:true, archivedAt: serverTimestamp() }, { merge:true });
+          }
+        }catch(e2){
+          console.warn("Failed to mark tracking as archived:", e2);
+        }
+
+
+        archiveSet.add(ord);
+        archiveLoaded = true;
+        await refreshArchiveUI();
+
+        // لو المستخدم فاتح تبويب كل الطلبات، حدث القائمة فوراً
+        if (ordersListCard && ordersListCard.style.display !== "none"){
+          renderOrdersList(ordersSearchInput ? ordersSearchInput.value : "");
+        }
+        alert("تمت أرشفة الطلب.");
+      }catch(e){
+        console.error(e);
+        alert("تعذر أرشفة الطلب. حاول مرة أخرى.");
+      }
+    }
+
+    async function unarchiveCurrentOrder(){
+      if (!currentOrderId) return;
+      const ord = String(currentOrderId);
+      const ok = confirm("تأكيد: إلغاء أرشفة الطلب " + ord + " ؟");
+      if (!ok) return;
+
+      try{
+        const ref = doc(db, ARCHIVE_COLLECTION, ord);
+        await deleteDoc(ref);
+
+        archiveSet.delete(ord);
+        archiveLoaded = true;
+        await refreshArchiveUI();
+
+        // تحديث القائمة لو مفتوحة
+        if (ordersListCard && ordersListCard.style.display !== "none"){
+          await loadOrdersList();
+        }
+        alert("تم إلغاء الأرشفة.");
+      }catch(e){
+        console.error(e);
+        alert("تعذر إلغاء الأرشفة. حاول مرة أخرى.");
+      }
+    }
+
+    if (archiveOrderBtn) archiveOrderBtn.addEventListener("click", archiveCurrentOrder);
+    if (unarchiveOrderBtn) unarchiveOrderBtn.addEventListener("click", unarchiveCurrentOrder);
+
+    function renderOrdersList(filterText=""){
+      const q = String(filterText||"").trim().toLowerCase();
+      const rows = Array.isArray(ordersListCache) ? ordersListCache : [];
+      const baseRows = rows.filter(r => !archiveSet.has(String(r.orderNo||"")));
+      const filtered = !q ? baseRows : baseRows.filter(r => {
+        const hay = [
+          r.orderNo, r.customerName, r.customerPhone, r.branch, r.vinVal, r.vinRaw
+        ].filter(Boolean).join(" ").toLowerCase();
+        return hay.includes(q);
+      });
+
+      ordersListBody.innerHTML = "";
+      if (!filtered.length){
+        ordersListBody.innerHTML = "<tr><td class='muted' colspan='5'>لا توجد نتائج مطابقة.</td></tr>";
+        return;
+      }
+
+      filtered.forEach(r => {
+        const tr = document.createElement("tr");
+        const isUnread = !ordersReadSet.has(String(r.orderNo||""));
+        if (isUnread) tr.classList.add("unread-row");
+
+        tr.innerHTML = `
+          <td><button class="link-btn" data-order="${r.orderNo}">${r.orderNo}</button></td>
+          <td>${r.customerName || "—"}</td>
+          <td>${r.customerPhone || "—"}</td>
+          <td>${r.branch || "—"}</td>
+          <td>${r.vinVal || "—"}</td>
+        `;
+        ordersListBody.appendChild(tr);
+      });
+    }
+
+
+    async function loadOrdersList() {
+      ordersListBody.innerHTML = "<tr><td class='muted' colspan='5'>جاري تحميل الطلبات...</td></tr>";
+      try {
+        await loadArchiveSet();
+        // ✅ نقرأ آخر 200 سجل من erp_orders (قد يكون في تكرار لأن كل سيارة سجل)
+        const q = query(collection(db, ERP_COLLECTION), limit(200));
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          ordersListBody.innerHTML = "<tr><td class='muted' colspan='5'>لا توجد طلبات مسجلة حالياً.</td></tr>";
+          return;
+        }
+        // ✅ نجمع حسب orderNo لتجنب تكرار الطلبات في القائمة
+        const byOrder = new Map();
+        for (const docSnap of snap.docs) {
+          const d = docSnap.data();
+          const orderNo = d.orderNo || d.OrderNo || docSnap.id;
+          if (!orderNo) continue;
+
+          if (!byOrder.has(orderNo)) {
+            byOrder.set(orderNo, { orderNo, docs: [] });
+          }
+          byOrder.get(orderNo).docs.push(d);
+        }
+
+        const rows = [];
+        for (const group of byOrder.values()) {
+          const docsArr = group.docs || [];
+          const first = docsArr[0] || {};
+
+          const vins = Array.from(new Set(
+            docsArr
+              .map(x => (getFieldFlex("VIN", x) || "").toString().trim())
+              .filter(v => v && v !== "-" && v !== "—")
+          ));
+
+          const vinVal = (vins.length <= 1)
+            ? (vins[0] || "—")
+            : ("(" + vins.length + ") هياكل");
+
+          const customerName = getFieldFlex("CustomerName", first) || "";
+          const customerPhone = getFieldFlex("CustomerPhone", first) || "";
+          const branch = getFieldFlex("Branch", first) || "";
+          const orderDateRaw = getFieldFlex("OrderDate", first) || "";
+
+          // حالة التتبع
+          // 🚀 تحسين أداء: لا نقرأ مراحل التتبع لكل طلب داخل القائمة (يسبب بطء شديد).
+          // التتبع والإجراءات تظهر بعد فتح الطلب من تبويب "بحث عن طلب".
+          
+
+          rows.push({ orderNo: group.orderNo, vinVal, vinRaw: vins.join(" "), customerName, customerPhone, branch, orderDateRaw });
+        }
+        
+        // ترتيب الصفوف بالأحدث أولاً (بدون الاعتماد على orderBy لتفادي مشاكل الفهارس/اختلاف أسماء الحقول)
+        function toMillis(v){
+          if (!v) return 0;
+          // Firestore Timestamp
+          if (v.toDate) return v.toDate().getTime();
+          // JS Date
+          if (v instanceof Date) return v.getTime();
+          // number
+          if (typeof v === "number") return v;
+          // string
+          const s = String(v).trim();
+          // try parse ISO / normal date
+          const t = Date.parse(s);
+          if (!Number.isNaN(t)) return t;
+          // fallback: if looks like dd/mm/yyyy or dd-mm-yyyy
+          const m = s.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+          if (m){
+            const dd = parseInt(m[1],10), mm = parseInt(m[2],10)-1, yy = parseInt(m[3],10);
+            const yyyy = yy < 100 ? (2000 + yy) : yy;
+            const d = new Date(yyyy, mm, dd);
+            return d.getTime() || 0;
+          }
+          return 0;
+        }
+
+        rows.sort((a,b) => {
+          const aMs = toMillis(a.orderDateRaw || a.deliveryDate || "");
+          const bMs = toMillis(b.orderDateRaw || b.deliveryDate || "");
+          // desc
+          return bMs - aMs;
+        });
+
+ordersListCache = rows;
+        loadReadOrders();
+        renderOrdersList(ordersSearchInput ? ordersSearchInput.value : "");
+} catch (err) {
+        console.error(err);
+        ordersListBody.innerHTML = "<tr><td class='err' colspan='5'>تعذر تحميل قائمة الطلبات.</td></tr>";
+      }
+    }
+
+    function activateTab(which) {
+      if (which === "list") {
+        orderCard.style.display = "none";
+        erpCard.style.display   = "none";
+        stagesCard.style.display= "none";
+        ordersListCard.style.display = "";
+        tabSearchBtn.classList.remove("tab-active");
+        tabListBtn.classList.add("tab-active");
+        loadOrdersList();
+      } else {
+        orderCard.style.display = "";
+        erpCard.style.display   = currentOrderId ? "" : "none";
+        stagesCard.style.display= "";
+        ordersListCard.style.display = "none";
+        tabSearchBtn.classList.add("tab-active");
+        tabListBtn.classList.remove("tab-active");
+      }
+    }
+
+    tabSearchBtn.addEventListener("click", () => activateTab("search"));
+    tabListBtn.addEventListener("click", () => activateTab("list"));
+
+    if (ordersSearchInput) {
+      ordersSearchInput.addEventListener("input", () => {
+        renderOrdersList(ordersSearchInput.value);
+      });
+    }
+
+    ordersListBody.addEventListener("click", async (e) => {
+      const btn = e.target.closest("button.link-btn");
+      if (!btn) return;
+      const ord = btn.dataset.order;
+      // mark as read (opened once) like mail behavior
+      ordersReadSet.add(String(ord || ""));
+      saveReadOrders();
+
+      try { await navigator.clipboard.writeText(ord); } catch(e) { console.warn(e); }
+      orderIdInput.value = ord;
+      vinInput.value = "";
+      activateTab("search");
+      loadOrder();
+    });
+
+    // زر توليد رابط التتبع
+    if (trackLinkBtn) {
+      trackLinkBtn.addEventListener("click", async () => {
+        if (!currentVin) {
+          alert("لم يتم اختيار رقم الهيكل.");
+          return;
+        }
+
+        const url = `https://mzj-tracking.vercel.app/Test-Track.html?vin=${encodeURIComponent(currentVin)}`;
+
+        // فتح الرابط في تبويب جديد
+        window.open(url, "_blank");
+
+        // نسخ الرابط إلى الحافظة
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          try {
+            await navigator.clipboard.writeText(url);
+            alert("تم نسخ رابط التتبع:\n" + url);
+          } catch (err) {
+            console.warn("لم يتم النسخ إلى الحافظة", err);
+          }
+        }
+      });
+    }
+
+
+    // إدارة حالة تسجيل الدخول وتوزيع الواجهات
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // مستخدم مسجل دخول
+        whoami.textContent = user.email || "";
+        logoutBtn.style.display = "inline-flex";
+
+        authCard.style.display = "none";
+        tabsBar.style.display  = "flex";
+
+        orderCard.style.display  = "";
+        if (currentOrderId) {
+          erpCard.style.display    = "";
+          stagesCard.style.display = "";
+        } else {
+          erpCard.style.display    = "none";
+          stagesCard.style.display = "none";
+        }
+        ordersListCard.style.display = "none";
+        refreshArchiveUI();
+      } else {
+        // لا يوجد مستخدم
+        whoami.textContent = "";
+        logoutBtn.style.display = "none";
+
+        authCard.style.display     = "";
+        tabsBar.style.display      = "none";
+        orderCard.style.display    = "none";
+        erpCard.style.display      = "none";
+        stagesCard.style.display   = "none";
+        ordersListCard.style.display = "none";
+        refreshArchiveUI();
+      }
+    });
+
+    // زر تسجيل الدخول
+    loginBtn.addEventListener("click", async () => {
+      authMsg.textContent = "";
+      const emailVal = (email.value || "").trim();
+      const passVal  = (password.value || "").trim();
+
+      if (!emailVal || !passVal) {
+        authMsg.innerHTML = "<span class='err'>أدخل البريد الإلكتروني وكلمة السر.</span>";
+        return;
+      }
+
+      try {
+        await signInWithEmailAndPassword(auth, emailVal, passVal);
+        authMsg.innerHTML = "<span class='ok'>تم تسجيل الدخول بنجاح.</span>";
+      } catch (e) {
+        console.error(e);
+        authMsg.innerHTML = "<span class='err'>تعذر تسجيل الدخول. تأكد من البيانات أو تواصل مع المسؤول.</span>";
+      }
+    });
+
+    // زر إنشاء حساب جديد (للمشرف فقط)
+    if (signupBtn) signupBtn.addEventListener("click", async () => {
+      authMsg.textContent = "";
+      const emailVal = (email.value || "").trim();
+      const passVal  = (password.value || "").trim();
+
+      if (!emailVal || !passVal) {
+        authMsg.innerHTML = "<span class='err'>أدخل البريد الإلكتروني وكلمة السر.</span>";
+        return;
+      }
+
+      try {
+        await createUserWithEmailAndPassword(auth, emailVal, passVal);
+        authMsg.innerHTML = "<span class='ok'>تم إنشاء الحساب وتسجيل الدخول.</span>";
+      } catch (e) {
+        console.error(e);
+        authMsg.innerHTML = "<span class='err'>تعذر إنشاء الحساب. ربما يكون البريد مستخدم من قبل.</span>";
+      }
+    });
+
+    // زر تسجيل الخروج
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await signOut(auth);
+      } catch (e) {
+        console.error(e);
+      }
+    });
+
+    // تهيئة أولية للصفحة
+    tabsBar.style.display      = "none";
+    orderCard.style.display    = "none";
+    erpCard.style.display      = "none";
+    stagesCard.style.display   = "none";
+    ordersListCard.style.display = "none";
+
+    clearErpTable();
+    buildStagesUI({ });
+
+  </script>
+
+<script>
+  // Topbar connection badge helper (non-invasive)
+  (function(){
+    const who = document.getElementById('whoami');
+    const dot = document.getElementById('connDot');
+    const txt = document.getElementById('connText');
+    function tick(){
+      const hasUser = who && (who.textContent||'').trim().length>0;
+      if(dot) dot.className = 'dot ' + (hasUser ? 'ok' : 'warn');
+      if(txt) txt.textContent = hasUser ? 'متصل' : 'غير مسجل';
+    }
+    setInterval(tick, 700);
+    setTimeout(tick, 50);
+  })();
+</script>
+
+  <script src="./mzj-ui.js"></script>
+
+      </div>
+    </main>
+  </div>
+
+
+  <!-- Message Modal (Edit before send) -->
+  <div id="msgModal" style="display:none;position:fixed;inset:0;z-index:9999;">
+    <div id="msgModalBackdrop" style="position:absolute;inset:0;background:rgba(0,0,0,.45);"></div>
+    <div style="position:relative;max-width:680px;margin:7vh auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid #e5e7eb;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:rgba(188,143,116,.16);color:var(--brown);font-weight:900;">
+            <i class="fa-solid fa-paper-plane"></i>
+          </div>
+          <div>
+            <div id="msgModalTitle" style="font-weight:900;color:var(--brown);">إرسال رسالة</div>
+            <div id="msgModalSub" style="font-size:12px;color:var(--muted);margin-top:2px;">—</div>
+          </div>
+        </div>
+        <button id="msgModalClose" class="btn-outline" type="button" style="font-size:12px;">إغلاق</button>
+      </div>
+
+      <div style="padding:12px 14px;">
+        <label style="margin:0 0 6px 0;">نص الرسالة (تقدر تعدّل قبل الإرسال)</label>
+        <textarea id="msgModalText" rows="9" style="width:100%;padding:10px 12px;border-radius:12px;border:1px solid #e5e7eb;background:#f9fafb;font-family:inherit;font-size:14px;outline:none;resize:vertical;"></textarea>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:10px;">
+          <div class="muted" style="font-size:12px;">
+            <span class="badge" id="msgModalChannel">—</span>
+            <span class="badge" id="msgModalPhone">—</span>
+            <span class="badge" id="msgModalVin">—</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button id="msgModalCopy" class="btn-outline" type="button" style="font-size:12px;"><i class="fa-regular fa-copy"></i> نسخ النص</button>
+            <button id="msgModalReset" class="btn-outline" type="button" style="font-size:12px;"><i class="fa-solid fa-rotate-left"></i> رجوع للنص الأصلي</button>
+            <button id="msgModalSend" class="btn" type="button" style="font-size:12px;"><i class="fa-solid fa-paper-plane"></i> إرسال</button>
+          </div>
+        </div>
+        <div id="msgModalMsg" class="muted" style="margin-top:8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dynamic QR (Clickable) -->
+  <div id="trackQrModal" style="display:none;position:fixed;inset:0;z-index:9998;">
+    <div id="trackQrBackdrop" style="position:absolute;inset:0;background:rgba(0,0,0,.45);"></div>
+    <div style="position:relative;max-width:420px;margin:10vh auto;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;border-bottom:1px solid #e5e7eb;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:rgba(188,143,116,.16);color:var(--brown);font-weight:900;">
+            <i class="fa-solid fa-qrcode"></i>
+          </div>
+          <div>
+            <div style="font-weight:900;color:var(--brown);">QR تتبع العميل</div>
+            <div id="trackQrSub" style="font-size:12px;color:var(--muted);margin-top:2px;">اضغط على الـ QR لفتح التتبع مباشرة</div>
+          </div>
+        </div>
+        <button id="trackQrClose" class="btn-outline" type="button" style="font-size:12px;">إغلاق</button>
+      </div>
+      <div style="padding:14px;text-align:center;">
+        <a id="trackQrLink" href="#" target="_blank" style="display:inline-block;text-decoration:none;">
+          <img id="trackQrImg" alt="QR Tracking" style="width:240px;height:240px;border-radius:14px;border:1px solid #e5e7eb;background:#fff;"/>
+        </a>
+        <div class="hint" style="margin-top:10px;">رابط التتبع: <button id="trackQrCopy" class="link-btn" type="button">نسخ الرابط</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="./sales.m.js"></script>
+</body>
+</html>
